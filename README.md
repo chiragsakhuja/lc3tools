@@ -1,4 +1,4 @@
-lc3sim
+# lc3sim
 lc3sim is a complete overhaul of the current LC-3 simulator used in EE 306 at The University of Texas at Austin.
 With lc3sim, we strive to achieve the following goals:
 * Create a truly cross platform assembler and simulator
