@@ -29,3 +29,8 @@
 
 # Vim swap files
 *.swp
+
+# Flex and Bison generated files
+*.tab.c
+*.tab.h
+lex.yy.c
