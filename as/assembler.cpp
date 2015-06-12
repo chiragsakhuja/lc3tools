@@ -1,5 +1,6 @@
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <map>
 #include <iostream>
 
@@ -40,7 +41,7 @@ Assembler::Assembler()
     opcodeLUT["trap"] = 0xf;
 }
 
-bool Assembler::assembleInstruction(Token *inst)
+bool Assembler::assembleInstruction(const char *filename, Token *inst)
 {
     std::string *op = inst->data.str;
     int opcode = 0;     // default to br
@@ -63,18 +64,23 @@ bool Assembler::assembleInstruction(Token *inst)
     } else {
         auto opcodeEntry = opcodeLUT.find(*op);
         if(opcodeEntry == opcodeLUT.end()) {
-            std::cerr << "Error: Unknown instruction at filename:" << inst->rowNum + 1 << "," << inst->colNum  + 1 << std::endl;
+            int spaceCount = strlen(filename) + std::to_string(inst->rowNum + 1).length() + std::to_string(inst->colNum + 1).length() + 4;
 
-            std::cout << "    " << fileBuffer[inst->rowNum] << std::endl;
-            std::cerr << "    ";
-            for(int i = 0; i < inst->colNum; i++) {
+            std::cerr << "\033[1m" << filename << ":" << inst->rowNum + 1 << ":" << inst->colNum + 1 << ": " << "\033[31m" << "error: " << "\033[0m\033[1m" << "unknown instruction '" << *op << "\033[0m" << "'" << std::endl;
+
+            for(int i = 0; i < spaceCount; i++) {
+                std::cerr << " ";
+            }
+            std::cerr << fileBuffer[inst->rowNum] << std::endl;
+            std::cerr << "\033[1m\033[32m";
+            for(int i = 0; i < spaceCount; i++) {
                 std::cerr << " ";
             }
             std::cerr << "^";
             for(int i = 1; i < inst->length; i++) {
                 std::cerr << "~";
             }
-            std::cerr << std::endl;
+            std::cerr << "\033[0m" << std::endl;
 
             return false;
         } else {
@@ -85,10 +91,10 @@ bool Assembler::assembleInstruction(Token *inst)
     return true;
 }
 
-bool Assembler::processStatement(Token *state)
+bool Assembler::processStatement(const char *filename, Token *state)
 {
     if(state->type == INST) {
-        return assembleInstruction(state);
+        return assembleInstruction(filename, state);
     } else if(state->type == PSEUDO) {
         // return processPsuedo(state);
     } else if(state->type == LABEL) {
@@ -118,7 +124,7 @@ bool Assembler::assembleProgram(const char *filename, Token *program, std::map<s
 
         bool success = true;
         while(curState != nullptr) {
-            success &= processStatement(curState);
+            success &= processStatement(filename, curState);
             curState = curState->next;
         }
     }

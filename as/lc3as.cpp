@@ -16,6 +16,7 @@ void printProgram(Token *head);
 extern FILE *yyin;
 extern int yyparse(void);
 extern Token *root;
+extern int rowNum, colNum;
 
 int main(int argc, char *argv[])
 {
@@ -39,6 +40,7 @@ void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable
     if((yyin = fopen(filename, "r")) == nullptr) {
         printWarning("Skipping file %s ...", filename);
     } else {
+        rowNum = 0; colNum = 0;
         yyparse();
         as.assembleProgram(filename, root, symbolTable);
 

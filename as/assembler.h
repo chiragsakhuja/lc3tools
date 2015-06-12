@@ -18,8 +18,8 @@ private:
     static std::map<std::string, int> opcodeLUT;
 
     Assembler();
-    static bool assembleInstruction(Token *state);
-    static bool processStatement(Token *state);
+    static bool assembleInstruction(const char *filename, Token *state);
+    static bool processStatement(const char *filename, Token *state);
 
     // cannot duplicate the singleton
     Assembler(Assembler const&)      = delete;
