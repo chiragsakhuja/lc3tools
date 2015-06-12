@@ -8,8 +8,6 @@
 
 void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable);
 
-template<typename... Args>
-void printWarning(const char *format, Args... args);
 std::string argsToString(Token *tok);
 void printProgram(Token *head);
 
@@ -38,7 +36,7 @@ void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable
     Assembler& as = Assembler::getInstance();
 
     if((yyin = fopen(filename, "r")) == nullptr) {
-        printWarning("Skipping file %s ...", filename);
+        // printWarning("Skipping file %s ...", filename);
     } else {
         rowNum = 0; colNum = 0;
         yyparse();
@@ -76,12 +74,4 @@ void printProgram(Token *head)
 
         head = head->next;
     }
-}
-
-template<typename... Args>
-void printWarning(const char *format, Args... args)
-{
-    std::cout << "Warning: ";
-    std::printf(format, args...);
-    std::cout << std::endl;
 }

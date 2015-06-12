@@ -6,6 +6,7 @@
 
 #include "assembler.h"
 #include "tokens.h"
+#include "assembly_printer.h"
 #include "lc3.tab.h"
 
 
@@ -43,6 +44,8 @@ Assembler::Assembler()
 
 bool Assembler::assembleInstruction(const char *filename, Token *inst)
 {
+    AssemblyPrinter &printer = AssemblyPrinter::getInstance();
+
     std::string *op = inst->data.str;
     int opcode = 0;     // default to br
     bool brBits[3] = {false, false, false};     // 0:n, 1:z, 2:p
@@ -64,23 +67,7 @@ bool Assembler::assembleInstruction(const char *filename, Token *inst)
     } else {
         auto opcodeEntry = opcodeLUT.find(*op);
         if(opcodeEntry == opcodeLUT.end()) {
-            int spaceCount = strlen(filename) + std::to_string(inst->rowNum + 1).length() + std::to_string(inst->colNum + 1).length() + 4;
-
-            std::cerr << "\033[1m" << filename << ":" << inst->rowNum + 1 << ":" << inst->colNum + 1 << ": " << "\033[31m" << "error: " << "\033[0m\033[1m" << "unknown instruction '" << *op << "\033[0m" << "'" << std::endl;
-
-            for(int i = 0; i < spaceCount; i++) {
-                std::cerr << " ";
-            }
-            std::cerr << fileBuffer[inst->rowNum] << std::endl;
-            std::cerr << "\033[1m\033[32m";
-            for(int i = 0; i < spaceCount; i++) {
-                std::cerr << " ";
-            }
-            std::cerr << "^";
-            for(int i = 1; i < inst->length; i++) {
-                std::cerr << "~";
-            }
-            std::cerr << "\033[0m" << std::endl;
+            printer.printAssemblyError(filename, inst, fileBuffer[inst->rowNum].c_str(), "unknown instruction \'%s\'", op->c_str(), op->c_str(), op->c_str());
 
             return false;
         } else {
