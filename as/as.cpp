@@ -1,5 +1,7 @@
 #include <iostream>
 #include <cstdio>
+#include <fstream>
+#include <vector>
 
 #include "tokens.h"
 #include "lc3.tab.h"
@@ -8,7 +10,9 @@ template<typename... Args>
 void printWarning(const char *format, Args... args);
 std::string argsToString(Token *tok);
 void printProgram(Token *head);
-
+void bufferFile(const char *filename, std::vector<std::string> &buffer);
+void assembleProgram(Token *program);
+void genObjectFile(const char *filename);
 extern FILE *yyin;
 extern int yyparse(void);
 extern Token *root;
@@ -19,20 +23,48 @@ int main(int argc, char *argv[])
         std::cout << "Usage: " << argv[0] << " file [file ...]\n";
     } else {
         for(int i = 1; i < argc; i++) {
-            FILE *file;
-
-            if((file = fopen(argv[i], "r")) == nullptr) {
-                printWarning("Skipping file %s ...", argv[i]);
-            } else {
-                yyparse();
-                printProgram(root);
-
-                fclose(yyin);
-            }
+            genObjectFile(argv[i]);
         }
     }
 
     return 0;
+}
+
+void bufferFile(const char *filename, std::vector<std::string> &buffer)
+{
+    std::ifstream file(filename);
+
+    if(file.is_open()) {
+        std::string line;
+
+        buffer.clear();
+        while(std::getline(file, line)) {
+            buffer.push_back(line);
+        }
+
+        file.close();
+    }
+}
+
+void assembleProgram(Token *program)
+{
+
+}
+
+void genObjectFile(const char *filename)
+{
+    if((yyin = fopen(filename, "r")) == nullptr) {
+        printWarning("Skipping file %s ...", filename);
+    } else {
+        std::vector<std::string> buffer;
+
+        bufferFile(filename, buffer);
+        yyparse();
+        assembleProgram(root);
+        // printProgram(root);
+
+        fclose(yyin);
+    }
 }
 
 std::string argsToString(Token *tok)
