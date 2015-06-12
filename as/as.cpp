@@ -24,24 +24,13 @@ int main(int argc, char *argv[])
             if((file = fopen(argv[i], "r")) == nullptr) {
                 printWarning("Skipping file %s ...", argv[i]);
             } else {
+                yyparse();
+                printProgram(root);
 
+                fclose(yyin);
             }
         }
     }
-
-    if(argc != 2) {
-        yyin = stdin;
-    } else {
-        if((yyin = fopen(argv[1], "r")) == NULL) {
-            yyin = stdin;
-        }
-    }
-
-    yyparse();
-
-    printProgram(root);
-
-    fclose(yyin);
 
     return 0;
 }
