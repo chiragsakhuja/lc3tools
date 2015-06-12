@@ -1,67 +1,46 @@
 #include <iostream>
 #include <cstdio>
-#include <fstream>
-#include <vector>
+#include <map>
 
 #include "tokens.h"
+#include "assembler.h"
 #include "lc3.tab.h"
+
+void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable);
 
 template<typename... Args>
 void printWarning(const char *format, Args... args);
 std::string argsToString(Token *tok);
 void printProgram(Token *head);
-void bufferFile(const char *filename, std::vector<std::string> &buffer);
-void assembleProgram(Token *program);
-void genObjectFile(const char *filename);
+
 extern FILE *yyin;
 extern int yyparse(void);
 extern Token *root;
 
 int main(int argc, char *argv[])
 {
+    std::map<std::string, int> symbolTable;
+
     if(argc < 2) {
         std::cout << "Usage: " << argv[0] << " file [file ...]\n";
     } else {
         for(int i = 1; i < argc; i++) {
-            genObjectFile(argv[i]);
+            genObjectFile(argv[i], symbolTable);
         }
     }
 
     return 0;
 }
 
-void bufferFile(const char *filename, std::vector<std::string> &buffer)
+void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable)
 {
-    std::ifstream file(filename);
+    Assembler& as = Assembler::getInstance();
 
-    if(file.is_open()) {
-        std::string line;
-
-        buffer.clear();
-        while(std::getline(file, line)) {
-            buffer.push_back(line);
-        }
-
-        file.close();
-    }
-}
-
-void assembleProgram(Token *program)
-{
-
-}
-
-void genObjectFile(const char *filename)
-{
     if((yyin = fopen(filename, "r")) == nullptr) {
         printWarning("Skipping file %s ...", filename);
     } else {
-        std::vector<std::string> buffer;
-
-        bufferFile(filename, buffer);
         yyparse();
-        assembleProgram(root);
-        // printProgram(root);
+        as.assembleProgram(filename, root, symbolTable);
 
         fclose(yyin);
     }
@@ -85,10 +64,10 @@ void printProgram(Token *head)
     while(head != nullptr) {
         printf("%s (%d,%d): ", argsToString(head).c_str(), head->rowNum, head->colNum);
 
-        Token *cur_arg = head->args;
-        while(cur_arg != nullptr) {
-            printf("%s (%d,%d)  ", argsToString(cur_arg).c_str(), cur_arg->rowNum, cur_arg->colNum);
-            cur_arg = cur_arg->next;
+        Token *curArg = head->args;
+        while(curArg != nullptr) {
+            printf("%s (%d,%d)  ", argsToString(curArg).c_str(), curArg->rowNum, curArg->colNum);
+            curArg = curArg->next;
         }
 
         printf("\n");
