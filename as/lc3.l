@@ -11,7 +11,7 @@ int stringToInt(const char *str);
 void yyerror(const char *);
 Token * makeToken(const char *tok, int type);
 
-int rowNum = 1, colNum = 1;
+int rowNum = 0, colNum = 0;
 
 %}
 
@@ -28,7 +28,7 @@ HDIG    [0-9a-f]
 
 %%
 
-{LE}+                   { colNum = 1; if(strlen(yytext) > 1 || yytext[0] != '\r') { rowNum++; } return NEWLINE; }
+{LE}+                   { colNum = 0; if(strlen(yytext) > 1 || yytext[0] != '\r') { rowNum++; } return NEWLINE; }
 
 [,]                     { colNum += strlen(yytext); return COMMA; }
 [.]                     { colNum += strlen(yytext); return DOT  ; }

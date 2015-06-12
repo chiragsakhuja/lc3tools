@@ -1,6 +1,7 @@
 #include <fstream>
 #include <string>
 #include <map>
+#include <iostream>
 
 #include "assembler.h"
 #include "tokens.h"
@@ -55,22 +56,27 @@ bool Assembler::assembleInstruction(Token *inst)
             brBits[2] = true;
         }
 
-        if(op->find("n") != std::string::npos) {
-            brBits[0] = true;
-        }
-
-        if(op->find("z") != std::string::npos) {
-            brBits[1] = true;
-        }
-
-        if(op->find("p") != std::string::npos) {
-            brBits[2] = true;
-        }
+        // set appropriate bits
+        if(op->find("n") != std::string::npos) { brBits[0] = true; }
+        if(op->find("z") != std::string::npos) { brBits[1] = true; }
+        if(op->find("p") != std::string::npos) { brBits[2] = true; }
     } else {
         auto opcodeEntry = opcodeLUT.find(*op);
         if(opcodeEntry == opcodeLUT.end()) {
-            opcode = 255;
-            // return false ?
+            std::cerr << "Error: Unknown instruction at filename:" << inst->rowNum + 1 << "," << inst->colNum  + 1 << std::endl;
+
+            std::cout << "    " << fileBuffer[inst->rowNum] << std::endl;
+            std::cerr << "    ";
+            for(int i = 0; i < inst->colNum; i++) {
+                std::cerr << " ";
+            }
+            std::cerr << "^";
+            for(int i = 1; i < inst->length; i++) {
+                std::cerr << "~";
+            }
+            std::cerr << std::endl;
+
+            return false;
         } else {
             opcode = opcodeEntry->second;
         }
