@@ -6,8 +6,6 @@
 #include "tokens.h"
 
 Token *append(Token *head, Token *list);
-std::string argsToString(Token *tok);
-void printProgram(Token *head);
 
 extern int yylex();
 void yyerror(const char *);
@@ -61,7 +59,7 @@ program : state program         { $$ = append($1, $2); }
         | state                 { $$ = $1; }
         ;
 
-tree    : program               { root = $1; printProgram($1); }
+tree    : program               { root = $1; }
         ;
 
 %%
@@ -74,32 +72,3 @@ Token * append(Token *head, Token *list)
     return head;
 }
 
-std::string argsToString(Token *tok)
-{
-    if(tok->type == NUM) {
-        return std::to_string(tok->data.num);
-    } else {
-        if(tok->data.str != nullptr) {
-            return *tok->data.str;
-        } else {
-            return std::string();
-        }
-    }
-}
-
-void printProgram(Token *head)
-{
-    while(head != nullptr) {
-        printf("%s (%d): ", argsToString(head).c_str(), head->type);
-
-        Token *cur_reg = head->args;
-        while(cur_reg != nullptr) {
-            printf("%s ", argsToString(cur_reg).c_str());
-            cur_reg = cur_reg->next;
-        }
-
-        printf("\n");
-
-        head = head->next;
-    }
-}

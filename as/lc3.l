@@ -8,8 +8,10 @@
 #include "lc3.tab.h"
 
 int stringToInt(const char *str);
-
 void yyerror(const char *);
+Token * makeToken(const char *tok, int type);
+
+int rowNum = 1, colNum = 1;
 
 %}
 
@@ -26,21 +28,38 @@ HDIG    [0-9a-f]
 
 %%
 
-{LE}                    { return NEWLINE; }
-[,]                     { return COMMA  ; }
-[.]                     { return DOT    ; }
-[:]                     { return COLON  ; }
+{LE}+                   { colNum = 1; if(strlen(yytext) > 1 || yytext[0] != '\r') { rowNum++; } return NEWLINE; }
 
-{WS}+                   { }
-(;|("//")){NLE}*        { }
+[,]                     { colNum += strlen(yytext); return COMMA; }
+[.]                     { colNum += strlen(yytext); return DOT  ; }
+[:]                     { colNum += strlen(yytext); return COLON; }
 
-0?b{BDIG}+              { yylval.tok = new Token(stringToInt(yytext), NUM) ; return NUM ; }
-#?{DIG}+                { yylval.tok = new Token(stringToInt(yytext), NUM) ; return NUM ; }
-0?x{HDIG}+              { yylval.tok = new Token(stringToInt(yytext), NUM) ; return NUM ; }
+{WS}+                   { colNum += strlen(yytext); }
+(;|("//")){NLE}*        { colNum += strlen(yytext); }
 
-{NDEL}+|['"]{NLE}*['"]  { yylval.tok = new Token(new std::string(yytext), STRING) ; return STRING ; }
+0?b{BDIG}+              { yylval.tok = makeToken(yytext, NUM)   ; colNum += strlen(yytext); return NUM   ; }
+#?{DIG}+                { yylval.tok = makeToken(yytext, NUM)   ; colNum += strlen(yytext); return NUM   ; }
+0?x{HDIG}+              { yylval.tok = makeToken(yytext, NUM)   ; colNum += strlen(yytext); return NUM   ; }
+{NDEL}+|['"]{NLE}*['"]  { yylval.tok = makeToken(yytext, STRING); colNum += strlen(yytext); return STRING; }
 
 %%
+
+Token * makeToken(const char *tok, int type)
+{
+    Token *ret = nullptr;
+
+    if(type == STRING) {
+        ret = new Token(new std::string(tok), STRING);
+    } else {
+        ret = new Token(stringToInt(tok), NUM);
+    }
+
+    ret->rowNum = rowNum;
+    ret->colNum = colNum;
+    ret->length = strlen(tok);
+
+    return ret;
+}
 
 int stringToInt(const char *str)
 {
@@ -54,21 +73,4 @@ int stringToInt(const char *str)
         case '#': return std::stoi(conv)       ; break;
         default : return std::stoi(str)        ; break;
     }
-}
-
-int main(int argc, char *argv[])
-{
-    if(argc != 2) {
-        yyin = stdin;
-    } else {
-        if((yyin = fopen(argv[1], "r")) == NULL) {
-            yyin = stdin;
-        }
-    }
-
-    yyparse();
-
-    fclose(yyin);
-
-    return 0;
 }
