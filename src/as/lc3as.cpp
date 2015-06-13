@@ -4,7 +4,7 @@
 
 #include "tokens.h"
 #include "assembler.h"
-#include "lc3.tab.h"
+#include "parser.hpp"
 
 void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable);
 

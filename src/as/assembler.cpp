@@ -7,7 +7,7 @@
 #include "assembler.h"
 #include "tokens.h"
 #include "assembly_printer.h"
-#include "lc3.tab.h"
+#include "parser.hpp"
 
 
 std::vector<std::string> Assembler::fileBuffer;

@@ -5,7 +5,7 @@
 #include <cstring>
 
 #include "tokens.h"
-#include "lc3.tab.h"
+#include "parser.hpp"
 
 int stringToInt(const char *str);
 void yyerror(const char *);

@@ -1,5 +1,5 @@
 #include "tokens.h"
-#include "../as/lc3.tab.h"
+#include "parser.hpp"
 
 Token::Token()
 {

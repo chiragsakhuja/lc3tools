@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <cstdarg>
 
 #include "tokens.h"
 #include "assembly_printer.h"
