@@ -23,4 +23,4 @@ include_directories(${SHARED_LIB_INCLUDE_DIR})
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 add_executable(lc3as ${AS_SRCS})
-target_link_libraries(lc3as lc3sim)
+target_link_libraries(lc3as lc3utils)
