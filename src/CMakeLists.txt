@@ -1,1 +1,2 @@
+subdirs(utils)
 subdirs(as)
