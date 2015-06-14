@@ -34,3 +34,6 @@
 *.tab.c
 *.tab.h
 lex.yy.c
+
+# Ignore build directory
+build/*
