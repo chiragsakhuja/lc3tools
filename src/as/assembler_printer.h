@@ -3,18 +3,18 @@
 
 #include "../utils/printer.h"
 
-class AssemblyPrinter : public Printer
+class AssemblerPrinter : public Printer
 {
 public:
-    static AssemblyPrinter& getInstance();
+    static AssemblerPrinter& getInstance();
 
     static void printAssemblyError(const char *filename, Token *tok, const char *line, const char *format, ...);
 
 private:
-    AssemblyPrinter() {}
+    AssemblerPrinter() {}
 
-    AssemblyPrinter(AssemblyPrinter const&) = delete;
-    void operator=(AssemblyPrinter const&)  = delete;
+    AssemblerPrinter(AssemblerPrinter const&) = delete;
+    void operator=(AssemblerPrinter const&)  = delete;
 };
 
 #endif

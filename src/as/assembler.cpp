@@ -6,7 +6,8 @@
 
 #include "assembler.h"
 #include "tokens.h"
-#include "assembly_printer.h"
+#include "assembler_printer.h"
+#include "instruction.h"
 #include "parser.hpp"
 
 
@@ -44,7 +45,7 @@ Assembler::Assembler()
 
 bool Assembler::assembleInstruction(const char *filename, Token *inst)
 {
-    AssemblyPrinter &printer = AssemblyPrinter::getInstance();
+    AssemblerPrinter &printer = AssemblerPrinter::getInstance();
 
     std::string *op = inst->data.str;
     int opcode = 0;     // default to br

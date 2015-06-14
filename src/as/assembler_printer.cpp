@@ -3,17 +3,17 @@
 #include <cstdarg>
 
 #include "tokens.h"
-#include "assembly_printer.h"
+#include "assembler_printer.h"
 
-AssemblyPrinter& AssemblyPrinter::getInstance()
+AssemblerPrinter& AssemblerPrinter::getInstance()
 {
     // only one copy and guaranteed to be destroyed
-    static AssemblyPrinter instance;
+    static AssemblerPrinter instance;
 
     return instance;
 }
 
-void AssemblyPrinter::printAssemblyError(const char *filename, Token *tok, const char *line, const char *format, ...)
+void AssemblerPrinter::printAssemblyError(const char *filename, Token *tok, const char *line, const char *format, ...)
 {
     std::cerr << BOLD << filename << ":" << tok->rowNum + 1 << ":" << tok->colNum + 1 << ": " << RED << "error: " << RESET << BOLD;
 
