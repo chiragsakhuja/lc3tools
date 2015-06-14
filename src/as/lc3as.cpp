@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstdio>
+#include <vector>
 #include <map>
+#include <string>
 
 #include "tokens.h"
 #include "assembler.h"

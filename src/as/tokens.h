@@ -1,8 +1,6 @@
 #ifndef TOKENS_H
 #define TOKENS_H
 
-#include <string>
-
 union DataType
 {
     std::string *str;

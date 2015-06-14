@@ -1,15 +1,16 @@
 #include <fstream>
 #include <string>
 #include <cstring>
+#include <vector>
 #include <map>
 #include <iostream>
 
-#include "assembler.h"
 #include "tokens.h"
+#include "assembler.h"
+#include "../utils/printer.h"
 #include "assembler_printer.h"
 #include "instruction.h"
 #include "parser.hpp"
-
 
 std::vector<std::string> Assembler::fileBuffer;
 std::map<std::string, int> Assembler::opcodeLUT;

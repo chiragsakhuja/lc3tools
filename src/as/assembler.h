@@ -1,12 +1,6 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 
-#include <map>
-#include <string>
-#include <vector>
-
-#include "tokens.h"
-
 class Assembler
 {
 public:

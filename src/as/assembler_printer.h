@@ -1,8 +1,6 @@
 #ifndef TOKEN_PRINTER_H
 #define TOKEN_PRINTER_H
 
-#include "../utils/printer.h"
-
 class AssemblerPrinter : public Printer
 {
 public:
