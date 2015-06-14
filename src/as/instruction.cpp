@@ -2,7 +2,7 @@
 
 #include "instruction.h"
 
-Instruction::Instruction(std::string label, int argCount, int opcode)
+Instruction::Instruction(const std::string& label, int argCount, int opcode)
 {
     this->label = label;
     this->argCount = argCount;

@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 
+#include "instruction.h"
 #include "tokens.h"
 #include "assembler.h"
 #include "parser.hpp"

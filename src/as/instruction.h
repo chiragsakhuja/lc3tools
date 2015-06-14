@@ -8,7 +8,8 @@ public:
     int argCount;
     int opcode;
 
-    Instruction(std::string label, int argCount, int opcode);
+    Instruction() {}
+    Instruction(const std::string& label, int argCount, int opcode);
 };
 
 #endif

@@ -14,20 +14,33 @@ AssemblerPrinter& AssemblerPrinter::getInstance()
     return instance;
 }
 
-void AssemblerPrinter::printAssemblyError(const char *filename, Token *tok, const char *line, const char *format, ...)
+void AssemblerPrinter::printAssemblyError(const std::string& filename, const Token *tok, const std::string& line, const char *format, ...)
 {
-    std::cerr << BOLD << filename << ":" << tok->rowNum + 1 << ":" << tok->colNum + 1 << ": " << RED << "error: " << RESET << BOLD;
-
     va_list args;
     va_start(args, format);
-    printErrorVL(format, args);
+    printAssemblyErrorXVL(filename, tok->colNum, tok->length, tok, line, format, args);
     va_end(args);
+}
+
+void AssemblerPrinter::printAssemblyErrorX(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    printAssemblyErrorXVL(filename, colNum, length, tok, line, format, args);
+    va_end(args);
+}
+
+void AssemblerPrinter::printAssemblyErrorXVL(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, va_list args)
+{
+    std::cerr << BOLD << filename << ":" << tok->rowNum + 1 << ":" << colNum + 1 << ": " << RED << "error: " << RESET << BOLD;
+
+    printErrorVL(format, args);
     std::cerr << RESET << std::endl;
 
     std::cerr << line << std::endl;
 
-    printNChars(std::cerr, ' ', tok->colNum);
+    printNChars(std::cerr, ' ', colNum);
     std::cerr << BOLD << GREEN << "^";
-    printNChars(std::cerr, '~', tok->length - 1);
+    printNChars(std::cerr, '~', length - 1);
     std::cerr << RESET << std::endl << std::endl;
 }

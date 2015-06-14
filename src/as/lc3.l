@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <string>
 #include <cstring>
+#include <algorithm>
 
 #include "tokens.h"
 #include "parser.hpp"
@@ -49,7 +50,9 @@ Token * makeToken(const char *tok, int type)
     Token *ret = nullptr;
 
     if(type == STRING) {
-        ret = new Token(new std::string(tok), STRING);
+        std::string *tokStr = new std::string(tok);
+        std::transform(tokStr->begin(), tokStr->end(), tokStr->begin(), ::tolower);
+        ret = new Token(tokStr, STRING);
     } else {
         ret = new Token(stringToInt(tok), NUM);
     }
