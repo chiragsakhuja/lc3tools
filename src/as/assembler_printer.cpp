@@ -32,10 +32,9 @@ void AssemblerPrinter::printAssemblyErrorX(const std::string& filename, int colN
 
 void AssemblerPrinter::printAssemblyErrorXVL(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, va_list args)
 {
-    std::cerr << BOLD << filename << ":" << tok->rowNum + 1 << ":" << colNum + 1 << ": " << RED << "error: " << RESET << BOLD;
+    std::cerr << BOLD << filename << ":" << tok->rowNum + 1 << ":" << colNum + 1 << ": ";
 
     printErrorVL(format, args);
-    std::cerr << RESET << std::endl;
 
     std::cerr << line << std::endl;
 

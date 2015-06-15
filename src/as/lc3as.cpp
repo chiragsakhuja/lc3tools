@@ -6,6 +6,7 @@
 
 #include "instruction.h"
 #include "tokens.h"
+#include "../utils/printer.h"
 #include "assembler.h"
 #include "parser.hpp"
 
@@ -37,9 +38,10 @@ int main(int argc, char *argv[])
 void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable)
 {
     Assembler& as = Assembler::getInstance();
+    Printer& printer = Printer::getInstance();
 
     if((yyin = fopen(filename, "r")) == nullptr) {
-        // printWarning("Skipping file %s ...", filename);
+         printer.printWarning("Skipping file %s ...", filename);
     } else {
         rowNum = 0; colNum = 0;
         yyparse();

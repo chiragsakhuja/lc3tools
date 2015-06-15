@@ -66,21 +66,21 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
                 int pos = inst->colNum + (int) i;
                 if(op.at(i) == 'n') {
                     if(brBits[0]) {
-                        printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "duplicate condition in branch");
+                        printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "duplicate condition \'n\' in branch");
                         success = false;
                     } else {
                         brBits[0] = true;
                     }
                 } else if(op[i] == 'z') {
                     if(brBits[1]) {
-                        printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "duplicate condition in branch");
+                        printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "duplicate condition \'z\' in branch");
                         success = false;
                     } else {
                         brBits[1] = true;
                     }
                 } else if(op[i] == 'p') {
                     if(brBits[2]) {
-                        printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "duplicate condition in branch");
+                        printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "duplicate condition \'p\' in branch");
                         success = false;
                     } else {
                         brBits[2] = true;
