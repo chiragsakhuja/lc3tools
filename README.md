@@ -23,10 +23,14 @@ and Bison. On a Linux or OS X system, you can execute the following commands to
 compile the project.
 
 ```
-mkdir build     # create build directory
-cmake ..        # configure directory for cmake
-cmake ..        # generate build system
-make all        # build all targets
+# create build directory
+mkdir build && cd build
+# configure directory for cmake
+cmake .. -DCMAKE_BUILD_TYPE=Release
+# generate build system
+cmake ..
+# build all the targets
+make all
 ```
 
 Building the project will generate a `bin` directory inside the `build`
