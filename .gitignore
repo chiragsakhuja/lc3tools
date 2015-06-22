@@ -37,3 +37,6 @@ lex.yy.c
 
 # Ignore build directory
 build/*
+
+# Ignore test cases
+*.asm
