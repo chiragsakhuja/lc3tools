@@ -4,11 +4,12 @@
 #include <map>
 #include <string>
 
-#include "instruction.h"
 #include "tokens.h"
 #include "../utils/printer.h"
 #include "assembler.h"
 #include "parser.hpp"
+
+#include "paths.h"
 
 void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable);
 
@@ -22,10 +23,11 @@ extern int rowNum, colNum;
 
 int main(int argc, char *argv[])
 {
+    Printer& printer = Printer::getInstance();
     std::map<std::string, int> symbolTable;
 
     if(argc < 2) {
-        std::cout << "Usage: " << argv[0] << " file [file ...]\n";
+        printer.printError("usage: %s file [file ...]", argv[0]);
     } else {
         for(int i = 1; i < argc; i++) {
             genObjectFile(argv[i], symbolTable);

@@ -9,7 +9,6 @@ public:
 
 private:
     static std::vector<std::string> fileBuffer;
-    static std::map<std::string, Instruction> opcodeLUT;
 
     Assembler();
     static bool assembleInstruction(const std::string& filename, const Token *state);

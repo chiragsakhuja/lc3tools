@@ -6,11 +6,14 @@
 #include <algorithm>
 #include <string>
 
+#include "utils/printer.h"
 #include "thirdparty/jsonxx/jsonxx.h"
 #include "instruction_encoder.h"
 
+#include "paths.h"
+
 std::map<int, std::list<Instruction *> > InstructionEncoder::insts;
-int InstructionEncoder::regWidth;
+int InstructionEncoder::regWidth = 32;
 std::vector<std::string> InstructionEncoder::regs;
 
 typedef enum {
@@ -67,136 +70,173 @@ InstructionEncoder& InstructionEncoder::getInstance()
 
 InstructionEncoder::InstructionEncoder()
 {
-    std::ifstream file("encodings.json");
-    std::stringstream buffer;
-    buffer << file.rdbuf();
+    Printer& printer = Printer::getInstance();
+    std::string resPath(globalResPath);
 
-    jsonxx::Array list;
-    list.parse(buffer.str());
 
-    for(size_t i = 0; i < list.size(); i++) {
-        if(!list.has<jsonxx::Object>(i)) {
+    std::ifstream file(resPath + "/encodings.json");
+
+    if(file.is_open()) {
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+
+        jsonxx::Array list;
+        list.parse(buffer.str());
+
+        for(size_t i = 0; i < list.size(); i++) {
+            if(!list.has<jsonxx::Object>(i)) {
+                printer.printError("unknown encoding");
+                continue;
+            }
+
+            jsonxx::Object state = list.get<jsonxx::Object>(i);
+
+            if(!state.has<jsonxx::String>("type") || !state.has<jsonxx::Object>("data")) {
+                printer.printError("incorrect encoding");
+                continue;
+            }
+
+            jsonxx::String type = state.get<jsonxx::String>("type");
+            jsonxx::Object data = state.get<jsonxx::Object>("data");
+
+            // begin the giant parser
+            if(type == "CONF") {    // start config
+                if(!data.has<jsonxx::Number>("width")) {
+                    printer.printError("unspecified width in encoding");
+                    continue;
+                }
+
+                jsonxx::Number width = data.get<jsonxx::Number>("width");
+                regWidth = width;
+
+                printer.printDebugInfo("configuring %d-bit registers", regWidth);
+            } else if(type == "REGS") {     // end config, start regs
+                if(!data.has<jsonxx::Array>("reglist")) {
+                    printer.printError("unspecified reglist in encoding");
+                    continue;
+                }
+
+                jsonxx::Array reglist = data.get<jsonxx::Array>("reglist");
+                std::stringstream output;
+                output << "configuring registers ";
+
+                for(size_t j = 0; j < reglist.size(); j++) {
+                    if(!reglist.has<jsonxx::String>(j)) {
+                        printer.printError("unknown type in reglist");
+                        continue;
+                    }
+
+                    jsonxx::String reg = reglist.get<jsonxx::String>(j);
+
+                    regs.push_back(reglist.get<jsonxx::String>(j));
+                    output << reg << " ";
+                }
+
+
+                printer.printDebugInfo(output.str().c_str());
+            } else if(type == "INST") {     // end regs, start inst
+                if(!data.has<jsonxx::String>("label") || !data.has<jsonxx::Boolean>("setcc") || !data.has<jsonxx::Array>("enc")) {
+                    printer.printError("unspecified fields in instruction encoding");
+                    continue;
+                }
+
+                jsonxx::String label = data.get<jsonxx::String>("label");
+                jsonxx::Boolean setcc = data.get<jsonxx::Boolean>("setcc");
+                jsonxx::Array enc = data.get<jsonxx::Array>("enc");
+
+                std::list<Instruction *> *sameOpInsts = nullptr;
+                if(regWidth == 0) {
+                    printer.printWarning("unconfigured register width, assuming 32-bit");
+                }
+
+                Instruction *newInst = new Instruction(regWidth, setcc, label);
+
+                for(size_t j = 0; j < enc.size(); j++) {
+                    if(!enc.has<jsonxx::Object>(j)) {
+                        printer.printError("unknown type in %s instruction encoding", label.c_str());
+                        continue;
+                    }
+
+                    jsonxx::Object inst = enc.get<jsonxx::Object>(j);
+
+                    if(!inst.has<jsonxx::Number>("hi") || !inst.has<jsonxx::Number>("lo") || !inst.has<jsonxx::String>("type") || !inst.has<jsonxx::Object>("data")) {
+                        printer.printError("unspecified fields in %s instruction encoding", label.c_str());
+                        continue;
+                    }
+
+                    jsonxx::Number hi = inst.get<jsonxx::Number>("hi");
+                    jsonxx::Number lo = inst.get<jsonxx::Number>("lo");
+                    jsonxx::String instType = inst.get<jsonxx::String>("type");
+                    jsonxx::Object instData = inst.get<jsonxx::Object>("data");
+
+                    if(instType == "OPCODE" || instType == "FIXED") {
+                        if(!instData.has<jsonxx::String>("value")) {
+                            printer.printError("unspecified value in fixed encoding for %s instruction", label.c_str());
+                            continue;
+                        }
+
+                        jsonxx::String value = instData.get<jsonxx::String>("value");
+
+                        if(instType == "OPCODE") {
+                            sameOpInsts = &insts[std::stoi(value, 0, 2)];
+                        }
+
+                        for(int k = (int) lo; k <= (int) hi; k++) {
+                            newInst->bitTypes[k] = value[hi - k] - '0';
+                        }
+                    } else if(instType == "REG" || instType == "IMMS" || instType == "IMMU" || instType == "PCOFFS" || instType == "PCOFFU") {
+                        if(!instData.has<jsonxx::Number>("pos")) {
+                            printer.printError("unspecified pos in dynamic encoding for %s instruction", label.c_str());
+                            continue;
+                        }
+
+                        jsonxx::Number pos = instData.get<jsonxx::Number>("pos");
+                        int type = 0;
+
+                        if(instType == "REG") {
+                            type = REG_TYPE;
+                        } else if(instType == "IMMS") {
+                            type = IMMS_TYPE;
+                        } else if(instType == "IMMU") {
+                            type = IMMU_TYPE;
+                        } else if(instType == "PCOFFS") {
+                            type = PCOFFS_TYPE;
+                        } else if(instType == "PCOFFU") {
+                            type = PCOFFU_TYPE;
+                        }
+
+                        newInst->argTypes.insert(newInst->argTypes.begin() + ((int) pos), Operand(type, lo, hi));
+                        std::fill_n(newInst->bitTypes + (int) lo, (int) (hi - lo + 1), type);
+                    } else {
+                        printer.printError("unknown encoding type %s", type.c_str());
+                        continue;
+                    }
+                }
+
+                sameOpInsts->push_back(newInst);
+            }
         }
 
-        jsonxx::Object state = list.get<jsonxx::Object>(i);
+        for(auto it = insts.begin(); it != insts.end(); it++) {
+            std::list<Instruction *>& encs = it->second;
 
-        if(!state.has<jsonxx::String>("type") || !state.has<jsonxx::Object>("data")) {
+            for(auto it2 = encs.begin(); it2 != encs.end(); it2++) {
+                std::stringstream output;
+                Instruction *inst = *it2;
+
+                output << inst->label << " (" << it->first << ") : { ";
+
+                for(int i = regWidth - 1; i >= 0; i--) {
+                    output << inst->bitTypes[i];
+                }
+
+                output << " }";
+                printer.printDebugInfo("configuring instruction %s", output.str().c_str());
+            }
         }
 
-        jsonxx::String type = state.get<jsonxx::String>("type");
-        jsonxx::Object data = state.get<jsonxx::Object>("data");
-
-        // begin the giant parser
-        if(type == "CONF") {    // start config
-            if(!data.has<jsonxx::Number>("width")) {
-            }
-
-            jsonxx::Number width = data.get<jsonxx::Number>("width");
-            regWidth = width;
-
-            std::cout << "Configuring " << width << "-bit registers\n";
-        } else if(type == "REGS") {     // end config, start regs
-            if(!data.has<jsonxx::Array>("reglist")) {
-            }
-
-            jsonxx::Array reglist = data.get<jsonxx::Array>("reglist");
-
-            std::cout << "Configuring registers ";
-            for(size_t j = 0; j < reglist.size(); j++) {
-                if(!reglist.has<jsonxx::String>(j)) {
-                }
-
-                jsonxx::String reg = reglist.get<jsonxx::String>(j);
-
-                regs.push_back(reglist.get<jsonxx::String>(j));
-                std::cout << reg << " ";
-            }
-            std::cout << std::endl;
-        } else if(type == "INST") {     // end regs, start inst
-            if(!data.has<jsonxx::String>("label") || !data.has<jsonxx::Boolean>("setcc") || !data.has<jsonxx::Array>("enc")) {
-            }
-
-            jsonxx::String label = data.get<jsonxx::String>("label");
-            jsonxx::Boolean setcc = data.get<jsonxx::Boolean>("setcc");
-            jsonxx::Array enc = data.get<jsonxx::Array>("enc");
-
-            std::list<Instruction *> *sameOpInsts = nullptr;
-            if(regWidth == 0) {
-            }
-
-            Instruction *newInst = new Instruction(regWidth, setcc, label);
-
-            for(size_t j = 0; j < enc.size(); j++) {
-                if(!enc.has<jsonxx::Object>(j)) {
-                }
-
-                jsonxx::Object inst = enc.get<jsonxx::Object>(j);
-
-                if(!inst.has<jsonxx::Number>("hi") || !inst.has<jsonxx::Number>("lo") || !inst.has<jsonxx::String>("type") || !inst.has<jsonxx::Object>("data")) {
-                }
-
-                jsonxx::Number hi = inst.get<jsonxx::Number>("hi");
-                jsonxx::Number lo = inst.get<jsonxx::Number>("lo");
-                jsonxx::String instType = inst.get<jsonxx::String>("type");
-                jsonxx::Object instData = inst.get<jsonxx::Object>("data");
-
-                if(instType == "OPCODE" || instType == "FIXED") {
-                    if(!instData.has<jsonxx::String>("value")) {
-                    }
-
-                    jsonxx::String value = instData.get<jsonxx::String>("value");
-
-                    if(instType == "OPCODE") {
-                        sameOpInsts = &insts[std::stoi(value, 0, 2)];
-                    }
-
-                    for(int k = (int) lo; k <= (int) hi; k++) {
-                        newInst->bitTypes[k] = value[hi - k] - '0';
-                    }
-                } else if(instType == "REG" || instType == "IMMS" || instType == "IMMU" || instType == "PCOFFS" || instType == "PCOFFU") {
-                    if(!instData.has<jsonxx::Number>("pos")) {
-                    }
-
-                    jsonxx::Number pos = instData.get<jsonxx::Number>("pos");
-                    int type = 0;
-
-                    if(instType == "REG") {
-                        type = REG_TYPE;
-                    } else if(instType == "IMMS") {
-                        type = IMMS_TYPE;
-                    } else if(instType == "IMMU") {
-                        type = IMMU_TYPE;
-                    } else if(instType == "PCOFFS") {
-                        type = PCOFFS_TYPE;
-                    } else if(instType == "PCOFFU") {
-                        type = PCOFFU_TYPE;
-                    }
-
-                    newInst->argTypes.insert(newInst->argTypes.begin() + ((int) pos), Operand(type, lo, hi));
-                    std::fill_n(newInst->bitTypes + (int) lo, (int) (hi - lo + 1), type);
-                } else {
-                    // error
-                }
-            }
-
-            sameOpInsts->push_back(newInst);
-        }
+        file.close();
+    } else {
+        printer.printError("could not open encodings.json");
     }
-
-    for(auto it = insts.begin(); it != insts.end(); it++) {
-        std::list<Instruction *>& encs = it->second;
-
-        for(auto it2 = encs.begin(); it2 != encs.end(); it2++) {
-            Instruction *inst = *it2;
-
-            std::cout << inst->label << " (" << it->first << ") : { ";
-
-            for(int i = regWidth - 1; i >= 0; i--) {
-                std::cout << inst->bitTypes[i];
-            }
-
-            std::cout << " }" << std::endl;
-        }
-    }
-
 }
