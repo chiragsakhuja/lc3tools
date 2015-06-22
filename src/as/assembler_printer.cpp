@@ -3,7 +3,7 @@
 #include <cstdarg>
 
 #include "tokens.h"
-#include "../utils/printer.h"
+#include "utils/printer.h"
 #include "assembler_printer.h"
 
 AssemblerPrinter& AssemblerPrinter::getInstance()

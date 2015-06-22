@@ -11,3 +11,4 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -O2 -w")
 
 project(lc3sim)
 subdirs(src)
+subdirs(thirdparty)
