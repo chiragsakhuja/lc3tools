@@ -16,17 +16,18 @@ void Printer::printfMessage(int type, const char *format, ...)
     va_list args;
     va_start(args, format);
     vprintfMessage(type, format, args);
-    print("\n");
+    if(type <= _PRINT_LEVEL) {
+        print("\n");
+    }
     va_end(args);
 }
 
 void Printer::vprintfMessage(int type, const char *format, va_list args)
 {
-    int level = type;
     int color = PRINT_MODE_RESET;
     std::string label = "";
 
-    if(level <= _PRINT_LEVEL) {
+    if(type <= _PRINT_LEVEL) {
         switch(type) {
             case ERROR:
                 color = PRINT_MODE_RED;
@@ -51,7 +52,7 @@ void Printer::vprintfMessage(int type, const char *format, va_list args)
             default: break;
         }
 
-        vxprintfMessage(level, color, label.c_str(), format, args);
+        vxprintfMessage(type, color, label.c_str(), format, args);
     }
 }
 
