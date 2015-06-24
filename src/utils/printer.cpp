@@ -16,6 +16,7 @@ void Printer::printfMessage(int type, const char *format, ...)
     va_list args;
     va_start(args, format);
     vprintfMessage(type, format, args);
+    print("\n");
     va_end(args);
 }
 
@@ -64,7 +65,6 @@ void Printer::vxprintfMessage(int level, int color, const char *label, const cha
     setMode(PRINT_MODE_BOLD);
     vprintf(format, args);
     setMode(PRINT_MODE_RESET);
-    print("\n");
 }
 
 void Printer::printf(const char *format, ...)

@@ -36,6 +36,7 @@ void AssemblerPrinter::vxprintfAssemblyMessage(int level, const std::string& fil
     printf("%s:%d:%d: ", filename.c_str(), tok->rowNum + 1, colNum + 1);
 
     vprintfMessage(level, format, args);
+    printf("\n%s\n", line.c_str());
 
     setMode(PRINT_MODE_BOLD);
     setMode(PRINT_MODE_GREEN);
