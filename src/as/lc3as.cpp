@@ -5,7 +5,7 @@
 #include <string>
 
 #include "tokens.h"
-#include "../utils/printer.h"
+#include "utils/printer.h"
 #include "assembler.h"
 #include "parser.hpp"
 
@@ -14,7 +14,6 @@
 void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable);
 
 std::string argsToString(Token *tok);
-void printProgram(Token *head);
 
 extern FILE *yyin;
 extern int yyparse(void);
@@ -27,7 +26,7 @@ int main(int argc, char *argv[])
     std::map<std::string, int> symbolTable;
 
     if(argc < 2) {
-        printer.printError("usage: %s file [file ...]", argv[0]);
+        printer.printfMessage(Printer::ERROR, "usage: %s file [file ...]", argv[0]);
     } else {
         for(int i = 1; i < argc; i++) {
             genObjectFile(argv[i], symbolTable);
@@ -43,7 +42,7 @@ void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable
     Printer& printer = Printer::getInstance();
 
     if((yyin = fopen(filename, "r")) == nullptr) {
-         printer.printWarning("Skipping file %s ...", filename);
+         printer.printfMessage(Printer::WARNING, "Skipping file %s ...", filename);
     } else {
         rowNum = 0; colNum = 0;
         yyparse();
@@ -63,22 +62,5 @@ std::string argsToString(Token *tok)
         } else {
             return std::string();
         }
-    }
-}
-
-void printProgram(Token *head)
-{
-    while(head != nullptr) {
-        printf("%s (%d,%d): ", argsToString(head).c_str(), head->rowNum, head->colNum);
-
-        Token *curArg = head->args;
-        while(curArg != nullptr) {
-            printf("%s (%d,%d)  ", argsToString(curArg).c_str(), curArg->rowNum, curArg->colNum);
-            curArg = curArg->next;
-        }
-
-        printf("\n");
-
-        head = head->next;
     }
 }

@@ -74,7 +74,7 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
         // if there was no match, check to see if it was because of incorrect number of operands or incorrect operands
         if(potentialMatch == nullptr) {
             // this will only be the case if there are no encodings with the same number of operands as the assembly line
-            printer.printAssemblyError(filename, inst, fileBuffer[inst->rowNum], "incorrect number of operands");
+            printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, inst, fileBuffer[inst->rowNum], "incorrect number of operands");
         } else {
             // this will only be the case if there is at least one encoding with the same number of operands as the assembly line
             // since there is still no match, this will assume you were trying to match against the last encoding in the list
@@ -83,7 +83,7 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
             // iterate through the assembly line to see which arguments were incorrect and print errors
             for(auto it = potentialMatch->argTypes.begin(); it != potentialMatch->argTypes.end(); it++) {
                 if((*it)->type != cur->type) {
-                    printer.printAssemblyError(filename, cur, fileBuffer[inst->rowNum], "incorrect operand");
+                    printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, cur, fileBuffer[inst->rowNum], "incorrect operand");
                 }
 
                 cur = cur->next;
@@ -105,11 +105,11 @@ bool Assembler::getOrig(const std::string& filename, const Token *orig, bool pri
 
     if(orig->checkPseudoType("orig")) {     // sanity check...
         if(printErrors && orig->numOperands != 1) {
-            printer.printAssemblyError(filename, orig, fileBuffer[orig->rowNum], "incorrect number of operands");
+            printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, orig, fileBuffer[orig->rowNum], "incorrect number of operands");
             return false;
         } else {
             if(printErrors && orig->args->type != NUM) {
-                printer.printAssemblyError(filename, orig->args, fileBuffer[orig->rowNum], "illegal operand");
+                printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, orig->args, fileBuffer[orig->rowNum], "illegal operand");
                 return false;
             } else {
                 newOrig = orig->args->data.num;
@@ -159,13 +159,13 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
         // move through the program until you find the first orig
         while(curState != nullptr && !curState->checkPseudoType("orig")) {
             // TODO: allow for exceptions, such as .external
-            printer.printAssemblyWarningX(filename, 0, fileBuffer[curState->rowNum].length(), curState, fileBuffer[curState->rowNum], "ignoring statement before valid .orig");
+            printer.xprintfAssemblyMessage(AssemblerPrinter::WARNING, filename, 0, fileBuffer[curState->rowNum].length(), curState, fileBuffer[curState->rowNum], "ignoring statement before valid .orig");
             curState = curState->next;
         }
 
         // looks like you hit nullptr before a .orig, meaning there is no .orig
         if(curState == nullptr) {
-            printer.printError("no .orig found in \'%s\'", filename.c_str());
+            printer.printfMessage(AssemblerPrinter::ERROR, "no .orig found in \'%s\'", filename.c_str());
             return false;
         }
 
@@ -180,7 +180,7 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
 
     // you hit nullptr after seeing at least one .orig, meaning there is no valid .orig
     if(!foundValidOrig) {
-        printer.printError("no valid .orig found in \'%s\'", filename.c_str());
+        printer.printfMessage(AssemblerPrinter::ERROR, "no valid .orig found in \'%s\'", filename.c_str());
         return false;
     }
 
@@ -191,14 +191,14 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
     while(curState != nullptr) {
         if(curState->checkPseudoType("orig")) {
             if(!getOrig(filename, curState, true, curOrig)) {
-                printer.printWarning("ignoring invalid .orig");
+                printer.printfMessage(AssemblerPrinter::WARNING, "ignoring invalid .orig");
             }
         }
 
         if(curState->type == LABEL) {
             const std::string& label = *curState->data.str;
 
-            printer.printDebugInfo("setting label \'%s\' to 0x%X", label.c_str(), curOrig + pcOffset);
+            printer.printfMessage(AssemblerPrinter::DEBUG, "setting label \'%s\' to 0x%X", label.c_str(), curOrig + pcOffset);
         }
 
         curState->pc = pcOffset;
@@ -237,14 +237,14 @@ bool Assembler::assembleProgram(const std::string& filename, Token *program, std
         return false;
     }
 
-    printer.printInfo("beginning first pass ...");
+    printer.printfMessage(AssemblerPrinter::INFO, "beginning first pass ...");
 
     Token *curState = nullptr;
     if(!preprocessProgram(filename, program, symbolTable, curState)) {
         return false;
     }
 
-    printer.printInfo("first pass completed successefully, beginning second pass ...");
+    printer.printfMessage(AssemblerPrinter::INFO, "first pass completed successefully, beginning second pass ...");
 
     while(curState != nullptr) {
         if(curState->checkPseudoType("orig")) {
@@ -258,7 +258,7 @@ bool Assembler::assembleProgram(const std::string& filename, Token *program, std
     }
 
     if(success) {
-        printer.printInfo("second pass completed successfully");
+        printer.printfMessage(AssemblerPrinter::INFO, "second pass completed successfully");
     }
 
     return success;

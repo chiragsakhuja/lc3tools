@@ -3,13 +3,6 @@
 
 #include "printer.h"
 
-const char *Printer::RED     = "\033[31m";
-const char *Printer::YELLOW  = "\033[33m";
-const char *Printer::GREEN   = "\033[32m";
-const char *Printer::MAGENTA = "\033[35m";
-const char *Printer::RESET   = "\033[0m";
-const char *Printer::BOLD    = "\033[1m";
-
 Printer& Printer::getInstance()
 {
     // only one copy and guaranteed to be destroyed
@@ -18,71 +11,99 @@ Printer& Printer::getInstance()
     return instance;
 }
 
-void Printer::printError(const char *format, ...)
+void Printer::printfMessage(int type, const char *format, ...)
 {
     va_list args;
     va_start(args, format);
-    printErrorVL(format, args);
+    vprintfMessage(type, format, args);
     va_end(args);
 }
 
-void Printer::printWarning(const char *format, ...)
+void Printer::vprintfMessage(int type, const char *format, va_list args)
 {
-    va_list args;
-    va_start(args, format);
-    printWarningVL(format, args);
-    va_end(args);
-}
+    int level = type;
+    int color = PRINT_MODE_RESET;
+    std::string label = "";
 
-void Printer::printInfo(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    printInfoVL(format, args);
-    va_end(args);
-}
+    if(level <= _PRINT_LEVEL) {
+        switch(type) {
+            case ERROR:
+                color = PRINT_MODE_RED;
+                label = "error";
+                break;
 
-void Printer::printDebugInfo(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    printDebugInfoVL(format, args);
-    va_end(args);
-}
+            case WARNING:
+                color = PRINT_MODE_YELLOW;
+                label = "warning";
+                break;
 
-void Printer::printErrorVL(const char *format, va_list args)
-{
-    std::cout << BOLD << RED << "error: " << RESET << BOLD;
-    std::vprintf(format, args);
-    std::cout << RESET << std::endl;
-}
+            case INFO:
+                color = PRINT_MODE_GREEN;
+                label = "info";
+                break;
 
-void Printer::printWarningVL(const char *format, va_list args)
-{
-    std::cout << BOLD << YELLOW << "warning: " << RESET << BOLD;
-    std::vprintf(format, args);
-    std::cout << RESET << std::endl;
-}
+            case DEBUG:
+                color = PRINT_MODE_MAGENTA;
+                label = "debug";
+                break;
 
-void Printer::printInfoVL(const char *format, va_list args)
-{
-    std::cout << BOLD << GREEN << "info: " << RESET << BOLD;
-    std::vprintf(format, args);
-    std::cout << RESET << std::endl;
-}
+            default: break;
+        }
 
-void Printer::printDebugInfoVL(const char *format, va_list args)
-{
-#ifdef DEBUG
-    std::cout << BOLD << MAGENTA << "debug: " << RESET << BOLD;
-    std::vprintf(format, args);
-    std::cout << RESET << std::endl;
-#endif
-}
-
-void Printer::printNChars(std::ostream &stream, char c, int count)
-{
-    for(int i = 0; i < count; i++) {
-        stream << c;
+        vxprintfMessage(level, color, label.c_str(), format, args);
     }
+}
+
+void Printer::vxprintfMessage(int level, int color, const char *label, const char *format, va_list args)
+{
+    setMode(PRINT_MODE_BOLD);
+    setMode(color);
+    printf("%s: ", label);
+    setMode(PRINT_MODE_RESET);
+
+    setMode(PRINT_MODE_BOLD);
+    vprintf(format, args);
+    setMode(PRINT_MODE_RESET);
+    print("\n");
+}
+
+void Printer::printf(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+}
+
+void Printer::vprintf(const char *format, va_list args)
+{
+    va_list copy;
+    va_copy(copy, args);
+
+    int len = std::vsnprintf(nullptr, 0, format, args);
+    char *string = new char[len + 1];
+
+    va_copy(args, copy);
+    std::vsnprintf(string, len + 1, format, args);
+    print(string);
+
+    delete[] string;
+}
+
+void Printer::setMode(int mode)
+{
+    switch(mode) {
+        case PRINT_MODE_RED    : std::cout << "\033[31m"; break;
+        case PRINT_MODE_YELLOW : std::cout << "\033[33m"; break;
+        case PRINT_MODE_GREEN  : std::cout << "\033[32m"; break;
+        case PRINT_MODE_MAGENTA: std::cout << "\033[35m"; break;
+        case PRINT_MODE_BOLD   : std::cout << "\033[1m" ; break;
+        case PRINT_MODE_RESET  : std::cout << "\033[0m" ; break;
+        default                :                          break;
+    }
+}
+
+void Printer::print(const char *string)
+{
+    std::cout << string;
 }

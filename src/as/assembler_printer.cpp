@@ -14,62 +14,41 @@ AssemblerPrinter& AssemblerPrinter::getInstance()
     return instance;
 }
 
-void AssemblerPrinter::printAssemblyError(const std::string& filename, const Token *tok, const std::string& line, const char *format, ...)
+void AssemblerPrinter::printfAssemblyMessage(int level, const std::string& filename, const Token *tok, const std::string& line, const char *format, ...)
 {
     va_list args;
     va_start(args, format);
-    printAssemblyErrorXVL(filename, tok->colNum, tok->length, tok, line, format, args);
+    vxprintfAssemblyMessage(level, filename, tok->colNum, tok->length, tok, line, format, args);
     va_end(args);
 }
 
-void AssemblerPrinter::printAssemblyErrorX(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, ...)
+void AssemblerPrinter::xprintfAssemblyMessage(int level, const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, ...)
 {
     va_list args;
     va_start(args, format);
-    printAssemblyErrorXVL(filename, colNum, length, tok, line, format, args);
+    vxprintfAssemblyMessage(level, filename, colNum, length, tok, line, format, args);
     va_end(args);
 }
 
-void AssemblerPrinter::printAssemblyWarning(const std::string& filename, const Token *tok, const std::string& line, const char *format, ...)
+void AssemblerPrinter::vxprintfAssemblyMessage(int level, const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, va_list args)
 {
-    va_list args;
-    va_start(args, format);
-    printAssemblyWarningXVL(filename, tok->colNum, tok->length, tok, line, format, args);
-    va_end(args);
-}
+    setMode(PRINT_MODE_BOLD);
+    printf("%s:%d:%d: ", filename.c_str(), tok->rowNum + 1, colNum + 1);
 
-void AssemblerPrinter::printAssemblyWarningX(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    printAssemblyWarningXVL(filename, colNum, length, tok, line, format, args);
-    va_end(args);
-}
+    vprintfMessage(level, format, args);
 
-void AssemblerPrinter::printAssemblyErrorXVL(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, va_list args)
-{
-    std::cerr << BOLD << filename << ":" << tok->rowNum + 1 << ":" << colNum + 1 << ": ";
+    setMode(PRINT_MODE_BOLD);
+    setMode(PRINT_MODE_GREEN);
 
-    printErrorVL(format, args);
+    for(int i = 0; i < colNum; i++) {
+        print(" ");
+    }
+    print("^");
 
-    std::cerr << line << std::endl;
+    for(int i = 0; i < length - 1; i++) {
+        print("~");
+    }
 
-    printNChars(std::cerr, ' ', colNum);
-    std::cerr << BOLD << GREEN << "^";
-    printNChars(std::cerr, '~', length - 1);
-    std::cerr << RESET << std::endl << std::endl;
-}
-
-void AssemblerPrinter::printAssemblyWarningXVL(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, va_list args)
-{
-    std::cerr << BOLD << filename << ":" << tok->rowNum + 1 << ":" << colNum + 1 << ": ";
-
-    printWarningVL(format, args);
-
-    std::cerr << line << std::endl;
-
-    printNChars(std::cerr, ' ', colNum);
-    std::cerr << BOLD << GREEN << "^";
-    printNChars(std::cerr, '~', length - 1);
-    std::cerr << RESET << std::endl << std::endl;
+    setMode(PRINT_MODE_RESET);
+    print("\n\n");
 }
