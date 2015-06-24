@@ -85,14 +85,14 @@ InstructionEncoder::InstructionEncoder()
 
         for(size_t i = 0; i < list.size(); i++) {
             if(!list.has<jsonxx::Object>(i)) {
-                printer.printError("unknown encoding");
+                printer.printfMessage(Printer::ERROR, "unknown encoding");
                 continue;
             }
 
             jsonxx::Object state = list.get<jsonxx::Object>(i);
 
             if(!state.has<jsonxx::String>("type") || !state.has<jsonxx::Object>("data")) {
-                printer.printError("incorrect encoding");
+                printer.printfMessage(Printer::ERROR, "incorrect encoding");
                 continue;
             }
 
@@ -102,17 +102,17 @@ InstructionEncoder::InstructionEncoder()
             // begin the giant parser
             if(type == "CONF") {    // start config
                 if(!data.has<jsonxx::Number>("width")) {
-                    printer.printError("unspecified width in encoding");
+                    printer.printfMessage(Printer::ERROR, "unspecified width in encoding");
                     continue;
                 }
 
                 jsonxx::Number width = data.get<jsonxx::Number>("width");
                 regWidth = width;
 
-                printer.printDebugInfo("configuring %d-bit registers", regWidth);
+                printer.printfMessage(Printer::DEBUG, "configuring %d-bit registers", regWidth);
             } else if(type == "REGS") {     // end config, start regs
                 if(!data.has<jsonxx::Array>("reglist")) {
-                    printer.printError("unspecified reglist in encoding");
+                    printer.printfMessage(Printer::ERROR, "unspecified reglist in encoding");
                     continue;
                 }
 
@@ -122,7 +122,7 @@ InstructionEncoder::InstructionEncoder()
 
                 for(size_t j = 0; j < reglist.size(); j++) {
                     if(!reglist.has<jsonxx::String>(j)) {
-                        printer.printError("unknown type in reglist");
+                        printer.printfMessage(Printer::ERROR, "unknown type in reglist");
                         continue;
                     }
 
@@ -133,10 +133,10 @@ InstructionEncoder::InstructionEncoder()
                 }
 
 
-                printer.printDebugInfo(output.str().c_str());
+                printer.printfMessage(Printer::DEBUG, output.str().c_str());
             } else if(type == "INST") {     // end regs, start inst
                 if(!data.has<jsonxx::String>("label") || !data.has<jsonxx::Boolean>("setcc") || !data.has<jsonxx::Array>("enc")) {
-                    printer.printError("unspecified fields in instruction encoding");
+                    printer.printfMessage(Printer::ERROR, "unspecified fields in instruction encoding");
                     continue;
                 }
 
@@ -146,21 +146,21 @@ InstructionEncoder::InstructionEncoder()
 
                 std::list<Instruction *> *sameOpInsts = nullptr;
                 if(regWidth == 0) {
-                    printer.printWarning("unconfigured register width, assuming 32-bit");
+                    printer.printfMessage(Printer::WARNING, "unconfigured register width, assuming 32-bit");
                 }
 
                 Instruction *newInst = new Instruction(regWidth, setcc, label);
 
                 for(size_t j = 0; j < enc.size(); j++) {
                     if(!enc.has<jsonxx::Object>(j)) {
-                        printer.printError("unknown type in %s instruction encoding", label.c_str());
+                        printer.printfMessage(Printer::ERROR, "unknown type in %s instruction encoding", label.c_str());
                         continue;
                     }
 
                     jsonxx::Object inst = enc.get<jsonxx::Object>(j);
 
                     if(!inst.has<jsonxx::Number>("hi") || !inst.has<jsonxx::Number>("lo") || !inst.has<jsonxx::String>("type") || !inst.has<jsonxx::Object>("data")) {
-                        printer.printError("unspecified fields in %s instruction encoding", label.c_str());
+                        printer.printfMessage(Printer::ERROR, "unspecified fields in %s instruction encoding", label.c_str());
                         continue;
                     }
 
@@ -171,7 +171,7 @@ InstructionEncoder::InstructionEncoder()
 
                     if(instType == "OPCODE" || instType == "FIXED") {
                         if(!instData.has<jsonxx::String>("value")) {
-                            printer.printError("unspecified value in fixed encoding for %s instruction", label.c_str());
+                            printer.printfMessage(Printer::ERROR, "unspecified value in fixed encoding for %s instruction", label.c_str());
                             continue;
                         }
 
@@ -186,7 +186,7 @@ InstructionEncoder::InstructionEncoder()
                         }
                     } else if(instType == "REG" || instType == "IMMS" || instType == "IMMU" || instType == "PCOFFS" || instType == "PCOFFU") {
                         if(!instData.has<jsonxx::Number>("pos")) {
-                            printer.printError("unspecified pos in dynamic encoding for %s instruction", label.c_str());
+                            printer.printfMessage(Printer::ERROR, "unspecified pos in dynamic encoding for %s instruction", label.c_str());
                             continue;
                         }
 
@@ -208,7 +208,7 @@ InstructionEncoder::InstructionEncoder()
                         newInst->argTypes.insert(newInst->argTypes.begin() + ((int) pos), Operand(type, lo, hi));
                         std::fill_n(newInst->bitTypes + (int) lo, (int) (hi - lo + 1), type);
                     } else {
-                        printer.printError("unknown encoding type %s", type.c_str());
+                        printer.printfMessage(Printer::ERROR, "unknown encoding type %s", type.c_str());
                         continue;
                     }
                 }
@@ -231,12 +231,12 @@ InstructionEncoder::InstructionEncoder()
                 }
 
                 output << " }";
-                printer.printDebugInfo("configuring instruction %s", output.str().c_str());
+                printer.printfMessage(Printer::DEBUG, "configuring instruction %s", output.str().c_str());
             }
         }
 
         file.close();
     } else {
-        printer.printError("could not open encodings.json");
+        printer.printfMessage(Printer::ERROR, "could not open encodings.json");
     }
 }
