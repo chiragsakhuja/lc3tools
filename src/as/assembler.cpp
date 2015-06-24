@@ -5,7 +5,6 @@
 #include <map>
 #include <iostream>
 #include <list>
-#include <sstream>
 #include <algorithm>
 
 #include "tokens.h"
@@ -17,6 +16,7 @@
 #include "assembler.h"
 
 std::vector<std::string> Assembler::fileBuffer;
+int Assembler::sectionStart;
 
 Assembler& Assembler::getInstance()
 {
@@ -26,7 +26,10 @@ Assembler& Assembler::getInstance()
     return instance;
 }
 
-Assembler::Assembler() {}
+Assembler::Assembler()
+{
+    sectionStart = 0;
+}
 
 bool Assembler::assembleInstruction(const std::string& filename, const Token *inst)
 {
@@ -34,83 +37,98 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
     InstructionEncoder& encoder = InstructionEncoder::getInstance();
 
     std::string& op = *(inst->data.str);
-    bool brBits[3] = {false, false, false};     // 0:n, 1:z, 2:p
     bool success = true;
-    // Instruction &instObj = opcodeLUT["br"];     // default to branch
+    std::list<Instruction *>& encs = InstructionEncoder::insts[op];
 
-    if(op.find("br") == 0) {
-        // starts with br (brn, brz, etc.)
+    Instruction *potentialMatch = nullptr;
+    bool foundMatch = false;
 
-        if(op == "br") {
-            // br means always branch
-            brBits[0] = true;
-            brBits[1] = true;
-            brBits[2] = true;
-        } else {
-            for(std::size_t i = 2; i < op.length(); i++) {
-                int pos = inst->colNum + (int) i;
-                if(op.at(i) == 'n') {
-                    if(brBits[0]) {
-                        printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "duplicate condition \'n\' in branch");
-                        success = false;
-                    } else {
-                        brBits[0] = true;
-                    }
-                } else if(op[i] == 'z') {
-                    if(brBits[1]) {
-                        printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "duplicate condition \'z\' in branch");
-                        success = false;
-                    } else {
-                        brBits[1] = true;
-                    }
-                } else if(op[i] == 'p') {
-                    if(brBits[2]) {
-                        printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "duplicate condition \'p\' in branch");
-                        success = false;
-                    } else {
-                        brBits[2] = true;
-                    }
-                } else {
-                    printer.printAssemblyErrorX(filename, pos, 1, inst, fileBuffer[inst->rowNum], "unknown branch condition '%c'", op[i]);
-                    success = false;
+    const Token *curArg = inst->args;
+
+    // check all encodings to see if there is a match
+    for(auto it = encs.begin(); it != encs.end(); it++) {
+        // first make sure the number of operands is the same, otherwise it's a waste
+        if((*it)->argTypes.size() == inst->numOperands) {
+            potentialMatch = *it;
+            bool actualMatch = true;
+
+            // iterate through the oeprand types to see if the assembly matches
+            for(auto it = potentialMatch->argTypes.begin(); it != potentialMatch->argTypes.end(); it++) {
+                if((*it)->type != curArg->type) {
+                    actualMatch = false;
+                    break;
                 }
+
+                curArg = curArg->next;
+            }
+
+            // found a match, stop searching
+            if(actualMatch) {
+                foundMatch = true;
+                break;
             }
         }
+    }
+
+    if(!foundMatch) {
+        // if there was no match, check to see if it was because of incorrect number of operands or incorrect operands
+        if(potentialMatch == nullptr) {
+            // this will only be the case if there are no encodings with the same number of operands as the assembly line
+            printer.printAssemblyError(filename, inst, fileBuffer[inst->rowNum], "incorrect number of operands");
+        } else {
+            // this will only be the case if there is at least one encoding with the same number of operands as the assembly line
+            // since there is still no match, this will assume you were trying to match against the last encoding in the list
+            const Token *cur = inst->args;
+
+            // iterate through the assembly line to see which arguments were incorrect and print errors
+            for(auto it = potentialMatch->argTypes.begin(); it != potentialMatch->argTypes.end(); it++) {
+                if((*it)->type != cur->type) {
+                    printer.printAssemblyError(filename, cur, fileBuffer[inst->rowNum], "incorrect operand");
+                }
+
+                cur = cur->next;
+            }
+        }
+
+        success = false;
     } else {
-        // auto opcodeEntry = opcodeLUT.find(op);
-
-        // if(opcodeEntry == opcodeLUT.end()) {
-        //     printer.printAssemblyError(filename, inst, fileBuffer[inst->rowNum], "unknown instruction \'%s\'", op.c_str());
-        //     return false;
-        // } else {
-        //     instObj = opcodeEntry->second;
-        // }
+        // there was a match, so take that match and encode
     }
-
-    Token *curArg = inst->args;
-    Token *firstExtraArg = nullptr;
-    int count = 0;
-
-    while(curArg != nullptr) {
-        count++;
-
-        // if(firstExtraArg == nullptr && count > instObj.argCount) {
-        //     firstExtraArg = curArg;
-        // }
-
-        curArg = curArg->next;
-
-    }
-
-    // if(count == instObj.argCount + 1) {
-    //     printer.printAssemblyError(filename, firstExtraArg, fileBuffer[inst->rowNum], "extraneous operand \'%s\'", firstExtraArg->data.str->c_str());
-    // } else if(count > instObj.argCount + 1) {
-    //     printer.printAssemblyError(filename, firstExtraArg, fileBuffer[inst->rowNum], "extraneous operands starting at \'%s\'", firstExtraArg->data.str->c_str());
-    // } else if(count < instObj.argCount + 1) {
-    //     printer.printAssemblyError(filename, inst, fileBuffer[inst->rowNum], "missing operands for \'%s\'", op.c_str());
-    // }
 
     return success;
+}
+
+// note: newOrig is untouched if the .orig is not valid
+bool Assembler::getOrig(const std::string& filename, const Token *orig, bool printErrors, int& newOrig)
+{
+    const AssemblerPrinter& printer = AssemblerPrinter::getInstance();
+
+    if(orig->checkPseudoType("orig")) {     // sanity check...
+        if(printErrors && orig->numOperands != 1) {
+            printer.printAssemblyError(filename, orig, fileBuffer[orig->rowNum], "incorrect number of operands");
+            return false;
+        } else {
+            if(printErrors && orig->args->type != NUM) {
+                printer.printAssemblyError(filename, orig->args, fileBuffer[orig->rowNum], "illegal operand");
+                return false;
+            } else {
+                newOrig = orig->args->data.num;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool Assembler::processPseudo(const std::string& filename, const Token *pseudo)
+{
+    if(pseudo->checkPseudoType("orig")) {
+        getOrig(filename, pseudo, true, sectionStart);
+    } else if(pseudo->checkPseudoType("end")) {
+        // do nothing
+    }
+
+    return true;
 }
 
 bool Assembler::processStatement(const std::string& filename, const Token *state)
@@ -118,7 +136,7 @@ bool Assembler::processStatement(const std::string& filename, const Token *state
     if(state->type == INST) {
         return assembleInstruction(filename, state);
     } else if(state->type == PSEUDO) {
-        // return processPsuedo(state);
+        return processPseudo(filename, state);
     } else if(state->type == LABEL) {
         // return injectSymbol(state);
     } else {
@@ -129,13 +147,85 @@ bool Assembler::processStatement(const std::string& filename, const Token *state
     return true;
 }
 
-bool Assembler::assembleProgram(const std::string& filename, const Token *program, const std::map<std::string, int> &symbolTable)
+bool Assembler::preprocessProgram(const std::string& filename, Token *program, std::map<std::string, int>& symbolTable, Token *& programStart)
+{
+    bool foundValidOrig = false;
+    int curOrig = 0;
+    Token *curState = program;
+    const AssemblerPrinter& printer = AssemblerPrinter::getInstance();
+
+    // find the orig
+    while(curState != nullptr && !foundValidOrig) {
+        // move through the program until you find the first orig
+        while(curState != nullptr && !curState->checkPseudoType("orig")) {
+            // TODO: allow for exceptions, such as .external
+            printer.printAssemblyWarningX(filename, 0, fileBuffer[curState->rowNum].length(), curState, fileBuffer[curState->rowNum], "ignoring statement before valid .orig");
+            curState = curState->next;
+        }
+
+        // looks like you hit nullptr before a .orig, meaning there is no .orig
+        if(curState == nullptr) {
+            printer.printError("no .orig found in \'%s\'", filename.c_str());
+            return false;
+        }
+
+        // check to see if .orig is valid
+        // if so, stop looking; if not, move on and try again
+        if(getOrig(filename, curState, true, curOrig)) {
+            foundValidOrig = true;
+        }
+
+        curState = curState->next;
+    }
+
+    // you hit nullptr after seeing at least one .orig, meaning there is no valid .orig
+    if(!foundValidOrig) {
+        printer.printError("no valid .orig found in \'%s\'", filename.c_str());
+        return false;
+    }
+
+    // write output
+    programStart = curState;
+
+    int pcOffset = 0;
+    while(curState != nullptr) {
+        if(curState->checkPseudoType("orig")) {
+            if(!getOrig(filename, curState, true, curOrig)) {
+                printer.printWarning("ignoring invalid .orig");
+            }
+        }
+
+        if(curState->type == LABEL) {
+            const std::string& label = *curState->data.str;
+
+            printer.printDebugInfo("setting label \'%s\' to 0x%X", label.c_str(), curOrig + pcOffset);
+        }
+
+        curState->pc = pcOffset;
+
+        if(curState->type == INST) {
+            pcOffset++;
+        }
+        // TODO: account for block allocations (e.g. .fill, .stringz)
+        // TODO: process arguments
+
+        curState = curState->next;
+    }
+
+    return true;
+}
+
+// precondition: filename exists
+// note what happens to the program
+bool Assembler::assembleProgram(const std::string& filename, Token *program, std::map<std::string, int> &symbolTable)
 {
     std::ifstream file(filename);
+    const AssemblerPrinter& printer = AssemblerPrinter::getInstance();
+    bool success = true;
 
+    // load program into buffer for error messages
     if(file.is_open()) {
         std::string line;
-        const Token *curState = program;
 
         fileBuffer.clear();
         while(std::getline(file, line)) {
@@ -143,13 +233,33 @@ bool Assembler::assembleProgram(const std::string& filename, const Token *progra
         }
 
         file.close();
-
-        bool success = true;
-        while(curState != nullptr) {
-            success &= processStatement(filename, curState);
-            curState = curState->next;
-        }
+    } else {
+        return false;
     }
 
-    return true;
+    printer.printInfo("beginning first pass ...");
+
+    Token *curState = nullptr;
+    if(!preprocessProgram(filename, program, symbolTable, curState)) {
+        return false;
+    }
+
+    printer.printInfo("first pass completed successefully, beginning second pass ...");
+
+    while(curState != nullptr) {
+        if(curState->checkPseudoType("orig")) {
+            success &= processPseudo(filename, curState);
+        }
+
+        if(curState->type == LABEL) {
+        }
+        success &= processStatement(filename, curState);
+        curState = curState->next;
+    }
+
+    if(success) {
+        printer.printInfo("second pass completed successfully");
+    }
+
+    return success;
 }

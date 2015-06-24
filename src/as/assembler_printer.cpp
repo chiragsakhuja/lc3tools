@@ -30,11 +30,41 @@ void AssemblerPrinter::printAssemblyErrorX(const std::string& filename, int colN
     va_end(args);
 }
 
+void AssemblerPrinter::printAssemblyWarning(const std::string& filename, const Token *tok, const std::string& line, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    printAssemblyWarningXVL(filename, tok->colNum, tok->length, tok, line, format, args);
+    va_end(args);
+}
+
+void AssemblerPrinter::printAssemblyWarningX(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    printAssemblyWarningXVL(filename, colNum, length, tok, line, format, args);
+    va_end(args);
+}
+
 void AssemblerPrinter::printAssemblyErrorXVL(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, va_list args)
 {
     std::cerr << BOLD << filename << ":" << tok->rowNum + 1 << ":" << colNum + 1 << ": ";
 
     printErrorVL(format, args);
+
+    std::cerr << line << std::endl;
+
+    printNChars(std::cerr, ' ', colNum);
+    std::cerr << BOLD << GREEN << "^";
+    printNChars(std::cerr, '~', length - 1);
+    std::cerr << RESET << std::endl << std::endl;
+}
+
+void AssemblerPrinter::printAssemblyWarningXVL(const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, va_list args)
+{
+    std::cerr << BOLD << filename << ":" << tok->rowNum + 1 << ":" << colNum + 1 << ": ";
+
+    printWarningVL(format, args);
 
     std::cerr << line << std::endl;
 

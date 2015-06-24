@@ -15,6 +15,8 @@ private:
 public:
     DataType data;
     int type;
+    int numOperands;
+    int pc;
     Token *args;
     Token *next;
 
@@ -22,9 +24,11 @@ public:
     int rowNum, colNum;
     int length;
 
-    Token(std::string *str, int type);
-    Token(int val, int type);
+    Token(std::string *str);
+    Token(int val);
     ~Token();
+
+    bool checkPseudoType(const std::string& pseudo) const;
 };
 
 #endif

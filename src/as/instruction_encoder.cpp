@@ -6,37 +6,18 @@
 #include <algorithm>
 #include <string>
 
+#include "tokens.h"
 #include "utils/printer.h"
 #include "thirdparty/jsonxx/jsonxx.h"
 #include "instruction_encoder.h"
 
 #include "paths.h"
 
-std::map<int, std::list<Instruction *> > InstructionEncoder::insts;
+std::map<std::string, std::list<Instruction *> > InstructionEncoder::insts;
 int InstructionEncoder::regWidth = 32;
 std::vector<std::string> InstructionEncoder::regs;
 
-typedef enum {
-      ENC_BAD_LIST = 1
-    , ENC_BAD_ENTRY
-    , ENC_BAD_CONF
-    , ENC_BAD_REGS
-    , ENC_BAD_REGLIST
-    , ENC_BAD_INST
-    , ENC_BAD_INST_ENC
-    , ENC_BAD_ORDER
-} AsReturnType;
-
-typedef enum {
-      REG_TYPE = 2
-    , IMMS_TYPE
-    , IMMU_TYPE
-    , PCOFFS_TYPE
-    , PCOFFU_TYPE
-    , UNKNOWN_TYPE
-} AsEncType;
-
-Operand::Operand() : Operand(UNKNOWN_TYPE, 0, 0) { }
+Operand::Operand() : Operand(ARG_TYPE_UNKNOWN, 0, 0) { }
 
 Operand::Operand(int type, int lo, int hi)
 {
@@ -48,7 +29,7 @@ Operand::Operand(int type, int lo, int hi)
 Instruction::Instruction(int width, bool setcc, const std::string& label)
 {
     bitTypes = new int[width];
-    std::fill_n(bitTypes, width, UNKNOWN_TYPE);
+    std::fill_n(bitTypes, width, ARG_TYPE_UNKNOWN);
 
     this->setcc = setcc;
     this->label = label;
@@ -58,6 +39,10 @@ Instruction::~Instruction()
 {
     delete[] bitTypes;
     bitTypes = nullptr;
+
+    for(auto it = argTypes.begin(); it != argTypes.end(); it++) {
+        delete *it;
+    }
 }
 
 InstructionEncoder& InstructionEncoder::getInstance()
@@ -178,7 +163,7 @@ InstructionEncoder::InstructionEncoder()
                         jsonxx::String value = instData.get<jsonxx::String>("value");
 
                         if(instType == "OPCODE") {
-                            sameOpInsts = &insts[std::stoi(value, 0, 2)];
+                            sameOpInsts = &insts[label];
                         }
 
                         for(int k = (int) lo; k <= (int) hi; k++) {
@@ -194,18 +179,18 @@ InstructionEncoder::InstructionEncoder()
                         int type = 0;
 
                         if(instType == "REG") {
-                            type = REG_TYPE;
+                            type = ARG_TYPE_REG;
                         } else if(instType == "IMMS") {
-                            type = IMMS_TYPE;
+                            type = ARG_TYPE_IMMS;
                         } else if(instType == "IMMU") {
-                            type = IMMU_TYPE;
+                            type = ARG_TYPE_IMMU;
                         } else if(instType == "PCOFFS") {
-                            type = PCOFFS_TYPE;
+                            type = ARG_TYPE_PCOFFS;
                         } else if(instType == "PCOFFU") {
-                            type = PCOFFU_TYPE;
+                            type = ARG_TYPE_PCOFFU;
                         }
 
-                        newInst->argTypes.insert(newInst->argTypes.begin() + ((int) pos), Operand(type, lo, hi));
+                        newInst->argTypes.insert(newInst->argTypes.begin() + ((int) pos), new Operand(type, lo, hi));
                         std::fill_n(newInst->bitTypes + (int) lo, (int) (hi - lo + 1), type);
                     } else {
                         printer.printError("unknown encoding type %s", type.c_str());
@@ -224,7 +209,7 @@ InstructionEncoder::InstructionEncoder()
                 std::stringstream output;
                 Instruction *inst = *it2;
 
-                output << inst->label << " (" << it->first << ") : { ";
+                output << inst->label << ": { ";
 
                 for(int i = regWidth - 1; i >= 0; i--) {
                     output << inst->bitTypes[i];
@@ -239,4 +224,17 @@ InstructionEncoder::InstructionEncoder()
     } else {
         printer.printError("could not open encodings.json");
     }
+}
+
+InstructionEncoder::~InstructionEncoder()
+{
+    for(auto map_it = insts.begin(); map_it != insts.end(); map_it++) {
+        std::list<Instruction *>& encs = map_it->second;
+
+        for(auto list_it = encs.begin(); list_it != encs.end(); list_it++) {
+            delete *list_it;
+        }
+    }
+
+    insts.clear();
 }

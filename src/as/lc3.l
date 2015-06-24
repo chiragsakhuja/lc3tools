@@ -52,9 +52,9 @@ Token * makeToken(const char *tok, int type)
     if(type == STRING) {
         std::string *tokStr = new std::string(tok);
         std::transform(tokStr->begin(), tokStr->end(), tokStr->begin(), ::tolower);
-        ret = new Token(tokStr, STRING);
+        ret = new Token(tokStr);
     } else {
-        ret = new Token(stringToInt(tok), NUM);
+        ret = new Token(stringToInt(tok));
     }
 
     ret->rowNum = rowNum;
