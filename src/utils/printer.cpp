@@ -16,9 +16,6 @@ void Printer::printfMessage(int type, const char *format, ...)
     va_list args;
     va_start(args, format);
     vprintfMessage(type, format, args);
-    if(type <= _PRINT_LEVEL) {
-        print("\n");
-    }
     va_end(args);
 }
 
@@ -53,6 +50,7 @@ void Printer::vprintfMessage(int type, const char *format, va_list args)
         }
 
         vxprintfMessage(type, color, label.c_str(), format, args);
+        print("\n");
     }
 }
 

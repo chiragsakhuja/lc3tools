@@ -1,0 +1,1 @@
+subdirs(assembler_simple)
