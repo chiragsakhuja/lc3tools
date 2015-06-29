@@ -13,8 +13,7 @@ set_source_files_properties(${PROJECT_BINARY_DIR}/parser/lexer.cpp PROPERTIES GE
 set_source_files_properties(${PROJECT_BINARY_DIR}/parser/parser.hpp PROPERTIES GENERATED 1)
 
 # get all necessary files
-file(GLOB CXX_AS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
-set(AS_SRCS ${BISON_Parser_OUTPUTS} ${FLEX_Scanner_OUTPUTS} ${CXX_AS_FILES})
+file(GLOB CXX_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 # find directories with includes
 include_directories(${PROJECT_SOURCE_DIR})
@@ -22,7 +21,24 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${PROJECT_BINARY_DIR}/parser)  # need this because bison generates parser.hpp
 
+file(GLOB SRC_HEADERS ${PROJECT_SOURCE_DIR}/src/*.h)
+file(GLOB AS_HEADERS ${PROJECT_SOURCE_DIR}/src/as/*.h)
+file(GLOB UTILS_HEADERS ${PROJECT_SOURCE_DIR}/src/utils/*.h)
+file(GLOB PARSER_HEADERS ${PROJECT_BINARY_DIR}/parser/*.hpp)
+
+set(SRCS ${BISON_Parser_OUTPUTS} ${FLEX_Scanner_OUTPUTS} ${CXX_FILES} ${SRC_HEADERS} ${AS_HEADERS} ${UTILS_HEADERS} ${PARSER_HEADERS})
+
+add_custom_target(parser DEPENDS ${CMAKE_BINARY_DIR}/parser/parser.hpp)
+
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-add_executable(lc3as ${AS_SRCS})
-target_link_libraries(lc3as lc3utils)
-target_link_libraries(lc3as jsonxx)
+add_executable(lc3as ${SRCS})
+add_dependencies(lc3as parser)
+target_link_libraries(lc3as lc3utils jsonxx)
+
+if(test)
+    list(REMOVE_ITEM SRCS main.cpp)
+    set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin/test)
+    add_library(testlc3as STATIC ${SRCS})
+    target_link_libraries(testlc3as lc3utils jsonxx)
+    add_dependencies(testlc3as parser)
+endif()
