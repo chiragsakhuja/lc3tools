@@ -17,7 +17,7 @@ public:
     int type;
     int numOperands;
     int pc;
-    Token *args;
+    Token *opers;
     Token *next;
 
     // used for errors

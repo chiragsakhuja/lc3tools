@@ -43,18 +43,18 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
     Instruction *potentialMatch = nullptr;
     bool foundMatch = false;
 
-    const Token *curArg = inst->args;
-
     // check all encodings to see if there is a match
+    int count = 0;
     for(auto it = encs.begin(); it != encs.end(); it++) {
         // first make sure the number of operands is the same, otherwise it's a waste
         if((*it)->argTypes.size() == inst->numOperands) {
             potentialMatch = *it;
             bool actualMatch = true;
+            const Token *curArg = inst->opers;
 
             // iterate through the oeprand types to see if the assembly matches
             for(auto it = potentialMatch->argTypes.begin(); it != potentialMatch->argTypes.end(); it++) {
-                if((*it)->type != curArg->type) {
+                if(! (*it)->compareTypes(curArg->type)) {
                     actualMatch = false;
                     break;
                 }
@@ -74,15 +74,15 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
         // if there was no match, check to see if it was because of incorrect number of operands or incorrect operands
         if(potentialMatch == nullptr) {
             // this will only be the case if there are no encodings with the same number of operands as the assembly line
-            printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, inst, fileBuffer[inst->rowNum], "incorrect number of operands");
+            printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, inst, fileBuffer[inst->rowNum], "incorrect number of operands for instruction \'%s\'", inst->data.str);
         } else {
             // this will only be the case if there is at least one encoding with the same number of operands as the assembly line
             // since there is still no match, this will assume you were trying to match against the last encoding in the list
-            const Token *cur = inst->args;
+            const Token *cur = inst->opers;
 
             // iterate through the assembly line to see which arguments were incorrect and print errors
             for(auto it = potentialMatch->argTypes.begin(); it != potentialMatch->argTypes.end(); it++) {
-                if((*it)->type != cur->type) {
+                if(! (*it)->compareTypes(cur->type)) {
                     printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, cur, fileBuffer[inst->rowNum], "incorrect operand");
                 }
 
@@ -108,11 +108,11 @@ bool Assembler::getOrig(const std::string& filename, const Token *orig, bool pri
             printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, orig, fileBuffer[orig->rowNum], "incorrect number of operands");
             return false;
         } else {
-            if(printErrors && orig->args->type != NUM) {
-                printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, orig->args, fileBuffer[orig->rowNum], "illegal operand");
+            if(printErrors && orig->opers->type != NUM) {
+                printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, orig->opers, fileBuffer[orig->rowNum], "illegal operand");
                 return false;
             } else {
-                newOrig = orig->args->data.num;
+                newOrig = orig->opers->data.num;
             }
         }
     }
@@ -147,12 +147,14 @@ bool Assembler::processStatement(const std::string& filename, const Token *state
     return true;
 }
 
+// TODO: explain what this does
 bool Assembler::preprocessProgram(const std::string& filename, Token *program, std::map<std::string, int>& symbolTable, Token *& programStart)
 {
     bool foundValidOrig = false;
     int curOrig = 0;
     Token *curState = program;
     const AssemblerPrinter& printer = AssemblerPrinter::getInstance();
+    const InstructionEncoder& encoder = InstructionEncoder::getInstance();
 
     // find the orig
     while(curState != nullptr && !foundValidOrig) {
@@ -205,9 +207,30 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
 
         if(curState->type == INST) {
             pcOffset++;
+
+            Token *oper = curState->opers;
+            while(oper != nullptr) {
+                if(oper->type == STRING) {
+                    bool regExists = false;
+
+                    for(auto it = encoder.regs.begin(); it != encoder.regs.end(); it++) {
+                        if(*it == *oper->data.str) {
+                            regExists = true;
+                            break;
+                        }
+                    }
+
+                    if(regExists) {
+                        oper->type = ARG_TYPE_REG;
+                    } else {
+                        oper->type = ARG_TYPE_LABEL;
+                    }
+                }
+
+                oper = oper->next;
+            }
         }
         // TODO: account for block allocations (e.g. .fill, .stringz)
-        // TODO: process arguments
 
         curState = curState->next;
     }

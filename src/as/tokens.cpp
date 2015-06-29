@@ -11,7 +11,7 @@ Token::Token()
     this->rowNum = 0;
     this->colNum = 0;
     this->length = 0;
-    this->args = nullptr;
+    this->opers = nullptr;
     this->next = nullptr;
 }
 

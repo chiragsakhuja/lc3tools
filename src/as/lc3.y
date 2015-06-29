@@ -40,8 +40,8 @@ arglist : arg COMMA arglist     { $$ = append($1, $3); }
         | arg                   { $$ = $1; }
         ;
 
-inst    : STRING arglist        { $1->type = INST; $1->args = $2; countOperands($1); $$ = $1; }
-        | STRING                { $1->type = INST; $1->args = nullptr; $1->numOperands = 0; $$ = $1; }
+inst    : STRING arglist        { $1->type = INST; $1->opers = $2; countOperands($1); $$ = $1; }
+        | STRING                { $1->type = INST; $1->opers = nullptr; $1->numOperands = 0; $$ = $1; }
         ;
 
 pseudo  : DOT inst              { $2->type = PSEUDO; $$ = $2; }
@@ -75,7 +75,7 @@ Token * append(Token *head, Token *list)
 
 void countOperands(Token *inst)
 {
-    Token *cur = inst->args;
+    Token *cur = inst->opers;
     int count = 0;
 
     while(cur != nullptr) {

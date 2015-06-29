@@ -26,6 +26,24 @@ Operand::Operand(int type, int lo, int hi)
     this->hi = hi;
 }
 
+bool Operand::compareTypes(int otherType)
+{
+    if(otherType == ARG_TYPE_REG && type == ARG_TYPE_REG) {
+        return true;
+    } else if(   otherType == ARG_TYPE_LABEL
+              && (   type == ARG_TYPE_IMMS
+                  || type == ARG_TYPE_IMMU
+                  || type == ARG_TYPE_PCOFFS
+                  || type == ARG_TYPE_PCOFFU
+                 )
+             )
+    {
+        return true;
+    }
+
+    return false;
+}
+
 Instruction::Instruction(int width, bool setcc, const std::string& label)
 {
     bitTypes = new int[width];

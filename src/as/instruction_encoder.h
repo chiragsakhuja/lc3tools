@@ -7,6 +7,7 @@ typedef enum {
     , ARG_TYPE_IMMU
     , ARG_TYPE_PCOFFS
     , ARG_TYPE_PCOFFU
+    , ARG_TYPE_LABEL
     , ARG_TYPE_UNKNOWN
 } AsArgType;
 
@@ -18,6 +19,8 @@ public:
 
     Operand();
     Operand(int type, int hi, int lo);
+
+    bool compareTypes(int otherType);
 };
 
 class Instruction
