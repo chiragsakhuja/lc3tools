@@ -1,1 +1,1 @@
-subdirs(assembler_simple)
+subdirs(assembler)
