@@ -17,6 +17,8 @@ of `lc3sim` to be truly cross platform implies that not only will complete
 functionality be supported on all major platforms, but also that the code should
 be compileable on these platforms.
 
+[![Build Status](https://drone.io/github.com/chiragsakhuja/lc3sim/status.png)](https://drone.io/github.com/chiragsakhuja/lc3sim/latest)
+
 # Building
 `lc3sim` uses CMake for the build system and the only packages it relies
 on outside of the source tree are Flex and Bison. On a Linux or OS X
