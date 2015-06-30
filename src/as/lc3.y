@@ -24,44 +24,44 @@ Token *root = nullptr;
 %token NEWLINE COLON COMMA DOT
 %token PSEUDO LABEL INST
 
-%type <tok> arg arglist inst pseudo label state program
+%type <tok> oper operlist inst pseudo label state program
 
 %start tree
 
 %%
 
-arg     : STRING                { $$ = $1; }
-        | NUM                   { $$ = $1; }
-        ;
+oper     : STRING                { $$ = $1; }
+         | NUM                   { $$ = $1; }
+         ;
 
-arglist : arg COMMA arglist     { $$ = append($1, $3); }
-        | arg arglist           { $$ = append($1, $2); }
-        | arg COMMA             { $$ = $1; }
-        | arg                   { $$ = $1; }
-        ;
+operlist : oper COMMA operlist   { $$ = append($1, $3); }
+         | oper operlist         { $$ = append($1, $2); }
+         | oper COMMA            { $$ = $1; }
+         | oper                  { $$ = $1; }
+         ;
 
-inst    : STRING arglist        { $1->type = INST; $1->opers = $2; countOperands($1); $$ = $1; }
-        | STRING                { $1->type = INST; $1->opers = nullptr; $1->numOperands = 0; $$ = $1; }
-        ;
+inst     : STRING operlist       { $1->type = INST; $1->opers = $2; countOperands($1); $$ = $1; }
+         | STRING                { $1->type = INST; $1->opers = nullptr; $1->numOperands = 0; $$ = $1; }
+         ;
 
-pseudo  : DOT inst              { $2->type = PSEUDO; $$ = $2; }
-        ;
+pseudo   : DOT inst              { $2->type = PSEUDO; $$ = $2; }
+         ;
 
-label   : STRING COLON NEWLINE  { $1->type = LABEL; $$ = $1; }
-        | STRING COLON          { $1->type = LABEL; $$ = $1; }
-        ;
+label    : STRING COLON NEWLINE  { $1->type = LABEL; $$ = $1; }
+         | STRING COLON          { $1->type = LABEL; $$ = $1; }
+         ;
 
-state   : inst NEWLINE          { $$ = $1; }
-        | pseudo NEWLINE        { $$ = $1; }
-        | label                 { $$ = $1; }
-        ;
+state    : inst NEWLINE          { $$ = $1; }
+         | pseudo NEWLINE        { $$ = $1; }
+         | label                 { $$ = $1; }
+         ;
 
-program : state program         { $$ = append($1, $2); }
-        | state                 { $$ = $1; }
-        ;
+program  : state program         { $$ = append($1, $2); }
+         | state                 { $$ = $1; }
+         ;
 
-tree    : program               { root = $1; }
-        ;
+tree     : program               { root = $1; }
+         ;
 
 %%
 

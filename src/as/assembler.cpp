@@ -6,6 +6,7 @@
 #include <iostream>
 #include <list>
 #include <algorithm>
+#include <cstdint>
 
 #include "tokens.h"
 #include "utils/printer.h"
@@ -31,7 +32,7 @@ Assembler::Assembler()
     sectionStart = 0;
 }
 
-bool Assembler::assembleInstruction(const std::string& filename, const Token *inst)
+bool Assembler::processInstruction(const std::string& filename, const Token *inst, const std::map<std::string, int>& symbolTable, uint32_t& encodedInstruction)
 {
     AssemblerPrinter& printer = AssemblerPrinter::getInstance();
     InstructionEncoder& encoder = InstructionEncoder::getInstance();
@@ -47,19 +48,19 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
     int count = 0;
     for(auto it = encs.begin(); it != encs.end(); it++) {
         // first make sure the number of operands is the same, otherwise it's a waste
-        if((*it)->argTypes.size() == inst->numOperands) {
+        if((*it)->operTypes.size() == inst->numOperands) {
             potentialMatch = *it;
             bool actualMatch = true;
-            const Token *curArg = inst->opers;
+            const Token *curOper = inst->opers;
 
             // iterate through the oeprand types to see if the assembly matches
-            for(auto it = potentialMatch->argTypes.begin(); it != potentialMatch->argTypes.end(); it++) {
-                if(! (*it)->compareTypes(curArg->type)) {
+            for(auto it = potentialMatch->operTypes.begin(); it != potentialMatch->operTypes.end(); it++) {
+                if(! (*it)->compareTypes(curOper->type)) {
                     actualMatch = false;
                     break;
                 }
 
-                curArg = curArg->next;
+                curOper = curOper->next;
             }
 
             // found a match, stop searching
@@ -70,7 +71,7 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
         }
     }
 
-    if(!foundMatch) {
+    if(! foundMatch) {
         // if there was no match, check to see if it was because of incorrect number of operands or incorrect operands
         if(potentialMatch == nullptr) {
             // this will only be the case if there are no encodings with the same number of operands as the assembly line
@@ -80,8 +81,8 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
             // since there is still no match, this will assume you were trying to match against the last encoding in the list
             const Token *cur = inst->opers;
 
-            // iterate through the assembly line to see which arguments were incorrect and print errors
-            for(auto it = potentialMatch->argTypes.begin(); it != potentialMatch->argTypes.end(); it++) {
+            // iterate through the assembly line to see which operands were incorrect and print errors
+            for(auto it = potentialMatch->operTypes.begin(); it != potentialMatch->operTypes.end(); it++) {
                 if(! (*it)->compareTypes(cur->type)) {
                     printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, cur, fileBuffer[inst->rowNum], "incorrect operand");
                 }
@@ -93,6 +94,7 @@ bool Assembler::assembleInstruction(const std::string& filename, const Token *in
         success = false;
     } else {
         // there was a match, so take that match and encode
+        success &= encoder.encodeInstruction(potentialMatch, inst, encodedInstruction);
     }
 
     return success;
@@ -131,22 +133,6 @@ bool Assembler::processPseudo(const std::string& filename, const Token *pseudo)
     return true;
 }
 
-bool Assembler::processStatement(const std::string& filename, const Token *state)
-{
-    if(state->type == INST) {
-        return assembleInstruction(filename, state);
-    } else if(state->type == PSEUDO) {
-        return processPseudo(filename, state);
-    } else if(state->type == LABEL) {
-        // return injectSymbol(state);
-    } else {
-        // well this is awkward...
-        return false;
-    }
-
-    return true;
-}
-
 // TODO: explain what this does
 bool Assembler::preprocessProgram(const std::string& filename, Token *program, std::map<std::string, int>& symbolTable, Token *& programStart)
 {
@@ -157,9 +143,9 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
     const InstructionEncoder& encoder = InstructionEncoder::getInstance();
 
     // find the orig
-    while(curState != nullptr && !foundValidOrig) {
+    while(curState != nullptr && ! foundValidOrig) {
         // move through the program until you find the first orig
-        while(curState != nullptr && !curState->checkPseudoType("orig")) {
+        while(curState != nullptr && ! curState->checkPseudoType("orig")) {
             // TODO: allow for exceptions, such as .external
             printer.xprintfAssemblyMessage(AssemblerPrinter::WARNING, filename, 0, fileBuffer[curState->rowNum].length(), curState, fileBuffer[curState->rowNum], "ignoring statement before valid .orig");
             curState = curState->next;
@@ -181,7 +167,7 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
     }
 
     // you hit nullptr after seeing at least one .orig, meaning there is no valid .orig
-    if(!foundValidOrig) {
+    if(! foundValidOrig) {
         printer.printfMessage(AssemblerPrinter::ERROR, "no valid .orig found in \'%s\'", filename.c_str());
         return false;
     }
@@ -192,7 +178,7 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
     int pcOffset = 0;
     while(curState != nullptr) {
         if(curState->checkPseudoType("orig")) {
-            if(!getOrig(filename, curState, true, curOrig)) {
+            if(! getOrig(filename, curState, true, curOrig)) {
                 printer.printfMessage(AssemblerPrinter::WARNING, "ignoring invalid .orig");
             }
         }
@@ -221,9 +207,9 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
                     }
 
                     if(regExists) {
-                        oper->type = ARG_TYPE_REG;
+                        oper->type = OPER_TYPE_REG;
                     } else {
-                        oper->type = ARG_TYPE_LABEL;
+                        oper->type = OPER_TYPE_LABEL;
                     }
                 }
 
@@ -240,6 +226,7 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
 
 // precondition: filename exists
 // note what happens to the program
+// TODO: change return type to int and actually propagate
 bool Assembler::assembleProgram(const std::string& filename, Token *program, std::map<std::string, int> &symbolTable)
 {
     std::ifstream file(filename);
@@ -263,7 +250,7 @@ bool Assembler::assembleProgram(const std::string& filename, Token *program, std
     printer.printfMessage(AssemblerPrinter::INFO, "beginning first pass ...");
 
     Token *curState = nullptr;
-    if(!preprocessProgram(filename, program, symbolTable, curState)) {
+    if(! preprocessProgram(filename, program, symbolTable, curState)) {
         return false;
     }
 
@@ -274,9 +261,11 @@ bool Assembler::assembleProgram(const std::string& filename, Token *program, std
             success &= processPseudo(filename, curState);
         }
 
-        if(curState->type == LABEL) {
+        if(curState->type == INST) {
+            uint32_t encodedInstruction;
+
+            success &= processInstruction(filename, curState, symbolTable, encodedInstruction);
         }
-        success &= processStatement(filename, curState);
         curState = curState->next;
     }
 

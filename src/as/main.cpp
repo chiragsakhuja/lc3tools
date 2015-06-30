@@ -13,8 +13,6 @@
 
 void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable);
 
-std::string argsToString(Token *tok);
-
 extern FILE *yyin;
 extern int yyparse(void);
 extern Token *root;
@@ -49,18 +47,5 @@ void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable
         as.assembleProgram(filename, root, symbolTable);
 
         fclose(yyin);
-    }
-}
-
-std::string argsToString(Token *tok)
-{
-    if(tok->type == NUM) {
-        return std::to_string(tok->data.num);
-    } else {
-        if(tok->data.str != nullptr) {
-            return *tok->data.str;
-        } else {
-            return std::string();
-        }
     }
 }

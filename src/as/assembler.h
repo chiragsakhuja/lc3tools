@@ -13,10 +13,9 @@ private:
 
     Assembler();
     static void processOperands(Token *operands);
-    static bool assembleInstruction(const std::string& filename, const Token *inst);
+    static bool processInstruction(const std::string& filename, const Token *inst, const std::map<std::string, int>& symbolTable, uint32_t& encodedInstruction);
     static bool preprocessProgram(const std::string& filename, Token *program, std::map<std::string, int>& symbolTable, Token *& programStart);
     static bool processPseudo(const std::string& filename, const Token *pseudo);
-    static bool processStatement(const std::string& filename, const Token *state);
     static bool getOrig(const std::string& filename, const Token *orig, bool printErrors, int& newOrig);
 
     // cannot duplicate the singleton

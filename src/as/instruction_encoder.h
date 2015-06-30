@@ -2,14 +2,14 @@
 #define INSTRUCTION_ENCODER_H
 
 typedef enum {
-      ARG_TYPE_REG = 2
-    , ARG_TYPE_IMMS
-    , ARG_TYPE_IMMU
-    , ARG_TYPE_PCOFFS
-    , ARG_TYPE_PCOFFU
-    , ARG_TYPE_LABEL
-    , ARG_TYPE_UNKNOWN
-} AsArgType;
+      OPER_TYPE_REG = 2
+    , OPER_TYPE_IMMS
+    , OPER_TYPE_IMMU
+    , OPER_TYPE_PCOFFS
+    , OPER_TYPE_PCOFFU
+    , OPER_TYPE_LABEL
+    , OPER_TYPE_UNKNOWN
+} OperType;
 
 class Operand
 {
@@ -28,7 +28,7 @@ class Instruction
 public:
     bool setcc;
     std::string label;
-    std::vector<Operand *> argTypes;
+    std::vector<Operand *> operTypes;
     int *bitTypes;
 
     Instruction(int width, bool setcc, const std::string& label);
@@ -42,6 +42,7 @@ public:
 
     static std::map<std::string, std::list<Instruction *> > insts;
     static std::vector<std::string> regs;
+    static bool encodeInstruction(const Instruction *pattern, const Token *inst, uint32_t& encodedInstruction);
 
 private:
     static int regWidth;

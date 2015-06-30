@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <cstdint>
 
 #include "tokens.h"
 #include "utils/printer.h"
@@ -17,7 +18,7 @@ std::map<std::string, std::list<Instruction *> > InstructionEncoder::insts;
 int InstructionEncoder::regWidth = 32;
 std::vector<std::string> InstructionEncoder::regs;
 
-Operand::Operand() : Operand(ARG_TYPE_UNKNOWN, 0, 0) { }
+Operand::Operand() : Operand(OPER_TYPE_UNKNOWN, 0, 0) { }
 
 Operand::Operand(int type, int lo, int hi)
 {
@@ -28,13 +29,13 @@ Operand::Operand(int type, int lo, int hi)
 
 bool Operand::compareTypes(int otherType)
 {
-    if(otherType == ARG_TYPE_REG && type == ARG_TYPE_REG) {
+    if(otherType == OPER_TYPE_REG && type == OPER_TYPE_REG) {
         return true;
-    } else if(   otherType == ARG_TYPE_LABEL
-              && (   type == ARG_TYPE_IMMS
-                  || type == ARG_TYPE_IMMU
-                  || type == ARG_TYPE_PCOFFS
-                  || type == ARG_TYPE_PCOFFU
+    } else if(   otherType == OPER_TYPE_LABEL
+              && (   type == OPER_TYPE_IMMS
+                  || type == OPER_TYPE_IMMU
+                  || type == OPER_TYPE_PCOFFS
+                  || type == OPER_TYPE_PCOFFU
                  )
              )
     {
@@ -47,7 +48,7 @@ bool Operand::compareTypes(int otherType)
 Instruction::Instruction(int width, bool setcc, const std::string& label)
 {
     bitTypes = new int[width];
-    std::fill_n(bitTypes, width, ARG_TYPE_UNKNOWN);
+    std::fill_n(bitTypes, width, OPER_TYPE_UNKNOWN);
 
     this->setcc = setcc;
     this->label = label;
@@ -58,7 +59,7 @@ Instruction::~Instruction()
     delete[] bitTypes;
     bitTypes = nullptr;
 
-    for(auto it = argTypes.begin(); it != argTypes.end(); it++) {
+    for(auto it = operTypes.begin(); it != operTypes.end(); it++) {
         delete *it;
     }
 }
@@ -197,18 +198,18 @@ InstructionEncoder::InstructionEncoder()
                         int type = 0;
 
                         if(instType == "REG") {
-                            type = ARG_TYPE_REG;
+                            type = OPER_TYPE_REG;
                         } else if(instType == "IMMS") {
-                            type = ARG_TYPE_IMMS;
+                            type = OPER_TYPE_IMMS;
                         } else if(instType == "IMMU") {
-                            type = ARG_TYPE_IMMU;
+                            type = OPER_TYPE_IMMU;
                         } else if(instType == "PCOFFS") {
-                            type = ARG_TYPE_PCOFFS;
+                            type = OPER_TYPE_PCOFFS;
                         } else if(instType == "PCOFFU") {
-                            type = ARG_TYPE_PCOFFU;
+                            type = OPER_TYPE_PCOFFU;
                         }
 
-                        newInst->argTypes.insert(newInst->argTypes.begin() + ((int) pos), new Operand(type, lo, hi));
+                        newInst->operTypes.insert(newInst->operTypes.begin() + ((int) pos), new Operand(type, lo, hi));
                         std::fill_n(newInst->bitTypes + (int) lo, (int) (hi - lo + 1), type);
                     } else {
                         printer.printfMessage(Printer::ERROR, "unknown encoding type %s", type.c_str());
@@ -255,4 +256,8 @@ InstructionEncoder::~InstructionEncoder()
     }
 
     insts.clear();
+}
+
+bool InstructionEncoder::encodeInstruction(const Instruction *pattern, const Token *inst, uint32_t& encodedInstruction)
+{
 }
