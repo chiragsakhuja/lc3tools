@@ -41,5 +41,5 @@ target_link_libraries(lc3as lc3utils jsonxx)
 
 # generate driver, and have it link against assembler library
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-add_executable(assembler ${SRCS})
+add_executable(assembler main.cpp)
 target_link_libraries(assembler lc3as)
