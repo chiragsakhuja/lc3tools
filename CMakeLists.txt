@@ -1,16 +1,12 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 2.8)
 
 # set project name
 project(lc3sim)
 
-# set defaults if no build type specified
-#    - debug mode
-#    - print level 9 (verbose)
+# if no build mode is specified, pick release
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "Setting build type to 'Debug'")
-    message(STATUS "Setting print level to 9")
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Type of build" FORCE)
-    set(PRINT_LEVEL 9 CACHE STRING "Print level" FORCE)
+    message(STATUS "Setting build type to 'Release'")
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Type of build" FORCE)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
@@ -34,6 +30,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -w")
 option(test "Build all tests." OFF)
 
 if(test)
+    find_package(Threads REQUIRED)
+    enable_testing()
+
     include(ExternalProject)
 
     ExternalProject_Add(
@@ -53,24 +52,6 @@ if(test)
     )
 
     include_directories("${source_dir}/include")
-
-    #ExternalProject_Add(
-        #gmock
-        #URL https://googlemock.googlecode.com/files/gmock-1.7.0.zip
-        #PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gmock
-        #INSTALL_COMMAND ""
-    #)
-
-    #add_library(libgmock IMPORTED STATIC GLOBAL)
-    #add_dependencies(libgmock gmock)
-
-    #ExternalProject_Get_Property(gmock source_dir binary_dir)
-    #set_target_properties(libgmock PROPERTIES
-        #"IMPORTED_LOCATION" "${binary_dir}/libgmock.a"
-        #"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-    #)
-
-    #include_directories("${source_dir}/include")
 
     subdirs(test)
 endif()
