@@ -38,7 +38,7 @@ public:
 class InstructionEncoder
 {
 public:
-    static InstructionEncoder& getInstance();
+    static InstructionEncoder& getInstance(bool printEnable);
 
     static std::map<std::string, std::list<Instruction *> > insts;
     static std::vector<std::string> regs;
@@ -47,7 +47,7 @@ public:
 private:
     static int regWidth;
 
-    InstructionEncoder();
+    InstructionEncoder(bool printEnable);
     ~InstructionEncoder();
 };
 

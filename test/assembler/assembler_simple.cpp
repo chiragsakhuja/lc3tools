@@ -25,12 +25,12 @@ Token * buildInstruction(const std::string& label, int numOpers, ...)
 {
     Token *ret = new Token(new std::string(label));
     Token *prevOper = nullptr;
-    ret->numOperands = numOpers / 2;
+    ret->numOperands = numOpers;
 
     va_list args;
     va_start(args, numOpers);
 
-    for(int i = 0; i < numOpers / 2; i++) {
+    for(int i = 0; i < numOpers; i++) {
         int type = va_arg(args, int);
         Token *temp = nullptr;
 
@@ -41,7 +41,7 @@ Token * buildInstruction(const std::string& label, int numOpers, ...)
         }
 
         if(prevOper == nullptr) {
-            ret->next = temp;
+            ret->opers = temp;
         } else {
             prevOper->next = temp;
         }
@@ -73,7 +73,7 @@ TEST(AssemblerSimple, SingleInstruction)
     std::map<std::string, int> symbolTable;
     uint32_t encodedInstructon;
 
-    Token *add1 = buildInstruction("add", OPER_TYPE_REG, "r0", OPER_TYPE_REG, "r1", OPER_TYPE_REG, "r2");
+    Token *add1 = buildInstruction("add", 3, OPER_TYPE_REG, "r0", OPER_TYPE_REG, "r1", OPER_TYPE_REG, "r2");
     EXPECT_TRUE(as.processInstruction(false, "", add1, symbolTable, encodedInstructon));
     destroyInstruction(add1);
 

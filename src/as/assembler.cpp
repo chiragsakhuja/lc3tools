@@ -37,7 +37,7 @@ Assembler::Assembler()
 bool Assembler::processInstruction(bool printEnable, const std::string& filename, const Token *inst, const std::map<std::string, int>& symbolTable, uint32_t& encodedInstruction)
 {
     AssemblerPrinter& printer = AssemblerPrinter::getInstance();
-    InstructionEncoder& encoder = InstructionEncoder::getInstance();
+    InstructionEncoder& encoder = InstructionEncoder::getInstance(printEnable);
 
     std::string& op = *(inst->data.str);
     bool success = true;
@@ -47,7 +47,6 @@ bool Assembler::processInstruction(bool printEnable, const std::string& filename
     bool foundMatch = false;
 
     // check all encodings to see if there is a match
-    int count = 0;
     for(auto it = encs.begin(); it != encs.end(); it++) {
         // first make sure the number of operands is the same, otherwise it's a waste
         if((*it)->operTypes.size() == inst->numOperands) {
@@ -146,7 +145,7 @@ bool Assembler::preprocessProgram(bool printEnable, const std::string& filename,
     int curOrig = 0;
     Token *curState = program;
     const AssemblerPrinter& printer = AssemblerPrinter::getInstance();
-    const InstructionEncoder& encoder = InstructionEncoder::getInstance();
+    const InstructionEncoder& encoder = InstructionEncoder::getInstance(printEnable);
 
     // find the orig
     while(curState != nullptr && ! foundValidOrig) {
