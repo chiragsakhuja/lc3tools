@@ -73,7 +73,7 @@
 {"type": "INST", "data": {"label": "not", "setcc": true,
                                     "enc":[{"hi": 15, "lo": 12, "type": "OPCODE", "data": {"value": "1001"}},
                                          {"hi": 11, "lo": 9 , "type": "REG"  , "data": {"pos": 0}},
-                                         {"hi": 8 , "lo": 6 , "type": "REG"  , "data": {"pos": 0}},
+                                         {"hi": 8 , "lo": 6 , "type": "REG"  , "data": {"pos": 1}},
                                          {"hi": 5 , "lo": 0 , "type": "FIXED", "data": {"value": "111111"}}]}},
 
 {"type": "INST", "data": {"label": "ret", "setcc": true,
