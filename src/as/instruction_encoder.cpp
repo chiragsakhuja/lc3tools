@@ -9,6 +9,7 @@
 
 #include "tokens.h"
 #include "utils/printer.h"
+#include "assembler_printer.h"
 #include "thirdparty/jsonxx/jsonxx.h"
 #include "instruction_encoder.h"
 
@@ -261,26 +262,58 @@ InstructionEncoder::~InstructionEncoder()
 // precondition: the instruction is of type pattern and is valid (no error checking)
 bool InstructionEncoder::encodeInstruction(const Instruction *pattern, const Token *inst, uint32_t& encodedInstruction)
 {
-    bool *bitsSet = new bool[regWidth];
+    bool success = true;
+    const AssemblerPrinter& printer = AssemblerPrinter::getInstance();
+
+    int *bits = new int[regWidth];
+    std::fill_n(bits, regWidth, OPER_TYPE_UNKNOWN);
 
     const Token *curOper = inst->opers;
 
     for(auto it = pattern->operTypes.begin(); it != pattern->operTypes.end(); it++) {
         if((*it)->type == OPER_TYPE_REG) {
-            int regNum = 0;
+            unsigned int regNum = 0;
+
             for(regNum = 0; regNum < regs.size(); regNum++) {
                 if(regs[regNum] == *curOper->data.str) {
                     break;
                 }
             }
 
-            std::cout << regNum << std::endl;
+            if(regNum > (1U << ((*it)->hi - (*it)->lo))) {
+                // TODO: print warning
+                success = false;
+                continue;
+            }
+
+            for(int i = (*it)->lo; i <= (*it)->hi; i++) {
+                bits[i] = regNum & 1;
+                regNum >>= 1;
+            }
         }
 
         curOper = curOper->next;
     }
 
-    delete[] bitsSet;
+    for(int i = 0; i < regWidth; i++) {
+        if(pattern->bitTypes[i] == 1 || pattern->bitTypes[i] == 0) {
+            bits[i] = pattern->bitTypes[i];
+        }
+    }
 
-    return true;
+    // sanity check
+    std::cout << "Encoded: ";
+    for(int i = regWidth - 1; i >= 0; i--) {
+        if(bits[i] == OPER_TYPE_UNKNOWN) {
+            success = false;
+            break;
+        } else {
+            std::cout << bits[i];
+        }
+    }
+    std::cout << std::endl;
+
+    delete[] bits;
+
+    return success;
 }
