@@ -67,17 +67,34 @@ void destroyInstruction(Token *inst)
     delete inst;
 }
 
-TEST(AssemblerSimple, SingleInstruction)
+TEST(AssemblerSimple, SingleDataProcessingInstruction)
 {
     const Assembler& as = Assembler::getInstance();
     std::map<std::string, int> symbolTable;
     uint32_t encodedInstructon;
+    bool status = false;
+    Token *inst = nullptr;
 
-    Token *add1 = buildInstruction("add", 3, OPER_TYPE_REG, "r0", OPER_TYPE_REG, "r1", OPER_TYPE_REG, "r2");
-    EXPECT_TRUE(as.processInstruction(false, "", add1, symbolTable, encodedInstructon));
-    destroyInstruction(add1);
+    inst = buildInstruction("add", 3, OPER_TYPE_REG, "r0", OPER_TYPE_REG, "r1", OPER_TYPE_REG, "r2");
+    EXPECT_TRUE(status = as.processInstruction(false, "", inst, symbolTable, encodedInstructon));
+    if(status) {
+        EXPECT_EQ(0x1042, encodedInstructon);
+    }
+    destroyInstruction(inst);
 
-    EXPECT_EQ(0x1042, encodedInstructon);
+    inst = buildInstruction("and", 3, OPER_TYPE_REG, "r0", OPER_TYPE_REG, "r1", OPER_TYPE_REG, "r2");
+    EXPECT_TRUE(status = as.processInstruction(false, "", inst, symbolTable, encodedInstructon));
+    if(status) {
+        EXPECT_EQ(0x5042, encodedInstructon);
+    }
+    destroyInstruction(inst);
+
+    inst = buildInstruction("not", 2, OPER_TYPE_REG, "r0", OPER_TYPE_REG, "r1");
+    EXPECT_TRUE(status = as.processInstruction(false, "", inst, symbolTable, encodedInstructon));
+    if(status) {
+        EXPECT_EQ(0x907f, encodedInstructon);
+    }
+    destroyInstruction(inst);
 }
 
 int main(int argc, char **argv)

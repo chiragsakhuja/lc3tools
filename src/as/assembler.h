@@ -9,7 +9,7 @@ public:
 
 private:
 #ifdef _ASSEMBLER_TEST
-    FRIEND_TEST(AssemblerSimple, SingleInstruction);
+    FRIEND_TEST(AssemblerSimple, SingleDataProcessingInstruction);
 #endif
 
     static std::vector<std::string> fileBuffer;
