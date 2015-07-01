@@ -78,7 +78,6 @@ InstructionEncoder::InstructionEncoder(bool printEnable)
     Printer& printer = Printer::getInstance();
     std::string resPath(globalResPath);
 
-
     std::ifstream file(resPath + "/encodings.json");
 
     if(file.is_open()) {

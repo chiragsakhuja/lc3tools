@@ -29,6 +29,13 @@ if(NOT PRINT_LEVEL MATCHES "^[0-9]$")
     message(FATAL_ERROR "LOG_LEVEL must be a number from 0 to 9")
 endif()
 
+# create variable to identify resources
+set(ResPath ${PROJECT_SOURCE_DIR}/res)
+# copy file
+configure_file(src/paths.h ${CMAKE_BINARY_DIR}/config/paths.h)
+# include directory of paths
+include_directories(${CMAKE_BINARY_DIR}/config)
+
 # set build flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_PRINT_LEVEL=${PRINT_LEVEL}")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Wall -D_ENABLE_DEBUG")

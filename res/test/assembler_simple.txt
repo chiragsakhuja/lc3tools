@@ -1,0 +1,17 @@
+global global_symbol1 0x3000
+
+test single_data_processing_instruction
+    local local_symbol1 0x3001
+
+    orig 0x3000
+        0x1042 add 3 reg r0 reg r1 reg r2
+    endorig
+
+    orig 0x3000
+        0x5042 and 3 reg r0 reg r1 reg r2
+    endorig
+
+    orig 0x3000
+        0x907f not 2 reg r0 reg r1
+    endorig
+endtest
