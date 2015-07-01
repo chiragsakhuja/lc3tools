@@ -258,6 +258,29 @@ InstructionEncoder::~InstructionEncoder()
     insts.clear();
 }
 
+// precondition: the instruction is of type pattern and is valid (no error checking)
 bool InstructionEncoder::encodeInstruction(const Instruction *pattern, const Token *inst, uint32_t& encodedInstruction)
 {
+    bool *bitsSet = new bool[regWidth];
+
+    const Token *curOper = inst->opers;
+
+    for(auto it = pattern->operTypes.begin(); it != pattern->operTypes.end(); it++) {
+        if((*it)->type == OPER_TYPE_REG) {
+            int regNum = 0;
+            for(regNum = 0; regNum < regs.size(); regNum++) {
+                if(regs[regNum] == *curOper->data.str) {
+                    break;
+                }
+            }
+
+            std::cout << regNum << std::endl;
+        }
+
+        curOper = curOper->next;
+    }
+
+    delete[] bitsSet;
+
+    return true;
 }
