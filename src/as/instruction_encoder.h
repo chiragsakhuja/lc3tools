@@ -42,7 +42,7 @@ public:
 
     static std::map<std::string, std::list<Instruction *> > insts;
     static std::vector<std::string> regs;
-    static bool encodeInstruction(const Instruction *pattern, const Token *inst, uint32_t& encodedInstruction);
+    static bool encodeInstruction(bool printEnable, const Instruction *pattern, const Token *inst, uint32_t& encodedInstruction);
 
 private:
     static int regWidth;

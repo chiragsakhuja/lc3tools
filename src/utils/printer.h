@@ -9,7 +9,8 @@ class Printer
 {
 public:
     enum PrintType {
-          ERROR = 0
+          FATAL_ERROR = 0
+        , ERROR
         , WARNING
         , INFO
         , DEBUG

@@ -14,7 +14,7 @@ endif()
 option(test "Build all tests." OFF)
 
 # if no print type is specified or auto created, select 2, which shows info
-if(NOT PRINT_LEVEL)
+if(NOT DEFINED PRINT_LEVEL)
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         message(STATUS "Setting print level to 9")
         set(PRINT_LEVEL 9 CACHE STRING "Print level" FORCE)
@@ -31,10 +31,12 @@ endif()
 
 # set build flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_PRINT_LEVEL=${PRINT_LEVEL}")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Wall -D_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Wall -D_ENABLE_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -w")
 
 if(test)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_ENABLE_TESTING")
+
     find_package(Threads REQUIRED)
     enable_testing()
 

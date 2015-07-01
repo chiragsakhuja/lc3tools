@@ -44,7 +44,7 @@ void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable
     } else {
         rowNum = 0; colNum = 0;
         yyparse();
-        as.assembleProgram(filename, root, symbolTable);
+        as.assembleProgram(true, filename, root, symbolTable);
 
         fclose(yyin);
     }

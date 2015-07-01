@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cstdint>
 
+class AssemblerSimple_SingleInstruction_Test;
+
 #include "tokens.h"
 #include "utils/printer.h"
 #include "thirdparty/jsonxx/jsonxx.h"
@@ -32,7 +34,7 @@ Assembler::Assembler()
     sectionStart = 0;
 }
 
-bool Assembler::processInstruction(const std::string& filename, const Token *inst, const std::map<std::string, int>& symbolTable, uint32_t& encodedInstruction)
+bool Assembler::processInstruction(bool printEnable, const std::string& filename, const Token *inst, const std::map<std::string, int>& symbolTable, uint32_t& encodedInstruction)
 {
     AssemblerPrinter& printer = AssemblerPrinter::getInstance();
     InstructionEncoder& encoder = InstructionEncoder::getInstance();
@@ -75,42 +77,46 @@ bool Assembler::processInstruction(const std::string& filename, const Token *ins
         // if there was no match, check to see if it was because of incorrect number of operands or incorrect operands
         if(potentialMatch == nullptr) {
             // this will only be the case if there are no encodings with the same number of operands as the assembly line
-            printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, inst, fileBuffer[inst->rowNum], "incorrect number of operands for instruction \'%s\'", inst->data.str);
+            if(printEnable) {
+                printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, inst, fileBuffer[inst->rowNum], "incorrect number of operands for instruction \'%s\'", inst->data.str);
+            }
         } else {
             // this will only be the case if there is at least one encoding with the same number of operands as the assembly line
             // since there is still no match, this will assume you were trying to match against the last encoding in the list
             const Token *cur = inst->opers;
 
             // iterate through the assembly line to see which operands were incorrect and print errors
-            for(auto it = potentialMatch->operTypes.begin(); it != potentialMatch->operTypes.end(); it++) {
-                if(! (*it)->compareTypes(cur->type)) {
-                    printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, cur, fileBuffer[inst->rowNum], "incorrect operand");
-                }
+            if(printEnable) {
+                for(auto it = potentialMatch->operTypes.begin(); it != potentialMatch->operTypes.end(); it++) {
+                    if(! (*it)->compareTypes(cur->type)) {
+                        printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, cur, fileBuffer[inst->rowNum], "incorrect operand");
+                    }
 
-                cur = cur->next;
+                    cur = cur->next;
+                }
             }
         }
 
         success = false;
     } else {
         // there was a match, so take that match and encode
-        success &= encoder.encodeInstruction(potentialMatch, inst, encodedInstruction);
+        success &= encoder.encodeInstruction(printEnable, potentialMatch, inst, encodedInstruction);
     }
 
     return success;
 }
 
 // note: newOrig is untouched if the .orig is not valid
-bool Assembler::getOrig(const std::string& filename, const Token *orig, bool printErrors, int& newOrig)
+bool Assembler::getOrig(bool printEnable, const std::string& filename, const Token *orig, int& newOrig)
 {
     const AssemblerPrinter& printer = AssemblerPrinter::getInstance();
 
     if(orig->checkPseudoType("orig")) {     // sanity check...
-        if(printErrors && orig->numOperands != 1) {
+        if(printEnable && orig->numOperands != 1) {
             printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, orig, fileBuffer[orig->rowNum], "incorrect number of operands");
             return false;
         } else {
-            if(printErrors && orig->opers->type != NUM) {
+            if(printEnable && orig->opers->type != NUM) {
                 printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, orig->opers, fileBuffer[orig->rowNum], "illegal operand");
                 return false;
             } else {
@@ -122,10 +128,10 @@ bool Assembler::getOrig(const std::string& filename, const Token *orig, bool pri
     return true;
 }
 
-bool Assembler::processPseudo(const std::string& filename, const Token *pseudo)
+bool Assembler::processPseudo(bool printEnable, const std::string& filename, const Token *pseudo)
 {
     if(pseudo->checkPseudoType("orig")) {
-        getOrig(filename, pseudo, true, sectionStart);
+        getOrig(printEnable, filename, pseudo, sectionStart);
     } else if(pseudo->checkPseudoType("end")) {
         // do nothing
     }
@@ -134,7 +140,7 @@ bool Assembler::processPseudo(const std::string& filename, const Token *pseudo)
 }
 
 // TODO: explain what this does
-bool Assembler::preprocessProgram(const std::string& filename, Token *program, std::map<std::string, int>& symbolTable, Token *& programStart)
+bool Assembler::preprocessProgram(bool printEnable, const std::string& filename, Token *program, std::map<std::string, int>& symbolTable, Token *& programStart)
 {
     bool foundValidOrig = false;
     int curOrig = 0;
@@ -147,19 +153,23 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
         // move through the program until you find the first orig
         while(curState != nullptr && ! curState->checkPseudoType("orig")) {
             // TODO: allow for exceptions, such as .external
-            printer.xprintfAssemblyMessage(AssemblerPrinter::WARNING, filename, 0, fileBuffer[curState->rowNum].length(), curState, fileBuffer[curState->rowNum], "ignoring statement before valid .orig");
+            if(printEnable) {
+                printer.xprintfAssemblyMessage(AssemblerPrinter::WARNING, filename, 0, fileBuffer[curState->rowNum].length(), curState, fileBuffer[curState->rowNum], "ignoring statement before valid .orig");
+            }
             curState = curState->next;
         }
 
         // looks like you hit nullptr before a .orig, meaning there is no .orig
         if(curState == nullptr) {
-            printer.printfMessage(AssemblerPrinter::ERROR, "no .orig found in \'%s\'", filename.c_str());
+            if(printEnable) {
+                printer.printfMessage(AssemblerPrinter::ERROR, "no .orig found in \'%s\'", filename.c_str());
+            }
             return false;
         }
 
         // check to see if .orig is valid
         // if so, stop looking; if not, move on and try again
-        if(getOrig(filename, curState, true, curOrig)) {
+        if(getOrig(printEnable, filename, curState, curOrig)) {
             foundValidOrig = true;
         }
 
@@ -168,7 +178,9 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
 
     // you hit nullptr after seeing at least one .orig, meaning there is no valid .orig
     if(! foundValidOrig) {
-        printer.printfMessage(AssemblerPrinter::ERROR, "no valid .orig found in \'%s\'", filename.c_str());
+        if(printEnable) {
+            printer.printfMessage(AssemblerPrinter::ERROR, "no valid .orig found in \'%s\'", filename.c_str());
+        }
         return false;
     }
 
@@ -178,15 +190,19 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
     int pcOffset = 0;
     while(curState != nullptr) {
         if(curState->checkPseudoType("orig")) {
-            if(! getOrig(filename, curState, true, curOrig)) {
-                printer.printfMessage(AssemblerPrinter::WARNING, "ignoring invalid .orig");
+            if(! getOrig(printEnable, filename, curState, curOrig)) {
+                if(printEnable) {
+                    printer.printfMessage(AssemblerPrinter::WARNING, "ignoring invalid .orig");
+                }
             }
         }
 
         if(curState->type == LABEL) {
             const std::string& label = *curState->data.str;
 
-            printer.printfMessage(AssemblerPrinter::DEBUG, "setting label \'%s\' to 0x%X", label.c_str(), curOrig + pcOffset);
+            if(printEnable) {
+                printer.printfMessage(AssemblerPrinter::DEBUG, "setting label \'%s\' to 0x%X", label.c_str(), curOrig + pcOffset);
+            }
         }
 
         curState->pc = pcOffset;
@@ -227,7 +243,7 @@ bool Assembler::preprocessProgram(const std::string& filename, Token *program, s
 // precondition: filename exists
 // note what happens to the program
 // TODO: change return type to int and actually propagate
-bool Assembler::assembleProgram(const std::string& filename, Token *program, std::map<std::string, int> &symbolTable)
+bool Assembler::assembleProgram(bool printEnable, const std::string& filename, Token *program, std::map<std::string, int> &symbolTable)
 {
     std::ifstream file(filename);
     const AssemblerPrinter& printer = AssemblerPrinter::getInstance();
@@ -247,29 +263,33 @@ bool Assembler::assembleProgram(const std::string& filename, Token *program, std
         return false;
     }
 
-    printer.printfMessage(AssemblerPrinter::INFO, "beginning first pass ...");
+    if(printEnable) {
+        printer.printfMessage(AssemblerPrinter::INFO, "beginning first pass ...");
+    }
 
     Token *curState = nullptr;
-    if(! preprocessProgram(filename, program, symbolTable, curState)) {
+    if(! preprocessProgram(printEnable, filename, program, symbolTable, curState)) {
         return false;
     }
 
-    printer.printfMessage(AssemblerPrinter::INFO, "first pass completed successefully, beginning second pass ...");
+    if(printEnable) {
+        printer.printfMessage(AssemblerPrinter::INFO, "first pass completed successefully, beginning second pass ...");
+    }
 
     while(curState != nullptr) {
         if(curState->checkPseudoType("orig")) {
-            success &= processPseudo(filename, curState);
+            success &= processPseudo(printEnable, filename, curState);
         }
 
         if(curState->type == INST) {
             uint32_t encodedInstruction;
 
-            success &= processInstruction(filename, curState, symbolTable, encodedInstruction);
+            success &= processInstruction(printEnable, filename, curState, symbolTable, encodedInstruction);
         }
         curState = curState->next;
     }
 
-    if(success) {
+    if(success && printEnable) {
         printer.printfMessage(AssemblerPrinter::INFO, "second pass completed successfully");
     }
 

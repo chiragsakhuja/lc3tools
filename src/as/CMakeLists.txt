@@ -38,6 +38,7 @@ add_custom_target(parser DEPENDS ${CMAKE_BINARY_DIR}/parser/parser.hpp)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 add_library(lc3as STATIC ${SRCS})
 target_link_libraries(lc3as lc3utils jsonxx)
+add_dependencies(lc3as parser)
 
 # generate driver, and have it link against assembler library
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)

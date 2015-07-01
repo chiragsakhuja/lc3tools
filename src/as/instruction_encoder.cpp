@@ -260,7 +260,7 @@ InstructionEncoder::~InstructionEncoder()
 }
 
 // precondition: the instruction is of type pattern and is valid (no error checking)
-bool InstructionEncoder::encodeInstruction(const Instruction *pattern, const Token *inst, uint32_t& encodedInstruction)
+bool InstructionEncoder::encodeInstruction(bool printEnable, const Instruction *pattern, const Token *inst, uint32_t& encodedInstruction)
 {
     bool success = true;
     const AssemblerPrinter& printer = AssemblerPrinter::getInstance();
@@ -302,16 +302,32 @@ bool InstructionEncoder::encodeInstruction(const Instruction *pattern, const Tok
     }
 
     // sanity check
-    std::cout << "Encoded: ";
+    std::stringstream output;
+
     for(int i = regWidth - 1; i >= 0; i--) {
         if(bits[i] == OPER_TYPE_UNKNOWN) {
             success = false;
             break;
         } else {
-            std::cout << bits[i];
+            if(printEnable) {
+                output << bits[i];
+            }
         }
     }
-    std::cout << std::endl;
+
+    if(success) {
+        encodedInstruction = 0;
+
+        for(int i = regWidth - 1; i >= 0; i--) {
+            encodedInstruction <<= 1;
+            encodedInstruction |= bits[i];
+        }
+    }
+
+
+    if(printEnable) {
+        printer.printfMessage(AssemblerPrinter::DEBUG, "%s", output.str().c_str());
+    }
 
     delete[] bits;
 
