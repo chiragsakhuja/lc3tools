@@ -31,6 +31,7 @@ endif()
 
 # create variable to identify resources
 set(ResPath ${PROJECT_SOURCE_DIR}/res)
+set(TestPath ${PROJECT_SOURCE_DIR}/test)
 # copy file
 configure_file(src/paths.h ${CMAKE_BINARY_DIR}/config/paths.h)
 # include directory of paths

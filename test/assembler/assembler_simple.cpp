@@ -76,8 +76,8 @@ class AssemblerSimple : public ::testing::Test
 protected:
     AssemblerSimple()
     {
-        std::string resPath(globalResPath);
-        std::ifstream file = std::ifstream(resPath + "/test/assembler_simple.txt");
+        std::string testPath(globalTestPath);
+        std::ifstream file = std::ifstream(testPath + "/assembler/assembler_simple.txt");
 
         if(file.is_open()) {
             std::string word;
@@ -115,8 +115,8 @@ protected:
 
     void readTest(const std::string& testName)
     {
-        std::string resPath(globalResPath);
-        std::ifstream file = std::ifstream(resPath + "/test/assembler_simple.txt");
+        std::string testPath(globalTestPath);
+        std::ifstream file = std::ifstream(testPath + "/assembler/assembler_simple.txt");
 
         if(file.is_open()) {
             std::string word;
