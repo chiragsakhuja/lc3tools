@@ -11,8 +11,8 @@ following goals:
 * Maintain an organized, easily extendable, and open source code base.
 
 Note on cross-platform compatibility: The two major problems with the existing
-simulator are that the code base has fragmented on Windows and Linux such that
-different functionality is supported, and OS X has no official support. The goal
+simulator are 1) that the code base has fragmented on Windows and Linux such that
+different functionality is supported, and 2) OS X has no official support. The goal
 of `lc3sim` to be truly cross platform implies that not only will complete
 functionality be supported on all major platforms, but also that the code should
 be compileable on these platforms.
