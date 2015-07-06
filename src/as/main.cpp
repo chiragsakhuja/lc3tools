@@ -33,3 +33,19 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+void genObjectFile(const char *filename, std::map<std::string, int> &symbolTable)
+{
+    Assembler& as = Assembler::getInstance();
+    Printer& printer = Printer::getInstance();
+
+    if((yyin = fopen(filename, "r")) == nullptr) {
+         printer.printfMessage(Printer::WARNING, "Skipping file %s ...", filename);
+    } else {
+        rowNum = 0; colNum = 0;
+        yyparse();
+        as.assembleProgram(true, filename, root, symbolTable);
+
+        fclose(yyin);
+    }
+}
