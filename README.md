@@ -58,3 +58,5 @@ make all
 # run testing suite
 make test
 ```
+**Note: ** Currently the testing framework only works on UNIX based
+platforms (i.e. it does not work on Windows).
