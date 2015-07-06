@@ -8,6 +8,7 @@
 #include <fstream>
 
 #include "tokens.h"
+#include "parser.hpp"
 #include "paths.h"
 #include "instruction_encoder.h"
 
@@ -20,39 +21,6 @@
 
 std::map<std::string, int> globalSymbols;
 std::map<std::string, int> localSymbols;
-
-Token * buildInstruction(const std::string& label, int numOpers, ...)
-{
-    Token *ret = new Token(new std::string(label));
-    Token *prevOper = nullptr;
-    ret->numOperands = numOpers;
-
-    va_list args;
-    va_start(args, numOpers);
-
-    for(int i = 0; i < numOpers; i++) {
-        int type = va_arg(args, int);
-        Token *temp = nullptr;
-
-        if(type == OPER_TYPE_REG) {
-            const char *reg = va_arg(args, const char *);
-            temp = new Token(new std::string(reg));
-            temp->type = OPER_TYPE_REG;
-        }
-
-        if(prevOper == nullptr) {
-            ret->opers = temp;
-        } else {
-            prevOper->next = temp;
-        }
-
-        prevOper = temp;
-    }
-
-    va_end(args);
-
-    return ret;
-}
 
 void destroyInstruction(Token *inst)
 {
@@ -84,13 +52,12 @@ protected:
 
             while(file >> word) {
                 if(word == "global") {
-                    std::string label;
                     std::string address;
 
-                    file >> label;
+                    file >> word;
                     file >> address;
 
-                    globalSymbols[label] = std::stoi(address);
+                    globalSymbols[word] = std::stoi(address, 0, 16);
                 }
             }
 
@@ -100,23 +67,20 @@ protected:
         }
     }
 
-    virtual ~AssemblerSimple()
-    {
-    }
+    virtual ~AssemblerSimple() { }
 
     virtual void SetUp()
     {
         localSymbols.clear();
     }
 
-    virtual void TearDown()
-    {
-    }
+    virtual void TearDown() { }
 
-    void readTest(const std::string& testName)
+    std::list<Token *> readTest(const std::string& testName)
     {
         std::string testPath(globalTestPath);
         std::ifstream file = std::ifstream(testPath + "/assembler/assembler_simple.txt");
+        std::list<Token *> programs;
 
         if(file.is_open()) {
             std::string word;
@@ -138,23 +102,74 @@ readTest:
                 file >> word;
 
                 if(word == "local") {
-                    std::string label;
                     std::string address;
 
-                    file >> label;
+                    file >> word;
                     file >> address;
 
-                    localSymbols[label] = std::stoi(address);
+                    localSymbols[word] = std::stoi(address, 0, 16);
                 } else if(word == "orig") {
                     file >> word;
 
-                    int pc = std::stoi(word);
+                    int pc = std::stoi(word, 0, 16);
 
-                    //std::cout << "\ntestcase\n";
+                    Token *program = nullptr, *prevInst = nullptr;
                     while(word != "endorig") {
+                        // get encoding
                         file >> word;
-                        //std::cout << " " << word;
+                        if(word == "endorig") {
+                            break;
+                        }
+                        int encoding = std::stoi(word, 0, 16);
+
+                        // get instruction name
+                        file >> word;
+
+                        Token *newInst = new Token(new std::string(word));
+                        newInst->type = INST;
+                        newInst->pc = pc;
+                        newInst->encoding = encoding;
+
+                        // get number of operands
+                        file >> word;
+                        int numOpers = std::stoi(word);
+                        newInst->numOperands = numOpers;
+
+                        // iterate over operands
+                        Token *prevOper = nullptr;
+                        for(int i = 0; i < numOpers; i++) {
+                            Token *newOper = nullptr;
+
+                            file >> word;
+
+                            if(word == "reg") {
+                                file >> word;
+
+                                newOper = new Token(new std::string(word));
+                                newOper->type = OPER_TYPE_REG;
+                            }
+
+                            // append operand to instruction
+                            if(prevOper == nullptr) {
+                                newInst->opers = newOper;
+                            } else {
+                                prevOper->next = newOper;
+                            }
+
+                            prevOper = newOper;
+                        }
+
+                        // append instruction to program
+                        if(program == nullptr) {
+                            program = newInst;
+                        } else {
+                            prevInst->next = newInst;
+                        }
+
+                        prevInst = newInst;
                     }
+
+                    programs.push_back(program);
                 }
             }
 
@@ -162,39 +177,26 @@ readTest:
         } else {
             std::cout << "Could not open test file";
         }
+
+        return programs;
     }
 };
 
 TEST_F(AssemblerSimple, SingleDataProcessingInstruction)
 {
-    readTest("single_data_processing_instruction");
+    std::list<Token *> programs = readTest("single_data_processing_instruction");
 
     const Assembler& as = Assembler::getInstance();
     std::map<std::string, int> symbolTable;
     uint32_t encodedInstructon;
     bool status = false;
-    Token *inst = nullptr;
 
-    inst = buildInstruction("add", 3, OPER_TYPE_REG, "r0", OPER_TYPE_REG, "r1", OPER_TYPE_REG, "r2");
-    EXPECT_TRUE(status = as.processInstruction(false, "", inst, symbolTable, encodedInstructon));
-    if(status) {
-        EXPECT_EQ(0x1042, encodedInstructon);
+    for(auto it = programs.begin(); it != programs.end(); it++) {
+        EXPECT_TRUE(status = as.processInstruction(false, "", *it, symbolTable, encodedInstructon));
+        if(status) {
+            EXPECT_EQ((*it)->encoding, encodedInstructon);
+        }
     }
-    destroyInstruction(inst);
-
-    inst = buildInstruction("and", 3, OPER_TYPE_REG, "r0", OPER_TYPE_REG, "r1", OPER_TYPE_REG, "r2");
-    EXPECT_TRUE(status = as.processInstruction(false, "", inst, symbolTable, encodedInstructon));
-    if(status) {
-        EXPECT_EQ(0x5042, encodedInstructon);
-    }
-    destroyInstruction(inst);
-
-    inst = buildInstruction("not", 2, OPER_TYPE_REG, "r0", OPER_TYPE_REG, "r1");
-    EXPECT_TRUE(status = as.processInstruction(false, "", inst, symbolTable, encodedInstructon));
-    if(status) {
-        EXPECT_EQ(0x907f, encodedInstructon);
-    }
-    destroyInstruction(inst);
 }
 
 int main(int argc, char **argv)

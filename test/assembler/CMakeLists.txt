@@ -1,5 +1,6 @@
 # include assembler directory for ease
 include_directories(${PROJECT_SOURCE_DIR}/src/as)
+include_directories(${PROJECT_BINARY_DIR}/parser)
 
 ### NEED TO COPY THE FOLLOWING SECTION FOR EVERY TEST
 # generate test driver

@@ -20,6 +20,10 @@ public:
     Token *opers;
     Token *next;
 
+#ifdef _ENABLE_TESTING
+    int encoding;
+#endif
+
     // used for errors
     int rowNum, colNum;
     int length;
