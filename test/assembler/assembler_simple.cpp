@@ -45,7 +45,7 @@ protected:
     AssemblerSimple()
     {
         std::string testPath(globalTestPath);
-        std::ifstream file = std::ifstream(testPath + "/assembler/assembler_simple.txt");
+        std::ifstream file(testPath + "/assembler/assembler_simple.txt");
 
         if(file.is_open()) {
             std::string word;
@@ -79,7 +79,7 @@ protected:
     std::list<Token *> readTest(const std::string& testName)
     {
         std::string testPath(globalTestPath);
-        std::ifstream file = std::ifstream(testPath + "/assembler/assembler_simple.txt");
+        std::ifstream file(testPath + "/assembler/assembler_simple.txt");
         std::list<Token *> programs;
 
         if(file.is_open()) {
