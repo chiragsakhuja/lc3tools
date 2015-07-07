@@ -50,8 +50,8 @@ Token * makeToken(const char *tok, int type)
     Token *ret = nullptr;
 
     if(type == STRING) {
-        std::string *tokStr = new std::string(tok);
-        std::transform(tokStr->begin(), tokStr->end(), tokStr->begin(), ::tolower);
+        std::string tokStr(tok);
+        std::transform(tokStr.begin(), tokStr.end(), tokStr.begin(), ::tolower);
         ret = new Token(tokStr);
     } else {
         ret = new Token(stringToInt(tok));

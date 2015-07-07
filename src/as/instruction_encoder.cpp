@@ -306,7 +306,7 @@ bool InstructionEncoder::encodeInstruction(bool printEnable, const Instruction *
             unsigned int regNum = 0;
 
             for(regNum = 0; regNum < regs.size(); regNum++) {
-                if(regs[regNum] == *curOper->data.str) {
+                if(regs[regNum] == curOper->str) {
                     break;
                 }
             }

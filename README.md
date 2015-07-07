@@ -1,4 +1,4 @@
-# lc3sim
+# lc3sim [![Build Status](https://drone.io/github.com/chiragsakhuja/lc3sim/status.png)](https://drone.io/github.com/chiragsakhuja/lc3sim/latest)
 `lc3sim` is a complete overhaul of the current LC-3 simulator used in EE 306 at
 The University of Texas at Austin.  With `lc3sim`, we strive to achieve the
 following goals:
@@ -11,13 +11,12 @@ following goals:
 * Maintain an organized, easily extendable, and open source code base.
 
 Note on cross-platform compatibility: The two major problems with the existing
-simulator are that the code base has fragmented on Windows and Linux such that
-different functionality is supported, and OS X has no official support. The goal
+simulator are 1) that the code base has fragmented on Windows and Linux such that
+different functionality is supported, and 2) OS X has no official support. The goal
 of `lc3sim` to be truly cross platform implies that not only will complete
 functionality be supported on all major platforms, but also that the code should
 be compileable on these platforms.
 
-[![Build Status](https://drone.io/github.com/chiragsakhuja/lc3sim/status.png)](https://drone.io/github.com/chiragsakhuja/lc3sim/latest)
 
 # Building
 `lc3sim` uses CMake for the build system and the only packages it relies
@@ -59,3 +58,5 @@ make all
 # run testing suite
 make test
 ```
+**Note:** Currently the testing framework only works on UNIX based
+platforms (i.e. it does not work on Windows).

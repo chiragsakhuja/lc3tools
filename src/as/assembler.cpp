@@ -39,7 +39,7 @@ bool Assembler::processInstruction(bool printEnable, const std::string& filename
     AssemblerPrinter& printer = AssemblerPrinter::getInstance();
     InstructionEncoder& encoder = InstructionEncoder::getInstance(printEnable);
 
-    std::string& op = *(inst->data.str);
+    const std::string& op = inst->str;
     bool success = true;
     std::list<Instruction *>& encs = InstructionEncoder::insts[op];
 
@@ -77,7 +77,7 @@ bool Assembler::processInstruction(bool printEnable, const std::string& filename
         if(potentialMatch == nullptr) {
             // this will only be the case if there are no encodings with the same number of operands as the assembly line
             if(printEnable) {
-                printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, inst, fileBuffer[inst->rowNum], "incorrect number of operands for instruction \'%s\'", inst->data.str);
+                printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, inst, fileBuffer[inst->rowNum], "incorrect number of operands for instruction \'%s\'", inst->str.c_str());
             }
         } else {
             // this will only be the case if there is at least one encoding with the same number of operands as the assembly line
@@ -119,7 +119,7 @@ bool Assembler::getOrig(bool printEnable, const std::string& filename, const Tok
                 printer.printfAssemblyMessage(AssemblerPrinter::ERROR, filename, orig->opers, fileBuffer[orig->rowNum], "illegal operand");
                 return false;
             } else {
-                newOrig = orig->opers->data.num;
+                newOrig = orig->opers->num;
             }
         }
     }
@@ -197,7 +197,7 @@ bool Assembler::preprocessProgram(bool printEnable, const std::string& filename,
         }
 
         if(curState->type == LABEL) {
-            const std::string& label = *curState->data.str;
+            const std::string& label = curState->str;
 
             if(printEnable) {
                 printer.printfMessage(AssemblerPrinter::DEBUG, "setting label \'%s\' to 0x%X", label.c_str(), curOrig + pcOffset);
@@ -215,7 +215,7 @@ bool Assembler::preprocessProgram(bool printEnable, const std::string& filename,
                     bool regExists = false;
 
                     for(auto it = encoder.regs.begin(); it != encoder.regs.end(); it++) {
-                        if(*it == *oper->data.str) {
+                        if(*it == oper->str) {
                             regExists = true;
                             break;
                         }

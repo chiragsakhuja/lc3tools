@@ -125,7 +125,7 @@ readTest:
                         // get instruction name
                         file >> word;
 
-                        Token *newInst = new Token(new std::string(word));
+                        Token *newInst = new Token(word);
                         newInst->type = INST;
                         newInst->pc = pc;
                         newInst->encoding = encoding;
@@ -145,7 +145,7 @@ readTest:
                             if(word == "reg") {
                                 file >> word;
 
-                                newOper = new Token(new std::string(word));
+                                newOper = new Token(word);
                                 newOper->type = OPER_TYPE_REG;
                             }
 
