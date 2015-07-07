@@ -18,12 +18,12 @@
 
 void PrintTo(const Token* inst, std::ostream* os)
 {
-    *os << *inst->data.str;
+    *os << inst->str;
 }
 
 Token * buildInstruction(const std::string& label, int numOpers, ...)
 {
-    Token *ret = new Token(new std::string(label));
+    Token *ret = new Token(label);
     Token *prevOper = nullptr;
     ret->numOperands = numOpers;
 
@@ -36,7 +36,7 @@ Token * buildInstruction(const std::string& label, int numOpers, ...)
 
         if(type == OPER_TYPE_REG) {
             const char *reg = va_arg(args, const char *);
-            temp = new Token(new std::string(reg));
+            temp = new Token(reg);
             temp->type = OPER_TYPE_REG;
         }
 

@@ -1,19 +1,15 @@
 #ifndef TOKENS_H
 #define TOKENS_H
 
-union DataType
-{
-    std::string *str;
-    int num;
-};
-
 class Token
 {
 private:
     Token();
 
 public:
-    DataType data;
+    std::string str;
+    int num;
+
     int type;
     int numOperands;
     int pc;
@@ -24,9 +20,8 @@ public:
     int rowNum, colNum;
     int length;
 
-    Token(std::string *str);
+    Token(const std::string& str);
     Token(int val);
-    ~Token();
 
     bool checkPseudoType(const std::string& pseudo) const;
 };
