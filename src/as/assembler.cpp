@@ -73,6 +73,7 @@ bool Assembler::processInstruction(bool printEnable, const std::string& filename
     }
 
     if(! foundMatch) {
+        std::cout << "No match\n";
         // if there was no match, check to see if it was because of incorrect number of operands or incorrect operands
         if(potentialMatch == nullptr) {
             // this will only be the case if there are no encodings with the same number of operands as the assembly line

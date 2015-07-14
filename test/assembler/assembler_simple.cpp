@@ -92,12 +92,11 @@ protected:
                     if(word != testName) {
                         while(word != "endtest") { file >> word; }
                     } else {
-                        goto readTest;
+                        break;
                     }
                 }
             }
 
-readTest:
             while(word != "endtest") {
                 file >> word;
 
@@ -147,6 +146,11 @@ readTest:
 
                                 newOper = new Token(word);
                                 newOper->type = OPER_TYPE_REG;
+                            } else if(word == "imm") {
+                                file >> word;
+
+                                newOper = new Token(std::stoi(word));
+                                newOper->type = OPER_TYPE_IMM;
                             }
 
                             // append operand to instruction

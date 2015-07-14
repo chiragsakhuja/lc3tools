@@ -30,15 +30,14 @@ Operand::Operand(int type, int lo, int hi)
 
 bool Operand::compareTypes(int otherType)
 {
-    if(otherType == OPER_TYPE_REG && type == OPER_TYPE_REG) {
-        return true;
-    } else if(   otherType == OPER_TYPE_LABEL
-              && (   type == OPER_TYPE_IMMS
-                  || type == OPER_TYPE_IMMU
-                  || type == OPER_TYPE_PCOFFS
-                  || type == OPER_TYPE_PCOFFU
-                 )
-             )
+    if(   (   otherType == OPER_TYPE_LABEL
+           && (   type == OPER_TYPE_IMM
+               || type == OPER_TYPE_PCOFFS
+               || type == OPER_TYPE_PCOFFU
+              )
+          )
+       || (otherType == type)
+      )
     {
         return true;
     }
@@ -212,7 +211,7 @@ InstructionEncoder::InstructionEncoder(bool printEnable)
                         for(int k = (int) lo; k <= (int) hi; k++) {
                             newInst->bitTypes[k] = value[hi - k] - '0';
                         }
-                    } else if(instType == "REG" || instType == "IMMS" || instType == "IMMU" || instType == "PCOFFS" || instType == "PCOFFU") {
+                    } else if(instType == "REG" || instType == "IMM" || instType == "PCOFFS" || instType == "PCOFFU") {
                         if(!instData.has<jsonxx::Number>("pos")) {
                             if(printEnable) {
                                 printer.printfMessage(Printer::ERROR, "unspecified pos in dynamic encoding for %s instruction", label.c_str());
@@ -225,10 +224,8 @@ InstructionEncoder::InstructionEncoder(bool printEnable)
 
                         if(instType == "REG") {
                             type = OPER_TYPE_REG;
-                        } else if(instType == "IMMS") {
-                            type = OPER_TYPE_IMMS;
-                        } else if(instType == "IMMU") {
-                            type = OPER_TYPE_IMMU;
+                        } else if(instType == "IMM") {
+                            type = OPER_TYPE_IMM;
                         } else if(instType == "PCOFFS") {
                             type = OPER_TYPE_PCOFFS;
                         } else if(instType == "PCOFFU") {
@@ -302,25 +299,28 @@ bool InstructionEncoder::encodeInstruction(bool printEnable, const Instruction *
     const Token *curOper = inst->opers;
 
     for(auto it = pattern->operTypes.begin(); it != pattern->operTypes.end(); it++) {
-        if((*it)->type == OPER_TYPE_REG) {
-            unsigned int regNum = 0;
+        int type = (*it)->type;
+        uint32_t tokenVal;
 
-            for(regNum = 0; regNum < regs.size(); regNum++) {
-                if(regs[regNum] == curOper->str) {
+        if(type == OPER_TYPE_REG) {
+            for(tokenVal = 0; tokenVal < regs.size(); tokenVal++) {
+                if(regs[tokenVal] == curOper->str) {
                     break;
                 }
             }
+        } else if(type == OPER_TYPE_IMM) {
+            tokenVal = curOper->num;
+        }
 
-            if(regNum > (1U << ((*it)->hi - (*it)->lo))) {
-                // TODO: print warning
-                success = false;
-                continue;
-            }
+        if(tokenVal >= (1U << ((*it)->hi - (*it)->lo))) {
+            // TODO: print warning
+            success = false;
+            continue;
+        }
 
-            for(int i = (*it)->lo; i <= (*it)->hi; i++) {
-                bits[i] = regNum & 1;
-                regNum >>= 1;
-            }
+        for(int i = (*it)->lo; i <= (*it)->hi; i++) {
+            bits[i] = tokenVal & 1;
+            tokenVal >>= 1;
         }
 
         curOper = curOper->next;

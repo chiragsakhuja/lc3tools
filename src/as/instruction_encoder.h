@@ -3,8 +3,7 @@
 
 typedef enum {
       OPER_TYPE_REG = 2
-    , OPER_TYPE_IMMS
-    , OPER_TYPE_IMMU
+    , OPER_TYPE_IMM
     , OPER_TYPE_PCOFFS
     , OPER_TYPE_PCOFFU
     , OPER_TYPE_LABEL
