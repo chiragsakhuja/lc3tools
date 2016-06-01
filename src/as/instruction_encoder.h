@@ -1,6 +1,14 @@
 #ifndef INSTRUCTION_ENCODER_H
 #define INSTRUCTION_ENCODER_H
 
+#include <map>
+#include <vector>
+#include <list>
+#include <string>
+
+#include "../utils/printer.h"
+#include "assembler_printer.h"
+
 typedef enum {
       OPER_TYPE_REG = 2
     , OPER_TYPE_IMM
@@ -19,7 +27,7 @@ public:
     Operand();
     Operand(int type, int hi, int lo);
 
-    bool compareTypes(int otherType);
+    bool compareTypes(int other_type) const;
 };
 
 class Instruction
@@ -27,27 +35,26 @@ class Instruction
 public:
     bool setcc;
     std::string label;
-    std::vector<Operand *> operTypes;
-    int *bitTypes;
+    std::vector<Operand *> oper_types;
+    int * bit_types;
 
-    Instruction(int width, bool setcc, const std::string& label);
+    Instruction(int width, bool setcc, std::string const & label);
     ~Instruction();
 };
 
 class InstructionEncoder
 {
 public:
-    static InstructionEncoder& getInstance(bool printEnable);
+    std::map<std::string, std::list<Instruction *> > insts;
+    std::vector<std::string> regs;
 
-    static std::map<std::string, std::list<Instruction *> > insts;
-    static std::vector<std::string> regs;
-    static bool encodeInstruction(bool printEnable, const Instruction *pattern, const Token *inst, uint32_t& encodedInstruction);
+    InstructionEncoder(bool print_enable, Printer const & printer);
+    ~InstructionEncoder();
+
+    bool encodeInstruction(bool print_enable, AssemblerPrinter const & printer, Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction) const;
 
 private:
-    static int regWidth;
-
-    InstructionEncoder(bool printEnable);
-    ~InstructionEncoder();
+    int reg_width;
 };
 
 #endif

@@ -3,18 +3,18 @@
 #include "tokens.h"
 #include "parser.hpp"
 
-Token::Token()
+Token::Token(void)
 {
-    this->numOperands = 0;
+    this->num_operands = 0;
     this->pc = 0;
-    this->rowNum = 0;
-    this->colNum = 0;
+    this->row_num = 0;
+    this->col_num = 0;
     this->length = 0;
     this->opers = nullptr;
     this->next = nullptr;
 }
 
-Token::Token(const std::string& str) : Token()
+Token::Token(const std::string & str) : Token()
 {
     this->str = str;
     this->type = STRING;
@@ -26,7 +26,7 @@ Token::Token(int num) : Token()
     this->type = NUM;
 }
 
-bool Token::checkPseudoType(const std::string& pseudo) const
+bool Token::checkPseudoType(std::string const & pseudo) const
 {
     return type == PSEUDO && str == pseudo;
 }

@@ -4,30 +4,30 @@
 class Token
 {
 private:
-    Token();
+    Token(void);
 
 public:
     std::string str;
     int num;
 
     int type;
-    int numOperands;
+    int num_operands;
     int pc;
-    Token *opers;
-    Token *next;
+    Token * opers;
+    Token * next;
 
 #ifdef _ENABLE_TESTING
     int encoding;
 #endif
 
     // used for errors
-    int rowNum, colNum;
+    int row_num, col_num;
     int length;
 
-    Token(const std::string& str);
+    Token(std::string const & str);
     Token(int val);
 
-    bool checkPseudoType(const std::string& pseudo) const;
+    bool checkPseudoType(std::string const & pseudo) const;
 };
 
 #endif

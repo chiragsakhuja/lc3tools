@@ -4,18 +4,15 @@
 class AssemblerPrinter : public Printer
 {
 public:
-    static AssemblerPrinter& getInstance();
+    AssemblerPrinter() = default;
+    AssemblerPrinter(AssemblerPrinter const &) = default;
+    AssemblerPrinter & operator=(AssemblerPrinter const &) = default;
 
-    static void printfAssemblyMessage(int level, const std::string& filename, const Token *tok, const std::string& line, const char *format, ...);
-    static void xprintfAssemblyMessage(int level, const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, ...);
+    void printfAssemblyMessage(int level, std::string const & filename, Token const * tok, std::string const & line, char const * format, ...) const;
+    void xprintfAssemblyMessage(int level, std::string const & filename, int col_num, int length, Token * const tok, std::string const & line, char const * format, ...) const;
 
 private:
-    AssemblerPrinter() {}
-
-    static void vxprintfAssemblyMessage(int level, const std::string& filename, int colNum, int length, const Token *tok, const std::string& line, const char *format, va_list args);
-
-    AssemblerPrinter(AssemblerPrinter const&) = delete;
-    void operator=(AssemblerPrinter const&)   = delete;
+    void vxprintfAssemblyMessage(int level, std::string const & filename, int col_num, int length, Token const * tok, std::string const & line, char const * format, va_list args) const;
 };
 
 #endif

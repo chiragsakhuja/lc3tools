@@ -132,7 +132,7 @@ protected:
                         // get number of operands
                         file >> word;
                         int numOpers = std::stoi(word);
-                        newInst->numOperands = numOpers;
+                        newInst->num_operands = numOpers;
 
                         // iterate over operands
                         Token *prevOper = nullptr;
@@ -190,13 +190,15 @@ TEST_F(AssemblerSimple, SingleDataProcessingInstruction)
 {
     std::list<Token *> programs = readTest("single_data_processing_instruction");
 
-    const Assembler& as = Assembler::getInstance();
+    Assembler as;
+    AssemblerPrinter printer;
+    InstructionEncoder encoder(false, printer);
     std::map<std::string, int> symbolTable;
     uint32_t encodedInstructon;
     bool status = false;
 
     for(auto it = programs.begin(); it != programs.end(); it++) {
-        EXPECT_TRUE(status = as.processInstruction(false, "", *it, symbolTable, encodedInstructon));
+        EXPECT_TRUE(status = as.processInstruction(false, printer, encoder, "", *it, symbolTable, encodedInstructon));
         if(status) {
             EXPECT_EQ((*it)->encoding, encodedInstructon);
         }

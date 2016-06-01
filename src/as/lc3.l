@@ -8,11 +8,11 @@
 #include "tokens.h"
 #include "parser.hpp"
 
-int stringToInt(const char *str);
-void yyerror(const char *);
-Token * makeToken(const char *tok, int type);
+int stringToInt(char const * str);
+void yyerror(char const *);
+Token * makeToken(char const * tok, int type);
 
-int rowNum = 0, colNum = 0;
+int row_num = 0, col_num = 0;
 
 %}
 
@@ -29,25 +29,25 @@ HDIG    [0-9a-f]
 
 %%
 
-{LE}+                   { colNum = 0; if(strlen(yytext) > 1 || yytext[0] != '\r') { rowNum++; } return NEWLINE; }
+{LE}+                   { col_num = 0; if(strlen(yytext) > 1 || yytext[0] != '\r') { row_num++; } return NEWLINE; }
 
-[,]                     { colNum += strlen(yytext); return COMMA; }
-[.]                     { colNum += strlen(yytext); return DOT  ; }
-[:]                     { colNum += strlen(yytext); return COLON; }
+[,]                     { col_num += strlen(yytext); return COMMA; }
+[.]                     { col_num += strlen(yytext); return DOT  ; }
+[:]                     { col_num += strlen(yytext); return COLON; }
 
-{WS}+                   { colNum += strlen(yytext); }
-(;|("//")){NLE}*        { colNum += strlen(yytext); }
+{WS}+                   { col_num += strlen(yytext); }
+(;|("//")){NLE}*        { col_num += strlen(yytext); }
 
-0?b{BDIG}+              { yylval.tok = makeToken(yytext, NUM)   ; colNum += strlen(yytext); return NUM   ; }
-#?{DIG}+                { yylval.tok = makeToken(yytext, NUM)   ; colNum += strlen(yytext); return NUM   ; }
-0?x{HDIG}+              { yylval.tok = makeToken(yytext, NUM)   ; colNum += strlen(yytext); return NUM   ; }
-{NDEL}+|['"]{NLE}*['"]  { yylval.tok = makeToken(yytext, STRING); colNum += strlen(yytext); return STRING; }
+0?b{BDIG}+              { yylval.tok = makeToken(yytext, NUM)   ; col_num += strlen(yytext); return NUM   ; }
+#?{DIG}+                { yylval.tok = makeToken(yytext, NUM)   ; col_num += strlen(yytext); return NUM   ; }
+0?x{HDIG}+              { yylval.tok = makeToken(yytext, NUM)   ; col_num += strlen(yytext); return NUM   ; }
+{NDEL}+|['"]{NLE}*['"]  { yylval.tok = makeToken(yytext, STRING); col_num += strlen(yytext); return STRING; }
 
 %%
 
-Token * makeToken(const char *tok, int type)
+Token * makeToken(char const * tok, int type)
 {
-    Token *ret = nullptr;
+    Token * ret = nullptr;
 
     if(type == STRING) {
         std::string tokStr(tok);
@@ -57,16 +57,16 @@ Token * makeToken(const char *tok, int type)
         ret = new Token(stringToInt(tok));
     }
 
-    ret->rowNum = rowNum;
-    ret->colNum = colNum;
+    ret->row_num = row_num;
+    ret->col_num = col_num;
     ret->length = strlen(tok);
 
     return ret;
 }
 
-int stringToInt(const char *str)
+int stringToInt(char const * str)
 {
-    if(str[0] == '0') { str++; }
+    if(str[0] == '0') { str += 1; }
 
     std::string conv = std::string(str).substr(1);
 

@@ -16,8 +16,11 @@ public:
         , DEBUG
     };
 
-    static Printer& getInstance();
-    static void printfMessage(int type, const char *format, ...);
+    void printfMessage(int type, const char * format, ...) const;
+
+    Printer() = default;
+    Printer(Printer const &) = default;
+    Printer & operator=(Printer const &) = default;
 
 protected:
     enum PrintMode {
@@ -29,18 +32,12 @@ protected:
         , PRINT_MODE_RESET
     };
 
-    Printer() {}
-
-    static void vprintfMessage(int type, const char *format, va_list args);
-    static void vxprintfMessage(int level, int color, const char *label, const char *format, va_list args);
-    static void printf(const char *format, ...);
-    static void vprintf(const char *format, va_list args);
-    static void setMode(int mode);
-    static void print(const char *string);
-
-    // cannot duplicate the singleton
-    Printer(Printer const&)        = delete;
-    void operator=(Printer const&) = delete;
+    void vprintfMessage(int type, const char * format, va_list args) const;
+    void vxprintfMessage(int level, int color, const char * label, const char * format, va_list args) const;
+    void printf(const char * format, ...) const;
+    void vprintf(const char * format, va_list args) const;
+    void setMode(int mode) const;
+    virtual void print(const char * string) const;
 };
 
 #endif

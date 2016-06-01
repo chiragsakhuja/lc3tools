@@ -5,18 +5,18 @@
 #include <string>
 #include "tokens.h"
 
-Token *append(Token *head, Token *list);
-void countOperands(Token *inst);
+Token *append(Token * head, Token * list);
+void countOperands(Token * inst);
 
 extern int yylex();
-void yyerror(const char *);
+void yyerror(char const *);
 
 Token *root = nullptr;
 
 %}
 
 %union {
-    Token *tok;
+    Token * tok;
 }
 
 %token <tok> NUM STRING
@@ -41,7 +41,7 @@ operlist : oper COMMA operlist   { $$ = append($1, $3); }
          ;
 
 inst     : STRING operlist       { $1->type = INST; $1->opers = $2; countOperands($1); $$ = $1; }
-         | STRING                { $1->type = INST; $1->opers = nullptr; $1->numOperands = 0; $$ = $1; }
+         | STRING                { $1->type = INST; $1->opers = nullptr; $1->num_operands = 0; $$ = $1; }
          ;
 
 pseudo   : DOT inst              { $2->type = PSEUDO; $$ = $2; }
@@ -75,14 +75,14 @@ Token * append(Token *head, Token *list)
 
 void countOperands(Token *inst)
 {
-    Token *cur = inst->opers;
+    Token * cur = inst->opers;
     int count = 0;
 
     while(cur != nullptr) {
-        count++;
+        count += 1;
         cur = cur->next;
     }
 
-    inst->numOperands = count;
+    inst->num_operands = count;
 }
 

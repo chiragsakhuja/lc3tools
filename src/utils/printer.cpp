@@ -3,15 +3,7 @@
 
 #include "printer.h"
 
-Printer& Printer::getInstance()
-{
-    // only one copy and guaranteed to be destroyed
-    static Printer instance;
-
-    return instance;
-}
-
-void Printer::printfMessage(int type, const char *format, ...)
+void Printer::printfMessage(int type, const char * format, ...) const
 {
     va_list args;
     va_start(args, format);
@@ -19,7 +11,7 @@ void Printer::printfMessage(int type, const char *format, ...)
     va_end(args);
 }
 
-void Printer::vprintfMessage(int type, const char *format, va_list args)
+void Printer::vprintfMessage(int type, const char * format, va_list args) const
 {
     int color = PRINT_MODE_RESET;
     std::string label = "";
@@ -54,7 +46,7 @@ void Printer::vprintfMessage(int type, const char *format, va_list args)
     }
 }
 
-void Printer::vxprintfMessage(int level, int color, const char *label, const char *format, va_list args)
+void Printer::vxprintfMessage(int level, int color, const char * label, const char * format, va_list args) const
 {
     setMode(PRINT_MODE_BOLD);
     setMode(color);
@@ -66,7 +58,7 @@ void Printer::vxprintfMessage(int level, int color, const char *label, const cha
     setMode(PRINT_MODE_RESET);
 }
 
-void Printer::printf(const char *format, ...)
+void Printer::printf(const char * format, ...) const
 {
     va_list args;
     va_start(args, format);
@@ -74,7 +66,7 @@ void Printer::printf(const char *format, ...)
     va_end(args);
 }
 
-void Printer::vprintf(const char *format, va_list args)
+void Printer::vprintf(const char * format, va_list args) const
 {
     va_list copy;
     va_copy(copy, args);
@@ -89,7 +81,7 @@ void Printer::vprintf(const char *format, va_list args)
     delete[] string;
 }
 
-void Printer::setMode(int mode)
+void Printer::setMode(int mode) const
 {
     switch(mode) {
         case PRINT_MODE_RED    : std::cout << "\033[31m"; break;
@@ -102,7 +94,7 @@ void Printer::setMode(int mode)
     }
 }
 
-void Printer::print(const char *string)
+void Printer::print(const char * string) const
 {
     std::cout << string;
 }
