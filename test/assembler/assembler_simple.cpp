@@ -12,6 +12,10 @@
 #include "paths.h"
 #include "instruction_encoder.h"
 
+#include "../../src/utils/printer.h"
+#include "../../src/utils/console_printer.h"
+#include "../../src/as/logger.h"
+
 #include "gtest/gtest.h"
 #include "gtest/gtest_prod.h"
 
@@ -191,14 +195,15 @@ TEST_F(AssemblerSimple, SingleDataProcessingInstruction)
     std::list<Token *> programs = readTest("single_data_processing_instruction");
 
     Assembler as;
-    AssemblerPrinter printer;
-    InstructionEncoder encoder(false, printer);
+    utils::Printer const * printer = new utils::ConsolePrinter();
+    AssemblerLogger logger(*printer);
+    InstructionEncoder encoder(false, *printer);
     std::map<std::string, int> symbolTable;
     uint32_t encodedInstructon;
     bool status = false;
 
     for(auto it = programs.begin(); it != programs.end(); it++) {
-        EXPECT_TRUE(status = as.processInstruction(false, printer, encoder, "", *it, symbolTable, encodedInstructon));
+        EXPECT_TRUE(status = as.processInstruction(false, logger, encoder, "", *it, symbolTable, encodedInstructon));
         if(status) {
             EXPECT_EQ((*it)->encoding, encodedInstructon);
         }

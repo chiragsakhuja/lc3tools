@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 
-#include "utils/printer.h"
+#include "../utils/printer.h"
 #include "logger.h"
 #include "instruction_encoder.h"
 
