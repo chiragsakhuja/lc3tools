@@ -5,9 +5,17 @@
     #define _PRINT_LEVEL 2
 #endif
 
-class Printer
+namespace utils
 {
-public:
+    enum PrintColor {
+          PRINT_COLOR_RED
+        , PRINT_COLOR_YELLOW
+        , PRINT_COLOR_GREEN
+        , PRINT_COLOR_MAGENTA
+        , PRINT_COLOR_BOLD
+        , PRINT_COLOR_RESET
+    };
+
     enum PrintType {
           FATAL_ERROR = 0
         , ERROR
@@ -16,28 +24,26 @@ public:
         , DEBUG
     };
 
-    void printfMessage(int type, const char * format, ...) const;
+    class Printer
+    {
+    public:
 
-    Printer() = default;
-    Printer(Printer const &) = default;
-    Printer & operator=(Printer const &) = default;
+        void printfMessage(int type, const char * format, ...) const;
+        void vprintfMessage(int type, const char * format, va_list args) const;
 
-protected:
-    enum PrintMode {
-          PRINT_MODE_RED
-        , PRINT_MODE_YELLOW
-        , PRINT_MODE_GREEN
-        , PRINT_MODE_MAGENTA
-        , PRINT_MODE_BOLD
-        , PRINT_MODE_RESET
+        Printer(void) = default;
+        Printer(Printer const &) = default;
+        Printer & operator=(Printer const &) = default;
+        virtual ~Printer(void) = default;
+
+        virtual void setColor(int color) const = 0;
+        virtual void print(const char * string) const = 0;
+
+    protected:
+        void vxprintfMessage(int level, int color, const char * label, const char * format, va_list args) const;
+        void printf(const char * format, ...) const;
+        void vprintf(const char * format, va_list args) const;
     };
-
-    void vprintfMessage(int type, const char * format, va_list args) const;
-    void vxprintfMessage(int level, int color, const char * label, const char * format, va_list args) const;
-    void printf(const char * format, ...) const;
-    void vprintf(const char * format, va_list args) const;
-    void setMode(int mode) const;
-    virtual void print(const char * string) const;
 };
 
 #endif

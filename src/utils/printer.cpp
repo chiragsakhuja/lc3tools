@@ -1,9 +1,9 @@
-#include <iostream>
 #include <cstdarg>
+#include <string>
 
 #include "printer.h"
 
-void Printer::printfMessage(int type, const char * format, ...) const
+void utils::Printer::printfMessage(int type, const char * format, ...) const
 {
     va_list args;
     va_start(args, format);
@@ -11,30 +11,30 @@ void Printer::printfMessage(int type, const char * format, ...) const
     va_end(args);
 }
 
-void Printer::vprintfMessage(int type, const char * format, va_list args) const
+void utils::Printer::vprintfMessage(int type, const char * format, va_list args) const
 {
-    int color = PRINT_MODE_RESET;
+    int color = PRINT_COLOR_RESET;
     std::string label = "";
 
     if(type <= _PRINT_LEVEL) {
         switch(type) {
             case ERROR:
-                color = PRINT_MODE_RED;
+                color = PRINT_COLOR_RED;
                 label = "error";
                 break;
 
             case WARNING:
-                color = PRINT_MODE_YELLOW;
+                color = PRINT_COLOR_YELLOW;
                 label = "warning";
                 break;
 
             case INFO:
-                color = PRINT_MODE_GREEN;
+                color = PRINT_COLOR_GREEN;
                 label = "info";
                 break;
 
             case DEBUG:
-                color = PRINT_MODE_MAGENTA;
+                color = PRINT_COLOR_MAGENTA;
                 label = "debug";
                 break;
 
@@ -46,19 +46,19 @@ void Printer::vprintfMessage(int type, const char * format, va_list args) const
     }
 }
 
-void Printer::vxprintfMessage(int level, int color, const char * label, const char * format, va_list args) const
+void utils::Printer::vxprintfMessage(int level, int color, const char * label, const char * format, va_list args) const
 {
-    setMode(PRINT_MODE_BOLD);
-    setMode(color);
+    setColor(PRINT_COLOR_BOLD);
+    setColor(color);
     printf("%s: ", label);
-    setMode(PRINT_MODE_RESET);
+    setColor(PRINT_COLOR_RESET);
 
-    setMode(PRINT_MODE_BOLD);
+    setColor(PRINT_COLOR_BOLD);
     vprintf(format, args);
-    setMode(PRINT_MODE_RESET);
+    setColor(PRINT_COLOR_RESET);
 }
 
-void Printer::printf(const char * format, ...) const
+void utils::Printer::printf(const char * format, ...) const
 {
     va_list args;
     va_start(args, format);
@@ -66,7 +66,7 @@ void Printer::printf(const char * format, ...) const
     va_end(args);
 }
 
-void Printer::vprintf(const char * format, va_list args) const
+void utils::Printer::vprintf(const char * format, va_list args) const
 {
     va_list copy;
     va_copy(copy, args);
@@ -79,22 +79,4 @@ void Printer::vprintf(const char * format, va_list args) const
     print(string);
 
     delete[] string;
-}
-
-void Printer::setMode(int mode) const
-{
-    switch(mode) {
-        case PRINT_MODE_RED    : std::cout << "\033[31m"; break;
-        case PRINT_MODE_YELLOW : std::cout << "\033[33m"; break;
-        case PRINT_MODE_GREEN  : std::cout << "\033[32m"; break;
-        case PRINT_MODE_MAGENTA: std::cout << "\033[35m"; break;
-        case PRINT_MODE_BOLD   : std::cout << "\033[1m" ; break;
-        case PRINT_MODE_RESET  : std::cout << "\033[0m" ; break;
-        default                :                          break;
-    }
-}
-
-void Printer::print(const char * string) const
-{
-    std::cout << string;
 }

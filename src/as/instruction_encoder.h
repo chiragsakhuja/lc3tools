@@ -6,8 +6,8 @@
 #include <list>
 #include <string>
 
-#include "../utils/printer.h"
-#include "assembler_printer.h"
+#include "utils/printer.h"
+#include "logger.h"
 
 typedef enum {
       OPER_TYPE_REG = 2
@@ -48,10 +48,10 @@ public:
     std::map<std::string, std::list<Instruction *> > insts;
     std::vector<std::string> regs;
 
-    InstructionEncoder(bool print_enable, Printer const & printer);
+    InstructionEncoder(bool print_enable, utils::Printer const & printer);
     ~InstructionEncoder();
 
-    bool encodeInstruction(bool print_enable, AssemblerPrinter const & printer, Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction) const;
+    bool encodeInstruction(bool print_enable, AssemblerLogger const & logger, Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction) const;
 
 private:
     int reg_width;

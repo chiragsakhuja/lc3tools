@@ -9,7 +9,7 @@
 
 #include "tokens.h"
 #include "utils/printer.h"
-#include "assembler_printer.h"
+#include "logger.h"
 #include "thirdparty/jsonxx/jsonxx.h"
 #include "instruction_encoder.h"
 
@@ -60,7 +60,7 @@ Instruction::~Instruction()
     }
 }
 
-InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printer)
+InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const & printer)
 {
     std::string res_path(globalResPath);
 
@@ -76,7 +76,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
         for(size_t i = 0; i < list.size(); i += 1) {
             if(! list.has<jsonxx::Object>(i)) {
                 if(print_enable) {
-                    printer.printfMessage(Printer::ERROR, "unknown encoding");
+                    printer.printfMessage(utils::PrintType::ERROR, "unknown encoding");
                 }
                 continue;
             }
@@ -85,7 +85,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
 
             if(! state.has<jsonxx::String>("type") || ! state.has<jsonxx::Object>("data")) {
                 if(print_enable) {
-                    printer.printfMessage(Printer::ERROR, "incorrect encoding");
+                    printer.printfMessage(utils::PrintType::ERROR, "incorrect encoding");
                 }
                 continue;
             }
@@ -97,7 +97,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
             if(type == "CONF") {    // start config
                 if(! data.has<jsonxx::Number>("width")) {
                     if(print_enable) {
-                        printer.printfMessage(Printer::ERROR, "unspecified width in encoding");
+                        printer.printfMessage(utils::PrintType::ERROR, "unspecified width in encoding");
                     }
                     continue;
                 }
@@ -106,12 +106,12 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
                 reg_width = width;
 
                 if(print_enable) {
-                    printer.printfMessage(Printer::DEBUG, "configuring %d-bit registers", reg_width);
+                    printer.printfMessage(utils::PrintType::DEBUG, "configuring %d-bit registers", reg_width);
                 }
             } else if(type == "REGS") {     // end config, start regs
                 if(! data.has<jsonxx::Array>("reglist")) {
                     if(print_enable) {
-                        printer.printfMessage(Printer::ERROR, "unspecified reglist in encoding");
+                        printer.printfMessage(utils::PrintType::ERROR, "unspecified reglist in encoding");
                     }
                     continue;
                 }
@@ -123,7 +123,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
                 for(size_t j = 0; j < reglist.size(); j += 1) {
                     if(! reglist.has<jsonxx::String>(j)) {
                         if(print_enable) {
-                            printer.printfMessage(Printer::ERROR, "unknown type in reglist");
+                            printer.printfMessage(utils::PrintType::ERROR, "unknown type in reglist");
                         }
                         continue;
                     }
@@ -136,12 +136,12 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
 
 
                 if(print_enable) {
-                    printer.printfMessage(Printer::DEBUG, output.str().c_str());
+                    printer.printfMessage(utils::PrintType::DEBUG, output.str().c_str());
                 }
             } else if(type == "INST") {     // end regs, start inst
                 if(! data.has<jsonxx::String>("label") || ! data.has<jsonxx::Boolean>("setcc") || ! data.has<jsonxx::Array>("enc")) {
                     if(print_enable) {
-                        printer.printfMessage(Printer::ERROR, "unspecified fields in instruction encoding");
+                        printer.printfMessage(utils::PrintType::ERROR, "unspecified fields in instruction encoding");
                     }
                     continue;
                 }
@@ -153,7 +153,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
                 std::list<Instruction *> * same_op_insts = nullptr;
                 if(reg_width == 0) {
                     if(print_enable) {
-                        printer.printfMessage(Printer::WARNING, "unconfigured register width, assuming 32-bit");
+                        printer.printfMessage(utils::PrintType::WARNING, "unconfigured register width, assuming 32-bit");
                     }
                 }
 
@@ -162,7 +162,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
                 for(size_t j = 0; j < enc.size(); j += 1) {
                     if(! enc.has<jsonxx::Object>(j)) {
                         if(print_enable) {
-                            printer.printfMessage(Printer::ERROR, "unknown type in %s instruction encoding", label.c_str());
+                            printer.printfMessage(utils::PrintType::ERROR, "unknown type in %s instruction encoding", label.c_str());
                         }
                         continue;
                     }
@@ -171,7 +171,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
 
                     if(! inst.has<jsonxx::Number>("hi") || ! inst.has<jsonxx::Number>("lo") || ! inst.has<jsonxx::String>("type") || ! inst.has<jsonxx::Object>("data")) {
                         if(print_enable) {
-                            printer.printfMessage(Printer::ERROR, "unspecified fields in %s instruction encoding", label.c_str());
+                            printer.printfMessage(utils::PrintType::ERROR, "unspecified fields in %s instruction encoding", label.c_str());
                         }
                         continue;
                     }
@@ -184,7 +184,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
                     if(inst_type == "OPCODE" || inst_type == "FIXED") {
                         if(! inst_data.has<jsonxx::String>("value")) {
                             if(print_enable) {
-                                printer.printfMessage(Printer::ERROR, "unspecified value in fixed encoding for %s instruction", label.c_str());
+                                printer.printfMessage(utils::PrintType::ERROR, "unspecified value in fixed encoding for %s instruction", label.c_str());
                             }
                             continue;
                         }
@@ -201,7 +201,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
                     } else if(inst_type == "REG" || inst_type == "IMM" || inst_type == "PCOFFS" || inst_type == "PCOFFU") {
                         if(! inst_data.has<jsonxx::Number>("pos")) {
                             if(print_enable) {
-                                printer.printfMessage(Printer::ERROR, "unspecified pos in dynamic encoding for %s instruction", label.c_str());
+                                printer.printfMessage(utils::PrintType::ERROR, "unspecified pos in dynamic encoding for %s instruction", label.c_str());
                             }
                             continue;
                         }
@@ -223,7 +223,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
                         std::fill_n(new_inst->bit_types + (int) lo, (int) (hi - lo + 1), type);
                     } else {
                         if(print_enable) {
-                            printer.printfMessage(Printer::ERROR, "unknown encoding type %s", type.c_str());
+                            printer.printfMessage(utils::PrintType::ERROR, "unknown encoding type %s", type.c_str());
                         }
                         continue;
                     }
@@ -248,7 +248,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
 
                 output << " }";
                 if(print_enable) {
-                    printer.printfMessage(Printer::DEBUG, "configuring instruction %s", output.str().c_str());
+                    printer.printfMessage(utils::PrintType::DEBUG, "configuring instruction %s", output.str().c_str());
                 }
             }
         }
@@ -256,7 +256,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, Printer const & printe
         file.close();
     } else {
         if(print_enable) {
-            printer.printfMessage(Printer::ERROR, "could not open encodings.json");
+            printer.printfMessage(utils::PrintType::ERROR, "could not open encodings.json");
         }
     }
 }
@@ -275,9 +275,9 @@ InstructionEncoder::~InstructionEncoder()
 }
 
 // precondition: the instruction is of type pattern and is valid (no error checking)
-bool InstructionEncoder::encodeInstruction(bool print_enable, AssemblerPrinter const & printer, Instruction const * pattern, Token const * inst, uint32_t & encoded_istruction) const
+bool InstructionEncoder::encodeInstruction(bool print_enable, AssemblerLogger const & logger, Instruction const * pattern, Token const * inst, uint32_t & encoded_istruction) const
 {
-    bool success = true;
+    bool log_enable = true;
 
     int * bits = new int[reg_width];
     std::fill_n(bits, reg_width, OPER_TYPE_UNKNOWN);
@@ -300,7 +300,7 @@ bool InstructionEncoder::encodeInstruction(bool print_enable, AssemblerPrinter c
 
         if(token_val >= (1U << ((*it)->hi - (*it)->lo))) {
             // TODO: print warning
-            success = false;
+            log_enable = false;
             continue;
         }
 
@@ -323,7 +323,7 @@ bool InstructionEncoder::encodeInstruction(bool print_enable, AssemblerPrinter c
 
     for(int i = reg_width - 1; i >= 0; i -= 1) {
         if(bits[i] == OPER_TYPE_UNKNOWN) {
-            success = false;
+            log_enable = false;
             break;
         } else {
             if(print_enable) {
@@ -332,7 +332,7 @@ bool InstructionEncoder::encodeInstruction(bool print_enable, AssemblerPrinter c
         }
     }
 
-    if(success) {
+    if(log_enable) {
         encoded_istruction = 0;
 
         for(int i = reg_width - 1; i >= 0; i -= 1) {
@@ -343,10 +343,10 @@ bool InstructionEncoder::encodeInstruction(bool print_enable, AssemblerPrinter c
 
 
     if(print_enable) {
-        printer.printfMessage(AssemblerPrinter::DEBUG, "%s", output.str().c_str());
+        logger.printfMessage(utils::PrintType::DEBUG, "%s", output.str().c_str());
     }
 
     delete[] bits;
 
-    return success;
+    return log_enable;
 }

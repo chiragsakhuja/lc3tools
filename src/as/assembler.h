@@ -5,14 +5,14 @@
 #include <map>
 #include <string>
 
-#include "../utils/printer.h"
-#include "assembler_printer.h"
+#include "utils/printer.h"
+#include "logger.h"
 #include "instruction_encoder.h"
 
 class Assembler
 {
 public:
-    bool assembleProgram(  bool print_enable, Printer const & printer, std::string const & filename, Token * program
+    bool assembleProgram(  bool log_enable, utils::Printer const & printer, std::string const & filename, Token * program
                          , std::map<std::string, int> & symbol_table);
 
     Assembler(void);
@@ -28,15 +28,15 @@ private:
     int sectionStart;
 
     void processOperands(Token * operands);
-    bool processInstruction(  bool print_enable, AssemblerPrinter const & printer, InstructionEncoder & encoder
+    bool processInstruction(  bool log_enable, AssemblerLogger const & logger, InstructionEncoder & encoder
                             , std::string const & filename, Token const * inst, std::map<std::string, int> const & symbol_table
                             , uint32_t & encoded_instruction) const;
-    bool processTokens(  bool print_enable, AssemblerPrinter const & printer, InstructionEncoder & encoder
+    bool processTokens(  bool log_enable, AssemblerLogger const & logger, InstructionEncoder & encoder
                        , std::string const & filename, Token * program, std::map<std::string, int> & symbol_table
                        , Token *& program_start);
-    bool processPseudo(  bool print_enable, AssemblerPrinter const & printer, std::string const & filename
+    bool processPseudo(  bool log_enable, AssemblerLogger const & logger, std::string const & filename
                        , Token const * pseudo);
-    bool getOrig(  bool print_enable, AssemblerPrinter const & printer, std::string const & filename, Token const * orig
+    bool getOrig(  bool log_enable, AssemblerLogger const & logger, std::string const & filename, Token const * orig
                  , int & new_orig);
 };
 

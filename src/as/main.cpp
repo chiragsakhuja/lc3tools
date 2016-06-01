@@ -4,12 +4,13 @@
 
 #include "tokens.h"
 #include "utils/printer.h"
+#include "utils/console_printer.h"
 #include "assembler.h"
 #include "parser.hpp"
 
 #include "paths.h"
 
-void genObjectFile(char const * filename, std::map<std::string, int> & symbol_table);
+void genObjectFile(char const * filename, utils::Printer const & printer, std::map<std::string, int> & symbol_table);
 
 extern FILE *yyin;
 extern int yyparse(void);
@@ -18,27 +19,28 @@ extern int row_num, col_num;
 
 int main(int argc, char *argv[])
 {
-    Printer printer;
+    utils::Printer const * printer = new utils::ConsolePrinter();
     std::map<std::string, int> symbol_table;
 
     if(argc < 2) {
-        printer.printfMessage(Printer::ERROR, "usage: %s file [file ...]", argv[0]);
+        printer->printfMessage(utils::PrintType::ERROR, "usage: %s file [file ...]", argv[0]);
     } else {
         for(int i = 1; i < argc; i++) {
-            genObjectFile(argv[i], symbol_table);
+            genObjectFile(argv[i], *printer, symbol_table);
         }
     }
+
+    delete printer;
 
     return 0;
 }
 
-void genObjectFile(char const * filename, std::map<std::string, int> & symbol_table)
+void genObjectFile(char const * filename, utils::Printer const & printer, std::map<std::string, int> & symbol_table)
 {
     Assembler as;
-    Printer printer;
 
     if((yyin = fopen(filename, "r")) == nullptr) {
-         printer.printfMessage(Printer::WARNING, "Skipping file %s ...", filename);
+         printer.printfMessage(utils::PrintType::WARNING, "Skipping file %s ...", filename);
     } else {
         row_num = 0; col_num = 0;
         yyparse();
