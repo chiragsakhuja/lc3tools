@@ -15,7 +15,7 @@ void utils::ConsolePrinter::setColor(int color) const
     }
 }
 
-void utils::ConsolePrinter::print(const char * string) const
+void utils::ConsolePrinter::print(std::string const & string) const
 {
     std::cout << string;
 }

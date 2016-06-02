@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
     std::map<std::string, int> symbol_table;
 
     if(argc < 2) {
-        printer->printfMessage(utils::PrintType::ERROR, "usage: %s file [file ...]", argv[0]);
+        printer->printf(utils::PrintType::ERROR, "usage: %s file [file ...]", argv[0]);
     } else {
         for(int i = 1; i < argc; i++) {
             genObjectFile(argv[i], *printer, symbol_table);
@@ -40,7 +40,7 @@ void genObjectFile(char const * filename, utils::Printer const & printer, std::m
     Assembler as;
 
     if((yyin = fopen(filename, "r")) == nullptr) {
-         printer.printfMessage(utils::PrintType::WARNING, "Skipping file %s ...", filename);
+         printer.printf(utils::PrintType::WARNING, "Skipping file %s ...", filename);
     } else {
         row_num = 0; col_num = 0;
         yyparse();

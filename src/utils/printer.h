@@ -27,23 +27,23 @@ namespace utils
     class Printer
     {
     public:
-
-        void printfMessage(int type, const char * format, ...) const;
-        void vprintfMessage(int type, const char * format, va_list args) const;
-
         Printer(void) = default;
         Printer(Printer const &) = default;
         Printer & operator=(Printer const &) = default;
         virtual ~Printer(void) = default;
 
+        void printf(int type, char const * format, ...) const;
+        void vprintf(int type, char const * format, va_list args) const;
+        std::string toString(char const * format, ...) const;
+        std::string vtoString(char const * format, va_list args) const;
+
         virtual void setColor(int color) const = 0;
-        virtual void print(const char * string) const = 0;
+        virtual void print(std::string const & string) const = 0;
 
     protected:
-        void vxprintfMessage(int level, int color, const char * label, const char * format, va_list args) const;
-        void printf(const char * format, ...) const;
-        void vprintf(const char * format, va_list args) const;
+        void vxprintf(int level, int color, char const * label, char const * format, va_list args) const;
     };
 };
+
 
 #endif

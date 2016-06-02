@@ -1,6 +1,8 @@
 #ifndef CONSOLE_PRINTER_H
 #define CONSOLE_PRINTER_H
 
+#include <string>
+
 #include "printer.h"
 
 namespace utils
@@ -9,7 +11,7 @@ namespace utils
     {
     public:
         virtual void setColor(int color) const override;
-        virtual void print(const char * string) const override;
+        virtual void print(std::string const & string) const override;
     };
 };
 

@@ -76,7 +76,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
         for(size_t i = 0; i < list.size(); i += 1) {
             if(! list.has<jsonxx::Object>(i)) {
                 if(print_enable) {
-                    printer.printfMessage(utils::PrintType::ERROR, "unknown encoding");
+                    printer.printf(utils::PrintType::ERROR, "unknown encoding");
                 }
                 continue;
             }
@@ -85,7 +85,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
 
             if(! state.has<jsonxx::String>("type") || ! state.has<jsonxx::Object>("data")) {
                 if(print_enable) {
-                    printer.printfMessage(utils::PrintType::ERROR, "incorrect encoding");
+                    printer.printf(utils::PrintType::ERROR, "incorrect encoding");
                 }
                 continue;
             }
@@ -97,7 +97,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
             if(type == "CONF") {    // start config
                 if(! data.has<jsonxx::Number>("width")) {
                     if(print_enable) {
-                        printer.printfMessage(utils::PrintType::ERROR, "unspecified width in encoding");
+                        printer.printf(utils::PrintType::ERROR, "unspecified width in encoding");
                     }
                     continue;
                 }
@@ -106,12 +106,12 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
                 reg_width = width;
 
                 if(print_enable) {
-                    printer.printfMessage(utils::PrintType::DEBUG, "configuring %d-bit registers", reg_width);
+                    printer.printf(utils::PrintType::DEBUG, "configuring %d-bit registers", reg_width);
                 }
             } else if(type == "REGS") {     // end config, start regs
                 if(! data.has<jsonxx::Array>("reglist")) {
                     if(print_enable) {
-                        printer.printfMessage(utils::PrintType::ERROR, "unspecified reglist in encoding");
+                        printer.printf(utils::PrintType::ERROR, "unspecified reglist in encoding");
                     }
                     continue;
                 }
@@ -123,7 +123,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
                 for(size_t j = 0; j < reglist.size(); j += 1) {
                     if(! reglist.has<jsonxx::String>(j)) {
                         if(print_enable) {
-                            printer.printfMessage(utils::PrintType::ERROR, "unknown type in reglist");
+                            printer.printf(utils::PrintType::ERROR, "unknown type in reglist");
                         }
                         continue;
                     }
@@ -136,12 +136,12 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
 
 
                 if(print_enable) {
-                    printer.printfMessage(utils::PrintType::DEBUG, output.str().c_str());
+                    printer.printf(utils::PrintType::DEBUG, output.str().c_str());
                 }
             } else if(type == "INST") {     // end regs, start inst
                 if(! data.has<jsonxx::String>("label") || ! data.has<jsonxx::Boolean>("setcc") || ! data.has<jsonxx::Array>("enc")) {
                     if(print_enable) {
-                        printer.printfMessage(utils::PrintType::ERROR, "unspecified fields in instruction encoding");
+                        printer.printf(utils::PrintType::ERROR, "unspecified fields in instruction encoding");
                     }
                     continue;
                 }
@@ -153,7 +153,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
                 std::list<Instruction *> * same_op_insts = nullptr;
                 if(reg_width == 0) {
                     if(print_enable) {
-                        printer.printfMessage(utils::PrintType::WARNING, "unconfigured register width, assuming 32-bit");
+                        printer.printf(utils::PrintType::WARNING, "unconfigured register width, assuming 32-bit");
                     }
                 }
 
@@ -162,7 +162,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
                 for(size_t j = 0; j < enc.size(); j += 1) {
                     if(! enc.has<jsonxx::Object>(j)) {
                         if(print_enable) {
-                            printer.printfMessage(utils::PrintType::ERROR, "unknown type in %s instruction encoding", label.c_str());
+                            printer.printf(utils::PrintType::ERROR, "unknown type in %s instruction encoding", label.c_str());
                         }
                         continue;
                     }
@@ -171,7 +171,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
 
                     if(! inst.has<jsonxx::Number>("hi") || ! inst.has<jsonxx::Number>("lo") || ! inst.has<jsonxx::String>("type") || ! inst.has<jsonxx::Object>("data")) {
                         if(print_enable) {
-                            printer.printfMessage(utils::PrintType::ERROR, "unspecified fields in %s instruction encoding", label.c_str());
+                            printer.printf(utils::PrintType::ERROR, "unspecified fields in %s instruction encoding", label.c_str());
                         }
                         continue;
                     }
@@ -184,7 +184,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
                     if(inst_type == "OPCODE" || inst_type == "FIXED") {
                         if(! inst_data.has<jsonxx::String>("value")) {
                             if(print_enable) {
-                                printer.printfMessage(utils::PrintType::ERROR, "unspecified value in fixed encoding for %s instruction", label.c_str());
+                                printer.printf(utils::PrintType::ERROR, "unspecified value in fixed encoding for %s instruction", label.c_str());
                             }
                             continue;
                         }
@@ -201,7 +201,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
                     } else if(inst_type == "REG" || inst_type == "IMM" || inst_type == "PCOFFS" || inst_type == "PCOFFU") {
                         if(! inst_data.has<jsonxx::Number>("pos")) {
                             if(print_enable) {
-                                printer.printfMessage(utils::PrintType::ERROR, "unspecified pos in dynamic encoding for %s instruction", label.c_str());
+                                printer.printf(utils::PrintType::ERROR, "unspecified pos in dynamic encoding for %s instruction", label.c_str());
                             }
                             continue;
                         }
@@ -223,7 +223,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
                         std::fill_n(new_inst->bit_types + (int) lo, (int) (hi - lo + 1), type);
                     } else {
                         if(print_enable) {
-                            printer.printfMessage(utils::PrintType::ERROR, "unknown encoding type %s", type.c_str());
+                            printer.printf(utils::PrintType::ERROR, "unknown encoding type %s", type.c_str());
                         }
                         continue;
                     }
@@ -248,7 +248,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
 
                 output << " }";
                 if(print_enable) {
-                    printer.printfMessage(utils::PrintType::DEBUG, "configuring instruction %s", output.str().c_str());
+                    printer.printf(utils::PrintType::DEBUG, "configuring instruction %s", output.str().c_str());
                 }
             }
         }
@@ -256,7 +256,7 @@ InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const &
         file.close();
     } else {
         if(print_enable) {
-            printer.printfMessage(utils::PrintType::ERROR, "could not open encodings.json");
+            printer.printf(utils::PrintType::ERROR, "could not open encodings.json");
         }
     }
 }
@@ -343,7 +343,7 @@ bool InstructionEncoder::encodeInstruction(bool print_enable, AssemblerLogger co
 
 
     if(print_enable) {
-        logger.printfMessage(utils::PrintType::DEBUG, "%s", output.str().c_str());
+        logger.printf(utils::PrintType::DEBUG, "%s", output.str().c_str());
     }
 
     delete[] bits;

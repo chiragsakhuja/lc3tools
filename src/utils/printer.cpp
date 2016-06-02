@@ -3,15 +3,15 @@
 
 #include "printer.h"
 
-void utils::Printer::printfMessage(int type, const char * format, ...) const
+void utils::Printer::printf(int type, char const * format, ...) const
 {
     va_list args;
     va_start(args, format);
-    vprintfMessage(type, format, args);
+    vprintf(type, format, args);
     va_end(args);
 }
 
-void utils::Printer::vprintfMessage(int type, const char * format, va_list args) const
+void utils::Printer::vprintf(int type, char const * format, va_list args) const
 {
     int color = PRINT_COLOR_RESET;
     std::string label = "";
@@ -41,42 +41,44 @@ void utils::Printer::vprintfMessage(int type, const char * format, va_list args)
             default: break;
         }
 
-        vxprintfMessage(type, color, label.c_str(), format, args);
+        vxprintf(type, color, label.c_str(), format, args);
         print("\n");
     }
 }
 
-void utils::Printer::vxprintfMessage(int level, int color, const char * label, const char * format, va_list args) const
+void utils::Printer::vxprintf(int level, int color, char const * label, char const * format, va_list args) const
 {
     setColor(PRINT_COLOR_BOLD);
     setColor(color);
-    printf("%s: ", label);
+    print(toString("%s: ", label));
     setColor(PRINT_COLOR_RESET);
 
     setColor(PRINT_COLOR_BOLD);
-    vprintf(format, args);
+    print(vtoString(format, args));
     setColor(PRINT_COLOR_RESET);
 }
 
-void utils::Printer::printf(const char * format, ...) const
+std::string utils::Printer::toString(char const * format, ...) const
 {
     va_list args;
     va_start(args, format);
-    vprintf(format, args);
+    std::string ret(vtoString(format, args));
     va_end(args);
+    return ret;
 }
 
-void utils::Printer::vprintf(const char * format, va_list args) const
+std::string utils::Printer::vtoString(char const * format, va_list args) const
 {
     va_list copy;
     va_copy(copy, args);
 
     int len = std::vsnprintf(nullptr, 0, format, args);
-    char *string = new char[len + 1];
+    char * str = new char[len + 1];
 
     va_copy(args, copy);
-    std::vsnprintf(string, len + 1, format, args);
-    print(string);
+    std::vsnprintf(str, len + 1, format, args);
 
-    delete[] string;
+    std::string ret(str);
+    delete[] str;
+    return ret;
 }
