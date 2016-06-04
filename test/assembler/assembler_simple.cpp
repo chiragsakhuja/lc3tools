@@ -194,16 +194,14 @@ TEST_F(AssemblerSimple, SingleDataProcessingInstruction)
 {
     std::list<Token *> programs = readTest("single_data_processing_instruction");
 
-    Assembler as;
-    utils::Printer const * printer = new utils::ConsolePrinter();
-    AssemblerLogger logger(*printer);
-    InstructionEncoder encoder(false, *printer);
     std::map<std::string, int> symbolTable;
+    utils::Printer const * printer = new utils::ConsolePrinter();
+    Assembler as(false, *printer, symbolTable);
     uint32_t encodedInstructon;
     bool status = false;
 
     for(auto it = programs.begin(); it != programs.end(); it++) {
-        EXPECT_TRUE(status = as.processInstruction(false, logger, encoder, "", *it, symbolTable, encodedInstructon));
+        EXPECT_TRUE(status = as.processInstruction("", *it, encodedInstructon));
         if(status) {
             EXPECT_EQ((*it)->encoding, encodedInstructon);
         }

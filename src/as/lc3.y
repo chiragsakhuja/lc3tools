@@ -47,12 +47,12 @@ inst     : STRING operlist       { $1->type = INST; $1->opers = $2; countOperand
 pseudo   : DOT inst              { $2->type = PSEUDO; $$ = $2; }
          ;
 
-label    : STRING COLON NEWLINE  { $1->type = LABEL; $$ = $1; }
-         | STRING COLON          { $1->type = LABEL; $$ = $1; }
+label    : STRING COLON          { $1->type = LABEL; $$ = $1; }
          ;
 
 state    : inst NEWLINE          { $$ = $1; }
          | pseudo NEWLINE        { $$ = $1; }
+         | NEWLINE               { Token * newline = new Token("NEWLINE"); newline->type = NEWLINE; $$ = newline; }
          | label                 { $$ = $1; }
          ;
 
@@ -75,12 +75,19 @@ Token * append(Token *head, Token *list)
 
 void countOperands(Token *inst)
 {
+    Token * prev = nullptr;
     Token * cur = inst->opers;
     int count = 0;
 
-    while(cur != nullptr) {
+    while(cur != nullptr && cur->type != NEWLINE) {
         count += 1;
+        prev = cur;
         cur = cur->next;
+    }
+
+    if(prev && cur && cur->type == NEWLINE) {
+        delete cur;
+        prev->next = nullptr;
     }
 
     inst->num_operands = count;

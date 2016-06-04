@@ -37,14 +37,14 @@ int main(int argc, char *argv[])
 
 void genObjectFile(char const * filename, utils::Printer const & printer, std::map<std::string, int> & symbol_table)
 {
-    Assembler as;
+    Assembler as(true, printer, symbol_table);
 
     if((yyin = fopen(filename, "r")) == nullptr) {
          printer.printf(utils::PrintType::WARNING, "Skipping file %s ...", filename);
     } else {
         row_num = 0; col_num = 0;
         yyparse();
-        as.assembleProgram(true, printer, filename, root, symbol_table);
+        as.assembleProgram(filename, root);
 
         fclose(yyin);
     }

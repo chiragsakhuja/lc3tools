@@ -20,9 +20,9 @@ int row_num = 0, col_num = 0;
 
 LE      [\r\n]
 NLE     [^\r\n]
-WS      [ \n\r\t]
-NWS     [^ \n\r\t]
-NDEL    [^ ,:.\n\r\t]
+WS      [ \t]
+NWS     [^ \t]
+NDEL    [^ ,:.\r\n\t]
 BDIG    [0-1]
 DIG     [0-9]
 HDIG    [0-9a-f]
@@ -71,9 +71,9 @@ int stringToInt(char const * str)
     std::string conv = std::string(str).substr(1);
 
     switch(str[0]) {
-        case 'b': return std::stoi(conv, 0, 2) ; break;
-        case 'x': return std::stoi(conv, 0, 16); break;
-        case '#': return std::stoi(conv)       ; break;
-        default : return std::stoi(str)        ; break;
+        case 'b': return std::stoi(conv, 0, 2) ;
+        case 'x': return std::stoi(conv, 0, 16);
+        case '#': return std::stoi(conv)       ;
+        default : return std::stoi(str)        ;
     }
 }
