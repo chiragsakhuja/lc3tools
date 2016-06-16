@@ -65,9 +65,9 @@ tree     : program               { root = $1; }
 
 %%
 
-void yyerror(const char *str) { printf("Parse Error: %s\n", str); }
+void yyerror(const char * str) { printf("Parse Error: %s\n", str); }
 
-Token * append(Token *head, Token *list)
+Token * append(Token * head, Token * list)
 {
     head->next = list;
     return head;

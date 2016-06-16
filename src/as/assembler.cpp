@@ -127,9 +127,43 @@ bool Assembler::processPseudo(std::string const & filename, Token const * pseudo
 
 bool Assembler::processTokens(std::string const & filename, Token * program,  Token *& program_start)
 {
+    Token * prev_state = nullptr;
+    Token * cur_state = program;
+
+    while(cur_state != nullptr) {
+        std::cout << cur_state->str << "\n";
+        cur_state = cur_state->next;
+    }
+
+    std::cout << program;
+
+    cur_state = program;
+    // remove newline tokens
+    while(cur_state != nullptr) {
+        bool delete_cur_state = false;
+        if(cur_state->type == NEWLINE) {
+            std::cout << "Removing newline token at " << cur_state->row_num << ":" << cur_state->col_num << "\n";
+            if(prev_state) {
+                prev_state->next = cur_state->next;
+            } else {
+                // if we start off with newlines, move the program pointer forward
+                program = cur_state->next;
+            }
+            delete_cur_state = true;
+        } else {
+            prev_state = cur_state;
+        }
+
+        Token * next_state = cur_state->next;
+        if(delete_cur_state) {
+            delete cur_state;
+        }
+        cur_state = next_state;
+    }
+
     bool found_valid_orig = false;
     int cur_orig = 0;
-    Token * cur_state = program;
+    cur_state = program;
 
     // find the orig
     while(cur_state != nullptr && ! found_valid_orig) {

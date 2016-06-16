@@ -28,6 +28,15 @@ public:
     Token(int val);
 
     bool checkPseudoType(std::string const & pseudo) const;
+    void print(std::ostream & out, int indent_level) const;
+
+#ifdef _ENABLE_DEBUG
+    friend std::ostream & operator<<(std::ostream &, Token const &);
+#endif
 };
+
+#ifdef _ENABLE_DEBUG
+std::ostream & operator<<(std::ostream & out, Token const & x);
+#endif
 
 #endif
