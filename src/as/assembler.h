@@ -24,17 +24,17 @@ private:
 #endif
 
     std::vector<std::string> file_buffer;
-    int sectionStart;
     AssemblerLogger * logger;
     bool log_enable;
     InstructionEncoder * encoder;
     std::map<std::string, int> & symbol_table;
 
+    Token * removeNewlineTokens(Token * program);
     void processOperands(std::string const & filename, Token * operands);
     bool processInstruction(std::string const & filename, Token const * inst, uint32_t & encoded_instruction) const;
     bool processTokens(std::string const & filename, Token * program, Token *& program_start);
     bool processPseudo(std::string const & filename, Token const * pseudo);
-    bool getOrig(std::string const & filename, Token const * orig, int & new_orig);
+    bool setOrig(std::string const & filename, Token const * orig, int & new_orig);
 };
 
 #endif

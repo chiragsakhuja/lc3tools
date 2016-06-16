@@ -15,6 +15,7 @@ typedef enum {
     , OPER_TYPE_PCOFFS
     , OPER_TYPE_PCOFFU
     , OPER_TYPE_LABEL
+    , OPER_TYPE_UNTYPED_NUM
     , OPER_TYPE_UNKNOWN
 } OperType;
 
@@ -52,6 +53,7 @@ public:
     ~InstructionEncoder();
 
     bool encodeInstruction(bool print_enable, AssemblerLogger const & logger, Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction) const;
+    bool findReg(std::string const & search) const;
 
 private:
     int reg_width;

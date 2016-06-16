@@ -20,7 +20,6 @@ class AssemblerSimple_SingleInstruction_Test;
 
 Assembler::Assembler(bool log_enable, utils::Printer const & printer, std::map<std::string, int> & symbol_table) : symbol_table(symbol_table)
 {
-    this->sectionStart = 0;
     this->logger = new AssemblerLogger(printer);
     this->log_enable = log_enable;
     this->encoder = new InstructionEncoder(log_enable, printer);
@@ -28,43 +27,44 @@ Assembler::Assembler(bool log_enable, utils::Printer const & printer, std::map<s
 
 bool Assembler::processInstruction(std::string const & filename, Token const * inst, uint32_t & encoded_instruction) const
 {
-    std::cout << *inst;
     std::string const & op = inst->str;
     bool success = true;
     std::list<Instruction *> const & encs = encoder->insts[op];
 
-    Instruction * potentialMatch = nullptr;
-    bool foundMatch = false;
+    Instruction * candidate_match = nullptr;
+    bool found_candidate = false;
+    bool found_match = false;
 
     // check all encodings to see if there is a match
-    for(auto it = encs.begin(); it != encs.end(); it++) {
+    for(Instruction * enc : encs) {
         // first make sure the number of operands is the same, otherwise it's a waste
-        if((*it)->oper_types.size() == (uint32_t) inst->num_operands) {
-            potentialMatch = *it;
-            bool actualMatch = true;
-            const Token *curOper = inst->opers;
+        if(enc->oper_types.size() == (uint32_t) inst->num_operands) {
+            candidate_match = enc;
+            found_candidate = true;
+            bool actual_match = true;
+            Token const * cur_oper = inst->opers;
 
             // iterate through the oeprand types to see if the assembly matches
-            for(auto it = potentialMatch->oper_types.begin(); it != potentialMatch->oper_types.end(); it++) {
-                if(! (*it)->compareTypes(curOper->type)) {
-                    actualMatch = false;
+            for(Operand const * oper : candidate_match->oper_types) {
+                if(! oper->compareTypes(cur_oper->type)) {
+                    actual_match = false;
                     break;
                 }
 
-                curOper = curOper->next;
+                cur_oper = cur_oper->next;
             }
 
             // found a match, stop searching
-            if(actualMatch) {
-                foundMatch = true;
+            if(actual_match) {
+                found_match = true;
                 break;
             }
         }
     }
 
-    if(! foundMatch) {
+    if(! found_match) {
         // if there was no match, check to see if it was because of incorrect number of operands or incorrect operands
-        if(potentialMatch == nullptr) {
+        if(! found_candidate) {
             // this will only be the case if there are no encodings with the same number of operands as the assembly line
             if(log_enable) {
                 logger->printfMessage(utils::PrintType::ERROR, filename, inst, file_buffer[inst->row_num], "incorrect number of operands for instruction \'%s\'", inst->str.c_str());
@@ -76,7 +76,7 @@ bool Assembler::processInstruction(std::string const & filename, Token const * i
 
             // iterate through the assembly line to see which operands were incorrect and print errors
             if(log_enable) {
-                for(auto it = potentialMatch->oper_types.begin(); it != potentialMatch->oper_types.end(); it++) {
+                for(auto it = candidate_match->oper_types.begin(); it != candidate_match->oper_types.end(); it++) {
                     if(! (*it)->compareTypes(cur->type)) {
                         logger->printfMessage(utils::PrintType::ERROR, filename, cur, file_buffer[inst->row_num], "incorrect operand");
                     }
@@ -89,25 +89,30 @@ bool Assembler::processInstruction(std::string const & filename, Token const * i
         success = false;
     } else {
         // there was a match, so take that match and encode
-        success &= encoder->encodeInstruction(log_enable, *logger, potentialMatch, inst, encoded_instruction);
+        success &= encoder->encodeInstruction(log_enable, *logger, candidate_match, inst, encoded_instruction);
     }
 
     return success;
 }
 
-// note: newOrig is untouched if the .orig is not valid
-bool Assembler::getOrig(std::string const & filename, Token const * orig, int & newOrig)
+// note: new_orig is untouched if the .orig is not valid
+bool Assembler::setOrig(std::string const & filename, Token const * orig, int & new_orig)
 {
     if(orig->checkPseudoType("orig")) {     // sanity check...
-        if(log_enable && orig->num_operands != 1) {
-            logger->printfMessage(utils::PrintType::ERROR, filename, orig, file_buffer[orig->row_num], "incorrect number of operands");
+        if(orig->num_operands != 1) {
+            if(log_enable) {
+                logger->printfMessage(utils::PrintType::WARNING, filename, orig, file_buffer[orig->row_num], "incorrect number of operands");
+            }
             return false;
         } else {
-            if(log_enable && orig->opers->type != NUM) {
-                logger->printfMessage(utils::PrintType::ERROR, filename, orig->opers, file_buffer[orig->row_num], "illegal operand");
+            if(orig->opers->type != NUM) {
+                if(log_enable) {
+                    logger->printfMessage(utils::PrintType::WARNING, filename, orig->opers, file_buffer[orig->row_num], "illegal operand");
+                }
                 return false;
             } else {
-                newOrig = orig->opers->num;
+                new_orig = orig->opers->num;
+                return true;
             }
         }
     }
@@ -118,7 +123,8 @@ bool Assembler::getOrig(std::string const & filename, Token const * orig, int & 
 bool Assembler::processPseudo(std::string const & filename, Token const * pseudo)
 {
     if(pseudo->checkPseudoType("orig")) {
-        getOrig(filename, pseudo, sectionStart);
+        int dummy;
+        setOrig(filename, pseudo, dummy);
     } else if(pseudo->checkPseudoType("end")) {
         // do nothing
     }
@@ -126,7 +132,7 @@ bool Assembler::processPseudo(std::string const & filename, Token const * pseudo
     return true;
 }
 
-bool Assembler::processTokens(std::string const & filename, Token * program,  Token *& program_start)
+Token * Assembler::removeNewlineTokens(Token * program)
 {
     Token * prev_state = nullptr;
     Token * cur_state = program;
@@ -153,9 +159,17 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
         cur_state = next_state;
     }
 
+    // since you may have moved the program pointer, you need to return it
+    return program;
+}
+
+bool Assembler::processTokens(std::string const & filename, Token * program,  Token *& program_start)
+{
+    program = removeNewlineTokens(program);
+
+    Token * cur_state = program;
     bool found_valid_orig = false;
     int cur_orig = 0;
-    cur_state = program;
 
     // find the orig
     while(cur_state != nullptr && ! found_valid_orig) {
@@ -179,7 +193,7 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
 
         // check to see if .orig is valid
         // if so, stop looking; if not, move on and try again
-        if(getOrig(filename, cur_state, cur_orig)) {
+        if(setOrig(filename, cur_state, cur_orig)) {
             found_valid_orig = true;
         }
 
@@ -200,10 +214,12 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
     int pc_offset = 0;
     while(cur_state != nullptr) {
         if(cur_state->checkPseudoType("orig")) {
-            if(! getOrig(filename, cur_state, cur_orig)) {
+            if(! setOrig(filename, cur_state, cur_orig)) {
                 if(log_enable) {
                     logger->printf(utils::PrintType::WARNING, "ignoring invalid .orig");
                 }
+            } else {
+                pc_offset = 0;
             }
         }
 
@@ -223,20 +239,13 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
             Token * oper = cur_state->opers;
             while(oper != nullptr) {
                 if(oper->type == STRING) {
-                    bool reg_exists = false;
-
-                    for(auto it = encoder->regs.begin(); it != encoder->regs.end(); ++it) {
-                        if(*it == oper->str) {
-                            reg_exists = true;
-                            break;
-                        }
-                    }
-
-                    if(reg_exists) {
+                    if(encoder->findReg(oper->str)) {
                         oper->type = OPER_TYPE_REG;
                     } else {
                         oper->type = OPER_TYPE_LABEL;
                     }
+                } else if(oper->type == NUM) {
+                    oper->type = OPER_TYPE_UNTYPED_NUM;
                 }
 
                 oper = oper->next;
@@ -285,7 +294,7 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program)
     }
 
     if(log_enable) {
-        logger->printf(utils::PrintType::INFO, "first pass completed successefully, beginning second pass ...");
+        logger->printf(utils::PrintType::INFO, "first pass completed successfully, beginning second pass ...");
     }
 
     while(cur_state != nullptr) {

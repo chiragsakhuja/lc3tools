@@ -26,11 +26,8 @@ Operand::Operand(int type, int lo, int hi)
 
 bool Operand::compareTypes(int other_type) const
 {
-    if(   (   other_type == OPER_TYPE_LABEL
-           && (   type == OPER_TYPE_IMM
-               || type == OPER_TYPE_PCOFFS
-               || type == OPER_TYPE_PCOFFU
-              )
+    if(   (   (other_type == OPER_TYPE_LABEL || other_type == OPER_TYPE_UNTYPED_NUM)
+           && (type == OPER_TYPE_IMM || type == OPER_TYPE_PCOFFS || type == OPER_TYPE_PCOFFU)
           )
        || (other_type == type)
       )
@@ -349,4 +346,9 @@ bool InstructionEncoder::encodeInstruction(bool print_enable, AssemblerLogger co
     delete[] bits;
 
     return log_enable;
+}
+
+bool InstructionEncoder::findReg(std::string const & search) const
+{
+    return std::find(regs.begin(), regs.end(), search) != std::end(regs);
 }
