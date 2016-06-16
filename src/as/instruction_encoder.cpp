@@ -62,7 +62,7 @@ Instruction::~Instruction()
 
 InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const & printer)
 {
-    std::string res_path(globalResPath);
+    std::string res_path(GLOBAL_RES_PATH);
 
     std::ifstream file(res_path + "/encodings.json");
 

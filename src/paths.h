@@ -3,7 +3,7 @@
 
 #include <string>
 
-std::string globalResPath = "@ResPath@";
-std::string globalTestPath = "@TestPath@";
+#define GLOBAL_RES_PATH "@ResPath@"
+#define GLOBAL_TEST_PATH "@TestPath@"
 
 #endif
