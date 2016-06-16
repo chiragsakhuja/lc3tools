@@ -29,7 +29,7 @@ mkdir build && cd build
 # configure directory for cmake
 cmake ..
 # generate build system
-cmake ..
+cmake -DCMAKE_BUILD_TYPE=Release ..
 # build all the targets
 make all
 ```
