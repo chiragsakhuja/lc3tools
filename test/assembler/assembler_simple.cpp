@@ -48,7 +48,7 @@ class AssemblerSimple : public ::testing::Test
 protected:
     AssemblerSimple()
     {
-        std::string testPath(globalTestPath);
+        std::string testPath(GLOBAL_TEST_PATH);
         std::ifstream file(testPath + "/assembler/assembler_simple.txt");
 
         if(file.is_open()) {
@@ -82,7 +82,7 @@ protected:
 
     std::list<Token *> readTest(const std::string& testName)
     {
-        std::string testPath(globalTestPath);
+        std::string testPath(GLOBAL_TEST_PATH);
         std::ifstream file(testPath + "/assembler/assembler_simple.txt");
         std::list<Token *> programs;
 
