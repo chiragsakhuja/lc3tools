@@ -40,7 +40,7 @@ void genObjectFile(char const * filename, utils::Printer const & printer, std::m
     Assembler as(true, printer, symbol_table);
 
     if((yyin = fopen(filename, "r")) == nullptr) {
-         printer.printf(utils::PrintType::WARNING, "Skipping file %s ...", filename);
+         printer.printf(utils::PrintType::WARNING, "skipping file %s ...", filename);
     } else {
         row_num = 0; col_num = 0;
         yyparse();

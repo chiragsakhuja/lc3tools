@@ -29,7 +29,7 @@ HDIG    [0-9a-f]
 
 %%
 
-{LE}+                   { col_num = 0; if(strlen(yytext) > 1 || yytext[0] != '\r') { row_num++; } return NEWLINE; }
+{LE}{1,2}               { col_num = 0; row_num += 1; if(strlen(yytext) == 2 && yytext[0] == yytext[1]) { row_num += 1; } return NEWLINE; }
 
 [,]                     { col_num += strlen(yytext); return COMMA; }
 [.]                     { col_num += strlen(yytext); return DOT  ; }
@@ -66,14 +66,17 @@ Token * makeToken(char const * tok, int type)
 
 int stringToInt(char const * str)
 {
-    if(str[0] == '0') { str += 1; }
+    if(str[0] == '0' && str[1] != '\0') { str += 1; }
 
-    std::string conv = std::string(str).substr(1);
-
-    switch(str[0]) {
-        case 'b': return std::stoi(conv, 0, 2) ;
-        case 'x': return std::stoi(conv, 0, 16);
-        case '#': return std::stoi(conv)       ;
-        default : return std::stoi(str)        ;
+    if(str[0] == 'b' || str[0] == 'x' || str[0] == '#') {
+        std::string conv = std::string(str).substr(1);
+        switch(str[0]) {
+            case 'b': return std::stoi(conv, 0, 2) ;
+            case 'x': return std::stoi(conv, 0, 16);
+            case '#': return std::stoi(conv)       ;
+            default : return std::stoi(str)        ;
+        }
+    } else {
+        return std::stoi(str);
     }
 }

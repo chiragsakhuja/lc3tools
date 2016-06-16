@@ -45,13 +45,21 @@ void Token::print(std::ostream & out, int indent_level) const
         out << "|- ";
     }
 
-    if(type == STRING) {
+    if(type == STRING || type == PSEUDO || type == LABEL || type == INST) {
         out << str;
     } else if(type == NUM) {
         out << num;
+    } else if(type == NEWLINE) {
+        out << "NEWLINE";
+    } else if(type == COLON) {
+        out << ":";
+    } else if(type == COMMA) {
+        out << ".";
+    } else {
+        out << "Unknown token";
     }
 
-    out << std::endl;
+    out << " (" << (row_num + 1) << ", " << (col_num + 1) << ", " << length << ")" << std::endl;
     Token * cur_oper = opers;
     while(cur_oper != nullptr) {
         cur_oper->print(out, indent_level + 1);

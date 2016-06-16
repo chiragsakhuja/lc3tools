@@ -28,6 +28,7 @@ Assembler::Assembler(bool log_enable, utils::Printer const & printer, std::map<s
 
 bool Assembler::processInstruction(std::string const & filename, Token const * inst, uint32_t & encoded_instruction) const
 {
+    std::cout << *inst;
     std::string const & op = inst->str;
     bool success = true;
     std::list<Instruction *> const & encs = encoder->insts[op];
@@ -38,7 +39,7 @@ bool Assembler::processInstruction(std::string const & filename, Token const * i
     // check all encodings to see if there is a match
     for(auto it = encs.begin(); it != encs.end(); it++) {
         // first make sure the number of operands is the same, otherwise it's a waste
-        if((*it)->oper_types.size() == inst->num_operands) {
+        if((*it)->oper_types.size() == (uint32_t) inst->num_operands) {
             potentialMatch = *it;
             bool actualMatch = true;
             const Token *curOper = inst->opers;
@@ -130,19 +131,10 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
     Token * prev_state = nullptr;
     Token * cur_state = program;
 
-    while(cur_state != nullptr) {
-        std::cout << cur_state->str << "\n";
-        cur_state = cur_state->next;
-    }
-
-    std::cout << program;
-
-    cur_state = program;
     // remove newline tokens
     while(cur_state != nullptr) {
         bool delete_cur_state = false;
         if(cur_state->type == NEWLINE) {
-            std::cout << "Removing newline token at " << cur_state->row_num << ":" << cur_state->col_num << "\n";
             if(prev_state) {
                 prev_state->next = cur_state->next;
             } else {
@@ -172,7 +164,7 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
             // TODO: allow for exceptions, such as .external
             if(log_enable) {
                 logger->xprintfMessage(  utils::PrintType::WARNING, filename, 0, file_buffer[cur_state->row_num].length(), cur_state
-                                      , file_buffer[cur_state->row_num], "ignoring statement before valid .orig");
+                                       , file_buffer[cur_state->row_num], "ignoring statement before valid .orig");
             }
             cur_state = cur_state->next;
         }
@@ -274,6 +266,9 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program)
 
         file.close();
     } else {
+        if(log_enable) {
+            logger->printf(utils::PrintType::WARNING, "somehow the file got destroyed in the last couple of ms, skipping file %s ...", filename.c_str());
+        }
         return false;
     }
 
@@ -283,6 +278,9 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program)
 
     Token * cur_state = nullptr;
     if(! processTokens(filename, program, cur_state)) {
+        if(log_enable) {
+            logger->printf(utils::PrintType::ERROR, "first pass failed");
+        }
         return false;
     }
 
@@ -303,8 +301,12 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program)
         cur_state = cur_state->next;
     }
 
-    if(success && log_enable) {
-        logger->printf(utils::PrintType::INFO, "second pass completed successfully");
+    if(log_enable) {
+        if(success) {
+            logger->printf(utils::PrintType::INFO, "second pass completed successfully");
+        } else {
+            logger->printf(utils::PrintType::ERROR, "second pass failed");
+        }
     }
 
     return success;
