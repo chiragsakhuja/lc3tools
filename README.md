@@ -26,10 +26,9 @@ system, you can execute the following commands to compile the project.
 ```
 # create build directory
 mkdir build && cd build
-# configure directory for cmake
-cmake ..
-# generate build system
+# set up build directory
 cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake ..
 # build all the targets
 make all
 ```
@@ -39,7 +38,9 @@ directory that contains the targets.
 
 # Usage
 Currently the following executables are produced upon building:
-* `assembler` is the assembler.
+* `lib/libjsonxx.so` is a third-party JSON parser.
+* `lib/liblc3core.so` is the backend for the assembler and simulator.
+* `bin/assembler` is a CLI frontend for the assembler.
 
 ## assembler
 `assembler` takes assembly files as inputs and generates assembled files with the
@@ -51,8 +52,9 @@ same name. For example, runnning `assembler proj1.asm` will generate the files
 is downloaded as part of the build process. To run the tests, you must
 run the following commands, after the project is initially built.
 ```
-# create build directory with testing
+# set up build directory
 cmake -Dtest=on -DPRINT_LEVEL=0 ..
+cmake ..
 # build testing targets
 make all
 # run testing suite
