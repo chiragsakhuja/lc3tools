@@ -1,13 +1,13 @@
 #ifndef INSTRUCTION_ENCODER_H
 #define INSTRUCTION_ENCODER_H
 
-#include <map>
-#include <vector>
 #include <list>
+#include <map>
 #include <string>
+#include <vector>
 
-#include "../utils/printer.h"
-#include "logger.h"
+#include "asm/logger.h"
+#include "common/printer.h"
 
 typedef enum {
       OPER_TYPE_REG = 2
@@ -49,7 +49,7 @@ public:
     std::map<std::string, std::list<Instruction *> > insts;
     std::vector<std::string> regs;
 
-    InstructionEncoder(bool print_enable, utils::Printer const & printer);
+    InstructionEncoder(bool print_enable, utils::Printer & printer);
     ~InstructionEncoder();
 
     bool encodeInstruction(bool print_enable, AssemblerLogger const & logger, Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction) const;

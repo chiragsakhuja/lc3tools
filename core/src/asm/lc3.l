@@ -1,11 +1,11 @@
 %{
 
-#include <cstdio>
-#include <string>
-#include <cstring>
 #include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <string>
 
-#include "tokens.h"
+#include "asm/tokens.h"
 #include "parser.hpp"
 
 int stringToInt(char const * str);

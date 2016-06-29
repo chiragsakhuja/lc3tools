@@ -1,19 +1,19 @@
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <list>
-#include <vector>
 #include <algorithm>
-#include <string>
 #include <cstdint>
+#include <fstream>
+#include <iostream>
+#include <list>
+#include <map>
+#include <string>
+#include <vector>
 
-#include "tokens.h"
-#include "utils/printer.h"
-#include "logger.h"
+#include "asm/instruction_encoder.h"
+#include "asm/logger.h"
+#include "asm/tokens.h"
+#include "common/printer.h"
 #include "thirdparty/jsonxx/jsonxx.h"
-#include "instruction_encoder.h"
 
-#include "paths.h"
+#include "paths_gen.h"
 
 Operand::Operand() : Operand(OPER_TYPE_UNKNOWN, 0, 0) { }
 
@@ -57,7 +57,7 @@ Instruction::~Instruction()
     }
 }
 
-InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer const & printer)
+InstructionEncoder::InstructionEncoder(bool print_enable, utils::Printer & printer)
 {
     std::string res_path(GLOBAL_RES_PATH);
 

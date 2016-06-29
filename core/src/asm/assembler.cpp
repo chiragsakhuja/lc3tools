@@ -1,24 +1,24 @@
-#include <fstream>
-#include <string>
-#include <cstring>
-#include <vector>
-#include <map>
-#include <iostream>
-#include <list>
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <list>
+#include <map>
+#include <string>
+#include <vector>
 
 class AssemblerSimple_SingleInstruction_Test;
 
-#include "tokens.h"
-#include "utils/printer.h"
-#include "thirdparty/jsonxx/jsonxx.h"
-#include "logger.h"
-#include "instruction_encoder.h"
+#include "asm/assembler.h"
+#include "asm/instruction_encoder.h"
+#include "asm/logger.h"
+#include "asm/tokens.h"
+#include "common/printer.h"
 #include "parser.hpp"
-#include "assembler.h"
+#include "thirdparty/jsonxx/jsonxx.h"
 
-Assembler::Assembler(bool log_enable, utils::Printer const & printer, std::map<std::string, int> & symbol_table) : symbol_table(symbol_table)
+Assembler::Assembler(bool log_enable, utils::Printer & printer)
 {
     this->logger = new AssemblerLogger(printer);
     this->log_enable = log_enable;
@@ -319,4 +319,23 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program)
     }
 
     return success;
+}
+
+extern FILE *yyin;
+extern int yyparse(void);
+extern Token *root;
+extern int row_num, col_num;
+
+void Assembler::genObjectFile(char const * filename)
+{
+    std::map<std::string, int> symbol_table;
+    if((yyin = fopen(filename, "r")) == nullptr) {
+         // printer.printf(utils::PrintType::WARNING, "skipping file %s ...", filename);
+    } else {
+        row_num = 0; col_num = 0;
+        yyparse();
+        assembleProgram(filename, root);
+
+        fclose(yyin);
+    }
 }

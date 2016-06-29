@@ -1,6 +1,11 @@
 #ifndef TOKENS_H
 #define TOKENS_H
 
+#include <iostream>
+#include <string>
+
+#include "asm/tokens.h"
+
 class Token
 {
 private:

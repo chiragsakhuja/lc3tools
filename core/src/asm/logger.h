@@ -1,16 +1,16 @@
 #ifndef TOKEN_PRINTER_H
 #define TOKEN_PRINTER_H
 
-#include "tokens.h"
-#include "../utils/printer.h"
+#include "asm/tokens.h"
+#include "common/printer.h"
 
 class AssemblerLogger
 {
 private:
-    const utils::Printer & printer;
+    utils::Printer & printer;
 
 public:
-    AssemblerLogger(utils::Printer const & printer) : printer(printer) {}
+    AssemblerLogger(utils::Printer & printer) : printer(printer) {}
     AssemblerLogger(AssemblerLogger const &) = default;
     AssemblerLogger & operator=(AssemblerLogger const &) = default;
 

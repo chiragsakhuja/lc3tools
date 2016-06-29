@@ -3,7 +3,7 @@
 
 #include "printer.h"
 
-void utils::Printer::printf(int type, char const * format, ...) const
+void utils::Printer::printf(int type, char const * format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -11,7 +11,7 @@ void utils::Printer::printf(int type, char const * format, ...) const
     va_end(args);
 }
 
-void utils::Printer::vprintf(int type, char const * format, va_list args) const
+void utils::Printer::vprintf(int type, char const * format, va_list args)
 {
     int color = PRINT_COLOR_RESET;
     std::string label = "";
@@ -46,7 +46,7 @@ void utils::Printer::vprintf(int type, char const * format, va_list args) const
     }
 }
 
-void utils::Printer::vxprintf(int level, int color, char const * label, char const * format, va_list args) const
+void utils::Printer::vxprintf(int level, int color, char const * label, char const * format, va_list args)
 {
     setColor(PRINT_COLOR_BOLD);
     setColor(color);
@@ -58,7 +58,7 @@ void utils::Printer::vxprintf(int level, int color, char const * label, char con
     setColor(PRINT_COLOR_RESET);
 }
 
-std::string utils::Printer::toString(char const * format, ...) const
+std::string utils::Printer::toString(char const * format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -67,7 +67,7 @@ std::string utils::Printer::toString(char const * format, ...) const
     return ret;
 }
 
-std::string utils::Printer::vtoString(char const * format, va_list args) const
+std::string utils::Printer::vtoString(char const * format, va_list args)
 {
     va_list copy;
     va_copy(copy, args);

@@ -3,7 +3,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
-#include "tokens.h"
+
+#include "asm/tokens.h"
 
 Token *append(Token * head, Token * list);
 void countOperands(Token * inst);

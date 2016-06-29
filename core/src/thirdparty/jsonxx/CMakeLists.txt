@@ -3,5 +3,5 @@ set(JSONXX_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${JSONXX_INCLUDE_DIR})
 set(JSONXX_SRCS jsonxx.cc)
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-add_library(jsonxx STATIC ${JSONXX_SRCS})
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
+add_library(jsonxx SHARED ${JSONXX_SRCS})

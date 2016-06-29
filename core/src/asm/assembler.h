@@ -1,22 +1,23 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 
-#include <vector>
 #include <map>
 #include <string>
+#include <vector>
 
-#include "../utils/printer.h"
-#include "logger.h"
-#include "instruction_encoder.h"
+#include "asm/instruction_encoder.h"
+#include "asm/logger.h"
+#include "common/printer.h"
 
 class Assembler
 {
 public:
-    bool assembleProgram(std::string const & filename, Token * program);
-
-    Assembler(bool log_enable, utils::Printer const & printer, std::map<std::string, int> & symbol_table);
+    Assembler(bool log_enable, utils::Printer & printer);
     Assembler(Assembler const &) = default;
     Assembler & operator=(Assembler const &) = default;
+
+    bool assembleProgram(std::string const & filename, Token * program);
+    void genObjectFile(char const * filename);
 
 private:
 #ifdef _ASSEMBLER_TEST
@@ -27,7 +28,6 @@ private:
     AssemblerLogger * logger;
     bool log_enable;
     InstructionEncoder * encoder;
-    std::map<std::string, int> & symbol_table;
 
     Token * removeNewlineTokens(Token * program);
     void processOperands(std::string const & filename, Token * operands);

@@ -2,7 +2,7 @@
 
 #include "console_printer.h"
 
-void utils::ConsolePrinter::setColor(int color) const
+void utils::ConsolePrinter::setColor(int color)
 {
     switch(color) {
         case PRINT_COLOR_RED    : std::cout << "\033[31m"; break;
@@ -15,7 +15,7 @@ void utils::ConsolePrinter::setColor(int color) const
     }
 }
 
-void utils::ConsolePrinter::print(std::string const & string) const
+void utils::ConsolePrinter::print(std::string const & string)
 {
     std::cout << string;
 }

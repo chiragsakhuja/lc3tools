@@ -1,10 +1,7 @@
-#ifdef _ENABLE_DEBUG
 #include <iostream>
-#endif
-
 #include <string>
 
-#include "tokens.h"
+#include "asm/tokens.h"
 #include "parser.hpp"
 
 Token::Token(void)

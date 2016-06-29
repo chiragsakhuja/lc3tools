@@ -5,6 +5,9 @@
     #define _PRINT_LEVEL 2
 #endif
 
+#include <cstdio>
+#include <string>
+
 namespace utils
 {
     enum PrintColor {
@@ -32,16 +35,16 @@ namespace utils
         Printer & operator=(Printer const &) = default;
         virtual ~Printer(void) = default;
 
-        void printf(int type, char const * format, ...) const;
-        void vprintf(int type, char const * format, va_list args) const;
-        std::string toString(char const * format, ...) const;
-        std::string vtoString(char const * format, va_list args) const;
+        void printf(int type, char const * format, ...);
+        void vprintf(int type, char const * format, va_list args);
+        std::string toString(char const * format, ...);
+        std::string vtoString(char const * format, va_list args);
 
-        virtual void setColor(int color) const = 0;
-        virtual void print(std::string const & string) const = 0;
+        virtual void setColor(int color) = 0;
+        virtual void print(std::string const & string) = 0;
 
     protected:
-        void vxprintf(int level, int color, char const * label, char const * format, va_list args) const;
+        void vxprintf(int level, int color, char const * label, char const * format, va_list args);
     };
 };
 

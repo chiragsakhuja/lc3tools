@@ -10,8 +10,8 @@ namespace utils
     class ConsolePrinter : public Printer
     {
     public:
-        virtual void setColor(int color) const override;
-        virtual void print(std::string const & string) const override;
+        virtual void setColor(int color) override;
+        virtual void print(std::string const & string) override;
     };
 };
 
