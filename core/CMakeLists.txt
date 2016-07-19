@@ -1,2 +1,2 @@
 # recurse into sources
-subdirs(src)
+add_subdirectory(src)

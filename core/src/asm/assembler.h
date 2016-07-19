@@ -5,9 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "asm/instruction_encoder.h"
-#include "asm/logger.h"
-#include "common/printer.h"
+#include "instruction_encoder.h"
+#include "logger.h"
+#include "../common/printer.h"
 
 class Assembler
 {

@@ -40,3 +40,7 @@ build/*
 
 # Ignore test cases
 *.asm
+
+# Ignore generated files
+core/src/asm/parser_gen/*
+core/src/common/configured_paths.h

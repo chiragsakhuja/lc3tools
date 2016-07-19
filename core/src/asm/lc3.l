@@ -5,7 +5,7 @@
 #include <cstring>
 #include <string>
 
-#include "asm/tokens.h"
+#include "../tokens.h"
 #include "parser.hpp"
 
 int stringToInt(char const * str);

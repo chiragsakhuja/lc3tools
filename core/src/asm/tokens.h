@@ -4,8 +4,6 @@
 #include <iostream>
 #include <string>
 
-#include "asm/tokens.h"
-
 class Token
 {
 private:

@@ -1,6 +1,6 @@
-#include "asm/assembler.h"
-#include "common/printer.h"
-#include "console_printer.h"
+#include "core/src/asm/assembler.h"
+#include "core/src/common/printer.h"
+#include "../common/console_printer.h"
 
 int main(int argc, char *argv[])
 {

@@ -1,8 +1,8 @@
 #ifndef TOKEN_PRINTER_H
 #define TOKEN_PRINTER_H
 
-#include "asm/tokens.h"
-#include "common/printer.h"
+#include "tokens.h"
+#include "../common/printer.h"
 
 class AssemblerLogger
 {

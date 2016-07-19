@@ -34,36 +34,38 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_PRINT_LEVEL=${PRINT_LEVEL}
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Wall -D_ENABLE_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -w")
 
-if(test)
-    set(TestPath ${PROJECT_SOURCE_DIR}/test)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_ENABLE_TESTING")
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
-    find_package(Threads REQUIRED)
-    enable_testing()
+#if(test)
+    #set(TestPath ${PROJECT_SOURCE_DIR}/test)
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_ENABLE_TESTING")
 
-    include(ExternalProject)
+    #find_package(Threads REQUIRED)
+    #enable_testing()
 
-    ExternalProject_Add(
-        gtest
-        URL https://googletest.googlecode.com/files/gtest-1.7.0.zip
-        PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
-        INSTALL_COMMAND ""
-    )
+    #include(ExternalProject)
 
-    add_library(libgtest IMPORTED STATIC GLOBAL)
-    add_dependencies(libgtest gtest)
+    #ExternalProject_Add(
+        #gtest
+        #URL https://googletest.googlecode.com/files/gtest-1.7.0.zip
+        #PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
+        #INSTALL_COMMAND ""
+    #)
 
-    ExternalProject_Get_Property(gtest source_dir binary_dir)
-    set_target_properties(libgtest PROPERTIES
-        "IMPORTED_LOCATION" "${binary_dir}/libgtest.a"
-        "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-    )
+    #add_library(libgtest IMPORTED STATIC GLOBAL)
+    #add_dependencies(libgtest gtest)
 
-    include_directories("${source_dir}/include")
+    #ExternalProject_Get_Property(gtest source_dir binary_dir)
+    #set_target_properties(libgtest PROPERTIES
+        #"IMPORTED_LOCATION" "${binary_dir}/libgtest.a"
+        #"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
+    #)
 
-    subdirs(test)
-endif()
+    #include_directories("${source_dir}/include")
 
+    #subdirs(test)
+#endif()
 
-subdirs(core)
-subdirs(cli)
+add_subdirectory(core)
+add_subdirectory(cli)

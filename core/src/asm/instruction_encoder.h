@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "asm/logger.h"
-#include "common/printer.h"
+#include "logger.h"
+#include "../common/printer.h"
 
 typedef enum {
       OPER_TYPE_REG = 2

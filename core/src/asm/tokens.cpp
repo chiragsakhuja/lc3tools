@@ -1,8 +1,8 @@
 #include <iostream>
 #include <string>
 
-#include "asm/tokens.h"
-#include "parser.hpp"
+#include "tokens.h"
+#include "parser_gen/parser.hpp"
 
 Token::Token(void)
 {

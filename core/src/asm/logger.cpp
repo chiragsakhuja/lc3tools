@@ -2,8 +2,8 @@
 #include <iostream>
 #include <string>
 
-#include "asm/logger.h"
-#include "asm/tokens.h"
+#include "logger.h"
+#include "tokens.h"
 
 void AssemblerLogger::printf(int level, char const * format, ...) const
 {

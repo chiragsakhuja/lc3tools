@@ -10,13 +10,13 @@
 
 class AssemblerSimple_SingleInstruction_Test;
 
-#include "asm/assembler.h"
-#include "asm/instruction_encoder.h"
-#include "asm/logger.h"
-#include "asm/tokens.h"
-#include "common/printer.h"
-#include "parser.hpp"
-#include "thirdparty/jsonxx/jsonxx.h"
+#include "assembler.h"
+#include "instruction_encoder.h"
+#include "logger.h"
+#include "tokens.h"
+#include "../common/printer.h"
+#include "parser_gen/parser.hpp"
+#include "../thirdparty/jsonxx/jsonxx.h"
 
 Assembler::Assembler(bool log_enable, utils::Printer & printer)
 {

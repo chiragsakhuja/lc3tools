@@ -7,13 +7,13 @@
 #include <string>
 #include <vector>
 
-#include "asm/instruction_encoder.h"
-#include "asm/logger.h"
-#include "asm/tokens.h"
-#include "common/printer.h"
-#include "thirdparty/jsonxx/jsonxx.h"
+#include "instruction_encoder.h"
+#include "logger.h"
+#include "tokens.h"
+#include "../common/printer.h"
+#include "../thirdparty/jsonxx/jsonxx.h"
 
-#include "paths_gen.h"
+#include "../common/configured_paths.h"
 
 Operand::Operand() : Operand(OPER_TYPE_UNKNOWN, 0, 0) { }
 
