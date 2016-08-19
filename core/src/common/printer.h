@@ -15,6 +15,7 @@ namespace utils
         , PRINT_COLOR_YELLOW
         , PRINT_COLOR_GREEN
         , PRINT_COLOR_MAGENTA
+        , PRINT_COLOR_BLUE
         , PRINT_COLOR_BOLD
         , PRINT_COLOR_RESET
     };
@@ -25,6 +26,7 @@ namespace utils
         , WARNING
         , INFO
         , DEBUG
+        , EXTRA
     };
 
     class Printer

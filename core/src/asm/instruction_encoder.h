@@ -52,11 +52,12 @@ public:
     InstructionEncoder(bool print_enable, utils::Printer & printer);
     ~InstructionEncoder();
 
-    bool encodeInstruction(bool print_enable, AssemblerLogger const & logger, Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction) const;
+    uint32_t encodeInstruction(bool print_enable, AssemblerLogger const & logger, Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction, std::string const & line) const;
     bool findReg(std::string const & search) const;
 
 private:
     int reg_width;
+    std::string udec_to_bin(uint32_t x, uint32_t num_bits) const;
 };
 
 #endif

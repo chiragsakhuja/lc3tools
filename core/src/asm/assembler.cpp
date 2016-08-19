@@ -89,7 +89,7 @@ bool Assembler::processInstruction(std::string const & filename, Token const * i
         success = false;
     } else {
         // there was a match, so take that match and encode
-        success &= encoder->encodeInstruction(log_enable, *logger, candidate_match, inst, encoded_instruction);
+        success &= encoder->encodeInstruction(log_enable, *logger, candidate_match, inst, encoded_instruction, file_buffer[inst->row_num]) == 0;
     }
 
     return success;

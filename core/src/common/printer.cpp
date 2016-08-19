@@ -38,6 +38,11 @@ void utils::Printer::vprintf(int type, char const * format, va_list args)
                 label = "debug";
                 break;
 
+            case EXTRA:
+                color = PRINT_COLOR_BLUE;
+                label = "extra";
+                break;
+
             default: break;
         }
 
