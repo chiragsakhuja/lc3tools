@@ -5,9 +5,7 @@
 int main(int argc, char *argv[])
 {
     utils::Printer * printer = new utils::ConsolePrinter();
-    Assembler as(true, *printer);
-
-    std::map<std::string, int> symbol_table;
+    core::Assembler as(true, *printer);
 
     if(argc < 2) {
         printer->printf(utils::PrintType::ERROR, "usage: %s file [file ...]", argv[0]);

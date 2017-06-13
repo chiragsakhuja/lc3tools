@@ -28,7 +28,5 @@ add_custom_target(parser DEPENDS ${PROJECT_SOURCE_DIR}/core/src/asm/parser_gen/p
 
 # generate library out of assembler
 add_library(lc3core SHARED ${BISON_Parser_OUTPUTS} ${FLEX_Scanner_OUTPUTS} ${CXX_SOURCES} ${CXX_HEADERS})
-target_link_libraries(lc3core jsonxx)
+target_link_libraries(lc3core)
 add_dependencies(lc3core parser)
-
-add_subdirectory(thirdparty)
