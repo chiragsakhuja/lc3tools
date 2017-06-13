@@ -22,24 +22,33 @@ Instruction::~Instruction(void)
     }
 }
 
-/*
- *bool Operand::compareTypes(int other_type) const
- *{
- *    if(   (   (other_type == OPER_TYPE_LABEL || other_type == OPER_TYPE_UNTYPED_NUM)
- *              && (type == OPER_TYPE_IMM || type == OPER_TYPE_PCOFFS || type == OPER_TYPE_PCOFFU)
- *              )
- *          || (other_type == type)
- *          )
- *        {
- *            return true;
- *        }
- *
- *    return false;
- *}
- */
+uint32_t Instruction::getNumOperands()
+{
+    uint32_t ret = 0;
+    for(Operand * operand : operands) {
+        if(operand->type != OPER_TYPE_FIXED) {
+            ret += 1;
+        }
+    }
+    return ret;
+}
+
+bool Operand::isEqualType(OperType other) const
+{
+    return type == other;
+}
 
 InstructionGenerator::InstructionGenerator(void)
 {
+    regs["r0"] = 0;
+    regs["r1"] = 1;
+    regs["r2"] = 2;
+    regs["r3"] = 3;
+    regs["r4"] = 4;
+    regs["r5"] = 5;
+    regs["r6"] = 6;
+    regs["r7"] = 7;
+
     instructions["add"].push_back(new ADDInstruction({
         new FixedOperand(4, 0x1),
         new RegOperand(3),
@@ -62,7 +71,7 @@ InstructionGenerator::~InstructionGenerator(void)
     // TODO: Go through map and delete all instructions
 }
 
-std::string Operand::udecToBin(uint32_t value, uint32_t num_bits)
+std::string core::udecToBin(uint32_t value, uint32_t num_bits)
 {
     char * bits = new char[num_bits + 1];
     for(uint32_t i = 0; i < num_bits; i += 1) {

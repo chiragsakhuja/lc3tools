@@ -16,10 +16,10 @@ namespace core {
         , OPER_TYPE_REG
     } OperType;
 
+    std::string udecToBin(uint32_t value, uint32_t num_bits);
+
     class Operand
     {
-    protected:
-        std::string udecToBin(uint32_t value, uint32_t num_bits);
     public:
         OperType type;
         uint32_t width;
@@ -28,6 +28,7 @@ namespace core {
         virtual ~Operand(void) = default;
 
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, Token const * inst, Token const * operand, uint32_t oper_count, std::map<std::string, uint32_t> const & registers) = 0;
+        bool isEqualType(OperType other) const;
     };
 
     class Instruction
@@ -39,6 +40,8 @@ namespace core {
 
         Instruction(bool setcc, std::string const & name, std::vector<Operand *> const & operands);
         ~Instruction(void);
+
+        uint32_t getNumOperands(void);
     };
 
     class InstructionGenerator

@@ -3,6 +3,9 @@
 
 #include "tokens.h"
 #include "parser_gen/parser.hpp"
+#include "../common/instructions.h"
+
+using namespace core;
 
 Token::Token(void)
 {
@@ -42,9 +45,9 @@ void Token::print(std::ostream & out, int indent_level) const
         out << "|- ";
     }
 
-    if(type == STRING || type == PSEUDO || type == LABEL || type == INST) {
+    if(type == STRING || type == PSEUDO || type == LABEL || type == INST || type == OPER_TYPE_LABEL || type == OPER_TYPE_REG) {
         out << str;
-    } else if(type == NUM) {
+    } else if(type == NUM || type == OPER_TYPE_NUM) {
         out << num;
     } else if(type == NEWLINE) {
         out << "NEWLINE";
@@ -56,7 +59,7 @@ void Token::print(std::ostream & out, int indent_level) const
         out << "Unknown token";
     }
 
-    out << " (" << (row_num + 1) << ", " << (col_num + 1) << ", " << length << ")" << std::endl;
+    out << " (" << (row_num + 1) << ", " << (col_num + 1) << ", " << length << ", " << num_operands << ")" << std::endl;
     Token * cur_oper = opers;
     while(cur_oper != nullptr) {
         cur_oper->print(out, indent_level + 1);

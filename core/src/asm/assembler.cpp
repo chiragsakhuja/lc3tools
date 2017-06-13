@@ -39,10 +39,14 @@ Assembler::~Assembler()
 void Assembler::processInstruction(std::string const & filename, Token const * inst, uint32_t & encoded_instruction) const
 {
     Instruction * candidate = nullptr;
-    bool valid_instruction = encoder->findInstruction(inst, candidate);
+    bool valid_instruction = encoder->findInstruction(inst, &candidate);
 
     if(valid_instruction) {
         encoder->encodeInstruction(log_enable, *logger, candidate, inst, encoded_instruction, file_buffer[inst->row_num]);
+
+        if(log_enable) {
+            logger->printf(utils::PrintType::DEBUG, "%s => %s", file_buffer[inst->row_num].c_str(), udecToBin(encoded_instruction, 16).c_str());
+        }
     } else {
         if(candidate == nullptr) {
             if(log_enable) {
@@ -58,11 +62,9 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
             // iterate through the assembly line to see which operands were incorrect and print errors
             if(log_enable) {
                 for(Operand * candidate_oper : candidate->operands) {
-                    /*
-                     *if(! (*it)->compareTypes(cur_oper->type)) {
-                     *    logger->printfMessage(utils::PrintType::ERROR, filename, cur, file_buffer[inst->row_num], "incorrect operand");
-                     *}
-                     */
+                    if(! candidate_oper->isEqualType((OperType) cur_oper->type)) {
+                        logger->printfMessage(utils::PrintType::ERROR, filename, cur_oper, file_buffer[inst->row_num], "incorrect operand");
+                    }
 
                     cur_oper = cur_oper->next;
                 }

@@ -20,7 +20,7 @@ namespace core
         // precondition: the instruction is of type pattern and is valid (no error checking)
         void encodeInstruction(bool log_enable, AssemblerLogger const & logger, Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction, std::string const & line) const;
         bool findReg(std::string const & search) const;
-        bool findInstruction(Token const * search, Instruction * candidate) const;
+        bool findInstruction(Token const * search, Instruction ** candidate) const;
 
     private:
         InstructionGenerator const & instructions;
