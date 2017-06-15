@@ -15,8 +15,9 @@ using namespace core;
 
 // precondition: the instruction is of type pattern and is valid (no error checking)
 void InstructionEncoder::encodeInstruction(bool log_enable, AssemblerLogger const & logger,
-    Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction,
-    std::string const & filename, std::string const & line) const
+    std::string const & filename, std::string const & line, Instruction const * pattern,
+    Token const * inst, uint32_t & encoded_instruction,
+    std::map<std::string, uint32_t> const & labels) const
 {
     uint32_t oper_count = 1;
     encoded_instruction = 0;
@@ -24,7 +25,7 @@ void InstructionEncoder::encodeInstruction(bool log_enable, AssemblerLogger cons
     Token const * cur_oper = inst->opers;
     for(Operand * pattern_op : pattern->operands) {
         encoded_instruction <<= pattern_op->width;
-        encoded_instruction |= pattern_op->encode(log_enable, logger, inst, filename, line, cur_oper, oper_count, instructions.regs);
+        encoded_instruction |= pattern_op->encode(log_enable, logger, filename, line, inst, cur_oper, oper_count, instructions.regs, labels);
 
         if(pattern_op->type != OPER_TYPE_FIXED) {
             cur_oper = cur_oper->next;

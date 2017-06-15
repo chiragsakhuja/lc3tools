@@ -17,7 +17,6 @@ class AssemblerSimple_SingleInstruction_Test;
 #include "tokens.h"
 #include "../common/printer.h"
 #include "parser_gen/parser.hpp"
-#include "../thirdparty/jsonxx/jsonxx.h"
 
 using namespace core;
 
@@ -29,20 +28,20 @@ Assembler::Assembler(bool log_enable, utils::Printer & printer)
     this->encoder = new InstructionEncoder(*instructions);
 }
 
-Assembler::~Assembler()
+Assembler::~Assembler(void)
 {
     delete logger;
     delete instructions;
     delete encoder;
 }
 
-void Assembler::processInstruction(std::string const & filename, Token const * inst, uint32_t & encoded_instruction) const
+void Assembler::processInstruction(std::string const & filename, Token const * inst, uint32_t & encoded_instruction, std::map<std::string, uint32_t> const & labels) const
 {
     Instruction * candidate = nullptr;
     bool valid_instruction = encoder->findInstruction(inst, &candidate);
 
     if(valid_instruction) {
-        encoder->encodeInstruction(log_enable, *logger, candidate, inst, encoded_instruction, filename, file_buffer[inst->row_num]);
+        encoder->encodeInstruction(log_enable, *logger, filename, file_buffer[inst->row_num], candidate, inst, encoded_instruction, labels);
 
         if(log_enable) {
             logger->printf(utils::PrintType::DEBUG, "%s => %s", file_buffer[inst->row_num].c_str(), udecToBin(encoded_instruction, 16).c_str());
@@ -50,6 +49,7 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
     } else {
         if(candidate == nullptr) {
             if(log_enable) {
+                // TODO: change this to a more appropriate error message
                 logger->printfMessage(utils::PrintType::ERROR, filename, inst, file_buffer[inst->row_num], "incorrect number of operands for instruction \'%s\'", inst->str.c_str());
             }
             throw std::runtime_error("could not match instruction with any candidate");
@@ -239,7 +239,7 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
     return true;
 }
 
-void Assembler::assembleProgram(std::string const & filename, Token * program)
+void Assembler::assembleProgram(std::string const & filename, Token * program, std::map<std::string, uint32_t> & labels)
 {
     std::ifstream file(filename);
 
@@ -280,7 +280,7 @@ void Assembler::assembleProgram(std::string const & filename, Token * program)
         if(cur_state->type == INST) {
             uint32_t encoded_instruction;
 
-            processInstruction(filename, cur_state, encoded_instruction);
+            processInstruction(filename, cur_state, encoded_instruction, labels);
         }
         cur_state = cur_state->next;
     }
@@ -297,13 +297,13 @@ extern int row_num, col_num;
 
 void Assembler::genObjectFile(char const * filename)
 {
-    std::map<std::string, int> symbol_table;
+    std::map<std::string, uint32_t> labels;
     if((yyin = fopen(filename, "r")) == nullptr) {
          // printer.printf(utils::PrintType::WARNING, "skipping file %s ...", filename);
     } else {
         row_num = 0; col_num = 0;
         yyparse();
-        assembleProgram(filename, root);
+        assembleProgram(filename, root, labels);
 
         fclose(yyin);
     }

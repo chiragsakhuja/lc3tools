@@ -11,7 +11,9 @@ int main(int argc, char *argv[])
         printer->printf(utils::PrintType::ERROR, "usage: %s file [file ...]", argv[0]);
     } else {
         for(int i = 1; i < argc; i += 1) {
-            as.genObjectFile(argv[i]);
+            try {
+                as.genObjectFile(argv[i]);
+            } catch (std::runtime_error const & e) {}
         }
     }
 

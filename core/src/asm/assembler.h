@@ -19,7 +19,8 @@ namespace core
         Assembler & operator=(Assembler const &) = default;
         ~Assembler(void);
 
-        void assembleProgram(std::string const & filename, Token * program);
+        void assembleProgram(std::string const & filename, Token * program,
+            std::map<std::string, uint32_t> & labels);
         void genObjectFile(char const * filename);
 
     private:
@@ -35,7 +36,8 @@ namespace core
         Token * removeNewlineTokens(Token * program);
         void processOperands(std::string const & filename, Token * operands);
         void processInstruction(std::string const & filename, Token const * inst,
-                uint32_t & encoded_instruction) const;
+            uint32_t & encoded_instruction,
+            std::map<std::string, uint32_t> const & labels) const;
         bool processTokens(std::string const & filename, Token * program,
                 Token *& program_start);
         bool processPseudo(std::string const & filename, Token const * pseudo);

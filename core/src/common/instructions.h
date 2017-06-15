@@ -17,6 +17,7 @@ namespace core {
     } OperType;
 
     std::string udecToBin(uint32_t value, uint32_t num_bits);
+    std::string decToBin(int32_t value, uint32_t num_bits);
     uint32_t sextTo32(uint32_t value, uint32_t num_bits);
 
     class Operand
@@ -28,9 +29,9 @@ namespace core {
         Operand(OperType type, uint32_t width);
         virtual ~Operand(void) = default;
 
-        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, Token const * inst,
-            std::string const & filename, std::string const & line, Token const * operand,
-            uint32_t oper_count, std::map<std::string, uint32_t> const & registers) = 0;
+        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
+            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) = 0;
         bool isEqualType(OperType other) const;
     };
 
@@ -63,18 +64,18 @@ namespace core {
         uint32_t value;
     public:
         FixedOperand(uint32_t width, uint32_t value) : Operand(OPER_TYPE_FIXED, width) { this->value = value; }
-        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, Token const * inst,
-            std::string const & filename, std::string const & line, Token const * operand,
-            uint32_t oper_count, std::map<std::string, uint32_t> const & registers) override;
+        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
+            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
     };
 
     class RegOperand : public Operand
     {
     public:
         RegOperand(uint32_t width) : Operand(OPER_TYPE_REG, width) {}
-        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, Token const * inst,
-            std::string const & filename, std::string const & line, Token const * operand,
-            uint32_t oper_count, std::map<std::string, uint32_t> const & registers) override;
+        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
+            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
     };
 
     class NumOperand : public Operand
@@ -83,9 +84,18 @@ namespace core {
         bool sext;
     public:
         NumOperand(uint32_t width, bool sext) : Operand(OPER_TYPE_NUM, width) { this->sext = sext; }
-        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, Token const * inst,
-            std::string const & filename, std::string const & line, Token const * operand,
-            uint32_t oper_count, std::map<std::string, uint32_t> const & registers) override;
+        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
+            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
+    };
+
+    class LabelOperand : public Operand
+    {
+    public:
+        LabelOperand(uint32_t width) : Operand(OPER_TYPE_LABEL, width) {}
+        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
+            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
     };
 
     class ADDInstruction : public Instruction
@@ -93,6 +103,85 @@ namespace core {
     public:
         ADDInstruction(std::vector<Operand *> const & operands) : Instruction(true, "add", operands) {}
     };
+
+    class ANDInstruction : public Instruction
+    {
+    public:
+        ANDInstruction(std::vector<Operand *> const & operands) : Instruction(true, "and", operands) {}
+    };
+
+    class JMPInstruction : public Instruction
+    {
+    public:
+        JMPInstruction(std::vector<Operand *> const & operands) : Instruction(false, "jmp", operands) {}
+    };
+
+    class JSRInstruction : public Instruction
+    {
+    public:
+        JSRInstruction(std::vector<Operand *> const & operands) : Instruction(false, "jsr", operands) {}
+    };
+
+    class LDInstruction : public Instruction
+    {
+    public:
+        LDInstruction(std::vector<Operand *> const & operands) : Instruction(true, "ld", operands) {}
+    };
+
+    class LDIInstruction : public Instruction
+    {
+    public:
+        LDIInstruction(std::vector<Operand *> const & operands) : Instruction(true, "ldi", operands) {}
+    };
+
+    class LDRInstruction : public Instruction
+    {
+    public:
+        LDRInstruction(std::vector<Operand *> const & operands) : Instruction(true, "ldr", operands) {}
+    };
+
+    class LEAInstruction : public Instruction
+    {
+    public:
+        LEAInstruction(std::vector<Operand *> const & operands) : Instruction(false, "lea", operands) {}
+    };
+
+    class NOTInstruction : public Instruction
+    {
+    public:
+        NOTInstruction(std::vector<Operand *> const & operands) : Instruction(true, "not", operands) {}
+    };
+
+    class RTIInstruction : public Instruction
+    {
+    public:
+        RTIInstruction(std::vector<Operand *> const & operands) : Instruction(false, "rti", operands) {}
+    };
+
+    class STInstruction : public Instruction
+    {
+    public:
+        STInstruction(std::vector<Operand *> const & operands) : Instruction(false, "st", operands) {}
+    };
+
+    class STIInstruction : public Instruction
+    {
+    public:
+        STIInstruction(std::vector<Operand *> const & operands) : Instruction(false, "sti", operands) {}
+    };
+
+    class STRInstruction : public Instruction
+    {
+    public:
+        STRInstruction(std::vector<Operand *> const & operands) : Instruction(false, "str", operands) {}
+    };
+
+    class TRAPInstruction : public Instruction
+    {
+    public:
+        TRAPInstruction(std::vector<Operand *> const & operands) : Instruction(false, "trap", operands) {}
+    };
+
 };
 
 #endif

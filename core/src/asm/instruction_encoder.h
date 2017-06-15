@@ -18,7 +18,9 @@ namespace core
         InstructionEncoder(InstructionGenerator const & instructions) : instructions(instructions) {}
 
         // precondition: the instruction is of type pattern and is valid (no error checking)
-        void encodeInstruction(bool log_enable, AssemblerLogger const & logger, Instruction const * pattern, Token const * inst, uint32_t & encoded_instruction, std::string const & filename, std::string const & line) const;
+        void encodeInstruction(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
+            std::string const & line, Instruction const * pattern, Token const * inst,
+            uint32_t & encoded_instruction, std::map<std::string, uint32_t> const & labels) const;
         bool findReg(std::string const & search) const;
         bool findInstruction(Token const * search, Instruction ** candidate) const;
 
