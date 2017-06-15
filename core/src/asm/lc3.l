@@ -38,9 +38,9 @@ HDIG    [0-9a-f]
 {WS}+                   { col_num += strlen(yytext); }
 (;|("//")){NLE}*        { col_num += strlen(yytext); }
 
-0?b{BDIG}+              { yylval.tok = makeToken(yytext, NUM)   ; col_num += strlen(yytext); return NUM   ; }
-#?{DIG}+                { yylval.tok = makeToken(yytext, NUM)   ; col_num += strlen(yytext); return NUM   ; }
-0?x{HDIG}+              { yylval.tok = makeToken(yytext, NUM)   ; col_num += strlen(yytext); return NUM   ; }
+0?b-?{BDIG}+            { yylval.tok = makeToken(yytext, NUM)   ; col_num += strlen(yytext); return NUM   ; }
+#?-?{DIG}+              { yylval.tok = makeToken(yytext, NUM)   ; col_num += strlen(yytext); return NUM   ; }
+0?x-?{HDIG}+            { yylval.tok = makeToken(yytext, NUM)   ; col_num += strlen(yytext); return NUM   ; }
 {NDEL}+|['"]{NLE}*['"]  { yylval.tok = makeToken(yytext, STRING); col_num += strlen(yytext); return STRING; }
 
 %%

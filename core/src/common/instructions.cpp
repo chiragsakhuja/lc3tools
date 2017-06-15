@@ -83,35 +83,61 @@ std::string core::udecToBin(uint32_t value, uint32_t num_bits)
     return std::string(bits);
 }
 
-uint32_t FixedOperand::encode(bool log_enable, AssemblerLogger const & logger, Token const * inst, Token const * operand, uint32_t oper_count, std::map<std::string, uint32_t> const & registers)
+uint32_t core::sextTo32(uint32_t value, uint32_t num_bits)
+{
+    uint32_t extension = ~((1 << num_bits) - 1);
+    if((value >> (num_bits - 1)) & 1) {
+        return extension | value;
+    } else {
+        return value;
+    }
+}
+
+uint32_t FixedOperand::encode(bool log_enable, AssemblerLogger const & logger, Token const * inst,
+    std::string const & filename, std::string const & line, Token const * operand,
+    uint32_t oper_count, std::map<std::string, uint32_t> const & registers)
 {
     (void) operand;
     (void) registers;
     return value & ((1 << width) - 1);
 }
 
-uint32_t RegOperand::encode(bool log_enable, AssemblerLogger const & logger, Token const * inst, Token const * operand, uint32_t oper_count, std::map<std::string, uint32_t> const & registers)
+uint32_t RegOperand::encode(bool log_enable, AssemblerLogger const & logger, Token const * inst,
+    std::string const & filename, std::string const & line, Token const * operand,
+    uint32_t oper_count, std::map<std::string, uint32_t> const & registers)
 {
     uint32_t token_val = registers.at(std::string(operand->str)) & ((1 << width) - 1);
 
     if(log_enable) {
-        logger.printf(utils::PrintType::DEBUG, "%d.%d: reg %s => %s", inst->row_num, oper_count, operand->str.c_str(), udecToBin(token_val, width).c_str());
+        logger.printf(utils::PrintType::DEBUG, "%d.%d: reg %s => %s", inst->row_num, oper_count,
+            operand->str.c_str(), udecToBin(token_val, width).c_str());
     }
 
     return token_val;
 }
 
-uint32_t NumOperand::encode(bool log_enable, AssemblerLogger const & logger, Token const * inst, Token const * operand, uint32_t oper_count, std::map<std::string, uint32_t> const & registers)
+uint32_t NumOperand::encode(bool log_enable, AssemblerLogger const & logger, Token const * inst,
+    std::string const & filename, std::string const & line, Token const * operand,
+    uint32_t oper_count, std::map<std::string, uint32_t> const & registers)
 {
     uint32_t token_val = operand->num & ((1 << width) - 1);
     (void) registers;
 
-    if(token_val != operand->num) {
-        logger.printf(utils::PrintType::WARNING, "%d.%d: imm %d truncated to %d", inst->row_num, oper_count, operand->num, token_val);
+    if(sext) {
+        if((int32_t) operand->num < -(1 << (width - 1)) || (int32_t) operand->num > ((1 << (width - 1)) - 1)) {
+            logger.printfMessage(utils::PrintType::WARNING, filename, operand, line, "immediate %d truncated to %d",
+                operand->num, sextTo32(token_val, width));
+        }
+    } else {
+        if(operand->num > ((1 << width) - 1)) {
+            logger.printfMessage(utils::PrintType::WARNING, filename, operand, line, "immediate %d truncated to %u",
+                operand->num, token_val);
+        }
     }
 
     if(log_enable) {
-        logger.printf(utils::PrintType::DEBUG, "%d.%d: imm %d => %s", inst->row_num, oper_count, operand->num, udecToBin(token_val, width).c_str());
+        logger.printf(utils::PrintType::DEBUG, "%d.%d: imm %d => %s", inst->row_num, oper_count, operand->num,
+            udecToBin(token_val, width).c_str());
     }
 
     return token_val;

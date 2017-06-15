@@ -42,7 +42,7 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
     bool valid_instruction = encoder->findInstruction(inst, &candidate);
 
     if(valid_instruction) {
-        encoder->encodeInstruction(log_enable, *logger, candidate, inst, encoded_instruction, file_buffer[inst->row_num]);
+        encoder->encodeInstruction(log_enable, *logger, candidate, inst, encoded_instruction, filename, file_buffer[inst->row_num]);
 
         if(log_enable) {
             logger->printf(utils::PrintType::DEBUG, "%s => %s", file_buffer[inst->row_num].c_str(), udecToBin(encoded_instruction, 16).c_str());

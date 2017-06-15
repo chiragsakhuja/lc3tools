@@ -13,7 +13,8 @@ void AssemblerLogger::printf(int level, char const * format, ...) const
     va_end(args);
 }
 
-void AssemblerLogger::printfMessage(int level, std::string const & filename, Token const * tok, std::string const & line, char const * format, ...) const
+void AssemblerLogger::printfMessage(int level, std::string const & filename, Token const * tok, 
+    std::string const & line, char const * format, ...) const
 {
     va_list args;
     va_start(args, format);
@@ -21,7 +22,8 @@ void AssemblerLogger::printfMessage(int level, std::string const & filename, Tok
     va_end(args);
 }
 
-void AssemblerLogger::xprintfMessage(int level, std::string const & filename, int col_num, int length, Token * const tok, std::string const & line, char const * format, ...) const
+void AssemblerLogger::xprintfMessage(int level, std::string const & filename, int col_num,
+    int length, Token * const tok, std::string const & line, char const * format, ...) const
 {
     va_list args;
     va_start(args, format);
@@ -29,7 +31,8 @@ void AssemblerLogger::xprintfMessage(int level, std::string const & filename, in
     va_end(args);
 }
 
-void AssemblerLogger::vxprintfMessage(int level, std::string const & filename, int col_num, int length, Token const * tok, std::string const & line, char const * format, va_list args) const
+void AssemblerLogger::vxprintfMessage(int level, std::string const & filename, int col_num, int length,
+    Token const * tok, std::string const & line, char const * format, va_list args) const
 {
     printer.setColor(utils::PrintColor::PRINT_COLOR_BOLD);
     printer.print(printer.toString("%s:%d:%d: ", filename.c_str(), tok->row_num + 1, col_num + 1));
