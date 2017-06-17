@@ -16,6 +16,7 @@ namespace utils
         , PRINT_COLOR_GREEN
         , PRINT_COLOR_MAGENTA
         , PRINT_COLOR_BLUE
+        , PRINT_COLOR_GRAY
         , PRINT_COLOR_BOLD
         , PRINT_COLOR_RESET
     };
@@ -24,6 +25,7 @@ namespace utils
           FATAL_ERROR = 0
         , ERROR
         , WARNING
+        , NOTE
         , INFO
         , DEBUG
         , EXTRA

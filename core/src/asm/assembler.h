@@ -19,7 +19,7 @@ namespace core
         Assembler & operator=(Assembler const &) = default;
         ~Assembler(void);
 
-        void assembleProgram(std::string const & filename, Token * program,
+        bool assembleProgram(std::string const & filename, Token * program,
             std::map<std::string, uint32_t> & labels);
         void genObjectFile(char const * filename);
 
@@ -41,7 +41,10 @@ namespace core
         bool processTokens(std::string const & filename, Token * program,
                 Token *& program_start);
         bool processPseudo(std::string const & filename, Token const * pseudo);
-        bool setOrig(std::string const & filename, Token const * orig, int & new_orig);
+        bool setOrig(std::string const & filename, Token const * orig, uint32_t & new_orig);
+        bool findFirstOrig(std::string const & filename, Token * program, Token *& program_start,
+                uint32_t & cur_orig);
+        void processOperands(Token * inst);
     };
 };
 

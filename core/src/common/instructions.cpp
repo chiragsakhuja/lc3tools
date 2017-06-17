@@ -3,9 +3,10 @@
 
 using namespace core;
 
-Operand::Operand(OperType type, uint32_t width)
+Operand::Operand(OperType type, std::string const & type_str, uint32_t width)
 {
     this->type = type;
+    this->type_str = type_str;
     this->width = width;
 }
 
@@ -242,11 +243,13 @@ uint32_t NumOperand::encode(bool log_enable, AssemblerLogger const & logger,
         if((int32_t) operand->num < -(1 << (width - 1)) || (int32_t) operand->num > ((1 << (width - 1)) - 1)) {
             logger.printfMessage(utils::PrintType::WARNING, filename, operand, line, "immediate %d truncated to %d",
                 operand->num, sextTo32(token_val, width));
+            logger.newline();
         }
     } else {
         if(operand->num > ((1 << width) - 1)) {
             logger.printfMessage(utils::PrintType::WARNING, filename, operand, line, "immediate %d truncated to %u",
                 operand->num, token_val);
+            logger.newline();
         }
     }
 
@@ -269,6 +272,7 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
         if(log_enable) {
             logger.printfMessage(utils::PrintType::ERROR, filename, operand, line, "unknown label \'%s\'",
                 operand->str.c_str());
+            logger.newline();
         }
         throw std::runtime_error("unknown label");
     }

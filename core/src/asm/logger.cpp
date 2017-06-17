@@ -53,5 +53,10 @@ void AssemblerLogger::vxprintfMessage(int level, std::string const & filename, i
     }
 
     printer.setColor(utils::PrintColor::PRINT_COLOR_RESET);
-    printer.print("\n\n");
+    printer.print("\n");
+}
+
+void AssemblerLogger::newline(void) const
+{
+    printer.print("\n");
 }

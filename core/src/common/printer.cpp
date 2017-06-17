@@ -28,6 +28,11 @@ void utils::Printer::vprintf(int type, char const * format, va_list args)
                 label = "warning";
                 break;
 
+            case NOTE:
+                color = PRINT_COLOR_GRAY;
+                label = "note";
+                break;
+
             case INFO:
                 color = PRINT_COLOR_GREEN;
                 label = "info";

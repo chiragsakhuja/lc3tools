@@ -22,7 +22,7 @@ namespace core
             std::string const & line, Instruction const * pattern, Token const * inst,
             uint32_t & encoded_instruction, std::map<std::string, uint32_t> const & labels) const;
         bool findReg(std::string const & search) const;
-        bool findInstruction(Token const * search, Instruction ** candidate) const;
+        bool findInstruction(Token const * search, std::vector<Instruction *> & candidate) const;
 
     private:
         InstructionGenerator const & instructions;

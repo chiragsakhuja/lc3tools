@@ -34,20 +34,18 @@ void InstructionEncoder::encodeInstruction(bool log_enable, AssemblerLogger cons
     }
 }
 
-bool InstructionEncoder::findInstruction(Token const * search, Instruction ** candidate) const
+bool InstructionEncoder::findInstruction(Token const * search, std::vector<Instruction *> & candidates) const
 {
     auto inst_list = instructions.instructions.find(std::string(search->str));
+    candidates.clear();
     if(inst_list != instructions.instructions.end()) {
-        std::vector<Instruction *> const & candidates = inst_list->second;
+        std::vector<Instruction *> const & candidate_list = inst_list->second;
         bool found_match = false;
 
         // check all encodings to see if there is a match
-        for(Instruction * cur_candidate : candidates) {
+        for(Instruction * cur_candidate : candidate_list) {
             // first make sure the number of operands is the same, otherwise it's a waste
             if(cur_candidate->getNumOperands() == (uint32_t) search->num_operands) {
-                // TODO: what if there are multiple candidates?
-                *candidate = cur_candidate;
-
                 bool actual_match = true;
                 Token const * cur_oper = search->opers;
 
@@ -68,9 +66,15 @@ bool InstructionEncoder::findInstruction(Token const * search, Instruction ** ca
 
                 // found a match, stop searching
                 if(actual_match) {
+                    candidates.clear();
+                    candidates.push_back(cur_candidate);
                     found_match = true;
                     break;
+                } else {
+                    candidates.push_back(cur_candidate);
                 }
+            } else {
+                candidates.push_back(cur_candidate);
             }
         }
 

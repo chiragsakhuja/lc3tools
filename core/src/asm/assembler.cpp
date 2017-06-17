@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <stdexcept>
+#include <sstream>
 
 class AssemblerSimple_SingleInstruction_Test;
 
@@ -35,64 +36,83 @@ Assembler::~Assembler(void)
     delete encoder;
 }
 
-void Assembler::processInstruction(std::string const & filename, Token const * inst, uint32_t & encoded_instruction, std::map<std::string, uint32_t> const & labels) const
+void Assembler::processInstruction(std::string const & filename, Token const * inst,
+    uint32_t & encoded_instruction, std::map<std::string, uint32_t> const & labels) const
 {
-    Instruction * candidate = nullptr;
-    bool valid_instruction = encoder->findInstruction(inst, &candidate);
+    std::vector<Instruction *> candidates;
+    bool valid_instruction = encoder->findInstruction(inst, candidates);
 
     if(valid_instruction) {
-        encoder->encodeInstruction(log_enable, *logger, filename, file_buffer[inst->row_num], candidate, inst, encoded_instruction, labels);
+        encoder->encodeInstruction(log_enable, *logger, filename, file_buffer[inst->row_num],
+            candidates[0], inst, encoded_instruction, labels);
 
         if(log_enable) {
-            logger->printf(utils::PrintType::DEBUG, "%s => %s", file_buffer[inst->row_num].c_str(), udecToBin(encoded_instruction, 16).c_str());
+            logger->printf(utils::PrintType::DEBUG, "%s => %s",
+                file_buffer[inst->row_num].c_str(), udecToBin(encoded_instruction, 16).c_str());
         }
     } else {
-        if(candidate == nullptr) {
+        if(candidates.size() == 0) {
             if(log_enable) {
-                // TODO: change this to a more appropriate error message
-                logger->printfMessage(utils::PrintType::ERROR, filename, inst, file_buffer[inst->row_num], "incorrect number of operands for instruction \'%s\'", inst->str.c_str());
+                // this shouldn't happen, because if there are no candidates it should've been
+                // retyped as a LABEL
+                logger->printfMessage(utils::PrintType::ERROR, filename, inst,
+                    file_buffer[inst->row_num], "\'%s\' is not a valid instruction",
+                    inst->str.c_str());
+                logger->newline();
             }
-            throw std::runtime_error("could not match instruction with any candidate");
+            throw std::runtime_error("could not find a valid instruction");
         } else {
-            // this will only be the case if there is at least one encoding with the same number of operands as the assembly line
-            // since there is still no match, this will assume you were trying to match against the last encoding in the list
-            // TODO: add more info (e.g. "Did you mean: ") and maybe go through a list of candidates
-            Token const * cur_oper = inst->opers;
-
-            // iterate through the assembly line to see which operands were incorrect and print errors
-            if(log_enable) {
-                for(Operand * candidate_oper : candidate->operands) {
-                    if(! candidate_oper->isEqualType((OperType) cur_oper->type)) {
-                        logger->printfMessage(utils::PrintType::ERROR, filename, cur_oper, file_buffer[inst->row_num], "incorrect operand");
+            logger->printfMessage(utils::PrintType::ERROR, filename, inst,
+                file_buffer[inst->row_num], "not a valid usage of \'%s\' instruction",
+                inst->str.c_str());
+            for(Instruction * candidate : candidates) {
+                std::stringstream assembly;
+                assembly << candidate->name << " ";
+                std::string prefix = "";
+                for(Operand * operand : candidate->operands) {
+                    if(operand->type != OPER_TYPE_FIXED) {
+                        assembly << prefix << operand->type_str;
+                        prefix = ", ";
                     }
-
-                    cur_oper = cur_oper->next;
                 }
+                logger->printf(utils::PrintType::NOTE, "did you mean \'%s\'?", assembly.str().c_str());
             }
-                
+            logger->newline();
+
             throw std::runtime_error("matched instruction with a candidate, but some operands were incorrect");
         }
     }
 }
 
 // note: new_orig is untouched if the .orig is not valid
-bool Assembler::setOrig(std::string const & filename, Token const * orig, int & new_orig)
+bool Assembler::setOrig(std::string const & filename, Token const * orig, uint32_t & new_orig)
 {
     if(orig->checkPseudoType("orig")) {     // sanity check...
         if(orig->num_operands != 1) {
             if(log_enable) {
-                logger->printfMessage(utils::PrintType::WARNING, filename, orig, file_buffer[orig->row_num], "incorrect number of operands");
+                logger->printfMessage(utils::PrintType::WARNING, filename, orig,
+                    file_buffer[orig->row_num], "incorrect number of operands");
+                logger->newline();
             }
             return false;
         } else {
             if(orig->opers->type != NUM) {
                 if(log_enable) {
-                    logger->printfMessage(utils::PrintType::WARNING, filename, orig->opers, file_buffer[orig->row_num], "illegal operand");
+                    logger->printfMessage(utils::PrintType::WARNING, filename,
+                        orig->opers, file_buffer[orig->row_num], "illegal operand");
+                    logger->newline();
                 }
                 return false;
             } else {
-                new_orig = orig->opers->num;
-                return true;
+                uint32_t value = ((uint32_t) orig->opers->num) & 0xffff;
+                if((uint32_t) orig->opers->num > 0xffff) {
+                    logger->printfMessage(utils::PrintType::WARNING, filename,
+                        orig->opers, file_buffer[orig->row_num],
+                        "truncating 0x%0.8x to 0x%0.4x", (uint32_t) orig->opers->num,
+                        value);
+                    logger->newline();
+                }
+                new_orig = value;
             }
         }
     }
@@ -103,7 +123,7 @@ bool Assembler::setOrig(std::string const & filename, Token const * orig, int & 
 bool Assembler::processPseudo(std::string const & filename, Token const * pseudo)
 {
     if(pseudo->checkPseudoType("orig")) {
-        int dummy;
+        uint32_t dummy;
         setOrig(filename, pseudo, dummy);
     } else if(pseudo->checkPseudoType("end")) {
         // do nothing
@@ -143,22 +163,22 @@ Token * Assembler::removeNewlineTokens(Token * program)
     return program;
 }
 
-bool Assembler::processTokens(std::string const & filename, Token * program,  Token *& program_start)
+bool Assembler::findFirstOrig(std::string const & filename, Token * program,
+    Token *& program_start, uint32_t & cur_orig)
 {
-    program = removeNewlineTokens(program);
-
     Token * cur_state = program;
     bool found_valid_orig = false;
-    int cur_orig = 0;
 
     // find the orig
     while(cur_state != nullptr && ! found_valid_orig) {
-        // move through the program until you find the first orig
+        // ignore everything until you find the first orig
         while(cur_state != nullptr && ! cur_state->checkPseudoType("orig")) {
             // TODO: allow for exceptions, such as .external
             if(log_enable) {
-                logger->xprintfMessage(  utils::PrintType::WARNING, filename, 0, file_buffer[cur_state->row_num].length(), cur_state
-                                       , file_buffer[cur_state->row_num], "ignoring statement before valid .orig");
+                logger->xprintfMessage(utils::PrintType::WARNING, filename, 0,
+                    file_buffer[cur_state->row_num].length(), cur_state,
+                    file_buffer[cur_state->row_num], "ignoring statement before .orig");
+                logger->newline();
             }
             cur_state = cur_state->next;
         }
@@ -188,11 +208,44 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
         return false;
     }
 
-    // write output
     program_start = cur_state;
 
-    int pc_offset = 0;
+    return true;
+}
+
+void Assembler::processOperands(Token * inst)
+{
+    Token * oper = inst->opers;
+    // redo operand types
+    while(oper != nullptr) {
+        if(oper->type == STRING) {
+            if(encoder->findReg(oper->str)) {
+                oper->type = OPER_TYPE_REG;
+            } else {
+                oper->type = OPER_TYPE_LABEL;
+            }
+        } else if(oper->type == NUM) {
+            oper->type = OPER_TYPE_NUM;
+        }
+
+        oper = oper->next;
+    }
+}
+
+bool Assembler::processTokens(std::string const & filename, Token * program, Token *& program_start)
+{
+    program = removeNewlineTokens(program);
+    Token * cur_state;
+    uint32_t cur_orig = 0;
+    if(! findFirstOrig(filename, program, cur_state, cur_orig)) {
+        return false;
+    }
+
+    program_start = cur_state;
+
+    uint32_t pc_offset = 0;
     while(cur_state != nullptr) {
+        // allow for multiple .orig in a single file
         if(cur_state->checkPseudoType("orig")) {
             if(! setOrig(filename, cur_state, cur_orig)) {
                 if(log_enable) {
@@ -203,33 +256,25 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
             }
         }
 
-        if(cur_state->type == LABEL) {
+        std::vector<Instruction *> candidates;
+        if(cur_state->type == LABEL ||
+            (cur_state->type == INST && ! encoder->findInstruction(cur_state, candidates) &&
+             candidates.size() == 0))
+        {
+            cur_state->type = LABEL;
             std::string const & label = cur_state->str;
 
             if(log_enable) {
-                logger->printf(utils::PrintType::DEBUG, "setting label \'%s\' to 0x%X", label.c_str(), cur_orig + pc_offset);
+                logger->printf(utils::PrintType::DEBUG, "setting label \'%s\' to 0x%X",
+                    label.c_str(), cur_orig + pc_offset);
             }
         }
 
-        cur_state->pc = pc_offset;
+        cur_state->pc = cur_orig + pc_offset;
 
         if(cur_state->type == INST) {
             pc_offset += 1;
-
-            Token * oper = cur_state->opers;
-            while(oper != nullptr) {
-                if(oper->type == STRING) {
-                    if(encoder->findReg(oper->str)) {
-                        oper->type = OPER_TYPE_REG;
-                    } else {
-                        oper->type = OPER_TYPE_LABEL;
-                    }
-                } else if(oper->type == NUM) {
-                    oper->type = OPER_TYPE_NUM;
-                }
-
-                oper = oper->next;
-            }
+            processOperands(cur_state);
         }
         // TODO: account for block allocations (e.g. .fill, .stringz)
 
@@ -239,7 +284,8 @@ bool Assembler::processTokens(std::string const & filename, Token * program,  To
     return true;
 }
 
-void Assembler::assembleProgram(std::string const & filename, Token * program, std::map<std::string, uint32_t> & labels)
+bool Assembler::assembleProgram(std::string const & filename, Token * program,
+    std::map<std::string, uint32_t> & labels)
 {
     std::ifstream file(filename);
 
@@ -255,12 +301,16 @@ void Assembler::assembleProgram(std::string const & filename, Token * program, s
         file.close();
     } else {
         if(log_enable) {
-            logger->printf(utils::PrintType::WARNING, "somehow the file got destroyed in the last couple of ms, skipping file %s ...", filename.c_str());
+            logger->printf(utils::PrintType::WARNING,
+                "somehow the file got destroyed in the last couple of milliseconds, skipping file %s ...",
+                filename.c_str());
         }
-        //return false;
+
+        return false;
     }
 
     if(log_enable) {
+        logger->printf(utils::PrintType::INFO, "assembling \'%s\'", filename.c_str());
         logger->printf(utils::PrintType::INFO, "beginning first pass ...");
     }
 
@@ -269,7 +319,7 @@ void Assembler::assembleProgram(std::string const & filename, Token * program, s
         if(log_enable) {
             logger->printf(utils::PrintType::ERROR, "first pass failed");
         }
-        //return false;
+        return false;
     }
 
     if(log_enable) {
@@ -288,6 +338,8 @@ void Assembler::assembleProgram(std::string const & filename, Token * program, s
     if(log_enable) {
         logger->printf(utils::PrintType::INFO, "second pass completed successfully");
     }
+
+    return true;
 }
 
 extern FILE *yyin;
@@ -299,7 +351,7 @@ void Assembler::genObjectFile(char const * filename)
 {
     std::map<std::string, uint32_t> labels;
     if((yyin = fopen(filename, "r")) == nullptr) {
-         // printer.printf(utils::PrintType::WARNING, "skipping file %s ...", filename);
+         logger->printf(utils::PrintType::WARNING, "skipping file %s ...", filename);
     } else {
         row_num = 0; col_num = 0;
         yyparse();
