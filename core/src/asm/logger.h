@@ -14,7 +14,7 @@ public:
     AssemblerLogger(AssemblerLogger const &) = default;
     AssemblerLogger & operator=(AssemblerLogger const &) = default;
 
-    void printf(int level, char const * format, ...) const;
+    void printf(int level, bool bold, char const * format, ...) const;
     void printfMessage(int level, std::string const & filename, Token const * tok, std::string const & line,
         char const * format, ...) const;
     void xprintfMessage(int level, std::string const & filename, int col_num, int length, Token * const tok,

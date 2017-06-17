@@ -5,11 +5,11 @@
 #include "logger.h"
 #include "tokens.h"
 
-void AssemblerLogger::printf(int level, char const * format, ...) const
+void AssemblerLogger::printf(int level, bool bold, char const * format, ...) const
 {
     va_list args;
     va_start(args, format);
-    printer.vprintf(level, format, args);
+    printer.vprintf(level, bold, format, args);
     va_end(args);
 }
 
@@ -37,7 +37,7 @@ void AssemblerLogger::vxprintfMessage(int level, std::string const & filename, i
     printer.setColor(utils::PrintColor::PRINT_COLOR_BOLD);
     printer.print(printer.toString("%s:%d:%d: ", filename.c_str(), tok->row_num + 1, col_num + 1));
 
-    printer.vprintf(level, format, args);
+    printer.vprintf(level, true, format, args);
     printer.print(printer.toString("%s\n", line.c_str()));
 
     printer.setColor(utils::PrintColor::PRINT_COLOR_BOLD);

@@ -47,7 +47,7 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
             candidates[0], inst, encoded_instruction, labels);
 
         if(log_enable) {
-            logger->printf(utils::PrintType::DEBUG, "%s => %s",
+            logger->printf(utils::PrintType::DEBUG, true, "%s => %s",
                 file_buffer[inst->row_num].c_str(), udecToBin(encoded_instruction, 16).c_str());
         }
     } else {
@@ -62,7 +62,6 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
             }
             throw std::runtime_error("could not find a valid instruction");
         } else {
-            std::cout << *inst;
             logger->printfMessage(utils::PrintType::ERROR, filename, inst,
                 file_buffer[inst->row_num], "not a valid usage of \'%s\' instruction",
                 inst->str.c_str());
@@ -76,7 +75,7 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
                         prefix = ", ";
                     }
                 }
-                logger->printf(utils::PrintType::NOTE, "did you mean \'%s\'?", assembly.str().c_str());
+                logger->printf(utils::PrintType::NOTE, false, "did you mean \'%s\'?", assembly.str().c_str());
             }
             logger->newline();
 
@@ -187,7 +186,7 @@ bool Assembler::findFirstOrig(std::string const & filename, Token * program,
         // looks like you hit nullptr before a .orig, meaning there is no .orig
         if(cur_state == nullptr) {
             if(log_enable) {
-                logger->printf(utils::PrintType::ERROR, "no .orig found in \'%s\'", filename.c_str());
+                logger->printf(utils::PrintType::ERROR, true, "no .orig found in \'%s\'", filename.c_str());
             }
             return false;
         }
@@ -204,7 +203,7 @@ bool Assembler::findFirstOrig(std::string const & filename, Token * program,
     // you hit nullptr after seeing at least one .orig, meaning there is no valid .orig
     if(! found_valid_orig) {
         if(log_enable) {
-            logger->printf(utils::PrintType::ERROR, "no valid .orig found in \'%s\'", filename.c_str());
+            logger->printf(utils::PrintType::ERROR, true, "no valid .orig found in \'%s\'", filename.c_str());
         }
         return false;
     }
@@ -251,7 +250,7 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
         if(cur_state->checkPseudoType("orig")) {
             if(! setOrig(filename, cur_state, cur_orig)) {
                 if(log_enable) {
-                    logger->printf(utils::PrintType::WARNING, "ignoring invalid .orig");
+                    logger->printf(utils::PrintType::WARNING, true, "ignoring invalid .orig");
                 }
             } else {
                 pc_offset = 0;
@@ -285,7 +284,7 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
                     cur_state->next->num_operands = num_operands;
                 } else {
                     if(log_enable) {
-                        logger->printfMessage(utils::PrintType::ERROR, filename, cur_state->opers,
+                        logger->printfMessage(utils::PrintType::ERROR, filename, cur_state,
                             file_buffer[cur_state->row_num],
                             "\'%s\' is being interpreted as a label, did you mean for it to be an instruction?",
                             cur_state->str.c_str());
@@ -293,10 +292,6 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
                     }
                 }
             }
-            /*
-             *std::cout << *cur_state;
-             *std::cout << *cur_state->next;
-             */
         }
 
         if(cur_state->type == LABEL)
@@ -316,7 +311,7 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
             labels[label] = cur_orig + pc_offset;
 
             if(log_enable) {
-                logger->printf(utils::PrintType::DEBUG, "setting label \'%s\' to 0x%X",
+                logger->printf(utils::PrintType::DEBUG, true, "setting label \'%s\' to 0x%X",
                     label.c_str(), cur_orig + pc_offset);
             }
         }
@@ -352,7 +347,7 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program,
         file.close();
     } else {
         if(log_enable) {
-            logger->printf(utils::PrintType::WARNING,
+            logger->printf(utils::PrintType::WARNING, true,
                 "somehow the file got destroyed in the last couple of milliseconds, skipping file %s ...",
                 filename.c_str());
         }
@@ -361,19 +356,19 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program,
     }
 
     if(log_enable) {
-        logger->printf(utils::PrintType::INFO, "assembling \'%s\'", filename.c_str());
-        logger->printf(utils::PrintType::INFO, "beginning first pass ...");
+        logger->printf(utils::PrintType::INFO, true, "assembling \'%s\'", filename.c_str());
+        logger->printf(utils::PrintType::INFO, true, "beginning first pass ...");
     }
 
     bool p1_success = true;
     Token * cur_state = nullptr;
     if(! processTokens(filename, program, labels, cur_state)) {
         if(log_enable) {
-            logger->printf(utils::PrintType::ERROR, "first pass failed");
+            logger->printf(utils::PrintType::ERROR, true, "first pass failed");
         }
     } else {
         if(log_enable) {
-            logger->printf(utils::PrintType::INFO, "first pass completed successfully, beginning second pass ...");
+            logger->printf(utils::PrintType::INFO, true, "first pass completed successfully, beginning second pass ...");
         }
         p1_success = false;
     }
@@ -394,9 +389,9 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program,
 
     if(log_enable) {
         if(p2_success) {
-            logger->printf(utils::PrintType::INFO, "second pass completed successfully");
+            logger->printf(utils::PrintType::INFO, true, "second pass completed successfully");
         } else {
-            logger->printf(utils::PrintType::ERROR, "second pass failed");
+            logger->printf(utils::PrintType::ERROR, true, "second pass failed");
         }
     }
 

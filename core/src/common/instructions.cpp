@@ -223,7 +223,7 @@ uint32_t RegOperand::encode(bool log_enable, AssemblerLogger const & logger,
     uint32_t token_val = registers.at(std::string(operand->str)) & ((1 << width) - 1);
 
     if(log_enable) {
-        logger.printf(utils::PrintType::DEBUG, "%d.%d: reg %s => %s", inst->row_num, oper_count,
+        logger.printf(utils::PrintType::DEBUG, true, "%d.%d: reg %s => %s", inst->row_num, oper_count,
             operand->str.c_str(), udecToBin(token_val, width).c_str());
     }
 
@@ -254,7 +254,7 @@ uint32_t NumOperand::encode(bool log_enable, AssemblerLogger const & logger,
     }
 
     if(log_enable) {
-        logger.printf(utils::PrintType::DEBUG, "%d.%d: imm %d => %s", inst->row_num, oper_count, operand->num,
+        logger.printf(utils::PrintType::DEBUG, true, "%d.%d: imm %d => %s", inst->row_num, oper_count, operand->num,
             udecToBin(token_val, width).c_str());
     }
 
@@ -281,7 +281,7 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     (void) registers;
 
     if(log_enable) {
-        logger.printf(utils::PrintType::DEBUG, "%d.%d: label %s (0x%0.4x) => %s", inst->row_num, oper_count,
+        logger.printf(utils::PrintType::DEBUG, true, "%d.%d: label %s (0x%0.4x) => %s", inst->row_num, oper_count,
             operand->str.c_str(), search->second, udecToBin((uint32_t) token_val, width).c_str());
     }
 

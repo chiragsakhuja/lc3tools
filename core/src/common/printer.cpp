@@ -3,15 +3,15 @@
 
 #include "printer.h"
 
-void utils::Printer::printf(int type, char const * format, ...)
+void utils::Printer::printf(int type, bool bold, char const * format, ...)
 {
     va_list args;
     va_start(args, format);
-    vprintf(type, format, args);
+    vprintf(type, bold, format, args);
     va_end(args);
 }
 
-void utils::Printer::vprintf(int type, char const * format, va_list args)
+void utils::Printer::vprintf(int type, bool bold, char const * format, va_list args)
 {
     int color = PRINT_COLOR_RESET;
     std::string label = "";
@@ -51,19 +51,21 @@ void utils::Printer::vprintf(int type, char const * format, va_list args)
             default: break;
         }
 
-        vxprintf(type, color, label.c_str(), format, args);
+        vxprintf(type, color, label.c_str(), bold, format, args);
         print("\n");
     }
 }
 
-void utils::Printer::vxprintf(int level, int color, char const * label, char const * format, va_list args)
+void utils::Printer::vxprintf(int level, int color, char const * label, bool bold, char const * format, va_list args)
 {
     setColor(PRINT_COLOR_BOLD);
     setColor(color);
     print(toString("%s: ", label));
     setColor(PRINT_COLOR_RESET);
 
-    setColor(PRINT_COLOR_BOLD);
+    if(bold) {
+        setColor(PRINT_COLOR_BOLD);
+    }
     print(vtoString(format, args));
     setColor(PRINT_COLOR_RESET);
 }

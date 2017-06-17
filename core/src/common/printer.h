@@ -39,8 +39,8 @@ namespace utils
         Printer & operator=(Printer const &) = default;
         virtual ~Printer(void) = default;
 
-        void printf(int type, char const * format, ...);
-        void vprintf(int type, char const * format, va_list args);
+        void printf(int type, bool bold, char const * format, ...);
+        void vprintf(int type, bool bold, char const * format, va_list args);
         std::string toString(char const * format, ...);
         std::string vtoString(char const * format, va_list args);
 
@@ -48,7 +48,7 @@ namespace utils
         virtual void print(std::string const & string) = 0;
 
     protected:
-        void vxprintf(int level, int color, char const * label, char const * format, va_list args);
+        void vxprintf(int level, int color, char const * label, bool bold, char const * format, va_list args);
     };
 };
 
