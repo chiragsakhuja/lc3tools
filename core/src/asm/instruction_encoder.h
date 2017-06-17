@@ -23,6 +23,7 @@ namespace core
             uint32_t & encoded_instruction, std::map<std::string, uint32_t> const & labels) const;
         bool findReg(std::string const & search) const;
         bool findInstruction(Token const * search, std::vector<Instruction *> & candidate) const;
+        bool findInstructionByName(std::string const & search) const;
 
     private:
         InstructionGenerator const & instructions;

@@ -48,7 +48,16 @@ void Token::print(std::ostream & out, int indent_level) const
     if(type == STRING || type == PSEUDO || type == LABEL || type == INST ||
         type == OPER_TYPE_LABEL || type == OPER_TYPE_REG)
     {
-        out << str << " (characters)";
+        out << str;
+       if(type == PSEUDO) {
+          out << " (characters)";
+       } else if(type == LABEL || type == OPER_TYPE_LABEL) {
+          out << " (label)";
+       } else if(type == INST) {
+           out << " (inst)";
+       } else if(type == OPER_TYPE_REG) {
+           out << " (reg)";
+       }
     } else if(type == NUM || type == OPER_TYPE_NUM) {
         out << num << " (number)";
     } else if(type == NEWLINE) {

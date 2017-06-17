@@ -39,7 +39,7 @@ namespace core
             uint32_t & encoded_instruction,
             std::map<std::string, uint32_t> const & labels) const;
         bool processTokens(std::string const & filename, Token * program,
-                Token *& program_start);
+            std::map<std::string, uint32_t> & labels, Token *& program_start);
         bool processPseudo(std::string const & filename, Token const * pseudo);
         bool setOrig(std::string const & filename, Token const * orig, uint32_t & new_orig);
         bool findFirstOrig(std::string const & filename, Token * program, Token *& program_start,

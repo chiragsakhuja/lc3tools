@@ -34,9 +34,14 @@ void InstructionEncoder::encodeInstruction(bool log_enable, AssemblerLogger cons
     }
 }
 
+bool InstructionEncoder::findInstructionByName(std::string const & search) const
+{
+    return instructions.instructions.find(search) != instructions.instructions.end();
+}
+
 bool InstructionEncoder::findInstruction(Token const * search, std::vector<Instruction *> & candidates) const
 {
-    auto inst_list = instructions.instructions.find(std::string(search->str));
+    auto inst_list = instructions.instructions.find(search->str);
     candidates.clear();
     if(inst_list != instructions.instructions.end()) {
         std::vector<Instruction *> const & candidate_list = inst_list->second;

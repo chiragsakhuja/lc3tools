@@ -277,7 +277,7 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
         throw std::runtime_error("unknown label");
     }
 
-    int32_t token_val = ((int32_t) search->second) - (inst->pc + 1);
+    uint32_t token_val = (((int32_t) search->second) - (inst->pc + 1)) & ((1 << width) - 1);
     (void) registers;
 
     if(log_enable) {

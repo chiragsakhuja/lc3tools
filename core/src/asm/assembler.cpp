@@ -62,6 +62,7 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
             }
             throw std::runtime_error("could not find a valid instruction");
         } else {
+            std::cout << *inst;
             logger->printfMessage(utils::PrintType::ERROR, filename, inst,
                 file_buffer[inst->row_num], "not a valid usage of \'%s\' instruction",
                 inst->str.c_str());
@@ -232,7 +233,8 @@ void Assembler::processOperands(Token * inst)
     }
 }
 
-bool Assembler::processTokens(std::string const & filename, Token * program, Token *& program_start)
+bool Assembler::processTokens(std::string const & filename, Token * program,
+    std::map<std::string, uint32_t> & labels, Token *& program_start)
 {
     program = removeNewlineTokens(program);
     Token * cur_state;
@@ -256,13 +258,62 @@ bool Assembler::processTokens(std::string const & filename, Token * program, Tok
             }
         }
 
+        // since the parser can't distinguish between an instruction and a label by design,
+        // we need to do it while analyzing the tokens using a simple rule: if the first INST
+        // of a chain of tokens is not a valid instruction, assume it's a label
         std::vector<Instruction *> candidates;
-        if(cur_state->type == LABEL ||
-            (cur_state->type == INST && ! encoder->findInstruction(cur_state, candidates) &&
-             candidates.size() == 0))
+        if(cur_state->type == INST && ! encoder->findInstruction(cur_state, candidates) &&
+             candidates.size() == 0)
         {
             cur_state->type = LABEL;
+            if(cur_state->opers != nullptr) {
+                if(encoder->findInstructionByName(cur_state->opers->str)) {
+                    // elevate the INST to a proper token in the chain
+                    cur_state->opers->type = INST;
+                    Token * next_oper = cur_state->opers->next;
+                    cur_state->opers->next = cur_state->next;
+                    cur_state->next = cur_state->opers;
+                    cur_state->next->opers = next_oper;
+                    cur_state->opers = nullptr;
+
+                    uint32_t num_operands = 0;
+                    Token * cur_oper = cur_state->next->opers;
+                    while(cur_oper != nullptr) {
+                        num_operands += 1;
+                        cur_oper = cur_oper->next;
+                    }
+                    cur_state->next->num_operands = num_operands;
+                } else {
+                    if(log_enable) {
+                        logger->printfMessage(utils::PrintType::ERROR, filename, cur_state->opers,
+                            file_buffer[cur_state->row_num],
+                            "\'%s\' is being interpreted as a label, did you mean for it to be an instruction?",
+                            cur_state->str.c_str());
+                        logger->newline();
+                    }
+                }
+            }
+            /*
+             *std::cout << *cur_state;
+             *std::cout << *cur_state->next;
+             */
+        }
+
+        if(cur_state->type == LABEL)
+        {
             std::string const & label = cur_state->str;
+
+            auto search = labels.find(label);
+            if(search != labels.end()) {
+                if(log_enable) {
+                    logger->printfMessage(utils::PrintType::WARNING, filename, cur_state,
+                        file_buffer[cur_state->row_num], "redefining label \'%s\'",
+                        cur_state->str.c_str());
+                    logger->newline();
+                }
+            }
+
+            labels[label] = cur_orig + pc_offset;
 
             if(log_enable) {
                 logger->printf(utils::PrintType::DEBUG, "setting label \'%s\' to 0x%X",
@@ -314,32 +365,42 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program,
         logger->printf(utils::PrintType::INFO, "beginning first pass ...");
     }
 
+    bool p1_success = true;
     Token * cur_state = nullptr;
-    if(! processTokens(filename, program, cur_state)) {
+    if(! processTokens(filename, program, labels, cur_state)) {
         if(log_enable) {
             logger->printf(utils::PrintType::ERROR, "first pass failed");
         }
-        return false;
+    } else {
+        if(log_enable) {
+            logger->printf(utils::PrintType::INFO, "first pass completed successfully, beginning second pass ...");
+        }
+        p1_success = false;
     }
 
-    if(log_enable) {
-        logger->printf(utils::PrintType::INFO, "first pass completed successfully, beginning second pass ...");
-    }
-
+    bool p2_success = true;
     while(cur_state != nullptr) {
         if(cur_state->type == INST) {
             uint32_t encoded_instruction;
 
-            processInstruction(filename, cur_state, encoded_instruction, labels);
+            try {
+                processInstruction(filename, cur_state, encoded_instruction, labels);
+            } catch(std::runtime_error & e) {
+                p2_success = false;
+            }
         }
         cur_state = cur_state->next;
     }
 
     if(log_enable) {
-        logger->printf(utils::PrintType::INFO, "second pass completed successfully");
+        if(p2_success) {
+            logger->printf(utils::PrintType::INFO, "second pass completed successfully");
+        } else {
+            logger->printf(utils::PrintType::ERROR, "second pass failed");
+        }
     }
 
-    return true;
+    return p1_success && p2_success;
 }
 
 extern FILE *yyin;
