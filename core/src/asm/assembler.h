@@ -20,7 +20,7 @@ namespace core
         ~Assembler(void);
 
         bool assembleProgram(std::string const & filename, Token * program,
-            std::map<std::string, uint32_t> & labels);
+            std::map<std::string, uint32_t> & labels, std::vector<uint32_t> & object_file);
         void genObjectFile(char const * filename);
 
     private:

@@ -331,7 +331,7 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
 }
 
 bool Assembler::assembleProgram(std::string const & filename, Token * program,
-    std::map<std::string, uint32_t> & labels)
+    std::map<std::string, uint32_t> & labels, std::vector<uint32_t> & object_file)
 {
     std::ifstream file(filename);
 
@@ -406,12 +406,14 @@ extern int row_num, col_num;
 void Assembler::genObjectFile(char const * filename)
 {
     std::map<std::string, uint32_t> labels;
+    std::vector<uint32_t> object_file;
+
     if((yyin = fopen(filename, "r")) == nullptr) {
          logger->printf(utils::PrintType::WARNING, "skipping file %s ...", filename);
     } else {
         row_num = 0; col_num = 0;
         yyparse();
-        assembleProgram(filename, root, labels);
+        assembleProgram(filename, root, labels, object_file);
 
         fclose(yyin);
     }

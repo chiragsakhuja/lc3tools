@@ -19,6 +19,10 @@
         <script>window.$ = window.jQuery = require('jquery');</script>
         <!-- Include all compiled plugins (below), or include individual files as needed -->
         <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+        <script>
+            const myAddon = require('bindings')('addon')
+        </script>
     </head>
 
     <body>
@@ -37,7 +41,10 @@
                 </div>
             </div>
 
-            <div class="panel panel-default" id="console-panel"></div>
+            <div class="panel panel-default" id="console-panel">
+                <div class="panel-body" id="console-panel-body">
+                </div>
+            </div>
 
         </div>
     </body>
