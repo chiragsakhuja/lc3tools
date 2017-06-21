@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>lc3edit</title>
+        <!-- Bootstrap -->
+        <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/styles.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+            <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script>window.$ = window.jQuery = require('jquery');</script>
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    </head>
+
+    <body>
+        <div class="container-fluid">
+            <div class="panel panel-default" id="toolbar-panel">
+                <div class="panel-body" id="toolbary-panel-body">
+                    <div class="btn-group" role="group" aria-label="...">
+                        <button type="button" class="btn btn-default btn-toolbar"><span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span></button>
+                        <button type="button" class="btn btn-default btn-toolbar"><span class="glyphicon glyphicon-folder-open glyphicon-toolbar"></span></button>
+                    </div>  
+                </div>
+            </div>
+            <div class="panel panel-default" id="editor-panel">
+                <div class="panel-body" id="editor-panel-body">
+                    <div id="editor"></div>
+                </div>
+            </div>
+
+            <div class="panel panel-default" id="console-panel"></div>
+
+        </div>
+    </body>
+
+    <script>
+// Monaco uses a custom amd loader that over-rides node's require.
+// Keep a reference to node's require so we can restore it after executing the amd loader file.
+var nodeRequire = global.require;
+    </script>
+    <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script>
+// Save Monaco's amd require and restore Node's require
+var amdRequire = global.require;
+global.require = nodeRequire;
+    </script>
+
+    <script>
+// require node modules before loader.js comes in
+var path = require('path');
+
+function uriFromPath(_path) {
+    var pathName = path.resolve(_path).replace(/\\/g, '/');
+    if (pathName.length > 0 && pathName.charAt(0) !== '/') {
+        pathName = '/' + pathName;
+    }
+    return encodeURI('file://' + pathName);
+}
+
+amdRequire.config({
+    baseUrl: uriFromPath(path.join(__dirname, '../node_modules/monaco-editor/min'))
+});
+
+// workaround monaco-css not understanding the environment
+self.module = undefined;
+
+// workaround monaco-typescript not understanding the environment
+self.process.browser = true;
+
+amdRequire(['vs/editor/editor.main'], function() {
+    var editor = monaco.editor.create(document.getElementById('editor'), {
+        value: [
+            'function x() {',
+            '\tconsole.log("Hello world!");',
+            '}'
+        ].join('\n'),
+        language: 'javascript',
+        theme: 'vs-dark'
+    });
+});
+    </script>
+</html>
