@@ -11,6 +11,7 @@ namespace utils
     public:
         virtual void setColor(int color) override;
         virtual void print(std::string const & string) override;
+        virtual void newline(void) override;
     };
 };
 

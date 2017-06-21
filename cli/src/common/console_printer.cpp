@@ -21,3 +21,8 @@ void utils::ConsolePrinter::print(std::string const & string)
 {
     std::cout << string;
 }
+
+void utils::ConsolePrinter::newline(void)
+{
+    std::cout << "\n";
+}

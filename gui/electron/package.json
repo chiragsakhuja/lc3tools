@@ -15,7 +15,8 @@
         "electron": "^1.6.11",
         "jquery": "^3.2.1",
         "monaco-editor": "^0.8.3",
-        "nan": "^2.6.2"
+        "nan": "^2.6.2",
+        "remote": "^0.2.6"
     },
     "devDependencies": {
         "electron-rebuild": "^1.5.11"

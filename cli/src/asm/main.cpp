@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     core::Assembler as(true, *printer);
 
     if(argc < 2) {
-        printer->printf(utils::PrintType::ERROR, "usage: %s file [file ...]", argv[0]);
+        printer->printf(utils::PRINT_TYPE_ERROR, "usage: %s file [file ...]", argv[0]);
     } else {
         for(int i = 1; i < argc; i += 1) {
             try {

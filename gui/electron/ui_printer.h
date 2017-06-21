@@ -17,6 +17,7 @@ namespace utils
 
         virtual void setColor(int color) override;
         virtual void print(std::string const & string) override;
+        virtual void newline(void) override;
 
         std::vector<std::string> const & getOutputBuffer(void) { return output_buffer; }
     };
@@ -56,6 +57,11 @@ void utils::UIPrinter::setColor(int color)
 void utils::UIPrinter::print(std::string const & string)
 {
     output_buffer.push_back(string);
+}
+
+void utils::UIPrinter::newline(void)
+{
+    output_buffer.push_back("</br>");
 }
 
 #endif

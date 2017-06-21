@@ -223,7 +223,7 @@ uint32_t RegOperand::encode(bool log_enable, AssemblerLogger const & logger,
     uint32_t token_val = registers.at(std::string(operand->str)) & ((1 << width) - 1);
 
     if(log_enable) {
-        logger.printf(utils::PrintType::DEBUG, true, "%d.%d: reg %s => %s", inst->row_num, oper_count,
+        logger.printf(utils::PRINT_TYPE_DEBUG, true, "%d.%d: reg %s => %s", inst->row_num, oper_count,
             operand->str.c_str(), udecToBin(token_val, width).c_str());
     }
 
@@ -241,20 +241,20 @@ uint32_t NumOperand::encode(bool log_enable, AssemblerLogger const & logger,
 
     if(sext) {
         if((int32_t) operand->num < -(1 << (width - 1)) || (int32_t) operand->num > ((1 << (width - 1)) - 1)) {
-            logger.printfMessage(utils::PrintType::WARNING, filename, operand, line, "immediate %d truncated to %d",
+            logger.printfMessage(utils::PRINT_TYPE_WARNING, filename, operand, line, "immediate %d truncated to %d",
                 operand->num, sextTo32(token_val, width));
             logger.newline();
         }
     } else {
         if(operand->num > ((1 << width) - 1)) {
-            logger.printfMessage(utils::PrintType::WARNING, filename, operand, line, "immediate %d truncated to %u",
+            logger.printfMessage(utils::PRINT_TYPE_WARNING, filename, operand, line, "immediate %d truncated to %u",
                 operand->num, token_val);
             logger.newline();
         }
     }
 
     if(log_enable) {
-        logger.printf(utils::PrintType::DEBUG, true, "%d.%d: imm %d => %s", inst->row_num, oper_count, operand->num,
+        logger.printf(utils::PRINT_TYPE_DEBUG, true, "%d.%d: imm %d => %s", inst->row_num, oper_count, operand->num,
             udecToBin(token_val, width).c_str());
     }
 
@@ -270,7 +270,7 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     auto search = labels.find(operand->str);
     if(search == labels.end()) {
         if(log_enable) {
-            logger.printfMessage(utils::PrintType::ERROR, filename, operand, line, "unknown label \'%s\'",
+            logger.printfMessage(utils::PRINT_TYPE_ERROR, filename, operand, line, "unknown label \'%s\'",
                 operand->str.c_str());
             logger.newline();
         }
@@ -281,7 +281,7 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     (void) registers;
 
     if(log_enable) {
-        logger.printf(utils::PrintType::DEBUG, true, "%d.%d: label %s (0x%0.4x) => %s", inst->row_num, oper_count,
+        logger.printf(utils::PRINT_TYPE_DEBUG, true, "%d.%d: label %s (0x%0.4x) => %s", inst->row_num, oper_count,
             operand->str.c_str(), search->second, udecToBin((uint32_t) token_val, width).c_str());
     }
 

@@ -7,8 +7,8 @@
 #include "core/src/common/printer.h"
 #include "ui_printer.h"
 
-utils::Printer * printer;
-core::Assembler * as;
+utils::Printer * printer = nullptr;
+core::Assembler * assembler = nullptr;
 
 NAN_METHOD(Assemble)
 {
@@ -18,7 +18,7 @@ NAN_METHOD(Assemble)
     }
 
     v8::String::Utf8Value str(info[0]->ToString());
-    as->genObjectFile((char const *) (*str));
+    assembler->genObjectFile((char const *) (*str));
 }
 
 NAN_METHOD(GetOutput)
@@ -36,7 +36,7 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, GetOutput);
 
     printer = new utils::UIPrinter();
-    as = new core::Assembler(true, *printer);
+    assembler = new core::Assembler(true, *printer);
 }
 
-NODE_MODULE(assembler, Initialize);
+NODE_MODULE(wrapper, Initialize);

@@ -19,10 +19,6 @@
         <script>window.$ = window.jQuery = require('jquery');</script>
         <!-- Include all compiled plugins (below), or include individual files as needed -->
         <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
-
-        <script>
-            const myAddon = require('bindings')('addon')
-        </script>
     </head>
 
     <body>
@@ -30,8 +26,9 @@
             <div class="panel panel-default" id="toolbar-panel">
                 <div class="panel-body" id="toolbary-panel-body">
                     <div class="btn-group" role="group" aria-label="...">
-                        <button type="button" class="btn btn-default btn-toolbar"><span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span></button>
-                        <button type="button" class="btn btn-default btn-toolbar"><span class="glyphicon glyphicon-folder-open glyphicon-toolbar"></span></button>
+                        <button type="button" class="btn btn-default btn-toolbar" id="toolbar-save"><span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span></button>
+                        <button type="button" class="btn btn-default btn-toolbar" id="toolbar-open"><span class="glyphicon glyphicon-folder-open glyphicon-toolbar"></span></button>
+                        <button type="button" class="btn btn-default btn-toolbar" id="toolbar-build"><span class="glyphicon glyphicon-play glyphicon-toolbar"></span></button>
                     </div>  
                 </div>
             </div>
@@ -43,6 +40,7 @@
 
             <div class="panel panel-default" id="console-panel">
                 <div class="panel-body" id="console-panel-body">
+                    <div id="console"></div>
                 </div>
             </div>
 
@@ -50,15 +48,15 @@
     </body>
 
     <script>
-// Monaco uses a custom amd loader that over-rides node's require.
-// Keep a reference to node's require so we can restore it after executing the amd loader file.
-var nodeRequire = global.require;
+        // Monaco uses a custom amd loader that over-rides node's require.
+        // Keep a reference to node's require so we can restore it after executing the amd loader file.
+        var nodeRequire = global.require;
     </script>
     <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
     <script>
-// Save Monaco's amd require and restore Node's require
-var amdRequire = global.require;
-global.require = nodeRequire;
+        // Save Monaco's amd require and restore Node's require
+        var amdRequire = global.require;
+        global.require = nodeRequire;
     </script>
 
     <script>
@@ -95,4 +93,12 @@ amdRequire(['vs/editor/editor.main'], function() {
     });
 });
     </script>
+
+        <script>
+            const myAddon = require('bindings')('addon')
+            $("#toolbar-build").on('click', function(e) {
+                myAddon.Assemble("test.asm");
+                $("#console").html(myAddon.GetOutput());
+            })
+        </script>
 </html>
