@@ -19,6 +19,61 @@
         <script>window.$ = window.jQuery = require('jquery');</script>
         <!-- Include all compiled plugins (below), or include individual files as needed -->
         <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+        <script src="../node_modules/css-element-queries/src/ResizeSensor.js"></script>
+        <script src="../node_modules/css-element-queries/src/ElementQueries.js"></script>
+        <script>
+            var ElementQueries = require('css-element-queries/src/ElementQueries');
+
+            // attaches to DOMLoadContent and does anything for you
+            ElementQueries.listen();
+        </script>
+
+        <script>
+            // Monaco uses a custom amd loader that over-rides node's require.
+            // Keep a reference to node's require so we can restore it after executing the amd loader file.
+            var nodeRequire = global.require;
+        </script>
+        <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+        <script>
+            // Save Monaco's amd require and restore Node's require
+            var amdRequire = global.require;
+            global.require = nodeRequire;
+        </script>
+
+        <script>
+            // require node modules before loader.js comes in
+            var path = require('path');
+
+            function uriFromPath(_path) {
+                var pathName = path.resolve(_path).replace(/\\/g, '/');
+                if (pathName.length > 0 && pathName.charAt(0) !== '/') {
+                    pathName = '/' + pathName;
+                }
+                return encodeURI('file://' + pathName);
+            }
+
+            amdRequire.config({
+                baseUrl: uriFromPath(path.join(__dirname, '../node_modules/monaco-editor/min'))
+            });
+
+            // workaround monaco-css not understanding the environment
+            self.module = undefined;
+
+            // workaround monaco-typescript not understanding the environment
+            self.process.browser = true;
+
+            amdRequire(['vs/editor/editor.main'], function() {
+                window.editor = monaco.editor.create(document.getElementById('editor'), {
+                    value: [
+                        'function x() {',
+                        '\tconsole.log("Hello world!");',
+                        '}'
+                    ].join('\n'),
+                    language: 'javascript',
+                    theme: 'vs-dark'
+                });
+            });
+        </script>
     </head>
 
     <body>
@@ -26,9 +81,9 @@
             <div class="panel panel-default" id="toolbar-panel">
                 <div class="panel-body" id="toolbary-panel-body">
                     <div class="btn-group" role="group" aria-label="...">
-                        <button type="button" class="btn btn-default btn-toolbar" id="toolbar-save"><span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span></button>
-                        <button type="button" class="btn btn-default btn-toolbar" id="toolbar-open"><span class="glyphicon glyphicon-folder-open glyphicon-toolbar"></span></button>
-                        <button type="button" class="btn btn-default btn-toolbar" id="toolbar-build"><span class="glyphicon glyphicon-play glyphicon-toolbar"></span></button>
+                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-save"><span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span></a>
+                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-open"><span class="glyphicon glyphicon-folder-open glyphicon-toolbar"></span></a>
+                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-build"><span class="glyphicon glyphicon-wrench glyphicon-toolbar"></span></a>
                     </div>  
                 </div>
             </div>
@@ -45,60 +100,39 @@
             </div>
 
         </div>
-    </body>
-
-    <script>
-        // Monaco uses a custom amd loader that over-rides node's require.
-        // Keep a reference to node's require so we can restore it after executing the amd loader file.
-        var nodeRequire = global.require;
-    </script>
-    <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
-    <script>
-        // Save Monaco's amd require and restore Node's require
-        var amdRequire = global.require;
-        global.require = nodeRequire;
-    </script>
-
-    <script>
-// require node modules before loader.js comes in
-var path = require('path');
-
-function uriFromPath(_path) {
-    var pathName = path.resolve(_path).replace(/\\/g, '/');
-    if (pathName.length > 0 && pathName.charAt(0) !== '/') {
-        pathName = '/' + pathName;
-    }
-    return encodeURI('file://' + pathName);
-}
-
-amdRequire.config({
-    baseUrl: uriFromPath(path.join(__dirname, '../node_modules/monaco-editor/min'))
-});
-
-// workaround monaco-css not understanding the environment
-self.module = undefined;
-
-// workaround monaco-typescript not understanding the environment
-self.process.browser = true;
-
-amdRequire(['vs/editor/editor.main'], function() {
-    var editor = monaco.editor.create(document.getElementById('editor'), {
-        value: [
-            'function x() {',
-            '\tconsole.log("Hello world!");',
-            '}'
-        ].join('\n'),
-        language: 'javascript',
-        theme: 'vs-dark'
-    });
-});
-    </script>
 
         <script>
+            $(".btn").click(function(e) {
+                // Removes focus of the button.
+                $(this).blur();
+            });
+
             const myAddon = require('bindings')('addon')
-            $("#toolbar-build").on('click', function(e) {
-                myAddon.Assemble("test.asm");
-                $("#console").html(myAddon.GetOutput());
+            $('#toolbar-build').on('click', function(e) {
+                myAddon.Assemble('test.asm');
+                $('#console').empty();
+                $('#console').html(myAddon.GetOutput());
+                $('#console-panel').stop().animate({
+                    scrollTop: $('#console-panel')[0].scrollHeight
+                }, 200);
             })
+
+            $('#toolbar-save').on('click', function(e) {
+                console.log(window.editor.getValue());
+            });
+
+            $(window).reisze(function() {
+                console.log("resize");
+            });
         </script>
+
+        <script>
+            var element = document.getElementById('editor-panel');
+            new ResizeSensor(element, function() {
+                console.log('Changed to ' + element.clientWidth);
+            });
+        </script>
+
+    </body>
+
 </html>

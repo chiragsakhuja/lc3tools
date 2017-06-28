@@ -70,6 +70,7 @@ html, body {
     height: 200px;
     box-shadow: 0 0px 6px 2px #000;
     z-index: 2;
+    overflow: scroll;
 }
 
 #editor {

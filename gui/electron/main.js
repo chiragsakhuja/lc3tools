@@ -9,7 +9,7 @@ let win
 function createWindow()
 {
     // create the browser window
-    win = new BrowserWindow({width: 800, height: 600})
+    win = new BrowserWindow({width: 800, height: 600, show: false})
     win.maximize()
 
     // load index.html
@@ -19,8 +19,12 @@ function createWindow()
         slashes: true
     }))
 
+    win.webContents.on('did-finish-load', function() {
+        win.show();
+    });
+
     // open developer tools
-    win.webContents.openDevTools()
+    //win.webContents.openDevTools()
 
     // emitted when the window is closed
     win.on('closed', () => {
