@@ -1,13 +1,6 @@
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
 
-#include <stdint.h>
-#include <string>
-#include <vector>
-#include <map>
-
-#include "logger.h"
-
 namespace core {
     typedef enum {
           OPER_TYPE_FIXED = 2

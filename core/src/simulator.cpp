@@ -1,5 +1,12 @@
 #include <fstream>
-#include <iostream>
+#include <cstdint>
+#include <array>
+#include <vector>
+
+#include "tokens.h"
+
+#include "printer.h"
+#include "logger.h"
 
 #include "simulator.h"
 

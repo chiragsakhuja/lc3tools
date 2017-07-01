@@ -1,14 +1,6 @@
 #ifndef SIM_H
 #define SIM_H
 
-#include <cstdint>
-#include <vector>
-#include <functional>
-#include <array>
-
-#include "logger.h"
-#include "printer.h"
-
 namespace core
 {
     struct MachineState

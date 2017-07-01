@@ -1,5 +1,15 @@
-#include "simulator.h"
+#include <array>
+#include <functional>
+#include <string>
+#include <vector>
+
+#include "tokens.h"
+
 #include "printer.h"
+#include "logger.h"
+
+#include "simulator.h"
+
 #include "../common/console_printer.h"
 
 int main(int argc, char *argv[])

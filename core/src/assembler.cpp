@@ -5,20 +5,25 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
-#include <sstream>
 
 class AssemblerSimple_SingleInstruction_Test;
 
-#include "assembler.h"
-#include "instruction_encoder.h"
-#include "logger.h"
-#include "tokens.h"
-#include "printer.h"
-#include "parser_gen/parser.hpp"
 #include "utils.h"
+
+#include "tokens.h"
+#include "parser_gen/parser.hpp"
+
+#include "printer.h"
+#include "logger.h"
+
+#include "instructions.h"
+#include "instruction_encoder.h"
+
+#include "assembler.h"
 
 using namespace core;
 

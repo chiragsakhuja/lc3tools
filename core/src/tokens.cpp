@@ -1,8 +1,14 @@
 #include <iostream>
+#include <map>
 #include <string>
+#include <vector>
 
 #include "tokens.h"
 #include "parser_gen/parser.hpp"
+
+#include "printer.h"
+#include "logger.h"
+
 #include "instructions.h"
 
 using namespace core;

@@ -1,14 +1,6 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 
-#include <map>
-#include <string>
-#include <vector>
-
-#include "instruction_encoder.h"
-#include "logger.h"
-#include "printer.h"
-
 namespace core
 {
     class Assembler

@@ -1,6 +1,16 @@
+#include <map>
 #include <stdexcept>
-#include "instructions.h"
+#include <string>
+#include <vector>
+
 #include "utils.h"
+
+#include "tokens.h"
+
+#include "printer.h"
+#include "logger.h"
+
+#include "instructions.h"
 
 using namespace core;
 

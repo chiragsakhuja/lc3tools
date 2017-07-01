@@ -7,9 +7,13 @@
 #include <string>
 #include <vector>
 
-#include "instruction_encoder.h"
-#include "logger.h"
+#include "tokens.h"
+
 #include "printer.h"
+#include "logger.h"
+
+#include "instructions.h"
+#include "instruction_encoder.h"
 
 using namespace core;
 

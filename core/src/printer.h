@@ -1,9 +1,6 @@
 #ifndef PRINTER_H
 #define PRINTER_H
 
-#include <cstdio>
-#include <string>
-
 namespace utils
 {
     enum PrintColor {

@@ -1,15 +1,6 @@
 #ifndef INSTRUCTION_ENCODER_H
 #define INSTRUCTION_ENCODER_H
 
-#include <list>
-#include <map>
-#include <string>
-#include <vector>
-
-#include "logger.h"
-#include "instructions.h"
-#include "printer.h"
-
 namespace core
 {
     class InstructionEncoder

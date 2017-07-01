@@ -1,9 +1,6 @@
 #ifndef TOKEN_PRINTER_H
 #define TOKEN_PRINTER_H
 
-#include "tokens.h"
-#include "printer.h"
-
 namespace core {
     enum PrintType {
           PRINT_TYPE_FATAL_ERROR = 0
