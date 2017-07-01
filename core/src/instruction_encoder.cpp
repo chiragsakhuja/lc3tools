@@ -9,7 +9,7 @@
 
 #include "instruction_encoder.h"
 #include "logger.h"
-#include "../common/printer.h"
+#include "printer.h"
 
 using namespace core;
 

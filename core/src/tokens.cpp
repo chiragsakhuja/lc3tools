@@ -3,7 +3,7 @@
 
 #include "tokens.h"
 #include "parser_gen/parser.hpp"
-#include "../common/instructions.h"
+#include "instructions.h"
 
 using namespace core;
 

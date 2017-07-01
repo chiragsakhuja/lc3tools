@@ -7,15 +7,15 @@
 #include <vector>
 
 #include "logger.h"
-#include "../common/instructions.h"
-#include "../common/printer.h"
+#include "instructions.h"
+#include "printer.h"
 
 namespace core
 {
     class InstructionEncoder
     {
     public:
-        InstructionEncoder(InstructionGenerator const & instructions) : instructions(instructions) {}
+        InstructionEncoder(InstructionHandler const & instructions) : instructions(instructions) {}
 
         // precondition: the instruction is of type pattern and is valid (no error checking)
         void encodeInstruction(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
@@ -26,7 +26,7 @@ namespace core
         bool findInstructionByName(std::string const & search) const;
 
     private:
-        InstructionGenerator const & instructions;
+        InstructionHandler const & instructions;
         std::string udec_to_bin(uint32_t x, uint32_t num_bits) const;
     };
 };

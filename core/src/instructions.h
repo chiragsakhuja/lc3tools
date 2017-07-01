@@ -6,7 +6,7 @@
 #include <vector>
 #include <map>
 
-#include "../asm/logger.h"
+#include "logger.h"
 
 namespace core {
     typedef enum {
@@ -15,10 +15,6 @@ namespace core {
         , OPER_TYPE_LABEL
         , OPER_TYPE_REG
     } OperType;
-
-    std::string udecToBin(uint32_t value, uint32_t num_bits);
-    std::string decToBin(int32_t value, uint32_t num_bits);
-    uint32_t sextTo32(uint32_t value, uint32_t num_bits);
 
     class Operand
     {
@@ -50,14 +46,14 @@ namespace core {
         uint32_t getNumOperands(void);
     };
 
-    class InstructionGenerator
+    class InstructionHandler
     {
     public:
         std::map<std::string, std::vector<Instruction *>> instructions;
         std::map<std::string, uint32_t> regs;
 
-        InstructionGenerator(void);
-        ~InstructionGenerator(void);
+        InstructionHandler(void);
+        ~InstructionHandler(void);
     };
 
     class FixedOperand : public Operand
@@ -115,13 +111,21 @@ namespace core {
     class JMPInstruction : public Instruction
     {
     public:
+        using Instruction::Instruction;
         JMPInstruction(std::vector<Operand *> const & operands) : Instruction(false, "jmp", operands) {}
     };
 
     class JSRInstruction : public Instruction
     {
     public:
+        using Instruction::Instruction;
         JSRInstruction(std::vector<Operand *> const & operands) : Instruction(false, "jsr", operands) {}
+    };
+
+    class JSRRInstruction : public JSRInstruction
+    {
+    public:
+        JSRRInstruction(std::vector<Operand *> const & operands) : JSRInstruction(false, "jsrr", operands) {}
     };
 
     class LDInstruction : public Instruction
@@ -153,6 +157,13 @@ namespace core {
     public:
         NOTInstruction(std::vector<Operand *> const & operands) : Instruction(true, "not", operands) {}
     };
+
+    class RETInstruction : public JMPInstruction
+    {
+    public:
+        RETInstruction(std::vector<Operand *> const & operands) : JMPInstruction(false, "ret", operands) {}
+    };
+
 
     class RTIInstruction : public Instruction
     {

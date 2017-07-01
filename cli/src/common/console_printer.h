@@ -2,7 +2,7 @@
 #define CONSOLE_PRINTER_H
 
 #include <string>
-#include "core/src/common/printer.h"
+#include "printer.h"
 
 namespace utils
 {

@@ -7,7 +7,7 @@
 
 #include "instruction_encoder.h"
 #include "logger.h"
-#include "../common/printer.h"
+#include "printer.h"
 
 namespace core
 {
@@ -30,7 +30,7 @@ namespace core
         std::vector<std::string> file_buffer;
         AssemblerLogger * logger;
         bool log_enable;
-        InstructionGenerator * instructions;
+        InstructionHandler * instructions;
         InstructionEncoder * encoder;
 
         Token * removeNewlineTokens(Token * program);

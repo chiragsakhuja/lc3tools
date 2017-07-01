@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include "instructions.h"
+#include "utils.h"
 
 using namespace core;
 
@@ -40,7 +41,7 @@ bool Operand::isEqualType(OperType other) const
     return type == other;
 }
 
-InstructionGenerator::InstructionGenerator(void)
+InstructionHandler::InstructionHandler(void)
 {
     regs["r0"] = 0;
     regs["r1"] = 1;
@@ -96,7 +97,7 @@ InstructionGenerator::InstructionGenerator(void)
         new LabelOperand(11)
     }));
 
-    instructions["jsrr"].push_back(new JSRInstruction({
+    instructions["jsrr"].push_back(new JSRRInstruction({
         new FixedOperand(4, 0x4),
         new FixedOperand(1, 0x0),
         new FixedOperand(2, 0x0),
@@ -136,7 +137,7 @@ InstructionGenerator::InstructionGenerator(void)
         new FixedOperand(6, 0x3f)
     }));
 
-    instructions["ret"].push_back(new JMPInstruction({
+    instructions["ret"].push_back(new RETInstruction({
         new FixedOperand(4, 0xc),
         new FixedOperand(3, 0x0),
         new FixedOperand(3, 0x7),
@@ -176,31 +177,9 @@ InstructionGenerator::InstructionGenerator(void)
     }));
 }
 
-InstructionGenerator::~InstructionGenerator(void)
+InstructionHandler::~InstructionHandler(void)
 {
     // TODO: Go through map and delete all instructions
-}
-
-std::string core::udecToBin(uint32_t value, uint32_t num_bits)
-{
-    char * bits = new char[num_bits + 1];
-    for(uint32_t i = 0; i < num_bits; i += 1) {
-        bits[num_bits - i - 1] = (value & 1) + '0';
-        value >>= 1;
-    }
-    bits[num_bits] = 0;
-
-    return std::string(bits);
-}
-
-uint32_t core::sextTo32(uint32_t value, uint32_t num_bits)
-{
-    uint32_t extension = ~((1 << num_bits) - 1);
-    if((value >> (num_bits - 1)) & 1) {
-        return extension | value;
-    } else {
-        return value;
-    }
 }
 
 uint32_t FixedOperand::encode(bool log_enable, AssemblerLogger const & logger,
@@ -223,7 +202,7 @@ uint32_t RegOperand::encode(bool log_enable, AssemblerLogger const & logger,
     uint32_t token_val = registers.at(std::string(operand->str)) & ((1 << width) - 1);
 
     if(log_enable) {
-        logger.printf(utils::PRINT_TYPE_DEBUG, true, "%d.%d: reg %s => %s", inst->row_num, oper_count,
+        logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: reg %s => %s", inst->row_num, oper_count,
             operand->str.c_str(), udecToBin(token_val, width).c_str());
     }
 
@@ -241,20 +220,20 @@ uint32_t NumOperand::encode(bool log_enable, AssemblerLogger const & logger,
 
     if(sext) {
         if((int32_t) operand->num < -(1 << (width - 1)) || (int32_t) operand->num > ((1 << (width - 1)) - 1)) {
-            logger.printfMessage(utils::PRINT_TYPE_WARNING, filename, operand, line, "immediate %d truncated to %d",
+            logger.printfMessage(PRINT_TYPE_WARNING, filename, operand, line, "immediate %d truncated to %d",
                 operand->num, sextTo32(token_val, width));
             logger.newline();
         }
     } else {
         if(operand->num > ((1 << width) - 1)) {
-            logger.printfMessage(utils::PRINT_TYPE_WARNING, filename, operand, line, "immediate %d truncated to %u",
+            logger.printfMessage(PRINT_TYPE_WARNING, filename, operand, line, "immediate %d truncated to %u",
                 operand->num, token_val);
             logger.newline();
         }
     }
 
     if(log_enable) {
-        logger.printf(utils::PRINT_TYPE_DEBUG, true, "%d.%d: imm %d => %s", inst->row_num, oper_count, operand->num,
+        logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: imm %d => %s", inst->row_num, oper_count, operand->num,
             udecToBin(token_val, width).c_str());
     }
 
@@ -270,7 +249,7 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     auto search = labels.find(operand->str);
     if(search == labels.end()) {
         if(log_enable) {
-            logger.printfMessage(utils::PRINT_TYPE_ERROR, filename, operand, line, "unknown label \'%s\'",
+            logger.printfMessage(PRINT_TYPE_ERROR, filename, operand, line, "unknown label \'%s\'",
                 operand->str.c_str());
             logger.newline();
         }
@@ -281,7 +260,7 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     (void) registers;
 
     if(log_enable) {
-        logger.printf(utils::PRINT_TYPE_DEBUG, true, "%d.%d: label %s (0x%0.4x) => %s", inst->row_num, oper_count,
+        logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: label %s (0x%0.4x) => %s", inst->row_num, oper_count,
             operand->str.c_str(), search->second, udecToBin((uint32_t) token_val, width).c_str());
     }
 
