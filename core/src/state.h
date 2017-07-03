@@ -24,6 +24,8 @@ namespace core
         StateChangeType type;
 
         IStateChange(StateChangeType type) : type(type) {}
+        virtual ~IStateChange(void) = default;
+
         virtual void updateState(MachineState & state) const = 0;
         virtual std::string getOutputString(MachineState const & state) const = 0;
     };
@@ -32,6 +34,7 @@ namespace core
     {
     public:
         RegStateChange(uint32_t reg, uint32_t value) : IStateChange(STATE_CHANGE_REG), reg(reg), value(value) {}
+
         virtual void updateState(MachineState & state) const override { state.regs[reg] = value; }
         virtual std::string getOutputString(MachineState const & state) const override { return toString("R%d: 0x%0.4x => 0x%0.4x", reg, state.regs[reg], value); }
     private:
@@ -42,32 +45,35 @@ namespace core
     class PSRStateChange : public IStateChange
     {
     public:
-        uint32_t value;
-
         PSRStateChange(uint32_t value) : IStateChange(STATE_CHANGE_PSR), value(value) {}
+
         virtual void updateState(MachineState & state) const override { state.psr = value; }
         virtual std::string getOutputString(MachineState const & state) const override { return toString("PSR: 0x%0.4x => 0x%0.4x", state.psr, value); }
+    private:
+        uint32_t value;
     };
 
     class PCStateChange : public IStateChange
     {
     public:
-        uint32_t value;
-
         PCStateChange(uint32_t value) : IStateChange(STATE_CHANGE_PC), value(value) {}
+
         virtual void updateState(MachineState & state) const override { state.pc = value; }
         virtual std::string getOutputString(MachineState const & state) const override { return toString("PC: 0x%0.4x => 0x%0.4x", state.pc, value); }
+    private:
+        uint32_t value;
     };
 
     class MemStateChange : public IStateChange
     {
     public:
-        uint32_t addr;
-        uint32_t value;
-
         MemStateChange(uint32_t addr, uint32_t value) : IStateChange(STATE_CHANGE_MEM), addr(addr), value(value) {}
+
         virtual void updateState(MachineState & state) const override { state.mem[addr] = value; }
         virtual std::string getOutputString(MachineState const & state) const override { return toString("MEM[0x%0.4x]: 0x%0.4x => 0x%0.4x", addr, state.mem[addr], value); }
+    private:
+        uint32_t addr;
+        uint32_t value;
     };
 };
 

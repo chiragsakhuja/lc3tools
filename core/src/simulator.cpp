@@ -59,6 +59,7 @@ void Simulator::simulate(void)
             state.pc += 1;
             std::vector<IStateChange const *> changes = candidate->execute(state);
             delete candidate;
+
             for(uint32_t i = 0; i < changes.size(); i += 1) {
                 if(log_enable) {
                     logger.printf(PRINT_TYPE_DEBUG, false, "%s", changes[i]->getOutputString(state).c_str());

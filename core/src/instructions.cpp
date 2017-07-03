@@ -102,15 +102,23 @@ InstructionHandler::~InstructionHandler(void)
     }
 }
 
+// TODO: remove all these nasty parameters (maybe by returning an error message chain?)
 uint32_t FixedOperand::encode(bool log_enable, AssemblerLogger const & logger,
     std::string const & filename, std::string const & line, Token const * inst,
     Token const * operand, uint32_t oper_count, 
     std::map<std::string, uint32_t> const & registers,
     std::map<std::string, uint32_t> const & labels)
 {
+    (void) log_enable;
+    (void) logger;
+    (void) filename;
+    (void) line;
+    (void) inst;
     (void) operand;
+    (void) oper_count;
     (void) registers;
     (void) labels;
+
     return value & ((1 << width) - 1);
 }
 
@@ -120,6 +128,10 @@ uint32_t RegOperand::encode(bool log_enable, AssemblerLogger const & logger,
     std::map<std::string, uint32_t> const & registers,
     std::map<std::string, uint32_t> const & labels)
 {
+    (void) filename;
+    (void) line;
+    (void) labels;
+
     uint32_t token_val = registers.at(std::string(operand->str)) & ((1 << width) - 1);
 
     if(log_enable) {
@@ -136,8 +148,10 @@ uint32_t NumOperand::encode(bool log_enable, AssemblerLogger const & logger,
     std::map<std::string, uint32_t> const & registers,
     std::map<std::string, uint32_t> const & labels)
 {
-    uint32_t token_val = operand->num & ((1 << width) - 1);
     (void) registers;
+    (void) labels;
+
+    uint32_t token_val = operand->num & ((1 << width) - 1);
 
     if(sext) {
         if((int32_t) operand->num < -(1 << (width - 1)) || (int32_t) operand->num > ((1 << (width - 1)) - 1)) {
@@ -243,7 +257,7 @@ std::vector<IStateChange const *> ANDIInstruction::execute(MachineState const & 
 std::vector<IStateChange const *> JMPInstruction::execute(MachineState const & state)
 {
     return std::vector<IStateChange const *> {
-        new PCStateChange(operands[2]->value & 0xffff)
+        new PCStateChange(state.regs[operands[2]->value] & 0xffff)
     };
 }
 
@@ -326,7 +340,9 @@ std::vector<IStateChange const *> NOTInstruction::execute(MachineState const & s
 
 std::vector<IStateChange const *> RTIInstruction::execute(MachineState const & state)
 {
-
+    // TODO: update state to have system stack pointer (see how existing simulator does it)
+    (void) state;
+    return std::vector<IStateChange const *> {};
 }
 
 std::vector<IStateChange const *> STInstruction::execute(MachineState const & state)
