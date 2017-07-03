@@ -1,6 +1,8 @@
 #ifndef TOKEN_PRINTER_H
 #define TOKEN_PRINTER_H
 
+#include "utils.h"
+
 namespace core {
     enum PrintType {
           PRINT_TYPE_FATAL_ERROR = 0
@@ -21,8 +23,6 @@ namespace core {
 
         template<typename ... Args>
         void printf(int level, bool bold, std::string const & format, Args ... args) const;
-        template<typename ... Args>
-        std::string toString(std::string const & str, Args ... args) const;
         void newline(void) const { printer.newline(); }
     };
 
@@ -95,19 +95,6 @@ void core::Logger::printf(int type, bool bold, std::string const & format, Args 
 
         printer.newline();
     }
-}
-
-template<typename ... Args>
-std::string core::Logger::toString(std::string const & format, Args ... args) const
-{
-    int len = std::snprintf(nullptr, 0, format.c_str(), args...);
-    char * str = new char[len + 1];
-
-    std::snprintf(str, len + 1, format.c_str(), args...);
-
-    std::string ret(str);
-    delete[] str;
-    return ret;
 }
 
 template<typename ... Args>

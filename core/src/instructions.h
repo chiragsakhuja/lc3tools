@@ -27,7 +27,7 @@ namespace core {
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) = 0;
-
+        virtual Operand * clone(void) const = 0;
         bool isEqualType(OperType other) const;
     };
 
@@ -38,10 +38,11 @@ namespace core {
         std::vector<Operand *> operands;
 
         Instruction(std::string const & name, std::vector<Operand *> const & operands);
+        Instruction(Instruction const & that);
         virtual ~Instruction(void);
 
         uint32_t getNumOperands(void) const;
-        virtual void execute(MachineState & state) = 0;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) = 0;
         virtual Instruction * clone(void) const = 0;
     };
 
@@ -64,6 +65,7 @@ namespace core {
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
+        virtual FixedOperand * clone(void) const override { return new FixedOperand(*this); }
     };
 
     class RegOperand : public Operand
@@ -73,6 +75,7 @@ namespace core {
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
+        virtual RegOperand * clone(void) const override { return new RegOperand(*this); }
     };
 
     class NumOperand : public Operand
@@ -84,6 +87,7 @@ namespace core {
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
+        virtual NumOperand * clone(void) const override { return new NumOperand(*this); }
     };
 
     class LabelOperand : public Operand
@@ -93,6 +97,7 @@ namespace core {
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
+        virtual LabelOperand * clone(void) const override { return new LabelOperand(*this); }
     };
 
     class ADDRInstruction : public Instruction
@@ -105,7 +110,7 @@ namespace core {
             new FixedOperand(3, 0x0),
             new RegOperand(3)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual ADDRInstruction * clone(void) const override { return new ADDRInstruction(*this); }
     };
 
@@ -119,7 +124,7 @@ namespace core {
             new FixedOperand(1, 0x1),
             new NumOperand(5, true)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual ADDIInstruction * clone(void) const override { return new ADDIInstruction(*this); }
     };
 
@@ -133,7 +138,7 @@ namespace core {
             new FixedOperand(3, 0x0),
             new RegOperand(3)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual ANDRInstruction * clone(void) const override { return new ANDRInstruction(*this); }
     };
 
@@ -147,7 +152,7 @@ namespace core {
             new FixedOperand(1, 0x1),
             new NumOperand(5, true)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual ANDIInstruction * clone(void) const override { return new ANDIInstruction(*this); }
     };
 
@@ -161,7 +166,7 @@ namespace core {
             new RegOperand(3),
             new FixedOperand(6, 0x0)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual JMPInstruction * clone(void) const override { return new JMPInstruction(*this); }
     };
 
@@ -174,7 +179,7 @@ namespace core {
             new FixedOperand(1, 0x1),
             new LabelOperand(11)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual JSRInstruction * clone(void) const override { return new JSRInstruction(*this); }
     };
 
@@ -188,7 +193,7 @@ namespace core {
             new RegOperand(3),
             new FixedOperand(6, 0x0)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual JSRRInstruction * clone(void) const override { return new JSRRInstruction(*this); }
     };
 
@@ -200,7 +205,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual LDInstruction * clone(void) const override { return new LDInstruction(*this); }
     };
 
@@ -212,7 +217,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual LDIInstruction * clone(void) const override { return new LDIInstruction(*this); }
     };
 
@@ -225,7 +230,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(6)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual LDRInstruction * clone(void) const override { return new LDRInstruction(*this); }
     };
 
@@ -237,7 +242,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual LEAInstruction * clone(void) const override { return new LEAInstruction(*this); }
     };
 
@@ -250,7 +255,7 @@ namespace core {
             new RegOperand(3),
             new FixedOperand(6, 0x3f)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual NOTInstruction * clone(void) const override { return new NOTInstruction(*this); }
     };
 
@@ -275,7 +280,7 @@ namespace core {
             new RegOperand(3),
             new FixedOperand(6, 0x3f)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual RTIInstruction * clone(void) const override { return new RTIInstruction(*this); }
     };
 
@@ -287,7 +292,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual STInstruction * clone(void) const override { return new STInstruction(*this); }
     };
 
@@ -299,7 +304,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual STIInstruction * clone(void) const override { return new STIInstruction(*this); }
     };
 
@@ -312,7 +317,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(6)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual STRInstruction * clone(void) const override { return new STRInstruction(*this); }
     };
 
@@ -324,7 +329,7 @@ namespace core {
             new FixedOperand(4, 0x0),
             new NumOperand(8, false)
         }) {}
-        virtual void execute(MachineState & state) override;
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual TRAPInstruction * clone(void) const override { return new TRAPInstruction(*this); }
     };
 };

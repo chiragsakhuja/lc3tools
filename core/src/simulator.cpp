@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "utils.h"
+
 #include "tokens.h"
 
 #include "printer.h"
@@ -27,27 +29,47 @@ Simulator::Simulator(bool log_enable, utils::IPrinter & printer) :
 {
     this->log_enable = log_enable;
 
-    state.mem.resize(1 << 16);
+    for(uint32_t i = 0; i < 8; i += 1) {
+        state.regs[i] = 0;
+    }
 
     state.pc = RESET_PC;
-    state.psr = 0x0002;
+    state.psr = 0x8002;
 
+    state.mem.resize(1 << 16);
+    for(uint32_t i = 0; i < (1 << 16); i += 1) {
+        state.mem[i] = 0;
+    }
     state.mem[MCR] = 0x8000;  // indicate the machine is running
 }
 
 void Simulator::simulate(void)
 {
-    uint32_t encoded_inst = state.mem[state.pc];
+    for(int i = 0; i < 2; i += 1) {
+        uint32_t encoded_inst = state.mem[state.pc];
 
-    Instruction * candidate;
-    bool valid = decoder.findInstructionByEncoding(encoded_inst, candidate);
-    if(valid) {
-        decoder.decode(encoded_inst, *candidate);
-        state.pc += 1;
-        candidate->execute(state);
-        delete candidate;
-    } else {
-        throw std::runtime_error("invalid instruction");
+        Instruction * candidate;
+        bool valid = decoder.findInstructionByEncoding(encoded_inst, candidate);
+        if(valid) {
+            if(log_enable) {
+                logger.printf(PRINT_TYPE_DEBUG, true, "executing %s", udecToBin(encoded_inst, 16).c_str());
+            }
+
+            decoder.decode(encoded_inst, *candidate);
+            state.pc += 1;
+            std::vector<IStateChange const *> changes = candidate->execute(state);
+            delete candidate;
+            for(uint32_t i = 0; i < changes.size(); i += 1) {
+                if(log_enable) {
+                    logger.printf(PRINT_TYPE_DEBUG, false, "%s", changes[i]->getOutputString(state).c_str());
+                }
+                changes[i]->updateState(state);
+
+                delete changes[i];
+            }
+        } else {
+            throw std::runtime_error("invalid instruction");
+        }
     }
 }
 

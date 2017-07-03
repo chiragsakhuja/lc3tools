@@ -398,9 +398,9 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program,
     return p1_success && p2_success;
 }
 
-extern FILE *yyin;
+extern FILE * yyin;
 extern int yyparse(void);
-extern Token *root;
+extern Token * root;
 extern int row_num, col_num;
 
 void Assembler::genObjectFile(char const * filename)

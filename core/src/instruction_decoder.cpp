@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 #include "utils.h"
 
 #include "tokens.h"
@@ -38,6 +40,7 @@ bool InstructionDecoder::findInstructionByEncoding(uint32_t encoding, Instructio
             bool valid = true;
             for(Operand const * op : inst->operands) {
                 if(op->type == OPER_TYPE_FIXED) {
+                    //printf("checking [%d, %d] => %s ?= %s\n", cur_pos, cur_pos - op->width + 1, udecToBin(getBits(encoding, cur_pos, cur_pos - op->width + 1), op->width).c_str(), udecToBin(((FixedOperand *) op)->value, op->width).c_str());
                     if(getBits(encoding, cur_pos, cur_pos - op->width + 1) != ((FixedOperand *) op)->value) {
                         valid = false;
                         break;

@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <iostream>
+
 #include "utils.h"
 
 #include "tokens.h"
@@ -29,6 +31,14 @@ Instruction::Instruction(std::string const & name, std::vector<Operand *> const 
 {
     this->name = name;
     this->operands = operands;
+}
+
+Instruction::Instruction(Instruction const & that)
+{
+    this->name = that.name;
+    for(Operand * op : that.operands) {
+        this->operands.push_back(op->clone());
+    }
 }
 
 Instruction::~Instruction(void)
@@ -100,6 +110,7 @@ uint32_t FixedOperand::encode(bool log_enable, AssemblerLogger const & logger,
 {
     (void) operand;
     (void) registers;
+    (void) labels;
     return value & ((1 << width) - 1);
 }
 
@@ -177,140 +188,184 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     return token_val;
 }
 
-void ADDRInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> ADDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
     uint32_t sr2_val = sextTo32(state.regs[operands[4]->value], 16);
-    uint32_t sum = (sr1_val + sr2_val) & 0xffff;
-    state.psr = computePSRCC(sum, state.psr);
-    state.regs[dr] = sum;
+    uint32_t result = (sr1_val + sr2_val) & 0xffff;
+
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(computePSRCC(result, state.psr)),
+        new RegStateChange(dr, result)
+    };
 }
 
-void ADDIInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> ADDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
     uint32_t imm_val = sextTo32(operands[4]->value, operands[4]->width);
-    uint32_t sum = (sr1_val + imm_val) & 0xffff;
-    state.psr = computePSRCC(sum, state.psr);
-    state.regs[dr] = sum;
+    uint32_t result = (sr1_val + imm_val) & 0xffff;
+
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(computePSRCC(result, state.psr)),
+        new RegStateChange(dr, result)
+    };
 }
 
-void ANDRInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> ANDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
     uint32_t sr2_val = sextTo32(state.regs[operands[4]->value], 16);
-    uint32_t sum = (sr1_val & sr2_val) & 0xffff;
-    state.psr = computePSRCC(sum, state.psr);
-    state.regs[dr] = sum;
+    uint32_t result = (sr1_val & sr2_val) & 0xffff;
+
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(computePSRCC(result, state.psr)),
+        new RegStateChange(dr, result)
+    };
 }
 
-void ANDIInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> ANDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
     uint32_t imm_val = sextTo32(operands[4]->value, operands[4]->width);
-    uint32_t sum = (sr1_val & imm_val) & 0xffff;
-    state.psr = computePSRCC(sum, state.psr);
-    state.regs[dr] = sum;
+    uint32_t result = (sr1_val & imm_val) & 0xffff;
+
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(computePSRCC(result, state.psr)),
+        new RegStateChange(dr, result)
+    };
 }
 
-void JMPInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> JMPInstruction::execute(MachineState const & state)
 {
-    state.pc = state.regs[operands[2]->value];
+    return std::vector<IStateChange const *> {
+        new PCStateChange(operands[2]->value & 0xffff)
+    };
 }
 
-void JSRInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> JSRInstruction::execute(MachineState const & state)
 {
-    state.regs[7] = state.pc;
-    state.pc = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    return std::vector<IStateChange const *> {
+        new RegStateChange(7, state.pc & 0xffff),
+        new PCStateChange(computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width))
+    };
 }
 
-void JSRRInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> JSRRInstruction::execute(MachineState const & state)
 {
-    state.regs[7] = state.pc;
-    state.pc = state.regs[operands[3]->value];
+    return std::vector<IStateChange const *> {
+        new RegStateChange(7, state.pc & 0xffff),
+        new PCStateChange(state.regs[operands[3]->value])
+    };
 }
 
-void LDInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> LDInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t value = state.mem[addr];
-    state.psr = computePSRCC(value, state.psr);
-    state.regs[dr] = value;
+
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(computePSRCC(value, state.psr)),
+        new RegStateChange(dr, value)
+    };
 }
 
-void LDIInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> LDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t addr2 = state.mem[addr1];
     uint32_t value = state.mem[addr2];
-    state.psr = computePSRCC(value, state.psr);
-    state.regs[dr] = value;
+
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(computePSRCC(value, state.psr)),
+        new RegStateChange(dr, value)
+    };
 }
 
-void LDRInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> LDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
             operands[3]->width);
     uint32_t value = state.mem[addr];
-    state.psr = computePSRCC(value, state.psr);
-    state.regs[dr] = value;
+
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(computePSRCC(value, state.psr)),
+        new RegStateChange(dr, value)
+    };
 }
 
-void LEAInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> LEAInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
-    state.psr = computePSRCC(addr, state.psr);
-    state.regs[dr] = addr;
+
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(computePSRCC(addr, state.psr)),
+        new RegStateChange(dr, addr)
+    };
 }
 
-void NOTInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> NOTInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr_val = sextTo32(state.regs[operands[2]->value], operands[2]->width);
-    uint32_t value = (~sr_val) & 0xffff;
-    state.psr = computePSRCC(value, state.psr);
-    state.regs[dr] = value;
+    uint32_t result = (~sr_val) & 0xffff;
+
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(computePSRCC(result, state.psr)),
+        new RegStateChange(dr, result)
+    };
 }
 
-void RTIInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> RTIInstruction::execute(MachineState const & state)
 {
 
 }
 
-void STInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> STInstruction::execute(MachineState const & state)
 {
     uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
-    state.mem[addr] = value;
+
+    return std::vector<IStateChange const *> {
+        new MemStateChange(addr, value)
+    };
 }
 
-void STIInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> STIInstruction::execute(MachineState const & state)
 {
     uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t addr2 = state.mem[addr1];
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
-    state.mem[addr2] = value;
+
+    return std::vector<IStateChange const *> {
+        new MemStateChange(addr2, value)
+    };
 }
 
-void STRInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> STRInstruction::execute(MachineState const & state)
 {
     uint32_t addr = computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
             operands[3]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
-    state.mem[addr] = value;
+
+    return std::vector<IStateChange const *> {
+        new MemStateChange(addr, value)
+    };
 }
 
-void TRAPInstruction::execute(MachineState & state)
+std::vector<IStateChange const *> TRAPInstruction::execute(MachineState const & state)
 {
-    state.regs[7] = state.pc;
-    state.pc = operands[2]->value & 0xffff;
-    state.psr &= 0x7fff;
+    return std::vector<IStateChange const *> {
+        new PSRStateChange(state.psr & 0x7fff),
+        new RegStateChange(7, state.pc & 0xffff),
+        new PCStateChange(operands[2]->value & 0xffff)
+    };
 }
