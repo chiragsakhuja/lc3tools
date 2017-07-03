@@ -87,6 +87,8 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(new BRzpInstruction());
     instructions.push_back(new BRnpInstruction());
     instructions.push_back(new BRnzpInstruction());
+    instructions.push_back(new NOP0Instruction());
+    instructions.push_back(new NOP1Instruction());
     instructions.push_back(new JMPInstruction());
     instructions.push_back(new JSRInstruction());
     instructions.push_back(new JSRRInstruction());
@@ -404,6 +406,6 @@ std::vector<IStateChange const *> TRAPInstruction::execute(MachineState const & 
     return std::vector<IStateChange const *> {
         new PSRStateChange(state.psr & 0x7fff),
         new RegStateChange(7, state.pc & 0xffff),
-        new PCStateChange(operands[2]->value & 0xffff)
+        new PCStateChange(state.mem[operands[2]->value] & 0xffff)
     };
 }

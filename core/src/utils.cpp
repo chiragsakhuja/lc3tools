@@ -40,7 +40,7 @@ uint32_t core::computePSRCC(uint32_t value, uint32_t psr)
     uint32_t cc = 0;
     if(value == 0) {
         cc = 2;
-    } else if((value & 0x8000) == 1) {
+    } else if((value & 0x8000) != 0) {
         cc = 4;
     } else {
         cc = 1;

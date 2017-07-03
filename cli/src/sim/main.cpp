@@ -1,10 +1,9 @@
 #include <array>
 #include <functional>
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
-
-#include <iostream>
 
 #include "tokens.h"
 
@@ -31,7 +30,9 @@ int main(int argc, char *argv[])
         for(int i = 1; i < argc; i += 1) {
             try {
                 sim.loadObjectFile(argv[i]);
-            } catch (std::runtime_error const & e) {std::cout << e.what();}
+            } catch (std::runtime_error const & e) {
+                std::cerr << "ERROR: " << e.what() << "\n";
+            }
         }
     }
 

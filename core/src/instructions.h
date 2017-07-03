@@ -240,11 +240,33 @@ namespace core {
     {
     public:
         BRnzpInstruction(void) : BRInstruction("brnzp", {
-            new FixedOperand(4, 0x5),
+            new FixedOperand(4, 0x0),
             new FixedOperand(3, 0x7),
             new LabelOperand(9)
         }) {}
         virtual BRnzpInstruction * clone(void) const override { return new BRnzpInstruction(*this); }
+    };
+
+    class NOP0Instruction : public BRInstruction
+    {
+    public:
+        NOP0Instruction(void) : BRInstruction("nop", {
+            new FixedOperand(4, 0x0),
+            new FixedOperand(3, 0x0),
+            new FixedOperand(9, 0x0)
+        }) {}
+        virtual NOP0Instruction * clone(void) const override { return new NOP0Instruction(*this); }
+    };
+
+    class NOP1Instruction : public BRInstruction
+    {
+    public:
+        NOP1Instruction(void) : BRInstruction("nop", {
+            new FixedOperand(4, 0x0),
+            new FixedOperand(3, 0x0),
+            new LabelOperand(9)
+        }) {}
+        virtual NOP1Instruction * clone(void) const override { return new NOP1Instruction(*this); }
     };
 
     class JMPInstruction : public Instruction

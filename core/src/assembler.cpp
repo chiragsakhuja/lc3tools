@@ -409,21 +409,35 @@ extern int yyparse(void);
 extern Token * root;
 extern int row_num, col_num;
 
-void Assembler::genObjectFile(char const * filename)
+void Assembler::genObjectFile(std::string const & filename)
 {
     std::map<std::string, uint32_t> labels;
     std::vector<uint32_t> object_file;
 
-    if((yyin = fopen(filename, "r")) == nullptr) {
-        logger.printf(PRINT_TYPE_WARNING, true, "skipping file %s ...", filename);
+    if((yyin = fopen(filename.c_str(), "r")) == nullptr) {
+        logger.printf(PRINT_TYPE_WARNING, true, "skipping file %s ...", filename.c_str());
     } else {
         row_num = 0; col_num = 0;
         yyparse();
         bool status = assembleProgram(filename, root, labels, object_file);
         if(status) {
+            char * data = new char[object_file.size() * 2];
+            uint32_t pos = 0;
+
             for(auto i : object_file) {
+                // output in big endian so it's easy to read in xxd
+                data[pos] = (char) ((i & 0xff00) >> 8);
+                ++pos;
+                data[pos] = (char) (i & 0xff);
+                ++pos;
                 logger.printf(PRINT_TYPE_EXTRA, true, "0x%0.4x", i);
             }
+
+            auto dot = filename.find_last_of('.');
+            std::string obj_filename = filename.substr(0, dot) + ".obj";
+            std::ofstream obj_file(obj_filename, std::ios::binary);
+            obj_file.write(data, object_file.size() * 2);
+            obj_file.close();
         }
 
         fclose(yyin);

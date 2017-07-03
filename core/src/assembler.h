@@ -13,7 +13,7 @@ namespace core
 
         bool assembleProgram(std::string const & filename, Token * program,
             std::map<std::string, uint32_t> & labels, std::vector<uint32_t> & object_file);
-        void genObjectFile(char const * filename);
+        void genObjectFile(std::string const & filename);
 
     private:
 #ifdef _ASSEMBLER_TEST

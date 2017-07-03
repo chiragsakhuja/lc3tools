@@ -45,14 +45,14 @@ Simulator::Simulator(bool log_enable, utils::IPrinter & printer) :
 
 void Simulator::simulate(void)
 {
-    for(int i = 0; i < 2; i += 1) {
+    for(int i = 0; i < 200; i += 1) {
         uint32_t encoded_inst = state.mem[state.pc];
 
         Instruction * candidate;
         bool valid = decoder.findInstructionByEncoding(encoded_inst, candidate);
         if(valid) {
             if(log_enable) {
-                logger.printf(PRINT_TYPE_DEBUG, true, "executing %s", udecToBin(encoded_inst, 16).c_str());
+                logger.printf(PRINT_TYPE_EXTRA, true, "executing %s", udecToBin(encoded_inst, 16).c_str());
             }
 
             decoder.decode(encoded_inst, *candidate);
@@ -62,7 +62,7 @@ void Simulator::simulate(void)
 
             for(uint32_t i = 0; i < changes.size(); i += 1) {
                 if(log_enable) {
-                    logger.printf(PRINT_TYPE_DEBUG, false, "%s", changes[i]->getOutputString(state).c_str());
+                    logger.printf(PRINT_TYPE_EXTRA, false, "  %s", changes[i]->getOutputString(state).c_str());
                 }
                 changes[i]->updateState(state);
 
