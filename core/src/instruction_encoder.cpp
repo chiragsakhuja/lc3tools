@@ -35,6 +35,7 @@ bool InstructionEncoder::findInstructionByName(std::string const & search) const
 bool InstructionEncoder::findInstruction(Token const * search, std::vector<Instruction const *> & candidates) const
 {
     auto inst_list = instructions_by_name.find(search->str);
+
     candidates.clear();
     if(inst_list != instructions_by_name.end()) {
         std::vector<Instruction const *> const & candidate_list = inst_list->second;

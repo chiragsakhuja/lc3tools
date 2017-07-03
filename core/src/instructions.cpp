@@ -79,6 +79,14 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(new ADDIInstruction());
     instructions.push_back(new ANDRInstruction());
     instructions.push_back(new ANDIInstruction());
+    instructions.push_back(new BRInstruction());
+    instructions.push_back(new BRnInstruction());
+    instructions.push_back(new BRzInstruction());
+    instructions.push_back(new BRpInstruction());
+    instructions.push_back(new BRnzInstruction());
+    instructions.push_back(new BRzpInstruction());
+    instructions.push_back(new BRnpInstruction());
+    instructions.push_back(new BRnzpInstruction());
     instructions.push_back(new JMPInstruction());
     instructions.push_back(new JSRInstruction());
     instructions.push_back(new JSRRInstruction());
@@ -93,6 +101,7 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(new STIInstruction());
     instructions.push_back(new STRInstruction());
     instructions.push_back(new TRAPInstruction());
+    instructions.push_back(new HALTInstruction());
 }
 
 InstructionHandler::~InstructionHandler(void)
@@ -181,6 +190,8 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     std::map<std::string, uint32_t> const & registers,
     std::map<std::string, uint32_t> const & labels)
 {
+    (void) registers;
+
     auto search = labels.find(operand->str);
     if(search == labels.end()) {
         if(log_enable) {
@@ -192,7 +203,6 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     }
 
     uint32_t token_val = (((int32_t) search->second) - (inst->pc + 1)) & ((1 << width) - 1);
-    (void) registers;
 
     if(log_enable) {
         logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: label %s (0x%0.4x) => %s", inst->row_num, oper_count,
@@ -252,6 +262,18 @@ std::vector<IStateChange const *> ANDIInstruction::execute(MachineState const & 
         new PSRStateChange(computePSRCC(result, state.psr)),
         new RegStateChange(dr, result)
     };
+}
+
+std::vector<IStateChange const *> BRInstruction::execute(MachineState const & state)
+{
+    std::vector<IStateChange const *> ret;
+    uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+
+    if((operands[1]->value & (state.psr & 0x0007)) != 0) {
+        ret.push_back(new PCStateChange(addr));
+    }
+
+    return ret;
 }
 
 std::vector<IStateChange const *> JMPInstruction::execute(MachineState const & state)

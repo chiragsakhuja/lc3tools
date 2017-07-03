@@ -366,20 +366,26 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program,
         if(log_enable) {
             logger.printf(PRINT_TYPE_ERROR, true, "first pass failed");
         }
+        p1_success = false;
     } else {
         if(log_enable) {
             logger.printf(PRINT_TYPE_INFO, true, "first pass completed successfully, beginning second pass ...");
         }
-        p1_success = false;
     }
 
     bool p2_success = true;
+    bool first = true;
     while(cur_state != nullptr) {
         if(cur_state->type == INST) {
             uint32_t encoded_instruction;
+            if(first) {
+                object_file.push_back(cur_state->pc);
+                first = false;
+            }
 
             try {
                 processInstruction(filename, cur_state, encoded_instruction, labels);
+                object_file.push_back(encoded_instruction);
             } catch(std::runtime_error & e) {
                 p2_success = false;
             }
@@ -413,7 +419,12 @@ void Assembler::genObjectFile(char const * filename)
     } else {
         row_num = 0; col_num = 0;
         yyparse();
-        assembleProgram(filename, root, labels, object_file);
+        bool status = assembleProgram(filename, root, labels, object_file);
+        if(status) {
+            for(auto i : object_file) {
+                logger.printf(PRINT_TYPE_EXTRA, true, "0x%0.4x", i);
+            }
+        }
 
         fclose(yyin);
     }

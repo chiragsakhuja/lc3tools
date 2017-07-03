@@ -7,6 +7,7 @@ namespace core {
         , OPER_TYPE_NUM
         , OPER_TYPE_LABEL
         , OPER_TYPE_REG
+        , OPER_TYPE_CC
     } OperType;
 
     class Operand
@@ -154,6 +155,96 @@ namespace core {
         }) {}
         virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual ANDIInstruction * clone(void) const override { return new ANDIInstruction(*this); }
+    };
+
+    class BRInstruction : public Instruction
+    {
+    public:
+        using Instruction::Instruction;
+        BRInstruction(void) : Instruction("br", {
+            new FixedOperand(4, 0x0),
+            new FixedOperand(3, 0x7),
+            new LabelOperand(9)
+        }) {}
+        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual BRInstruction * clone(void) const override { return new BRInstruction(*this); }
+    };
+
+    class BRnInstruction : public BRInstruction
+    {
+    public:
+        BRnInstruction(void) : BRInstruction("brn", {
+            new FixedOperand(4, 0x0),
+            new FixedOperand(3, 0x4),
+            new LabelOperand(9)
+        }) {}
+        virtual BRnInstruction * clone(void) const override { return new BRnInstruction(*this); }
+    };
+
+    class BRzInstruction : public BRInstruction
+    {
+    public:
+        BRzInstruction(void) : BRInstruction("brz", {
+            new FixedOperand(4, 0x0),
+            new FixedOperand(3, 0x2),
+            new LabelOperand(9)
+        }) {}
+        virtual BRzInstruction * clone(void) const override { return new BRzInstruction(*this); }
+    };
+
+    class BRpInstruction : public BRInstruction
+    {
+    public:
+        BRpInstruction(void) : BRInstruction("brp", {
+            new FixedOperand(4, 0x0),
+            new FixedOperand(3, 0x1),
+            new LabelOperand(9)
+        }) {}
+        virtual BRpInstruction * clone(void) const override { return new BRpInstruction(*this); }
+    };
+
+    class BRnzInstruction : public BRInstruction
+    {
+    public:
+        BRnzInstruction(void) : BRInstruction("brnz", {
+            new FixedOperand(4, 0x0),
+            new FixedOperand(3, 0x6),
+            new LabelOperand(9)
+        }) {}
+        virtual BRnzInstruction * clone(void) const override { return new BRnzInstruction(*this); }
+    };
+
+    class BRzpInstruction : public BRInstruction
+    {
+    public:
+        BRzpInstruction(void) : BRInstruction("brzp", {
+            new FixedOperand(4, 0x0),
+            new FixedOperand(3, 0x3),
+            new LabelOperand(9)
+        }) {}
+        virtual BRzpInstruction * clone(void) const override { return new BRzpInstruction(*this); }
+    };
+
+    class BRnpInstruction : public BRInstruction
+    {
+    public:
+        BRnpInstruction(void) : BRInstruction("brnp", {
+            new FixedOperand(4, 0x0),
+            new FixedOperand(3, 0x5),
+            new LabelOperand(9)
+        }) {}
+        virtual BRnpInstruction * clone(void) const override { return new BRnpInstruction(*this); }
+    };
+
+    class BRnzpInstruction : public BRInstruction
+    {
+    public:
+        BRnzpInstruction(void) : BRInstruction("brnzp", {
+            new FixedOperand(4, 0x5),
+            new FixedOperand(3, 0x7),
+            new LabelOperand(9)
+        }) {}
+        virtual BRnzpInstruction * clone(void) const override { return new BRnzpInstruction(*this); }
     };
 
     class JMPInstruction : public Instruction
@@ -324,6 +415,7 @@ namespace core {
     class TRAPInstruction : public Instruction
     {
     public:
+        using Instruction::Instruction;
         TRAPInstruction(void) : Instruction("trap", {
             new FixedOperand(4, 0xf),
             new FixedOperand(4, 0x0),
@@ -331,6 +423,17 @@ namespace core {
         }) {}
         virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual TRAPInstruction * clone(void) const override { return new TRAPInstruction(*this); }
+    };
+
+    class HALTInstruction : public TRAPInstruction
+    {
+    public:
+        HALTInstruction(void) : TRAPInstruction("halt", {
+            new FixedOperand(4, 0xf),
+            new FixedOperand(4, 0x0),
+            new FixedOperand(8, 0x25)
+        }) {}
+        virtual HALTInstruction * clone(void) const override { return new HALTInstruction(*this); }
     };
 };
 
