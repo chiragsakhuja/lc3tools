@@ -31,8 +31,8 @@ namespace core
             std::map<std::string, uint32_t> const & labels) const;
         bool processTokens(std::string const & filename, Token * program,
             std::map<std::string, uint32_t> & labels, Token *& program_start);
-        bool processPseudo(std::string const & filename, Token const * pseudo);
         bool setOrig(std::string const & filename, Token const * orig, uint32_t & new_orig);
+        void separateLabels(std::string const & filename, Token * program);
         bool findFirstOrig(std::string const & filename, Token * program, Token *& program_start,
                 uint32_t & cur_orig);
         void processOperands(Token * inst);

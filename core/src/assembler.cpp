@@ -120,18 +120,6 @@ bool Assembler::setOrig(std::string const & filename, Token const * orig, uint32
     return true;
 }
 
-bool Assembler::processPseudo(std::string const & filename, Token const * pseudo)
-{
-    if(pseudo->checkPseudoType("orig")) {
-        uint32_t dummy;
-        setOrig(filename, pseudo, dummy);
-    } else if(pseudo->checkPseudoType("end")) {
-        // do nothing
-    }
-
-    return true;
-}
-
 Token * Assembler::removeNewlineTokens(Token * program)
 {
     Token * prev_state = nullptr;
@@ -232,47 +220,29 @@ void Assembler::processOperands(Token * inst)
     }
 }
 
-bool Assembler::processTokens(std::string const & filename, Token * program,
-    std::map<std::string, uint32_t> & labels, Token *& program_start)
+void Assembler::separateLabels(std::string const & filename, Token * program)
 {
-    program = removeNewlineTokens(program);
-    Token * cur_state;
-    uint32_t cur_orig = 0;
-    if(! findFirstOrig(filename, program, cur_state, cur_orig)) {
-        return false;
-    }
-
-    program_start = cur_state;
-
-    uint32_t pc_offset = 0;
+    Token * cur_state = program;
+    // since the parser can't distinguish between an instruction and a label by design,
+    // we need to do it while analyzing the tokens using a simple rule: if the first INST
+    // of a chain of tokens is not a valid instruction, assume it's a label
     while(cur_state != nullptr) {
-        // allow for multiple .orig in a single file
-        if(cur_state->checkPseudoType("orig")) {
-            if(! setOrig(filename, cur_state, cur_orig)) {
-                if(log_enable) {
-                    logger.printf(PRINT_TYPE_WARNING, true, "ignoring invalid .orig");
-                }
-            } else {
-                pc_offset = 0;
-            }
-        }
-
-        // since the parser can't distinguish between an instruction and a label by design,
-        // we need to do it while analyzing the tokens using a simple rule: if the first INST
-        // of a chain of tokens is not a valid instruction, assume it's a label
         std::vector<Instruction const *> candidates;
-        if(cur_state->type == INST && ! encoder.findInstruction(cur_state, candidates) &&
-             candidates.size() == 0)
+        if((cur_state->type == INST && ! encoder.findInstruction(cur_state, candidates) &&
+             candidates.size() == 0) || cur_state->type == LABEL)
         {
             cur_state->type = LABEL;
             if(cur_state->opers != nullptr) {
-                if(encoder.findInstructionByName(cur_state->opers->str)) {
+                Token * upgrade_state = cur_state->opers;
+                // if there is something after the label that the parser marked as an operand
+                if(upgrade_state->type == PSEUDO || encoder.findInstructionByName(upgrade_state->str)) {
                     // elevate the INST to a proper token in the chain
-                    cur_state->opers->type = INST;
-                    Token * next_oper = cur_state->opers->next;
-                    cur_state->opers->next = cur_state->next;
-                    cur_state->next = cur_state->opers;
-                    cur_state->next->opers = next_oper;
+                    if(upgrade_state->type != PSEUDO) {
+                        upgrade_state->type = INST;
+                        upgrade_state->opers = upgrade_state->next;
+                    }
+                    upgrade_state->next = cur_state->next;
+                    cur_state->next = upgrade_state;
                     cur_state->opers = nullptr;
 
                     uint32_t num_operands = 0;
@@ -293,9 +263,45 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
                 }
             }
         }
+        cur_state = cur_state->next;
+    }
+}
 
-        if(cur_state->type == LABEL)
-        {
+bool Assembler::processTokens(std::string const & filename, Token * program,
+    std::map<std::string, uint32_t> & labels, Token *& program_start)
+{
+    program = removeNewlineTokens(program);
+    separateLabels(filename, program);
+
+    Token * temp = program;
+    while(temp != nullptr) {
+        std::cout << *temp;
+        temp = temp->next;
+    }
+
+    Token * cur_state;
+    uint32_t cur_orig = 0;
+    if(! findFirstOrig(filename, program, cur_state, cur_orig)) {
+        return false;
+    }
+
+    program_start = cur_state;
+
+    uint32_t pc_offset = 0;
+    while(cur_state != nullptr) {
+        // allow for multiple .orig in a single file
+        // TODO: make this so that you have to have a .end and then another .orig
+        if(cur_state->checkPseudoType("orig")) {
+            if(! setOrig(filename, cur_state, cur_orig)) {
+                if(log_enable) {
+                    logger.printf(PRINT_TYPE_WARNING, true, "ignoring invalid .orig");
+                }
+            } else {
+                pc_offset = 0;
+            }
+        }
+
+        if(cur_state->type == LABEL) {
             std::string const & label = cur_state->str;
 
             auto search = labels.find(label);
@@ -319,10 +325,22 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
         cur_state->pc = cur_orig + pc_offset;
 
         if(cur_state->type == INST) {
-            pc_offset += 1;
             processOperands(cur_state);
+            pc_offset += 1;
+        } else if(cur_state->type == PSEUDO) {
+            if(cur_state->str == "fill") {
+                pc_offset += 1;
+            } else if(cur_state->str == "stringz") {
+                logger.printf(PRINT_TYPE_ERROR, true, "pseudo op: %s", cur_state->str.c_str());
+                if(cur_state->opers != nullptr) {
+                    Token * oper = cur_state->opers;
+                    if(oper->type == STRING) {
+                        logger.printf(PRINT_TYPE_ERROR, true, "value: %s", oper->str.c_str());
+                        pc_offset += oper->str.size();
+                    }
+                }
+            }
         }
-        // TODO: account for block allocations (e.g. .fill, .stringz)
 
         cur_state = cur_state->next;
     }

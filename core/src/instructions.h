@@ -7,7 +7,6 @@ namespace core {
         , OPER_TYPE_NUM
         , OPER_TYPE_LABEL
         , OPER_TYPE_REG
-        , OPER_TYPE_CC
     } OperType;
 
     class Operand
@@ -341,7 +340,7 @@ namespace core {
             new FixedOperand(4, 0x6),
             new RegOperand(3),
             new RegOperand(3),
-            new LabelOperand(6)
+            new NumOperand(6, true)
         }) {}
         virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual LDRInstruction * clone(void) const override { return new LDRInstruction(*this); }
@@ -389,9 +388,7 @@ namespace core {
     public:
         RTIInstruction(void) : Instruction("rti", {
             new FixedOperand(4, 0x0),
-            new RegOperand(3),
-            new RegOperand(3),
-            new FixedOperand(6, 0x3f)
+            new FixedOperand(12, 0x0)
         }) {}
         virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual RTIInstruction * clone(void) const override { return new RTIInstruction(*this); }
@@ -445,6 +442,61 @@ namespace core {
         }) {}
         virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual TRAPInstruction * clone(void) const override { return new TRAPInstruction(*this); }
+    };
+
+    class GETCInstruction : public TRAPInstruction
+    {
+    public:
+        GETCInstruction(void) : TRAPInstruction("getc", {
+            new FixedOperand(4, 0xf),
+            new FixedOperand(4, 0x0),
+            new FixedOperand(8, 0x20)
+        }) {}
+        virtual GETCInstruction * clone(void) const override { return new GETCInstruction(*this); }
+    };
+
+    class OUTInstruction : public TRAPInstruction
+    {
+    public:
+        OUTInstruction(void) : TRAPInstruction("out", {
+            new FixedOperand(4, 0xf),
+            new FixedOperand(4, 0x0),
+            new FixedOperand(8, 0x21)
+        }) {}
+        virtual OUTInstruction * clone(void) const override { return new OUTInstruction(*this); }
+    };
+
+    class PUTSInstruction : public TRAPInstruction
+    {
+    public:
+        PUTSInstruction(void) : TRAPInstruction("puts", {
+            new FixedOperand(4, 0xf),
+            new FixedOperand(4, 0x0),
+            new FixedOperand(8, 0x22)
+        }) {}
+        virtual PUTSInstruction * clone(void) const override { return new PUTSInstruction(*this); }
+    };
+
+    class INInstruction : public TRAPInstruction
+    {
+    public:
+        INInstruction(void) : TRAPInstruction("in", {
+            new FixedOperand(4, 0xf),
+            new FixedOperand(4, 0x0),
+            new FixedOperand(8, 0x23)
+        }) {}
+        virtual INInstruction * clone(void) const override { return new INInstruction(*this); }
+    };
+
+    class PUTSPInstruction : public TRAPInstruction
+    {
+    public:
+        PUTSPInstruction(void) : TRAPInstruction("putsp", {
+            new FixedOperand(4, 0xf),
+            new FixedOperand(4, 0x0),
+            new FixedOperand(8, 0x24)
+        }) {}
+        virtual PUTSPInstruction * clone(void) const override { return new PUTSPInstruction(*this); }
     };
 
     class HALTInstruction : public TRAPInstruction

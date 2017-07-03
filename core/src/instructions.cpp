@@ -103,6 +103,11 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(new STIInstruction());
     instructions.push_back(new STRInstruction());
     instructions.push_back(new TRAPInstruction());
+    instructions.push_back(new GETCInstruction());
+    instructions.push_back(new OUTInstruction());
+    instructions.push_back(new PUTSInstruction());
+    instructions.push_back(new INInstruction());
+    instructions.push_back(new PUTSPInstruction());
     instructions.push_back(new HALTInstruction());
 }
 
