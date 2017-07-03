@@ -1,13 +1,9 @@
 #ifndef UI_PRINTER
 #define UI_PRINTER
 
-#include <string>
-#include <vector>
-#include "core/src/common/printer.h"
-
 namespace utils
 {
-    class UIPrinter : public Printer
+    class UIPrinter : public IPrinter
     {
     private:
         std::vector<std::string> output_buffer;

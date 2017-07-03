@@ -45,7 +45,7 @@ Simulator::Simulator(bool log_enable, utils::IPrinter & printer) :
 
 void Simulator::simulate(void)
 {
-    for(int i = 0; i < 200; i += 1) {
+    for(int i = 0; i < 20000; i += 1) {
         uint32_t encoded_inst = state.mem[state.pc];
 
         Instruction * candidate;

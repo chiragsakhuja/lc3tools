@@ -1,13 +1,30 @@
 #include <nan.h>
 
-#include <vector>
+#include <array>
+#include <iostream>
+#include <map>
 #include <string>
+#include <vector>
 
-#include "core/src/asm/assembler.h"
-#include "core/src/common/printer.h"
+#ifndef _PRINT_LEVEL
+    #define _PRINT_LEVEL 4
+#endif
+
+
+#include "../../core/src/tokens.h"
+
+#include "../../core/src/printer.h"
+#include "../../core/src/logger.h"
 #include "ui_printer.h"
 
-utils::Printer * printer = nullptr;
+#include "../../core/src/state.h"
+
+#include "../../core/src/instructions.h"
+#include "../../core/src/instruction_encoder.h"
+
+#include "../../core/src/assembler.h"
+
+utils::IPrinter * printer = nullptr;
 core::Assembler * assembler = nullptr;
 
 NAN_METHOD(Assemble)
