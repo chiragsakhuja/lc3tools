@@ -14,11 +14,11 @@ namespace utils
         , PRINT_COLOR_RESET
     };
 
-    class Printer
+    class IPrinter
     {
     public:
-        Printer(void) = default;
-        virtual ~Printer(void) = default;
+        IPrinter(void) = default;
+        virtual ~IPrinter(void) = default;
 
         virtual void setColor(int color) = 0;
         virtual void print(std::string const & string) = 0;

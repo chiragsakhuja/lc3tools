@@ -3,27 +3,20 @@
 
 namespace core
 {
-    struct MachineState
-    {
-        std::vector<uint16_t> mem;
-        std::array<uint32_t, 8> regs;
-        uint32_t pc;
-        uint32_t psr;
-    };
-
     class Simulator
     {
     public:
-        Simulator(bool log_enable, utils::Printer & printer);
-        ~Simulator(void);
+        Simulator(bool log_enable, utils::IPrinter & printer);
+        ~Simulator(void) = default;
 
         void loadObjectFile(std::string const & filename);
         void simulate(void);
     private:
+        InstructionDecoder decoder;
         std::function<void(void)> preInstructionCallback;
         MachineState state;
 
-        Logger * logger;
+        Logger logger;
         bool log_enable;
     };
 };

@@ -1,3 +1,4 @@
+#include <array>
 #include <iostream>
 #include <map>
 #include <string>
@@ -8,6 +9,8 @@
 
 #include "printer.h"
 #include "logger.h"
+
+#include "state.h"
 
 #include "instructions.h"
 

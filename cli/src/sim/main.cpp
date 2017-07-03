@@ -1,5 +1,6 @@
 #include <array>
 #include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -8,13 +9,18 @@
 #include "printer.h"
 #include "logger.h"
 
+#include "state.h"
+
+#include "instructions.h"
+#include "instruction_decoder.h"
+
 #include "simulator.h"
 
 #include "../common/console_printer.h"
 
 int main(int argc, char *argv[])
 {
-    utils::Printer * printer = new utils::ConsolePrinter();
+    utils::IPrinter * printer = new utils::ConsolePrinter();
     core::Simulator sim(true, *printer);
 
     if(argc < 2) {

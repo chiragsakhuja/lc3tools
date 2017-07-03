@@ -6,10 +6,10 @@ namespace core
     class Assembler
     {
     public:
-        Assembler(bool log_enable, utils::Printer & printer);
+        Assembler(bool log_enable, utils::IPrinter & printer);
         Assembler(Assembler const &) = default;
         Assembler & operator=(Assembler const &) = default;
-        ~Assembler(void);
+        ~Assembler(void) = default;
 
         bool assembleProgram(std::string const & filename, Token * program,
             std::map<std::string, uint32_t> & labels, std::vector<uint32_t> & object_file);
@@ -20,10 +20,9 @@ namespace core
         FRIEND_TEST(AssemblerSimple, SingleDataProcessingInstruction);
 #endif
         std::vector<std::string> file_buffer;
-        AssemblerLogger * logger;
+        AssemblerLogger logger;
         bool log_enable;
-        InstructionHandler * instructions;
-        InstructionEncoder * encoder;
+        InstructionEncoder encoder;
 
         Token * removeNewlineTokens(Token * program);
         void processOperands(std::string const & filename, Token * operands);

@@ -6,7 +6,7 @@
 
 namespace utils
 {
-    class ConsolePrinter : public Printer
+    class ConsolePrinter : public IPrinter
     {
     public:
         virtual void setColor(int color) override;

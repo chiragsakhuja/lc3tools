@@ -15,9 +15,9 @@ namespace core {
     class Logger
     {
     protected:
-        utils::Printer & printer;
+        utils::IPrinter & printer;
     public:
-        Logger(utils::Printer & printer) : printer(printer) {}
+        Logger(utils::IPrinter & printer) : printer(printer) {}
 
         template<typename ... Args>
         void printf(int level, bool bold, std::string const & format, Args ... args) const;

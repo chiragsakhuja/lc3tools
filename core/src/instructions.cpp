@@ -1,3 +1,4 @@
+#include <array>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -10,6 +11,8 @@
 #include "printer.h"
 #include "logger.h"
 
+#include "state.h"
+
 #include "instructions.h"
 
 using namespace core;
@@ -19,11 +22,11 @@ Operand::Operand(OperType type, std::string const & type_str, uint32_t width)
     this->type = type;
     this->type_str = type_str;
     this->width = width;
+    this->value = 0;
 }
 
-Instruction::Instruction(bool setcc, std::string const & name, std::vector<Operand *> const & operands)
+Instruction::Instruction(std::string const & name, std::vector<Operand *> const & operands)
 {
-    this->setcc = setcc;
     this->name = name;
     this->operands = operands;
 }
@@ -35,7 +38,7 @@ Instruction::~Instruction(void)
     }
 }
 
-uint32_t Instruction::getNumOperands()
+uint32_t Instruction::getNumOperands() const
 {
     uint32_t ret = 0;
     for(Operand * operand : operands) {
@@ -62,134 +65,31 @@ InstructionHandler::InstructionHandler(void)
     regs["r6"] = 6;
     regs["r7"] = 7;
 
-    instructions["add"].push_back(new ADDInstruction({
-        new FixedOperand(4, 0x1),
-        new RegOperand(3),
-        new RegOperand(3),
-        new FixedOperand(3, 0x0),
-        new RegOperand(3)
-    }));
-
-    instructions["add"].push_back(new ADDInstruction({
-        new FixedOperand(4, 0x1),
-        new RegOperand(3),
-        new RegOperand(3),
-        new FixedOperand(1, 0x1),
-        new NumOperand(5, true)
-    }));
-
-    instructions["and"].push_back(new ANDInstruction({
-        new FixedOperand(4, 0x5),
-        new RegOperand(3),
-        new RegOperand(3),
-        new FixedOperand(3, 0x0),
-        new RegOperand(3)
-    }));
-
-    instructions["and"].push_back(new ANDInstruction({
-        new FixedOperand(4, 0x5),
-        new RegOperand(3),
-        new RegOperand(3),
-        new FixedOperand(1, 0x1),
-        new NumOperand(5, true)
-    }));
-
-    instructions["jmp"].push_back(new JMPInstruction({
-        new FixedOperand(4, 0xc),
-        new FixedOperand(3, 0x0),
-        new RegOperand(3),
-        new FixedOperand(6, 0x0)
-    }));
-
-    instructions["jsr"].push_back(new JSRInstruction({
-        new FixedOperand(4, 0x4),
-        new FixedOperand(1, 0x1),
-        new LabelOperand(11)
-    }));
-
-    instructions["jsrr"].push_back(new JSRRInstruction({
-        new FixedOperand(4, 0x4),
-        new FixedOperand(1, 0x0),
-        new FixedOperand(2, 0x0),
-        new RegOperand(3),
-        new FixedOperand(6, 0x0)
-    }));
-
-    instructions["ld"].push_back(new LDInstruction({
-        new FixedOperand(4, 0x2),
-        new RegOperand(3),
-        new LabelOperand(9)
-    }));
-
-    instructions["ldi"].push_back(new LDIInstruction({
-        new FixedOperand(4, 0xa),
-        new RegOperand(3),
-        new LabelOperand(9)
-    }));
-
-    instructions["ldr"].push_back(new LDRInstruction({
-        new FixedOperand(4, 0x6),
-        new RegOperand(3),
-        new RegOperand(3),
-        new LabelOperand(6)
-    }));
-
-    instructions["lea"].push_back(new LEAInstruction({
-        new FixedOperand(4, 0xe),
-        new RegOperand(3),
-        new LabelOperand(9)
-    }));
-
-    instructions["not"].push_back(new NOTInstruction({
-        new FixedOperand(4, 0x0),
-        new RegOperand(3),
-        new RegOperand(3),
-        new FixedOperand(6, 0x3f)
-    }));
-
-    instructions["ret"].push_back(new RETInstruction({
-        new FixedOperand(4, 0xc),
-        new FixedOperand(3, 0x0),
-        new FixedOperand(3, 0x7),
-        new FixedOperand(6, 0x0)
-    }));
-
-    instructions["rti"].push_back(new RTIInstruction({
-        new FixedOperand(4, 0x0),
-        new RegOperand(3),
-        new RegOperand(3),
-        new FixedOperand(6, 0x3f)
-    }));
-
-    instructions["st"].push_back(new STInstruction({
-        new FixedOperand(4, 0x3),
-        new RegOperand(3),
-        new LabelOperand(9)
-    }));
-
-    instructions["sti"].push_back(new STIInstruction({
-        new FixedOperand(4, 0xb),
-        new RegOperand(3),
-        new LabelOperand(9)
-    }));
-
-    instructions["str"].push_back(new STRInstruction({
-        new FixedOperand(4, 0x7),
-        new RegOperand(3),
-        new RegOperand(3),
-        new LabelOperand(6)
-    }));
-
-    instructions["trap"].push_back(new TRAPInstruction({
-        new FixedOperand(4, 0xf),
-        new FixedOperand(4, 0x0),
-        new NumOperand(8, false)
-    }));
+    instructions.push_back(new ADDRInstruction());
+    instructions.push_back(new ADDIInstruction());
+    instructions.push_back(new ANDRInstruction());
+    instructions.push_back(new ANDIInstruction());
+    instructions.push_back(new JMPInstruction());
+    instructions.push_back(new JSRInstruction());
+    instructions.push_back(new JSRRInstruction());
+    instructions.push_back(new LDInstruction());
+    instructions.push_back(new LDIInstruction());
+    instructions.push_back(new LDRInstruction());
+    instructions.push_back(new LEAInstruction());
+    instructions.push_back(new NOTInstruction());
+    instructions.push_back(new RETInstruction());
+    instructions.push_back(new RTIInstruction());
+    instructions.push_back(new STInstruction());
+    instructions.push_back(new STIInstruction());
+    instructions.push_back(new STRInstruction());
+    instructions.push_back(new TRAPInstruction());
 }
 
 InstructionHandler::~InstructionHandler(void)
 {
-    // TODO: Go through map and delete all instructions
+    for(uint32_t i = 0; i < instructions.size(); i += 1) {
+        delete instructions[i];
+    }
 }
 
 uint32_t FixedOperand::encode(bool log_enable, AssemblerLogger const & logger,
@@ -275,4 +175,142 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     }
 
     return token_val;
+}
+
+void ADDRInstruction::execute(MachineState & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
+    uint32_t sr2_val = sextTo32(state.regs[operands[4]->value], 16);
+    uint32_t sum = (sr1_val + sr2_val) & 0xffff;
+    state.psr = computePSRCC(sum, state.psr);
+    state.regs[dr] = sum;
+}
+
+void ADDIInstruction::execute(MachineState & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
+    uint32_t imm_val = sextTo32(operands[4]->value, operands[4]->width);
+    uint32_t sum = (sr1_val + imm_val) & 0xffff;
+    state.psr = computePSRCC(sum, state.psr);
+    state.regs[dr] = sum;
+}
+
+void ANDRInstruction::execute(MachineState & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
+    uint32_t sr2_val = sextTo32(state.regs[operands[4]->value], 16);
+    uint32_t sum = (sr1_val & sr2_val) & 0xffff;
+    state.psr = computePSRCC(sum, state.psr);
+    state.regs[dr] = sum;
+}
+
+void ANDIInstruction::execute(MachineState & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
+    uint32_t imm_val = sextTo32(operands[4]->value, operands[4]->width);
+    uint32_t sum = (sr1_val & imm_val) & 0xffff;
+    state.psr = computePSRCC(sum, state.psr);
+    state.regs[dr] = sum;
+}
+
+void JMPInstruction::execute(MachineState & state)
+{
+    state.pc = state.regs[operands[2]->value];
+}
+
+void JSRInstruction::execute(MachineState & state)
+{
+    state.regs[7] = state.pc;
+    state.pc = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+}
+
+void JSRRInstruction::execute(MachineState & state)
+{
+    state.regs[7] = state.pc;
+    state.pc = state.regs[operands[3]->value];
+}
+
+void LDInstruction::execute(MachineState & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t value = state.mem[addr];
+    state.psr = computePSRCC(value, state.psr);
+    state.regs[dr] = value;
+}
+
+void LDIInstruction::execute(MachineState & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t addr2 = state.mem[addr1];
+    uint32_t value = state.mem[addr2];
+    state.psr = computePSRCC(value, state.psr);
+    state.regs[dr] = value;
+}
+
+void LDRInstruction::execute(MachineState & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t addr = computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
+            operands[3]->width);
+    uint32_t value = state.mem[addr];
+    state.psr = computePSRCC(value, state.psr);
+    state.regs[dr] = value;
+}
+
+void LEAInstruction::execute(MachineState & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    state.psr = computePSRCC(addr, state.psr);
+    state.regs[dr] = addr;
+}
+
+void NOTInstruction::execute(MachineState & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t sr_val = sextTo32(state.regs[operands[2]->value], operands[2]->width);
+    uint32_t value = (~sr_val) & 0xffff;
+    state.psr = computePSRCC(value, state.psr);
+    state.regs[dr] = value;
+}
+
+void RTIInstruction::execute(MachineState & state)
+{
+
+}
+
+void STInstruction::execute(MachineState & state)
+{
+    uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t value = state.regs[operands[1]->value] & 0xffff;
+    state.mem[addr] = value;
+}
+
+void STIInstruction::execute(MachineState & state)
+{
+    uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t addr2 = state.mem[addr1];
+    uint32_t value = state.regs[operands[1]->value] & 0xffff;
+    state.mem[addr2] = value;
+}
+
+void STRInstruction::execute(MachineState & state)
+{
+    uint32_t addr = computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
+            operands[3]->width);
+    uint32_t value = state.regs[operands[1]->value] & 0xffff;
+    state.mem[addr] = value;
+}
+
+void TRAPInstruction::execute(MachineState & state)
+{
+    state.regs[7] = state.pc;
+    state.pc = operands[2]->value & 0xffff;
+    state.psr &= 0x7fff;
 }
