@@ -29,6 +29,9 @@ namespace core
         void processInstruction(std::string const & filename, Token const * inst,
             uint32_t & encoded_instruction,
             std::map<std::string, uint32_t> const & labels) const;
+        void processPseudo(std::string const & filename, Token const * inst,
+            std::vector<uint32_t> & object_file,
+            std::map<std::string, uint32_t> const & labels) const;
         bool processTokens(std::string const & filename, Token * program,
             std::map<std::string, uint32_t> & labels, Token *& program_start);
         bool setOrig(std::string const & filename, Token const * orig, uint32_t & new_orig);

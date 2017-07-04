@@ -44,6 +44,8 @@ namespace core {
         uint32_t getNumOperands(void) const;
         virtual std::vector<IStateChange const *> execute(MachineState const & state) = 0;
         virtual Instruction * clone(void) const = 0;
+        std::string toFormatString(void) const;
+        std::string toValueString(void) const;
     };
 
     class InstructionHandler

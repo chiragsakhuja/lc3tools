@@ -1,5 +1,6 @@
 #include <array>
 #include <map>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -57,6 +58,44 @@ uint32_t Instruction::getNumOperands() const
         }
     }
     return ret;
+}
+
+std::string Instruction::toFormatString(void) const
+{
+    std::stringstream assembly;
+    assembly << name << " ";
+    std::string prefix = "";
+    for(Operand * operand : operands) {
+        if(operand->type != OPER_TYPE_FIXED) {
+            assembly << prefix << operand->type_str;
+            prefix = ", ";
+        }
+    }
+    return assembly.str();
+}
+
+std::string Instruction::toValueString(void) const
+{
+    std::stringstream assembly;
+    assembly << name << " ";
+    std::string prefix = "";
+    for(Operand * operand : operands) {
+        if(operand->type != OPER_TYPE_FIXED) {
+            std::string oper_str;
+            if(operand->type == OPER_TYPE_NUM || operand->type == OPER_TYPE_LABEL) {
+                if((operand->type == OPER_TYPE_NUM && ((NumOperand *) operand)->sext) || operand->type == OPER_TYPE_LABEL) {
+                    oper_str = "#" + std::to_string((int32_t) sextTo32(operand->value, operand->width));
+                } else {
+                    oper_str = "#" + std::to_string(operand->value);
+                }
+            } else if(operand->type == OPER_TYPE_REG) {
+                oper_str = "r" + std::to_string(operand->value);
+            }
+            assembly << prefix << oper_str;
+            prefix = ", ";
+        }
+    }
+    return assembly.str();
 }
 
 bool Operand::isEqualType(OperType other) const

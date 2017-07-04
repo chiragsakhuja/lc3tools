@@ -66,16 +66,7 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
                 file_buffer[inst->row_num], "not a valid usage of \'%s\' instruction",
                 inst->str.c_str());
             for(Instruction const * candidate : candidates) {
-                std::stringstream assembly;
-                assembly << candidate->name << " ";
-                std::string prefix = "";
-                for(Operand * operand : candidate->operands) {
-                    if(operand->type != OPER_TYPE_FIXED) {
-                        assembly << prefix << operand->type_str;
-                        prefix = ", ";
-                    }
-                }
-                logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'%s\'?", assembly.str().c_str());
+                logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'%s\'?", candidate->toFormatString().c_str());
             }
             logger.newline();
 
@@ -328,15 +319,23 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
             processOperands(cur_state);
             pc_offset += 1;
         } else if(cur_state->type == PSEUDO) {
+            // don't do any error checking, just ignore the pseduo op if it doesn't meet the requirements
             if(cur_state->str == "fill") {
                 pc_offset += 1;
             } else if(cur_state->str == "stringz") {
-                logger.printf(PRINT_TYPE_ERROR, true, "pseudo op: %s", cur_state->str.c_str());
                 if(cur_state->opers != nullptr) {
                     Token * oper = cur_state->opers;
                     if(oper->type == STRING) {
-                        logger.printf(PRINT_TYPE_ERROR, true, "value: %s", oper->str.c_str());
-                        pc_offset += oper->str.size();
+                        pc_offset += oper->str.size() + 1;
+                    } else if(oper->type == NUM) {
+                        pc_offset += std::to_string(oper->num).size() + 1;
+                    }
+                }
+            } else if(cur_state->str == "blkw") {
+                if(cur_state->opers != nullptr) {
+                    Token * oper = cur_state->opers;
+                    if(oper->type == NUM) {
+                        pc_offset += oper->num;
                     }
                 }
             }
@@ -346,6 +345,73 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
     }
 
     return true;
+}
+
+void Assembler::processPseudo(std::string const & filename, Token const * inst,
+    std::vector<uint32_t> & object_file,
+    std::map<std::string, uint32_t> const & labels) const
+{
+    if(inst->str == "fill") {
+        Token * oper = inst->opers;
+        if(inst->num_operands != 1 || (oper->type != NUM && oper->type != STRING)) {
+            logger.printfMessage(PRINT_TYPE_ERROR, filename, inst,
+                file_buffer[inst->row_num], "not a valid usage of .fill pseudo-op");
+            logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.fill num\'?");
+            logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.fill label\'?");
+            throw std::runtime_error("not a valid usage of .fill pseudo-op");
+        } else {
+            if(oper->type == NUM) {
+                object_file.push_back(oper->num);
+            } else if(oper->type == STRING) {
+                auto search = labels.find(oper->str);
+                if(search != labels.end()) {
+                    object_file.push_back(search->second);
+                } else {
+                    logger.printfMessage(PRINT_TYPE_ERROR, filename, oper,
+                        file_buffer[oper->row_num], "unknown label \'%s\'",
+                        oper->str.c_str());
+                    throw std::runtime_error("unknown label");
+                }
+            }
+        }
+    } else if(inst->str == "stringz") {
+        Token * oper = inst->opers;
+        if(inst->num_operands != 1 || (oper->type != NUM && oper->type != STRING)) {
+            logger.printfMessage(PRINT_TYPE_ERROR, filename, inst,
+                file_buffer[inst->row_num], "not a valid usage of .stringz pseudo-op");
+            logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.stringz string\'?");
+            throw std::runtime_error("not a valid usage of .stringz pseudo-op");
+        } else {
+            std::string value;
+            if(oper->type == NUM) {
+                value = std::to_string(oper->num);
+                logger.printfMessage(PRINT_TYPE_WARNING, filename, oper,
+                    file_buffer[inst->row_num], "interpreting numeric value as decimal string \'%s\'", value.c_str());
+                logger.printf(PRINT_TYPE_NOTE, false, "did you mean to put the numeric value in quotes?");
+            } else if(oper->type == STRING) {
+                value = oper->str;
+            }
+
+            for(char i : value) {
+                object_file.push_back(((uint32_t) i) & 0xff);
+            }
+            object_file.push_back(0);
+        }
+    } else if(inst->str == "blkw") {
+        Token * oper = inst->opers;
+        if(inst->num_operands != 1 || oper->type != NUM) {
+            logger.printfMessage(PRINT_TYPE_ERROR, filename, inst,
+                file_buffer[inst->row_num], "not a valid usage of .blkw pseudo-op");
+            logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.blkw num\'?");
+            throw std::runtime_error("not a valid usage of .blkw pseudo-op");
+        } else {
+            if(oper->type == NUM) {
+                for(uint32_t i = 0; i < (uint32_t) oper->num; i += 1) {
+                    object_file.push_back(0);
+                }
+            }
+        }
+    }
 }
 
 bool Assembler::assembleProgram(std::string const & filename, Token * program,
@@ -394,16 +460,23 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program,
     bool p2_success = true;
     bool first = true;
     while(cur_state != nullptr) {
+        if(first) {
+            object_file.push_back(cur_state->pc);
+            first = false;
+        }
+
         if(cur_state->type == INST) {
             uint32_t encoded_instruction;
-            if(first) {
-                object_file.push_back(cur_state->pc);
-                first = false;
-            }
 
             try {
                 processInstruction(filename, cur_state, encoded_instruction, labels);
                 object_file.push_back(encoded_instruction);
+            } catch(std::runtime_error & e) {
+                p2_success = false;
+            }
+        } else if(cur_state->type == PSEUDO) {
+            try {
+                processPseudo(filename, cur_state, object_file, labels);
             } catch(std::runtime_error & e) {
                 p2_success = false;
             }

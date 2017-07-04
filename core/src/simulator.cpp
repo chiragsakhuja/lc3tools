@@ -45,19 +45,18 @@ Simulator::Simulator(bool log_enable, utils::IPrinter & printer) :
 
 void Simulator::simulate(void)
 {
-    for(int i = 0; i < 20000; i += 1) {
+    for(int i = 0; i < 200; i += 1) {
         uint32_t encoded_inst = state.mem[state.pc];
 
         Instruction * candidate;
         bool valid = decoder.findInstructionByEncoding(encoded_inst, candidate);
         if(valid) {
-            if(log_enable) {
-                logger.printf(PRINT_TYPE_EXTRA, true, "executing %s", udecToBin(encoded_inst, 16).c_str());
-            }
-
             decoder.decode(encoded_inst, *candidate);
             state.pc += 1;
             std::vector<IStateChange const *> changes = candidate->execute(state);
+            if(log_enable) {
+                logger.printf(PRINT_TYPE_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc, candidate->toValueString().c_str(), encoded_inst);
+            }
             delete candidate;
 
             for(uint32_t i = 0; i < changes.size(); i += 1) {
@@ -94,7 +93,7 @@ void Simulator::loadObjectFile(std::string const & filename)
             state.mem[cur] = value;
             ++cur;
         }
-        state.pc = orig;
+        //state.pc = orig;
         simulate();
     }
 }
