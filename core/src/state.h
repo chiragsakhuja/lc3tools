@@ -5,10 +5,16 @@ namespace core
 {
     struct MachineState
     {
+    public:
+        MachineState(Logger & logger) : logger(logger) {}
+
         std::vector<uint32_t> mem;
         std::array<uint32_t, 8> regs;
         uint32_t pc;
         uint32_t psr;
+
+        Logger & logger;
+        std::vector<char> console_buffer;
     };
 
     typedef enum {
@@ -69,7 +75,7 @@ namespace core
     public:
         MemStateChange(uint32_t addr, uint32_t value) : IStateChange(STATE_CHANGE_MEM), addr(addr), value(value) {}
 
-        virtual void updateState(MachineState & state) const override { state.mem[addr] = value; }
+        virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override { return ssprintf("MEM[0x%0.4x]: 0x%0.4x => 0x%0.4x", addr, state.mem[addr], value); }
     private:
         uint32_t addr;

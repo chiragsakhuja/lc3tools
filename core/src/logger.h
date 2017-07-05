@@ -24,6 +24,7 @@ namespace core {
         template<typename ... Args>
         void printf(int level, bool bold, std::string const & format, Args ... args) const;
         void newline(void) const { printer.newline(); }
+        void print(std::string const & str) { printer.print(str); }
     };
 
     class AssemblerLogger : public Logger

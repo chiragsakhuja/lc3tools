@@ -557,8 +557,7 @@ OS_START    ; machine starts executing at x0200
     PUTS
     HALT
 
-; OS_START_MSG    .STRINGZ "\nA new and improved LC-3 simulator and GUI for the LC-3 ISA\nCopyright (C) 2016  Michael Bartling and Jimmy Brisson\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>.\n"
-OS_START_MSG .STRINGZ "hi"
+OS_START_MSG    .STRINGZ "\nA new and improved LC-3 simulator and GUI for the LC-3 ISA\nCopyright (C) 2016  Michael Bartling and Jimmy Brisson\nThis program is free software: you can redistribute it and/or modify\nit under the terms of the GNU General Public License as published by\nthe Free Software Foundation, either version 3 of the License, or\n(at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see <http://www.gnu.org/licenses/>.\n"
 
 OS_KBSR    .FILL xFE00
 OS_KBDR    .FILL xFE02

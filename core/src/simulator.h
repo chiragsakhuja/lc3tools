@@ -19,6 +19,9 @@ namespace core
 
         Logger logger;
         bool log_enable;
+
+        void executeInstruction(void);
+        void updateDevices(void);
     };
 };
 

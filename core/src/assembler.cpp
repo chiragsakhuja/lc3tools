@@ -324,6 +324,29 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
                 if(cur_state->opers != nullptr) {
                     Token * oper = cur_state->opers;
                     if(oper->type == STRING) {
+                        std::stringstream new_str;
+                        std::string value = oper->str;
+
+                        if(value[0] == '"') {
+                            if(value[value.size() - 1] == '"') {
+                                value = value.substr(1, value.size() - 2);
+                            } else {
+                                value = value.substr(1);
+                            }
+                        }
+
+                        for(uint32_t i = 0; i < value.size(); i += 1) {
+                            char char_value = value[i];
+                            if(char_value == '\\' && i + 1 < value.size()) {
+                                if(value[i + 1] == 'n') {
+                                    char_value = '\n';
+                                }
+                                i += 1;
+                            }
+                            new_str << char_value;
+                        }
+                        oper->str = new_str.str();
+
                         pc_offset += oper->str.size() + 1;
                     } else if(oper->type == NUM) {
                         pc_offset += std::to_string(oper->num).size() + 1;

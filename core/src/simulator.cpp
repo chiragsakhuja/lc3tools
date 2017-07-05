@@ -23,15 +23,14 @@
 #include "instructions.h"
 #include "instruction_decoder.h"
 
+#include "device_regs.h"
+
 #include "simulator.h"
 
 using namespace core;
 
-#define RESET_PC 0x0200
-#define MCR 0xFFFE
-
 Simulator::Simulator(bool log_enable, utils::IPrinter & printer) :
-    logger(printer)
+    state(logger), logger(printer)
 {
     this->log_enable = log_enable;
     this->state.mem.resize(1 << 16);
@@ -55,34 +54,54 @@ void Simulator::reset(void)
     state.mem[MCR] = 0x8000;  // indicate the machine is running
 }
 
+void Simulator::updateDevices(void)
+{
+    state.mem[DSR] |= 0x8000;
+}
+
+void Simulator::executeInstruction(void)
+{
+    uint32_t encoded_inst = state.mem[state.pc];
+
+    IInstruction * candidate;
+    bool valid = decoder.findInstructionByEncoding(encoded_inst, candidate);
+    if(valid) {
+        candidate->assignOperands(encoded_inst);
+        if(log_enable) {
+            logger.printf(PRINT_TYPE_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc, candidate->toValueString().c_str(), encoded_inst);
+        }
+        state.pc += 1;
+        std::vector<IStateChange const *> changes = candidate->execute(state);
+        delete candidate;
+
+        for(uint32_t i = 0; i < changes.size(); i += 1) {
+            if(log_enable) {
+                logger.printf(PRINT_TYPE_EXTRA, false, "  %s", changes[i]->getOutputString(state).c_str());
+            }
+            changes[i]->updateState(state);
+
+            delete changes[i];
+        }
+    } else {
+        throw std::runtime_error(core::ssprintf("invalid instruction 0x%0.4x", encoded_inst));
+    }
+}
+
 void Simulator::simulate(void)
 {
-    for(int i = 0; i < 200; i += 1) {
-        uint32_t encoded_inst = state.mem[state.pc];
-
-        IInstruction * candidate;
-        bool valid = decoder.findInstructionByEncoding(encoded_inst, candidate);
-        if(valid) {
-            candidate->assignOperands(encoded_inst);
-            state.pc += 1;
-            std::vector<IStateChange const *> changes = candidate->execute(state);
-            if(log_enable) {
-                logger.printf(PRINT_TYPE_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc, candidate->toValueString().c_str(), encoded_inst);
-            }
-            delete candidate;
-
-            for(uint32_t i = 0; i < changes.size(); i += 1) {
-                if(log_enable) {
-                    logger.printf(PRINT_TYPE_EXTRA, false, "  %s", changes[i]->getOutputString(state).c_str());
-                }
-                changes[i]->updateState(state);
-
-                delete changes[i];
-            }
-        } else {
-            throw std::runtime_error(core::ssprintf("invalid instruction 0x%0.4x", encoded_inst));
-        }
+    while((state.mem[MCR] & 0x8000) != 0) {
+        executeInstruction();
+        updateDevices();
     }
+    /*
+     *for(char i : state.console_buffer) {
+     *    if(i == '\n') {
+     *        logger.newline();
+     *    } else {
+     *        logger.print(std::string(1, i));
+     *    }
+     *}
+     */
 }
 
 void Simulator::loadObjectFile(std::string const & filename)
@@ -99,4 +118,5 @@ void Simulator::loadObjectFile(std::string const & filename)
             offset += 1;
         }
     }
+    state.mem[MCR] |= 0x8000;
 }
