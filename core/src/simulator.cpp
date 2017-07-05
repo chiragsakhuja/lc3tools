@@ -12,6 +12,8 @@
 #include "printer.h"
 #include "logger.h"
 
+#include "object_file_utils.cpp"
+
 #include "state.h"
 
 #include "instructions.h"
@@ -75,25 +77,16 @@ void Simulator::simulate(void)
 
 void Simulator::loadObjectFile(std::string const & filename)
 {
-    std::ifstream file(filename, std::ios::binary);
-    if(!file) {
-        logger.printf(PRINT_TYPE_WARNING, true, "skipping file %s ...", filename.c_str());
-    } else {
-        std::istreambuf_iterator<char> it(file);
-        uint32_t orig = *it;
-        ++it;
-        orig = (orig << 8) | (*it);
-        ++it;
-        uint32_t cur = orig;
-        while(it != std::istreambuf_iterator<char>()) {
-            uint32_t value = (uint8_t) *it;
-            ++it;
-            value = (value << 8) | ((uint8_t) (*it));
-            ++it;
-            state.mem[cur] = value;
-            ++cur;
+    ObjectFileReader reader(filename);
+    uint32_t offset = 0;
+    while(! reader.atEnd()) {
+        ObjectFileStatement statement = reader.readStatement();
+        if(statement.isOrig()) {
+            state.pc = statement.getValue();
+            offset = 0;
+        } else {
+            state.mem[state.pc + offset] = statement.getValue();
+            offset += 1;
         }
-        //state.pc = orig;
-        simulate();
     }
 }

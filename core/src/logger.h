@@ -83,14 +83,14 @@ void core::Logger::printf(int type, bool bold, std::string const & format, Args 
 
         printer.setColor(utils::PRINT_COLOR_BOLD);
         printer.setColor(color);
-        printer.print(toString("%s: ", label.c_str()));
+        printer.print(ssprintf("%s: ", label.c_str()));
         printer.setColor(utils::PRINT_COLOR_RESET);
 
         if(bold) {
             printer.setColor(utils::PRINT_COLOR_BOLD);
         }
 
-        printer.print(toString(format, args...));
+        printer.print(ssprintf(format, args...));
         printer.setColor(utils::PRINT_COLOR_RESET);
 
         printer.newline();
@@ -109,10 +109,10 @@ void core::AssemblerLogger::xprintfMessage(int level, std::string const & filena
     int length, Token const * tok, std::string const & line, std::string const & format, Args ... args) const
 {
     printer.setColor(utils::PRINT_COLOR_BOLD);
-    printer.print(toString("%s:%d:%d: ", filename.c_str(), tok->row_num + 1, col_num + 1));
+    printer.print(ssprintf("%s:%d:%d: ", filename.c_str(), tok->row_num + 1, col_num + 1));
  
     printf(level, true, format, args...);
-    printer.print(toString("%s", line.c_str()));
+    printer.print(ssprintf("%s", line.c_str()));
     printer.newline();
  
     printer.setColor(utils::PRINT_COLOR_BOLD);

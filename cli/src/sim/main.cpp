@@ -1,38 +1,33 @@
-#include <array>
-#include <functional>
 #include <iostream>
-#include <map>
+#include <stdexcept>
 #include <string>
-#include <vector>
 
-#include "tokens.h"
-
-#include "printer.h"
-#include "logger.h"
-
-#include "state.h"
-
-#include "instructions.h"
-#include "instruction_decoder.h"
-
-#include "simulator.h"
+#include "core.h"
 
 #include "../common/console_printer.h"
 
 int main(int argc, char *argv[])
 {
     utils::IPrinter * printer = new utils::ConsolePrinter();
-    core::Simulator sim(true, *printer);
+    core::lc3 interface(*printer);
 
     if(argc < 2) {
         //printer->printf(utils::PRINT_TYPE_ERROR, "usage: %s file [file ...]", argv[0]);
     } else {
         for(int i = 1; i < argc; i += 1) {
             try {
-                sim.loadObjectFile(argv[i]);
-            } catch (std::runtime_error const & e) {
-                std::cerr << "ERROR: " << e.what() << "\n";
+                interface.loadSimulator(std::string(argv[i]));
+            } catch (core::exception const & e) {
+                printer->print(e.what());
+                printer->newline();
             }
+        }
+
+        try {
+            interface.simulate();
+        } catch(core::exception const & e) {
+            printer->print(e.what());
+            printer->newline();
         }
     }
 

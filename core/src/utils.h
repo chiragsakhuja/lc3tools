@@ -10,17 +10,25 @@ namespace core {
     uint32_t computeBasePlusSOffset(uint32_t base, uint32_t signed_off, uint32_t width);
 
     template<typename ... Args>
-    std::string toString(std::string const & format, Args ... args)
+    std::string ssprintf(std::string const & format, Args ... args)
     {
         int len = std::snprintf(nullptr, 0, format.c_str(), args...);
-        char * str = new char[len + 1];
+        char * c_str = new char[len + 1];
 
-        std::snprintf(str, len + 1, format.c_str(), args...);
+        std::snprintf(c_str, len + 1, format.c_str(), args...);
 
-        std::string ret(str);
-        delete[] str;
+        std::string ret(c_str);
+        delete[] c_str;
+
         return ret;
     }
+
+    class exception : public std::runtime_error
+    {
+    public:
+        exception(std::string const & msg) : std::runtime_error(msg) {}
+        virtual const char * what(void) const noexcept override { return std::runtime_error::what(); }
+    };
 };
 
 #endif

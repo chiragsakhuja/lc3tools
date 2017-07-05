@@ -9,7 +9,7 @@ namespace core
         Simulator(bool log_enable, utils::IPrinter & printer);
         ~Simulator(void) = default;
 
-        void loadObjectFile(std::string const & filename);
+        void loadObjectFile(std::string const & obj_file);
         void simulate(void);
     private:
         InstructionDecoder decoder;
