@@ -1,4 +1,4 @@
-# lc3v2 [![Build Status](https://drone.io/github.com/chiragsakhuja/lc3v2/status.png)](https://drone.io/github.com/chiragsakhuja/lc3v2/latest)
+# lc3v2 [![Build Status](https://travis-ci.org/chiragsakhuja/lc3v2.svg?branch=master)](https://travis-ci.org/chiragsakhuja/lc3v2)
 `lc3v2` is a complete overhaul of the current LC-3 simulator used in EE 306 at
 The University of Texas at Austin.  With `lc3v2`, we strive to achieve the
 following goals:
