@@ -16,7 +16,7 @@ script:
     - export CC=/usr/bin/gcc-6
     - export CXX=/usr/bin/g++-6
     - gcc -v && g++ -v && cmake --version
-    - mkdir build
+    - mkdir build && cd build
     - cmake -DCMAKE_BUILD_TYPE=Release ..
     - cmake ..
     - make
