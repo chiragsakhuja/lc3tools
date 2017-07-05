@@ -266,7 +266,7 @@ bool Assembler::processTokens(std::string const & filename, Token * program,
 
     Token * temp = program;
     while(temp != nullptr) {
-        std::cout << *temp;
+        //std::cout << *temp;
         temp = temp->next;
     }
 
