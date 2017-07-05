@@ -23,23 +23,23 @@ using namespace core;
 
 InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
 {
-    for(Instruction const * inst : instructions) {
+    for(IInstruction const * inst : instructions) {
         // assumption: every instruction will have a FixedOperand first, and that is the opcode
         uint32_t opcode = ((FixedOperand *) inst->operands[0])->value;
         instructions_by_opcode[opcode].push_back(inst);
     }
 }
 
-bool InstructionDecoder::findInstructionByEncoding(uint32_t encoding, Instruction *& candidate) const
+bool InstructionDecoder::findInstructionByEncoding(uint32_t encoding, IInstruction *& candidate) const
 {
     auto search = instructions_by_opcode.find(getBits(encoding, 15, 12));
     candidate = nullptr;
 
     if(search != instructions_by_opcode.end()) {
-        for(Instruction const * inst : search->second) {
+        for(IInstruction const * inst : search->second) {
             uint32_t cur_pos = 15;
             bool valid = true;
-            for(Operand const * op : inst->operands) {
+            for(IOperand const * op : inst->operands) {
                 if(op->type == OPER_TYPE_FIXED) {
                     //printf("checking [%d, %d] => %s ?= %s\n", cur_pos, cur_pos - op->width + 1, udecToBin(getBits(encoding, cur_pos, cur_pos - op->width + 1), op->width).c_str(), udecToBin(((FixedOperand *) op)->value, op->width).c_str());
                     if(getBits(encoding, cur_pos, cur_pos - op->width + 1) != ((FixedOperand *) op)->value) {
@@ -61,16 +61,5 @@ bool InstructionDecoder::findInstructionByEncoding(uint32_t encoding, Instructio
         return false;
     } else {
         return false;
-    }
-}
-
-void InstructionDecoder::decode(uint32_t encoded_inst, Instruction & candidate)
-{
-    uint32_t cur_pos = 15;
-    for(Operand * op : candidate.operands) {
-        if(op->type != OPER_TYPE_FIXED) {
-            op->value = getBits(encoded_inst, cur_pos, cur_pos - op->width + 1);
-        }
-        cur_pos -= op->width;
     }
 }

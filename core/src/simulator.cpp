@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "configured_paths.h"
+
 #include "utils.h"
 
 #include "tokens.h"
@@ -32,7 +34,14 @@ Simulator::Simulator(bool log_enable, utils::IPrinter & printer) :
     logger(printer)
 {
     this->log_enable = log_enable;
+    this->state.mem.resize(1 << 16);
+    this->reset();
+    this->loadObjectFile(std::string(GLOBAL_RES_PATH) + "/lc3os.obj");
+    this->state.pc = RESET_PC;
+}
 
+void Simulator::reset(void)
+{
     for(uint32_t i = 0; i < 8; i += 1) {
         state.regs[i] = 0;
     }
@@ -40,7 +49,6 @@ Simulator::Simulator(bool log_enable, utils::IPrinter & printer) :
     state.pc = RESET_PC;
     state.psr = 0x8002;
 
-    state.mem.resize(1 << 16);
     for(uint32_t i = 0; i < (1 << 16); i += 1) {
         state.mem[i] = 0;
     }
@@ -52,10 +60,10 @@ void Simulator::simulate(void)
     for(int i = 0; i < 200; i += 1) {
         uint32_t encoded_inst = state.mem[state.pc];
 
-        Instruction * candidate;
+        IInstruction * candidate;
         bool valid = decoder.findInstructionByEncoding(encoded_inst, candidate);
         if(valid) {
-            decoder.decode(encoded_inst, *candidate);
+            candidate->assignOperands(encoded_inst);
             state.pc += 1;
             std::vector<IStateChange const *> changes = candidate->execute(state);
             if(log_enable) {
@@ -72,7 +80,7 @@ void Simulator::simulate(void)
                 delete changes[i];
             }
         } else {
-            throw std::runtime_error("invalid instruction");
+            throw std::runtime_error(core::ssprintf("invalid instruction 0x%0.4x", encoded_inst));
         }
     }
 }

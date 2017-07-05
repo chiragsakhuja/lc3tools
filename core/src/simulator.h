@@ -11,6 +11,7 @@ namespace core
 
         void loadObjectFile(std::string const & obj_file);
         void simulate(void);
+        void reset(void);
     private:
         InstructionDecoder decoder;
         std::function<void(void)> preInstructionCallback;

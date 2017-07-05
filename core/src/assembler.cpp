@@ -11,8 +11,6 @@
 #include <string>
 #include <vector>
 
-class AssemblerSimple_SingleInstruction_Test;
-
 #include "utils.h"
 
 #include "tokens.h"
@@ -39,7 +37,7 @@ Assembler::Assembler(bool log_enable, utils::IPrinter & printer) :
 void Assembler::processInstruction(std::string const & filename, Token const * inst,
     uint32_t & encoded_instruction, std::map<std::string, uint32_t> const & labels) const
 {
-    std::vector<Instruction const *> candidates;
+    std::vector<IInstruction const *> candidates;
     bool valid_instruction = encoder.findInstruction(inst, candidates);
 
     if(valid_instruction) {
@@ -65,7 +63,7 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
             logger.printfMessage(PRINT_TYPE_ERROR, filename, inst,
                 file_buffer[inst->row_num], "not a valid usage of \'%s\' instruction",
                 inst->str.c_str());
-            for(Instruction const * candidate : candidates) {
+            for(IInstruction const * candidate : candidates) {
                 logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'%s\'?", candidate->toFormatString().c_str());
             }
             logger.newline();
@@ -218,7 +216,7 @@ void Assembler::separateLabels(std::string const & filename, Token * program)
     // we need to do it while analyzing the tokens using a simple rule: if the first INST
     // of a chain of tokens is not a valid instruction, assume it's a label
     while(cur_state != nullptr) {
-        std::vector<Instruction const *> candidates;
+        std::vector<IInstruction const *> candidates;
         if((cur_state->type == INST && ! encoder.findInstruction(cur_state, candidates) &&
              candidates.size() == 0) || cur_state->type == LABEL)
         {

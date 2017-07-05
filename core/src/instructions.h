@@ -9,7 +9,7 @@ namespace core {
         , OPER_TYPE_REG
     } OperType;
 
-    class Operand
+    class IOperand
     {
     public:
         OperType type;
@@ -21,29 +21,31 @@ namespace core {
         // used by simulator
         uint32_t value;
 
-        Operand(OperType type, std::string const & type_str, uint32_t width);
-        virtual ~Operand(void) = default;
+        IOperand(OperType type, std::string const & type_str, uint32_t width);
+        virtual ~IOperand(void) = default;
 
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) = 0;
-        virtual Operand * clone(void) const = 0;
+        virtual IOperand * clone(void) const = 0;
         bool isEqualType(OperType other) const;
     };
 
-    class Instruction
+    class IInstruction
     {
     public:
         std::string name;
-        std::vector<Operand *> operands;
+        std::vector<IOperand *> operands;
 
-        Instruction(std::string const & name, std::vector<Operand *> const & operands);
-        Instruction(Instruction const & that);
-        virtual ~Instruction(void);
+        IInstruction(std::string const & name, std::vector<IOperand *> const & operands);
+        IInstruction(IInstruction const & that);
+        virtual ~IInstruction(void);
 
         uint32_t getNumOperands(void) const;
+        void assignOperands(uint32_t encoded_inst);
+
         virtual std::vector<IStateChange const *> execute(MachineState const & state) = 0;
-        virtual Instruction * clone(void) const = 0;
+        virtual IInstruction * clone(void) const = 0;
         std::string toFormatString(void) const;
         std::string toValueString(void) const;
     };
@@ -56,56 +58,56 @@ namespace core {
 
         std::map<std::string, uint32_t> const & getRegs(void) { return regs; }
     protected:
-        std::vector<Instruction *> instructions;
+        std::vector<IInstruction *> instructions;
         std::map<std::string, uint32_t> regs;
     };
 
-    class FixedOperand : public Operand
+    class FixedOperand : public IOperand
     {
     public:
-        FixedOperand(uint32_t width, uint32_t value) : Operand(OPER_TYPE_FIXED, "fixed", width) { this->value = value; }
+        FixedOperand(uint32_t width, uint32_t value) : IOperand(OPER_TYPE_FIXED, "fixed", width) { this->value = value; }
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
         virtual FixedOperand * clone(void) const override { return new FixedOperand(*this); }
     };
 
-    class RegOperand : public Operand
+    class RegOperand : public IOperand
     {
     public:
-        RegOperand(uint32_t width) : Operand(OPER_TYPE_REG, "reg", width) {}
+        RegOperand(uint32_t width) : IOperand(OPER_TYPE_REG, "reg", width) {}
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
         virtual RegOperand * clone(void) const override { return new RegOperand(*this); }
     };
 
-    class NumOperand : public Operand
+    class NumOperand : public IOperand
     {
     public:
         bool sext;
 
-        NumOperand(uint32_t width, bool sext) : Operand(OPER_TYPE_NUM, "imm", width) { this->sext = sext; }
+        NumOperand(uint32_t width, bool sext) : IOperand(OPER_TYPE_NUM, "imm", width) { this->sext = sext; }
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
         virtual NumOperand * clone(void) const override { return new NumOperand(*this); }
     };
 
-    class LabelOperand : public Operand
+    class LabelOperand : public IOperand
     {
     public:
-        LabelOperand(uint32_t width) : Operand(OPER_TYPE_LABEL, "label", width) {}
+        LabelOperand(uint32_t width) : IOperand(OPER_TYPE_LABEL, "label", width) {}
         virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
             std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
         virtual LabelOperand * clone(void) const override { return new LabelOperand(*this); }
     };
 
-    class ADDRInstruction : public Instruction
+    class ADDRInstruction : public IInstruction
     {
     public:
-        ADDRInstruction(void) : Instruction("add", {
+        ADDRInstruction(void) : IInstruction("add", {
             new FixedOperand(4, 0x1),
             new RegOperand(3),
             new RegOperand(3),
@@ -116,10 +118,10 @@ namespace core {
         virtual ADDRInstruction * clone(void) const override { return new ADDRInstruction(*this); }
     };
 
-    class ADDIInstruction : public Instruction
+    class ADDIInstruction : public IInstruction
     {
     public:
-        ADDIInstruction(void) : Instruction("add", {
+        ADDIInstruction(void) : IInstruction("add", {
             new FixedOperand(4, 0x1),
             new RegOperand(3),
             new RegOperand(3),
@@ -130,10 +132,10 @@ namespace core {
         virtual ADDIInstruction * clone(void) const override { return new ADDIInstruction(*this); }
     };
 
-    class ANDRInstruction : public Instruction
+    class ANDRInstruction : public IInstruction
     {
     public:
-        ANDRInstruction(void) : Instruction("and", {
+        ANDRInstruction(void) : IInstruction("and", {
             new FixedOperand(4, 0x5),
             new RegOperand(3),
             new RegOperand(3),
@@ -144,10 +146,10 @@ namespace core {
         virtual ANDRInstruction * clone(void) const override { return new ANDRInstruction(*this); }
     };
 
-    class ANDIInstruction : public Instruction
+    class ANDIInstruction : public IInstruction
     {
     public:
-        ANDIInstruction(void) : Instruction("and", {
+        ANDIInstruction(void) : IInstruction("and", {
             new FixedOperand(4, 0x5),
             new RegOperand(3),
             new RegOperand(3),
@@ -158,11 +160,11 @@ namespace core {
         virtual ANDIInstruction * clone(void) const override { return new ANDIInstruction(*this); }
     };
 
-    class BRInstruction : public Instruction
+    class BRInstruction : public IInstruction
     {
     public:
-        using Instruction::Instruction;
-        BRInstruction(void) : Instruction("br", {
+        using IInstruction::IInstruction;
+        BRInstruction(void) : IInstruction("br", {
             new FixedOperand(4, 0x0),
             new FixedOperand(3, 0x7),
             new LabelOperand(9)
@@ -270,11 +272,11 @@ namespace core {
         virtual NOP1Instruction * clone(void) const override { return new NOP1Instruction(*this); }
     };
 
-    class JMPInstruction : public Instruction
+    class JMPInstruction : public IInstruction
     {
     public:
-        using Instruction::Instruction;
-        JMPInstruction(void) : Instruction("jmp", {
+        using IInstruction::IInstruction;
+        JMPInstruction(void) : IInstruction("jmp", {
             new FixedOperand(4, 0xc),
             new FixedOperand(3, 0x0),
             new RegOperand(3),
@@ -284,11 +286,11 @@ namespace core {
         virtual JMPInstruction * clone(void) const override { return new JMPInstruction(*this); }
     };
 
-    class JSRInstruction : public Instruction
+    class JSRInstruction : public IInstruction
     {
     public:
-        using Instruction::Instruction;
-        JSRInstruction(void) : Instruction("jsr", {
+        using IInstruction::IInstruction;
+        JSRInstruction(void) : IInstruction("jsr", {
             new FixedOperand(4, 0x4),
             new FixedOperand(1, 0x1),
             new LabelOperand(11)
@@ -297,10 +299,10 @@ namespace core {
         virtual JSRInstruction * clone(void) const override { return new JSRInstruction(*this); }
     };
 
-    class JSRRInstruction : public Instruction
+    class JSRRInstruction : public IInstruction
     {
     public:
-        JSRRInstruction(void) : Instruction("jsrr", {
+        JSRRInstruction(void) : IInstruction("jsrr", {
             new FixedOperand(4, 0x4),
             new FixedOperand(1, 0x0),
             new FixedOperand(2, 0x0),
@@ -311,10 +313,10 @@ namespace core {
         virtual JSRRInstruction * clone(void) const override { return new JSRRInstruction(*this); }
     };
 
-    class LDInstruction : public Instruction
+    class LDInstruction : public IInstruction
     {
     public:
-        LDInstruction(void) : Instruction("ld", {
+        LDInstruction(void) : IInstruction("ld", {
             new FixedOperand(4, 0x2),
             new RegOperand(3),
             new LabelOperand(9)
@@ -323,10 +325,10 @@ namespace core {
         virtual LDInstruction * clone(void) const override { return new LDInstruction(*this); }
     };
 
-    class LDIInstruction : public Instruction
+    class LDIInstruction : public IInstruction
     {
     public:
-        LDIInstruction(void) : Instruction("ldi", {
+        LDIInstruction(void) : IInstruction("ldi", {
             new FixedOperand(4, 0xa),
             new RegOperand(3),
             new LabelOperand(9)
@@ -335,10 +337,10 @@ namespace core {
         virtual LDIInstruction * clone(void) const override { return new LDIInstruction(*this); }
     };
 
-    class LDRInstruction : public Instruction
+    class LDRInstruction : public IInstruction
     {
     public:
-        LDRInstruction(void) : Instruction("ldr", {
+        LDRInstruction(void) : IInstruction("ldr", {
             new FixedOperand(4, 0x6),
             new RegOperand(3),
             new RegOperand(3),
@@ -348,10 +350,10 @@ namespace core {
         virtual LDRInstruction * clone(void) const override { return new LDRInstruction(*this); }
     };
 
-    class LEAInstruction : public Instruction
+    class LEAInstruction : public IInstruction
     {
     public:
-        LEAInstruction(void) : Instruction("lea", {
+        LEAInstruction(void) : IInstruction("lea", {
             new FixedOperand(4, 0xe),
             new RegOperand(3),
             new LabelOperand(9)
@@ -360,10 +362,10 @@ namespace core {
         virtual LEAInstruction * clone(void) const override { return new LEAInstruction(*this); }
     };
 
-    class NOTInstruction : public Instruction
+    class NOTInstruction : public IInstruction
     {
     public:
-        NOTInstruction(void) : Instruction("not", {
+        NOTInstruction(void) : IInstruction("not", {
             new FixedOperand(4, 0x0),
             new RegOperand(3),
             new RegOperand(3),
@@ -385,10 +387,10 @@ namespace core {
         virtual RETInstruction * clone(void) const override { return new RETInstruction(*this); }
     };
 
-    class RTIInstruction : public Instruction
+    class RTIInstruction : public IInstruction
     {
     public:
-        RTIInstruction(void) : Instruction("rti", {
+        RTIInstruction(void) : IInstruction("rti", {
             new FixedOperand(4, 0x0),
             new FixedOperand(12, 0x0)
         }) {}
@@ -396,10 +398,10 @@ namespace core {
         virtual RTIInstruction * clone(void) const override { return new RTIInstruction(*this); }
     };
 
-    class STInstruction : public Instruction
+    class STInstruction : public IInstruction
     {
     public:
-        STInstruction(void) : Instruction("st", {
+        STInstruction(void) : IInstruction("st", {
             new FixedOperand(4, 0x3),
             new RegOperand(3),
             new LabelOperand(9)
@@ -408,10 +410,10 @@ namespace core {
         virtual STInstruction * clone(void) const override { return new STInstruction(*this); }
     };
 
-    class STIInstruction : public Instruction
+    class STIInstruction : public IInstruction
     {
     public:
-        STIInstruction(void) : Instruction("sti", {
+        STIInstruction(void) : IInstruction("sti", {
             new FixedOperand(4, 0xb),
             new RegOperand(3),
             new LabelOperand(9)
@@ -420,10 +422,10 @@ namespace core {
         virtual STIInstruction * clone(void) const override { return new STIInstruction(*this); }
     };
 
-    class STRInstruction : public Instruction
+    class STRInstruction : public IInstruction
     {
     public:
-        STRInstruction(void) : Instruction("str", {
+        STRInstruction(void) : IInstruction("str", {
             new FixedOperand(4, 0x7),
             new RegOperand(3),
             new RegOperand(3),
@@ -433,11 +435,11 @@ namespace core {
         virtual STRInstruction * clone(void) const override { return new STRInstruction(*this); }
     };
 
-    class TRAPInstruction : public Instruction
+    class TRAPInstruction : public IInstruction
     {
     public:
-        using Instruction::Instruction;
-        TRAPInstruction(void) : Instruction("trap", {
+        using IInstruction::IInstruction;
+        TRAPInstruction(void) : IInstruction("trap", {
             new FixedOperand(4, 0xf),
             new FixedOperand(4, 0x0),
             new NumOperand(8, false)

@@ -20,7 +20,7 @@
 
 using namespace core;
 
-Operand::Operand(OperType type, std::string const & type_str, uint32_t width)
+IOperand::IOperand(OperType type, std::string const & type_str, uint32_t width)
 {
     this->type = type;
     this->type_str = type_str;
@@ -28,31 +28,31 @@ Operand::Operand(OperType type, std::string const & type_str, uint32_t width)
     this->value = 0;
 }
 
-Instruction::Instruction(std::string const & name, std::vector<Operand *> const & operands)
+IInstruction::IInstruction(std::string const & name, std::vector<IOperand *> const & operands)
 {
     this->name = name;
     this->operands = operands;
 }
 
-Instruction::Instruction(Instruction const & that)
+IInstruction::IInstruction(IInstruction const & that)
 {
     this->name = that.name;
-    for(Operand * op : that.operands) {
+    for(IOperand * op : that.operands) {
         this->operands.push_back(op->clone());
     }
 }
 
-Instruction::~Instruction(void)
+IInstruction::~IInstruction(void)
 {
     for(uint32_t i = 0; i < operands.size(); i += 1) {
         delete operands[i];
     }
 }
 
-uint32_t Instruction::getNumOperands() const
+uint32_t IInstruction::getNumOperands(void) const
 {
     uint32_t ret = 0;
-    for(Operand * operand : operands) {
+    for(IOperand * operand : operands) {
         if(operand->type != OPER_TYPE_FIXED) {
             ret += 1;
         }
@@ -60,12 +60,23 @@ uint32_t Instruction::getNumOperands() const
     return ret;
 }
 
-std::string Instruction::toFormatString(void) const
+void IInstruction::assignOperands(uint32_t encoded_inst)
+{
+    uint32_t cur_pos = 15;
+    for(IOperand * op : operands) {
+        if(op->type != OPER_TYPE_FIXED) {
+            op->value = getBits(encoded_inst, cur_pos, cur_pos - op->width + 1);
+        }
+        cur_pos -= op->width;
+    }
+}
+
+std::string IInstruction::toFormatString(void) const
 {
     std::stringstream assembly;
     assembly << name << " ";
     std::string prefix = "";
-    for(Operand * operand : operands) {
+    for(IOperand * operand : operands) {
         if(operand->type != OPER_TYPE_FIXED) {
             assembly << prefix << operand->type_str;
             prefix = ", ";
@@ -74,12 +85,12 @@ std::string Instruction::toFormatString(void) const
     return assembly.str();
 }
 
-std::string Instruction::toValueString(void) const
+std::string IInstruction::toValueString(void) const
 {
     std::stringstream assembly;
     assembly << name << " ";
     std::string prefix = "";
-    for(Operand * operand : operands) {
+    for(IOperand * operand : operands) {
         if(operand->type != OPER_TYPE_FIXED) {
             std::string oper_str;
             if(operand->type == OPER_TYPE_NUM || operand->type == OPER_TYPE_LABEL) {
@@ -98,7 +109,7 @@ std::string Instruction::toValueString(void) const
     return assembly.str();
 }
 
-bool Operand::isEqualType(OperType other) const
+bool IOperand::isEqualType(OperType other) const
 {
     return type == other;
 }

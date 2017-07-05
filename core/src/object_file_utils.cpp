@@ -32,12 +32,12 @@ ObjectFileReader::~ObjectFileReader(void)
 
 ObjectFileStatement ObjectFileReader::readStatement(void)
 {
-    uint32_t value = *file_stream;
+    uint32_t value = (*file_stream) & 0xff;
     ++file_stream;
-    value = (value << 8) | (*file_stream);
+    value = (value << 8) | ((*file_stream) & 0xff);
     ++file_stream;
 
-    ObjectFileStatement ret(value, first_read);
+    ObjectFileStatement ret(value & 0xffff, first_read);
     first_read = false;
 
     return ret;

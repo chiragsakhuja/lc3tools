@@ -11,9 +11,11 @@ int main(int argc, char *argv[])
     utils::IPrinter * printer = new utils::ConsolePrinter();
     core::lc3 interface(*printer);
 
-    if(argc < 2) {
-        //printer->printf(utils::PRINT_TYPE_ERROR, "usage: %s file [file ...]", argv[0]);
-    } else {
+    /*
+     *if(argc < 2) {
+     *    //printer->printf(utils::PRINT_TYPE_ERROR, "usage: %s file [file ...]", argv[0]);
+     *} else {
+     */
         for(int i = 1; i < argc; i += 1) {
             try {
                 interface.loadSimulator(std::string(argv[i]));
@@ -29,7 +31,9 @@ int main(int argc, char *argv[])
             printer->print(e.what());
             printer->newline();
         }
-    }
+    /*
+     *}
+     */
 
     delete printer;
 

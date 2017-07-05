@@ -8,10 +8,9 @@ namespace core
     public:
         InstructionDecoder(void);
 
-        bool findInstructionByEncoding(uint32_t encoding, Instruction *& candidate) const;
-        void decode(uint32_t encoded_inst, Instruction & inst);
+        bool findInstructionByEncoding(uint32_t encoding, IInstruction *& candidate) const;
     private:
-        std::map<uint32_t, std::vector<Instruction const *>> instructions_by_opcode;
+        std::map<uint32_t, std::vector<IInstruction const *>> instructions_by_opcode;
     };
 };
 
