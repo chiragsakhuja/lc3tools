@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <stdexcept>
 #include <string>
 
 #include "utils.h"

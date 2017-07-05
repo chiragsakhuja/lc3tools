@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <map>
 #include <string>
+#include <stdexcept>
 #include <vector>
 
 #include <iostream>
