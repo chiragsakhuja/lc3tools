@@ -12,7 +12,7 @@
 #include "printer.h"
 #include "logger.h"
 
-#include "object_file_utils.cpp"
+#include "object_file_utils.h"
 
 #include "state.h"
 
@@ -77,10 +77,10 @@ void Simulator::simulate(void)
 
 void Simulator::loadObjectFile(std::string const & filename)
 {
-    ObjectFileReader reader(filename);
+    utils::ObjectFileReader reader(filename);
     uint32_t offset = 0;
     while(! reader.atEnd()) {
-        ObjectFileStatement statement = reader.readStatement();
+        utils::ObjectFileStatement statement = reader.readStatement();
         if(statement.isOrig()) {
             state.pc = statement.getValue();
             offset = 0;
