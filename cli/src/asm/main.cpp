@@ -1,35 +1,24 @@
-#include <array>
 #include <iostream>
-#include <map>
+#include <stdexcept>
 #include <string>
-#include <vector>
 
-#include "tokens.h"
-
-#include "printer.h"
-#include "logger.h"
-
-#include "state.h"
-
-#include "instructions.h"
-#include "instruction_encoder.h"
-
-#include "assembler.h"
+#include "core.h"
 
 #include "../common/console_printer.h"
-
 
 int main(int argc, char *argv[])
 {
     utils::IPrinter * printer = new utils::ConsolePrinter();
-    core::Assembler as(true, *printer);
+    core::lc3 interface(*printer);
 
     if(argc < 2) {
         //printer->printf(utils::PRINT_TYPE_ERROR, "usage: %s file [file ...]", argv[0]);
     } else {
         for(int i = 1; i < argc; i += 1) {
             try {
-                as.genObjectFile(argv[i]);
+                std::string asm_filename(argv[i]);
+                std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
+                interface.assemble(asm_filename, obj_filename);
             } catch (std::runtime_error const & e) {
                 std::cout << "ERROR: " << e.what() << "\n";
             }

@@ -44,7 +44,7 @@ operlist : oper COMMA operlist   { $$ = append($1, $3); }
          ;
 
 inst     : STRING operlist       { $1->type = INST; $1->opers = $2; adjustOperands($1); $$ = $1; }
-         | STRING                { $1->type = INST; $1->opers = nullptr; $1->num_operands = 0; $$ = $1; }
+         | STRING                { $1->type = INST; $1->opers = nullptr; $1->num_opers = 0; $$ = $1; }
          ;
 
 pseudo   : DOT inst              { $2->type = PSEUDO; $$ = $2; }
@@ -92,6 +92,6 @@ void adjustOperands(Token *inst)
         prev->next = nullptr;
     }
 
-    inst->num_operands = count;
+    inst->num_opers = count;
 }
 

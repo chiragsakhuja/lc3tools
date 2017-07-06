@@ -16,7 +16,7 @@
 #include "printer.h"
 #include "logger.h"
 
-#include "object_file_utils.h"
+#include "files.h"
 
 #include "state.h"
 
@@ -30,7 +30,7 @@
 using namespace core;
 
 Simulator::Simulator(bool log_enable, utils::IPrinter & printer) :
-    state(logger), logger(printer)
+    state(logger), logger(log_enable, printer)
 {
     this->log_enable = log_enable;
     this->state.mem.resize(1 << 16);
@@ -52,6 +52,7 @@ void Simulator::reset(void)
         state.mem[i] = 0;
     }
     state.mem[MCR] = 0x8000;  // indicate the machine is running
+    state.running = true;
 }
 
 void Simulator::updateDevices(void)
@@ -83,16 +84,17 @@ void Simulator::executeInstruction(void)
             delete changes[i];
         }
     } else {
-        throw std::runtime_error(core::ssprintf("invalid instruction 0x%0.4x", encoded_inst));
+        throw core::exception(core::ssprintf("invalid instruction 0x%0.4x", encoded_inst));
     }
 }
 
 void Simulator::simulate(void)
 {
-    while((state.mem[MCR] & 0x8000) != 0) {
+    while(state.running && (state.mem[MCR] & 0x8000) != 0) {
         executeInstruction();
         updateDevices();
     }
+    state.running = false;
     /*
      *for(char i : state.console_buffer) {
      *    if(i == '\n') {

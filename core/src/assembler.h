@@ -6,23 +6,34 @@ namespace core
     class Assembler
     {
     public:
-        Assembler(bool log_enable, utils::IPrinter & printer);
+        Assembler(bool log_enable, utils::IPrinter & printer) : printer(printer), log_enable(log_enable) {}
         Assembler(Assembler const &) = default;
         Assembler & operator=(Assembler const &) = default;
         ~Assembler(void) = default;
 
-        bool assembleProgram(std::string const & filename, Token * program,
-            std::map<std::string, uint32_t> & labels, std::vector<uint32_t> & object_file);
-        void genObjectFile(std::string const & filename);
+        void assemble(std::string const & asm_filename, std::string const & obj_filename);
 
     private:
-#ifdef _ASSEMBLER_TEST
-        FRIEND_TEST(AssemblerSimple, SingleDataProcessingInstruction);
-#endif
         std::vector<std::string> file_buffer;
-        AssemblerLogger logger;
+        utils::IPrinter & printer;
+
         bool log_enable;
         InstructionEncoder encoder;
+
+        Token * removeNewlineTokens(Token * program);
+        void separateLabels(Token * program, AssemblerLogger & logger);
+        void toLower(Token * token_chain);
+        Token * findOrig(Token * program, AssemblerLogger & logger);
+        Token * firstPass(Token * program, std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
+        std::vector<utils::ObjectFileStatement> assembleChain(Token * program,
+            std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
+        std::vector<std::string> readFile(std::string const & filename);
+        /*
+        std::vector<std::string> readFile(std::string const & filename);
+        std::vector<utils::ObjectFileStatement> assembleChain(Token * program,
+            std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
+        Token * firstPass(Token * program,
+            std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
 
         Token * removeNewlineTokens(Token * program);
         void processOperands(std::string const & filename, Token * operands);
@@ -39,6 +50,7 @@ namespace core
         bool findFirstOrig(std::string const & filename, Token * program, Token *& program_start,
                 uint32_t & cur_orig);
         void processOperands(Token * inst);
+        */
     };
 };
 

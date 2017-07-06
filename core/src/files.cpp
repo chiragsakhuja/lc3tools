@@ -6,27 +6,16 @@
 
 #include "utils.h"
 
-#include "object_file_utils.h"
+#include "files.h"
 
 using namespace utils;
 
-ObjectFileReader::ObjectFileReader(std::string const & filename)
+ObjectFileReader::ObjectFileReader(std::string const & filename) :
+    first_read(true)
 {
-    file.open(filename, std::ios::binary);
-
-    if(! file) {
-        throw core::exception(core::ssprintf("could not load \'%s\'", filename.c_str()));
-    } 
-
-    file_stream = std::istreambuf_iterator<char>(file);
-
-    first_read = true;
-}
-
-ObjectFileReader::~ObjectFileReader(void)
-{
-    if(file) {
-        file.close();
+    file.open(filename);
+    if(! file.is_open()) {
+        throw core::exception(core::ssprintf("could not open file \'%s\'", filename.c_str()));
     }
 }
 

@@ -18,7 +18,7 @@ using namespace core;
 
 Token::Token(void)
 {
-    this->num_operands = 0;
+    this->num_opers = 0;
     this->pc = 0;
     this->row_num = 0;
     this->col_num = 0;

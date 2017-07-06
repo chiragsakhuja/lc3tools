@@ -5,7 +5,6 @@ namespace core
 {
     struct MachineState
     {
-    public:
         MachineState(Logger & logger) : logger(logger) {}
 
         std::vector<uint32_t> mem;
@@ -15,6 +14,8 @@ namespace core
 
         Logger & logger;
         std::vector<char> console_buffer;
+
+        bool running;
     };
 
     typedef enum {

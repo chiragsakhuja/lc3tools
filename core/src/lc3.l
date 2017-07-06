@@ -51,7 +51,6 @@ Token * makeToken(char const * tok, int type)
 
     if(type == STRING) {
         std::string tokStr(tok);
-        std::transform(tokStr.begin(), tokStr.end(), tokStr.begin(), ::tolower);
         ret = new Token(tokStr);
     } else {
         ret = new Token(stringToInt(tok));

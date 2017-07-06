@@ -18,8 +18,9 @@ namespace core {
     {
     protected:
         utils::IPrinter & printer;
+        bool log_enable;
     public:
-        Logger(utils::IPrinter & printer) : printer(printer) {}
+        Logger(bool log_enable, utils::IPrinter & printer) :  printer(printer), log_enable(log_enable) {}
 
         template<typename ... Args>
         void printf(int level, bool bold, std::string const & format, Args ... args) const;
@@ -33,17 +34,20 @@ namespace core {
         using Logger::Logger;
 
         template<typename ... Args>
-        void printfMessage(int level, std::string const & filename, Token const * tok, std::string const & line,
-            std::string const & format, Args ... args) const;
+        void printfMessage(int level, Token const * tok, std::string const & format, Args ... args) const;
         template<typename ... Args>
-        void xprintfMessage(int level, std::string const & filename, int col_num, int length, Token const * tok,
-            std::string const & line, std::string const & format, Args ... args) const;
+        void xprintfMessage(int level, int col_num, int length, Token const * tok, std::string const & format,
+            Args ... args) const;
+
+        std::string filename;
+        std::vector<std::string> asm_blob;
     };
 }
 
 template<typename ... Args>
 void core::Logger::printf(int type, bool bold, std::string const & format, Args ... args) const
 {
+    if(! log_enable) { return; }
     int color = utils::PRINT_COLOR_RESET;
     std::string label = "";
 
@@ -99,21 +103,22 @@ void core::Logger::printf(int type, bool bold, std::string const & format, Args 
 }
 
 template<typename ... Args>
-void core::AssemblerLogger::printfMessage(int level, std::string const & filename, Token const * tok, 
-    std::string const & line, std::string const & format, Args ... args) const
+void core::AssemblerLogger::printfMessage(int level, Token const * tok, std::string const & format,
+    Args ... args) const
 {
-    xprintfMessage(level, filename, tok->col_num, tok->length, tok, line, format, args...);
+    xprintfMessage(level, tok->col_num, tok->length, tok, format, args...);
 }
 
 template<typename ... Args>
-void core::AssemblerLogger::xprintfMessage(int level, std::string const & filename, int col_num,
-    int length, Token const * tok, std::string const & line, std::string const & format, Args ... args) const
+void core::AssemblerLogger::xprintfMessage(int level, int col_num, int length, Token const * tok,
+    std::string const & format, Args ... args) const
 {
+    if(! log_enable) { return; }
     printer.setColor(utils::PRINT_COLOR_BOLD);
     printer.print(ssprintf("%s:%d:%d: ", filename.c_str(), tok->row_num + 1, col_num + 1));
  
     printf(level, true, format, args...);
-    printer.print(ssprintf("%s", line.c_str()));
+    printer.print(ssprintf("%s", asm_blob[tok->row_num].c_str()));
     printer.newline();
  
     printer.setColor(utils::PRINT_COLOR_BOLD);

@@ -15,11 +15,11 @@ namespace utils {
         bool orig;
     };
 
-    class ObjectFileReader
+    class ObjectFileReader : public std::ifstream
     {
     public:
         ObjectFileReader(std::string const & filename);
-        ~ObjectFileReader(void);
+        ~ObjectFileReader(void) { if(file.is_open()) { file.close(); } }
 
         ObjectFileStatement readStatement(void);
         bool atEnd(void) { return file_stream == std::istreambuf_iterator<char>(); }

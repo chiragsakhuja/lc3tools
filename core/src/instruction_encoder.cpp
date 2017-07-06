@@ -44,7 +44,7 @@ bool InstructionEncoder::findInstruction(Token const * search, std::vector<IInst
         // check all encodings to see if there is a match
         for(IInstruction const * cur_candidate : candidate_list) {
             // first make sure the number of operands is the same, otherwise it's a waste
-            if(cur_candidate->getNumOperands() == (uint32_t) search->num_operands) {
+            if(cur_candidate->getNumOperands() == (uint32_t) search->num_opers) {
                 bool actual_match = true;
                 Token const * cur_oper = search->opers;
 

@@ -11,14 +11,10 @@ public:
     int num;
 
     int type;
-    int num_operands;
+    int num_opers;
     int pc;
     Token * opers;
     Token * next;
-
-#ifdef _ENABLE_TESTING
-    int encoding;
-#endif
 
     // used for errors
     int row_num, col_num;

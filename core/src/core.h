@@ -17,6 +17,8 @@
 #include "printer.h"
 #include "logger.h"
 
+#include "files.h"
+
 #include "state.h"
 
 #include "instructions.h"

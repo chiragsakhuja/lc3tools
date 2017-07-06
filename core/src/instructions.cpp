@@ -221,13 +221,13 @@ uint32_t NumOperand::encode(bool log_enable, AssemblerLogger const & logger,
 
     if(sext) {
         if((int32_t) operand->num < -(1 << (width - 1)) || (int32_t) operand->num > ((1 << (width - 1)) - 1)) {
-            logger.printfMessage(PRINT_TYPE_WARNING, filename, operand, line, "immediate %d truncated to %d",
+            logger.printfMessage(PRINT_TYPE_WARNING, operand, "immediate %d truncated to %d",
                 operand->num, sextTo32(token_val, width));
             logger.newline();
         }
     } else {
         if(operand->num > ((1 << width) - 1)) {
-            logger.printfMessage(PRINT_TYPE_WARNING, filename, operand, line, "immediate %d truncated to %u",
+            logger.printfMessage(PRINT_TYPE_WARNING, operand, "immediate %d truncated to %u",
                 operand->num, token_val);
             logger.newline();
         }
@@ -252,7 +252,7 @@ uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
     auto search = labels.find(operand->str);
     if(search == labels.end()) {
         if(log_enable) {
-            logger.printfMessage(PRINT_TYPE_ERROR, filename, operand, line, "unknown label \'%s\'",
+            logger.printfMessage(PRINT_TYPE_ERROR, operand, "unknown label \'%s\'",
                 operand->str.c_str());
             logger.newline();
         }

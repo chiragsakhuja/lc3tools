@@ -19,6 +19,8 @@
 #include "printer.h"
 #include "logger.h"
 
+#include "files.h"
+
 #include "state.h"
 
 #include "instructions.h"
@@ -28,12 +30,7 @@
 
 using namespace core;
 
-Assembler::Assembler(bool log_enable, utils::IPrinter & printer) :
-    logger(printer)
-{
-    this->log_enable = log_enable;
-}
-
+/*
 void Assembler::processInstruction(std::string const & filename, Token const * inst,
     uint32_t & encoded_instruction, std::map<std::string, uint32_t> const & labels) const
 {
@@ -77,7 +74,7 @@ void Assembler::processInstruction(std::string const & filename, Token const * i
 bool Assembler::setOrig(std::string const & filename, Token const * orig, uint32_t & new_orig)
 {
     if(orig->checkPseudoType("orig")) {     // sanity check...
-        if(orig->num_operands != 1) {
+        if(orig->num_opers != 1) {
             if(log_enable) {
                 logger.printfMessage(PRINT_TYPE_WARNING, filename, orig,
                     file_buffer[orig->row_num], "incorrect number of operands");
@@ -143,51 +140,6 @@ Token * Assembler::removeNewlineTokens(Token * program)
 bool Assembler::findFirstOrig(std::string const & filename, Token * program,
     Token *& program_start, uint32_t & cur_orig)
 {
-    Token * cur_state = program;
-    bool found_valid_orig = false;
-
-    // find the orig
-    while(cur_state != nullptr && ! found_valid_orig) {
-        // ignore everything until you find the first orig
-        while(cur_state != nullptr && ! cur_state->checkPseudoType("orig")) {
-            // TODO: allow for exceptions, such as .external
-            if(log_enable) {
-                logger.xprintfMessage(PRINT_TYPE_WARNING, filename, 0,
-                    file_buffer[cur_state->row_num].length(), cur_state,
-                    file_buffer[cur_state->row_num], "ignoring statement before .orig");
-                logger.newline();
-            }
-            cur_state = cur_state->next;
-        }
-
-        // looks like you hit nullptr before a .orig, meaning there is no .orig
-        if(cur_state == nullptr) {
-            if(log_enable) {
-                logger.printf(PRINT_TYPE_ERROR, true, "no .orig found in \'%s\'", filename.c_str());
-            }
-            return false;
-        }
-
-        // check to see if .orig is valid
-        // if so, stop looking; if not, move on and try again
-        if(setOrig(filename, cur_state, cur_orig)) {
-            found_valid_orig = true;
-        }
-
-        cur_state = cur_state->next;
-    }
-
-    // you hit nullptr after seeing at least one .orig, meaning there is no valid .orig
-    if(! found_valid_orig) {
-        if(log_enable) {
-            logger.printf(PRINT_TYPE_ERROR, true, "no valid .orig found in \'%s\'", filename.c_str());
-        }
-        return false;
-    }
-
-    program_start = cur_state;
-
-    return true;
 }
 
 void Assembler::processOperands(Token * inst)
@@ -234,13 +186,13 @@ void Assembler::separateLabels(std::string const & filename, Token * program)
                     cur_state->next = upgrade_state;
                     cur_state->opers = nullptr;
 
-                    uint32_t num_operands = 0;
+                    uint32_t num_opers = 0;
                     Token * cur_oper = cur_state->next->opers;
                     while(cur_oper != nullptr) {
-                        num_operands += 1;
+                        num_opers += 1;
                         cur_oper = cur_oper->next;
                     }
-                    cur_state->next->num_operands = num_operands;
+                    cur_state->next->num_opers = num_opers;
                 } else {
                     if(log_enable) {
                         logger.printfMessage(PRINT_TYPE_ERROR, filename, cur_state,
@@ -259,14 +211,14 @@ void Assembler::separateLabels(std::string const & filename, Token * program)
 bool Assembler::processTokens(std::string const & filename, Token * program,
     std::map<std::string, uint32_t> & labels, Token *& program_start)
 {
-    program = removeNewlineTokens(program);
-    separateLabels(filename, program);
-
     Token * temp = program;
     while(temp != nullptr) {
-        //std::cout << *temp;
+        std::cout << *temp;
         temp = temp->next;
     }
+
+    program = removeNewlineTokens(program);
+    separateLabels(filename, program);
 
     Token * cur_state;
     uint32_t cur_orig = 0;
@@ -374,7 +326,7 @@ void Assembler::processPseudo(std::string const & filename, Token const * inst,
 {
     if(inst->str == "fill") {
         Token * oper = inst->opers;
-        if(inst->num_operands != 1 || (oper->type != NUM && oper->type != STRING)) {
+        if(inst->num_opers != 1 || (oper->type != NUM && oper->type != STRING)) {
             logger.printfMessage(PRINT_TYPE_ERROR, filename, inst,
                 file_buffer[inst->row_num], "not a valid usage of .fill pseudo-op");
             logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.fill num\'?");
@@ -397,7 +349,7 @@ void Assembler::processPseudo(std::string const & filename, Token const * inst,
         }
     } else if(inst->str == "stringz") {
         Token * oper = inst->opers;
-        if(inst->num_operands != 1 || (oper->type != NUM && oper->type != STRING)) {
+        if(inst->num_opers != 1 || (oper->type != NUM && oper->type != STRING)) {
             logger.printfMessage(PRINT_TYPE_ERROR, filename, inst,
                 file_buffer[inst->row_num], "not a valid usage of .stringz pseudo-op");
             logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.stringz string\'?");
@@ -420,7 +372,7 @@ void Assembler::processPseudo(std::string const & filename, Token const * inst,
         }
     } else if(inst->str == "blkw") {
         Token * oper = inst->opers;
-        if(inst->num_operands != 1 || oper->type != NUM) {
+        if(inst->num_opers != 1 || oper->type != NUM) {
             logger.printfMessage(PRINT_TYPE_ERROR, filename, inst,
                 file_buffer[inst->row_num], "not a valid usage of .blkw pseudo-op");
             logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.blkw num\'?");
@@ -438,32 +390,6 @@ void Assembler::processPseudo(std::string const & filename, Token const * inst,
 bool Assembler::assembleProgram(std::string const & filename, Token * program,
     std::map<std::string, uint32_t> & labels, std::vector<uint32_t> & object_file)
 {
-    std::ifstream file(filename);
-
-    // load program into buffer for error messages
-    if(file.is_open()) {
-        std::string line;
-
-        file_buffer.clear();
-        while(std::getline(file, line)) {
-            file_buffer.push_back(line);
-        }
-
-        file.close();
-    } else {
-        if(log_enable) {
-            logger.printf(PRINT_TYPE_WARNING, true,
-                "somehow the file got destroyed in the last couple of milliseconds, skipping file %s ...",
-                filename.c_str());
-        }
-
-        return false;
-    }
-
-    if(log_enable) {
-        logger.printf(PRINT_TYPE_INFO, true, "assembling \'%s\'", filename.c_str());
-        logger.printf(PRINT_TYPE_INFO, true, "beginning first pass ...");
-    }
 
     bool p1_success = true;
     Token * cur_state = nullptr;
@@ -515,43 +441,349 @@ bool Assembler::assembleProgram(std::string const & filename, Token * program,
 
     return p1_success && p2_success;
 }
+*/
+
+Token * Assembler::removeNewlineTokens(Token * program)
+{
+    Token * program_start = program;
+    Token * prev_tok = nullptr;
+    Token * cur_tok = program;
+
+    // remove newline toks
+    while(cur_tok != nullptr) {
+        bool del_cur_tok = false;
+        if(cur_tok->type == NEWLINE) {
+            if(prev_tok != nullptr) {
+                prev_tok->next = cur_tok->next;
+            } else {
+                // if we start off with newlines, move the program pointer forward
+                program_start = cur_tok->next;
+            }
+            del_cur_tok = true;
+        } else {
+            prev_tok = cur_tok;
+        }
+
+        Token * next_tok = cur_tok->next;
+        if(del_cur_tok) {
+            delete cur_tok;
+        }
+        cur_tok = next_tok;
+    }
+
+    // since you may have moved the program pointer, you need to return it
+    return program_start;
+}
+
+void Assembler::separateLabels(Token * program, AssemblerLogger & logger)
+{
+    Token * cur_tok = program;
+    // since the parser can't distinguish between an instruction and a label by design,
+    // we need to do it while analyzing the tokens using a simple rule: if the first INST
+    // of a chain of tokens is not a valid instruction, assume it's a label
+    while(cur_tok != nullptr) {
+        std::vector<IInstruction const *> candidates;
+        // if the token was labeled an instruction and it's not even a candidate for an instruction,
+        // assume it's a label
+        if((cur_tok->type == INST && ! encoder.findInstruction(cur_tok, candidates) &&
+                candidates.size() == 0) ||
+            cur_tok->type == LABEL)
+        {
+            cur_tok->type = LABEL;
+            if(cur_tok->opers != nullptr) {
+                Token * upgrade_tok = cur_tok->opers;
+                // if there is something after the label that the parser marked as an operand
+                if(upgrade_tok->type == PSEUDO || encoder.findInstructionByName(upgrade_tok->str)) {
+                    if(upgrade_tok->type != PSEUDO) {
+                        upgrade_tok->type = INST;
+                        // if it is a pseduo-op, then the opers are already correct because of parser behavior
+                        // if not, opers is a nullptr because the opers are really in the next pointer
+                        upgrade_tok->opers = upgrade_tok->next;
+                        // recount operands (could just subtract 1, but do this just in case)
+                        uint32_t num_opers = 0;
+                        Token * cur_oper = upgrade_tok->opers;
+                        while(cur_oper != nullptr) {
+                            num_opers += 1;
+                            cur_oper = cur_oper->next;
+                        }
+                        upgrade_tok->num_opers = num_opers;
+                    }
+                    // elevate the token to a proper token in the chain
+                    upgrade_tok->next = cur_tok->next;
+                    cur_tok->next = upgrade_tok;
+                    cur_tok->opers = nullptr;
+                    cur_tok->num_opers = 0;
+                } else {
+                    if(log_enable) {
+                        logger.printfMessage(PRINT_TYPE_ERROR, cur_tok,
+                            "\'%s\' is being interpreted as a label, did you mean for it to be an instruction?",
+                            cur_tok->str.c_str());
+                        logger.newline();
+                    }
+                }
+            }
+        }
+        cur_tok = cur_tok->next;
+    }
+}
+
+void Assembler::toLower(Token * token_chain)
+{
+    Token * cur_token = token_chain;
+    while(cur_token != nullptr) {
+        if(cur_token->type != NUM) {
+            std::string & cur_str = cur_token->str;
+            std::transform(cur_str.begin(), cur_str.end(), cur_str.begin(), ::tolower);
+            if(! cur_token->checkPseudoType("stringz")) {
+                toLower(cur_token->opers);
+            }
+        }
+        cur_token = cur_token->next;
+    }
+}
+
+Token * Assembler::findOrig(Token * program, AssemblerLogger & logger)
+{
+    Token * program_start = program;
+    Token * cur_tok = program;
+    bool found_valid_orig = false;
+    uint32_t invalid_statement_count = 0;
+    while(! found_valid_orig && cur_tok != nullptr) {
+        if(! cur_tok->checkPseudoType("orig")) {
+            if(cur_tok->type != LABEL) {
+                invalid_statement_count += 1;
+            }
+        } else {
+            found_valid_orig = true;
+            if(cur_tok->num_opers != 1) {
+                logger.printfMessage(PRINT_TYPE_ERROR, cur_tok, "incorrect number of operands");
+                throw core::exception("incorrect number of operands to .orig");
+            }
+
+            if(cur_tok->opers->type != NUM) {
+                logger.printfMessage(PRINT_TYPE_ERROR, cur_tok->opers, "illegal operand");
+                throw core::exception("illegal operand to .orig");
+            }
+
+            // TODO: use encode function
+            uint32_t oper_val = (uint32_t) cur_tok->opers->num;
+            uint32_t trunc_oper_val =((uint32_t) oper_val) & 0xffff;
+            if(oper_val > 0xffff) {
+                logger.printfMessage(PRINT_TYPE_WARNING, cur_tok->opers, "truncating 0x%0.8x to 0x%0.4x",
+                    oper_val, trunc_oper_val);
+            }
+            cur_tok->pc = trunc_oper_val;
+            program_start = cur_tok;
+        } 
+        cur_tok = cur_tok->next;
+    }
+
+    if(! found_valid_orig) {
+        logger.printf(PRINT_TYPE_ERROR, true, "could not find valid .orig in program");
+        throw core::exception("could not find valid .orig");
+    } else {
+        if(invalid_statement_count > 0) {
+            logger.printf(PRINT_TYPE_WARNING, true, "ignoring %d statements before .orig", invalid_statement_count);
+        }
+    }
+
+    return program_start;
+}
+
+Token * Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & labels, AssemblerLogger & logger)
+{
+    // TODO: make sure we aren't leaking tokens by changing the program start
+    Token * program_start = removeNewlineTokens(program);
+    toLower(program_start);
+    separateLabels(program_start, logger);
+    program_start = findOrig(program_start, logger);
+    
+    Token * temp = program_start;
+    while(temp != nullptr) {
+        std::cout << *temp;
+        temp = temp->next;
+    }
+
+    return program_start;
+
+    // TODO: everything following here
+    /*
+
+    program = removeNewlineTokens(program);
+    separateLabels(filename, program);
+
+    Token * cur_state;
+    uint32_t cur_orig = 0;
+    if(! findFirstOrig(filename, program, cur_state, cur_orig)) {
+        return false;
+    }
+
+    program_start = cur_state;
+
+    uint32_t pc_offset = 0;
+    while(cur_state != nullptr) {
+        // allow for multiple .orig in a single file
+        // TODO: make this so that you have to have a .end and then another .orig
+        if(cur_state->checkPseudoType("orig")) {
+            if(! setOrig(filename, cur_state, cur_orig)) {
+                if(log_enable) {
+                    logger.printf(PRINT_TYPE_WARNING, true, "ignoring invalid .orig");
+                }
+            } else {
+                pc_offset = 0;
+            }
+        }
+
+        if(cur_state->type == LABEL) {
+            std::string const & label = cur_state->str;
+
+            auto search = labels.find(label);
+            if(search != labels.end()) {
+                if(log_enable) {
+                    logger.printfMessage(PRINT_TYPE_WARNING, filename, cur_state,
+                        file_buffer[cur_state->row_num], "redefining label \'%s\'",
+                        cur_state->str.c_str());
+                    logger.newline();
+                }
+            }
+
+            labels[label] = cur_orig + pc_offset;
+
+            if(log_enable) {
+                logger.printf(PRINT_TYPE_DEBUG, true, "setting label \'%s\' to 0x%X",
+                    label.c_str(), cur_orig + pc_offset);
+            }
+        }
+
+        cur_state->pc = cur_orig + pc_offset;
+
+        if(cur_state->type == INST) {
+            processOperands(cur_state);
+            pc_offset += 1;
+        } else if(cur_state->type == PSEUDO) {
+            // don't do any error checking, just ignore the pseduo op if it doesn't meet the requirements
+            if(cur_state->str == "fill") {
+                pc_offset += 1;
+            } else if(cur_state->str == "stringz") {
+                if(cur_state->opers != nullptr) {
+                    Token * oper = cur_state->opers;
+                    if(oper->type == STRING) {
+                        std::stringstream new_str;
+                        std::string value = oper->str;
+
+                        if(value[0] == '"') {
+                            if(value[value.size() - 1] == '"') {
+                                value = value.substr(1, value.size() - 2);
+                            } else {
+                                value = value.substr(1);
+                            }
+                        }
+
+                        for(uint32_t i = 0; i < value.size(); i += 1) {
+                            char char_value = value[i];
+                            if(char_value == '\\' && i + 1 < value.size()) {
+                                if(value[i + 1] == 'n') {
+                                    char_value = '\n';
+                                }
+                                i += 1;
+                            }
+                            new_str << char_value;
+                        }
+                        oper->str = new_str.str();
+
+                        pc_offset += oper->str.size() + 1;
+                    } else if(oper->type == NUM) {
+                        pc_offset += std::to_string(oper->num).size() + 1;
+                    }
+                }
+            } else if(cur_state->str == "blkw") {
+                if(cur_state->opers != nullptr) {
+                    Token * oper = cur_state->opers;
+                    if(oper->type == NUM) {
+                        pc_offset += oper->num;
+                    }
+                }
+            }
+        }
+
+        cur_state = cur_state->next;
+    }
+
+    return true;
+    */
+}
+
+std::vector<utils::ObjectFileStatement> Assembler::assembleChain(Token * program,
+    std::map<std::string, uint32_t> & labels, AssemblerLogger & logger)
+{
+    logger.printf(PRINT_TYPE_INFO, true, "beginning first pass ...");
+
+    try {
+        Token * program_start = firstPass(program, labels, logger);
+    } catch(core::exception const & e) {
+        logger.printf(PRINT_TYPE_ERROR, true, "first pass failed");
+        throw e;
+    }
+
+    logger.printf(PRINT_TYPE_INFO, true, "first pass completed successfully, beginning second pass ...");
+
+    std::vector<utils::ObjectFileStatement> ret;
+    return ret;
+}
+
+// assumes the file is valid
+std::vector<std::string> Assembler::readFile(std::string const & filename)
+{
+    std::vector<std::string> file_buffer;
+    std::ifstream file(filename);
+
+    // load program into buffer for error messages
+    if(file.is_open()) {
+        std::string line;
+
+        file_buffer.clear();
+        while(std::getline(file, line)) {
+            file_buffer.push_back(line);
+        }
+
+        file.close();
+    }
+
+    return file_buffer;
+}
 
 extern FILE * yyin;
 extern int yyparse(void);
 extern Token * root;
 extern int row_num, col_num;
 
-void Assembler::genObjectFile(std::string const & filename)
+void Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
 {
     std::map<std::string, uint32_t> labels;
-    std::vector<uint32_t> object_file;
+    AssemblerLogger logger(log_enable, printer);
 
-    if((yyin = fopen(filename.c_str(), "r")) == nullptr) {
-        logger.printf(PRINT_TYPE_WARNING, true, "skipping file %s ...", filename.c_str());
+    if((yyin = fopen(asm_filename.c_str(), "r")) == nullptr) {
+        logger.printf(PRINT_TYPE_WARNING, true, "skipping file %s ...", asm_filename.c_str());
     } else {
-        row_num = 0; col_num = 0;
+        row_num = 0;
+        col_num = 0;
         yyparse();
-        bool status = assembleProgram(filename, root, labels, object_file);
-        if(status) {
-            char * data = new char[object_file.size() * 2];
-            uint32_t pos = 0;
 
-            for(auto i : object_file) {
-                // output in big endian so it's easy to read in xxd
-                data[pos] = (char) ((i & 0xff00) >> 8);
-                ++pos;
-                data[pos] = (char) (i & 0xff);
-                ++pos;
-                logger.printf(PRINT_TYPE_EXTRA, true, "0x%0.4x", i);
-            }
+        logger.printf(PRINT_TYPE_INFO, true, "assembling \'%s\' into \'%s\'", asm_filename.c_str(),
+            obj_filename.c_str());
 
-            auto dot = filename.find_last_of('.');
-            std::string obj_filename = filename.substr(0, dot) + ".obj";
-            std::ofstream obj_file(obj_filename, std::ios::binary);
-            obj_file.write(data, object_file.size() * 2);
-            obj_file.close();
-        }
+        logger.filename = asm_filename;
+        logger.asm_blob = readFile(asm_filename);
+        std::vector<utils::ObjectFileStatement> object_file = assembleChain(root, labels, logger);
 
+/*
+ *        ObjectFileWriter writer(obj_filename);
+ *        for(ObjectFileStatement const & state : object_file) {
+ *            writer.writeStatement(state);
+ *        }
+ *
+ */
         fclose(yyin);
     }
 }
+
