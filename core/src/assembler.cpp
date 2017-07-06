@@ -142,25 +142,6 @@ bool Assembler::findFirstOrig(std::string const & filename, Token * program,
 {
 }
 
-void Assembler::processOperands(Token * inst)
-{
-    Token * oper = inst->opers;
-    // redo operand types
-    while(oper != nullptr) {
-        if(oper->type == STRING) {
-            if(encoder.findReg(oper->str)) {
-                oper->type = OPER_TYPE_REG;
-            } else {
-                oper->type = OPER_TYPE_LABEL;
-            }
-        } else if(oper->type == NUM) {
-            oper->type = OPER_TYPE_NUM;
-        }
-
-        oper = oper->next;
-    }
-}
-
 void Assembler::separateLabels(std::string const & filename, Token * program)
 {
     Token * cur_state = program;
@@ -514,12 +495,9 @@ void Assembler::separateLabels(Token * program, AssemblerLogger & logger)
                     cur_tok->opers = nullptr;
                     cur_tok->num_opers = 0;
                 } else {
-                    if(log_enable) {
-                        logger.printfMessage(PRINT_TYPE_ERROR, cur_tok,
-                            "\'%s\' is being interpreted as a label, did you mean for it to be an instruction?",
-                            cur_tok->str.c_str());
-                        logger.newline();
-                    }
+                    logger.printfMessage(PRINT_TYPE_ERROR, cur_tok,
+                        "\'%s\' is being interpreted as a label, did you mean for it to be an instruction?",
+                        cur_tok->str.c_str());
                 }
             }
         }
@@ -590,6 +568,108 @@ Token * Assembler::findOrig(Token * program, AssemblerLogger & logger)
     return program_start;
 }
 
+void Assembler::processInstOperands(Token * inst)
+{
+    Token * oper = inst->opers;
+    // reassign operand types
+    while(oper != nullptr) {
+        if(oper->type == STRING) {
+            if(encoder.findReg(oper->str)) {
+                oper->type = OPER_TYPE_REG;
+            } else {
+                oper->type = OPER_TYPE_LABEL;
+            }
+        } else if(oper->type == NUM) {
+            oper->type = OPER_TYPE_NUM;
+        }
+
+        oper = oper->next;
+    }
+}
+
+void Assembler::processStringzOperands(Token * stringz)
+{
+    Token * oper = stringz->opers;
+    if(oper->type == STRING) {
+        std::stringstream new_str;
+        std::string value = oper->str;
+
+        if(value[0] == '"') {
+            if(value[value.size() - 1] == '"') {
+                value = value.substr(1, value.size() - 2);
+            } else {
+                value = value.substr(1);
+            }
+        }
+
+        for(uint32_t i = 0; i < value.size(); i += 1) {
+            char char_value = value[i];
+            if(char_value == '\\' && i + 1 < value.size()) {
+                if(value[i + 1] == 'n') {
+                    char_value = '\n';
+                }
+                i += 1;
+            }
+            new_str << char_value;
+        }
+        oper->str = new_str.str();
+    } else {
+        oper->type = STRING;
+        oper->str = std::to_string(oper->num);
+    }
+}
+
+// precondition: first token is valid .orig
+void Assembler::processStatements(Token * program)
+{
+    uint32_t pc = program->pc;
+    uint32_t pc_offset = 0;
+    Token * cur_tok = program->next;
+    while(cur_tok != nullptr) {
+        cur_tok->pc = pc + pc_offset;
+        if(cur_tok->type == INST) {
+            processInstOperands(cur_tok);
+            pc_offset += 1;
+        } else if(cur_tok->type == PSEUDO) {
+            // don't do any error checking, just ignore the pseduo op if it doesn't meet the requirements
+            if(cur_tok->str == "fill") {
+                if(cur_tok->num_opers == 1) {
+                    pc_offset += 1;
+                }
+            } else if(cur_tok->str == "stringz") {
+                if(cur_tok->num_opers == 1) {
+                    processStringzOperands(cur_tok);
+                    pc_offset += cur_tok->opers->str.size() + 1;
+                }
+            } else if(cur_tok->str == "blkw") {
+                if(cur_tok->num_opers == 1 && cur_tok->opers->type == NUM) {
+                    pc_offset += cur_tok->opers->num;
+                }
+            }
+        }
+        cur_tok = cur_tok->next;
+    }
+}
+
+void Assembler::saveSymbols(Token * program, std::map<std::string, uint32_t> & labels, AssemblerLogger & logger)
+{
+    Token * cur_tok = program;
+    while(cur_tok != nullptr) {
+        if(cur_tok->type == LABEL) {
+            std::string const & label = cur_tok->str;
+
+            if(labels.find(label) != labels.end()) {
+                logger.printfMessage(PRINT_TYPE_WARNING, cur_tok, "redefining label \'%s\'", cur_tok->str.c_str());
+            }
+
+            labels[label] = cur_tok->pc;
+
+            logger.printf(PRINT_TYPE_DEBUG, true, "setting label \'%s\' to 0x%X", label.c_str(), cur_tok->pc);
+        }
+        cur_tok = cur_tok->next;
+    }
+}
+
 Token * Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & labels, AssemblerLogger & logger)
 {
     // TODO: make sure we aren't leaking tokens by changing the program start
@@ -597,6 +677,8 @@ Token * Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & 
     toLower(program_start);
     separateLabels(program_start, logger);
     program_start = findOrig(program_start, logger);
+    processStatements(program_start);
+    saveSymbols(program_start, labels, logger);
     
     Token * temp = program_start;
     while(temp != nullptr) {
@@ -622,37 +704,8 @@ Token * Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & 
 
     uint32_t pc_offset = 0;
     while(cur_state != nullptr) {
-        // allow for multiple .orig in a single file
-        // TODO: make this so that you have to have a .end and then another .orig
-        if(cur_state->checkPseudoType("orig")) {
-            if(! setOrig(filename, cur_state, cur_orig)) {
-                if(log_enable) {
-                    logger.printf(PRINT_TYPE_WARNING, true, "ignoring invalid .orig");
-                }
-            } else {
-                pc_offset = 0;
-            }
-        }
 
         if(cur_state->type == LABEL) {
-            std::string const & label = cur_state->str;
-
-            auto search = labels.find(label);
-            if(search != labels.end()) {
-                if(log_enable) {
-                    logger.printfMessage(PRINT_TYPE_WARNING, filename, cur_state,
-                        file_buffer[cur_state->row_num], "redefining label \'%s\'",
-                        cur_state->str.c_str());
-                    logger.newline();
-                }
-            }
-
-            labels[label] = cur_orig + pc_offset;
-
-            if(log_enable) {
-                logger.printf(PRINT_TYPE_DEBUG, true, "setting label \'%s\' to 0x%X",
-                    label.c_str(), cur_orig + pc_offset);
-            }
         }
 
         cur_state->pc = cur_orig + pc_offset;
@@ -661,49 +714,6 @@ Token * Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & 
             processOperands(cur_state);
             pc_offset += 1;
         } else if(cur_state->type == PSEUDO) {
-            // don't do any error checking, just ignore the pseduo op if it doesn't meet the requirements
-            if(cur_state->str == "fill") {
-                pc_offset += 1;
-            } else if(cur_state->str == "stringz") {
-                if(cur_state->opers != nullptr) {
-                    Token * oper = cur_state->opers;
-                    if(oper->type == STRING) {
-                        std::stringstream new_str;
-                        std::string value = oper->str;
-
-                        if(value[0] == '"') {
-                            if(value[value.size() - 1] == '"') {
-                                value = value.substr(1, value.size() - 2);
-                            } else {
-                                value = value.substr(1);
-                            }
-                        }
-
-                        for(uint32_t i = 0; i < value.size(); i += 1) {
-                            char char_value = value[i];
-                            if(char_value == '\\' && i + 1 < value.size()) {
-                                if(value[i + 1] == 'n') {
-                                    char_value = '\n';
-                                }
-                                i += 1;
-                            }
-                            new_str << char_value;
-                        }
-                        oper->str = new_str.str();
-
-                        pc_offset += oper->str.size() + 1;
-                    } else if(oper->type == NUM) {
-                        pc_offset += std::to_string(oper->num).size() + 1;
-                    }
-                }
-            } else if(cur_state->str == "blkw") {
-                if(cur_state->opers != nullptr) {
-                    Token * oper = cur_state->opers;
-                    if(oper->type == NUM) {
-                        pc_offset += oper->num;
-                    }
-                }
-            }
         }
 
         cur_state = cur_state->next;

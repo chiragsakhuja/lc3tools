@@ -28,6 +28,10 @@ namespace core
         std::vector<utils::ObjectFileStatement> assembleChain(Token * program,
             std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
         std::vector<std::string> readFile(std::string const & filename);
+        void processInstOperands(Token * inst);
+        void processStringzOperands(Token * stringz);
+        void processStatements(Token * program);
+        void saveSymbols(Token * program, std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
         /*
         std::vector<std::string> readFile(std::string const & filename);
         std::vector<utils::ObjectFileStatement> assembleChain(Token * program,
