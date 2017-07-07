@@ -14,9 +14,7 @@
 
 #include "state.h"
 
-using namespace core;
-
-void MemStateChange::updateState(MachineState & state) const
+void core::MemStateChange::updateState(MachineState & state) const
 {
     state.mem[addr].setValue(value);
     if(addr == DDR) {

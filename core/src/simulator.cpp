@@ -27,9 +27,7 @@
 
 #include "simulator.h"
 
-using namespace core;
-
-void Simulator::loadObjectFile(std::string const & filename)
+void core::Simulator::loadObjectFile(std::string const & filename)
 {
     std::ifstream file(filename);
     if(! file) {
@@ -57,19 +55,19 @@ void Simulator::loadObjectFile(std::string const & filename)
     state.mem[MCR].setValue(value | 0x8000);
 }
 
-void Simulator::loadOS(void)
+void core::Simulator::loadOS(void)
 {
     loadObjectFile(std::string(GLOBAL_RES_PATH) + "/lc3os.obj");
     state.pc = RESET_PC;
 }
 
-Simulator::Simulator(bool log_enable, utils::IPrinter & printer) : state(logger), logger(log_enable, printer)
+core::Simulator::Simulator(bool log_enable, utils::IPrinter & printer) : state(logger), logger(log_enable, printer)
 {
     state.mem.resize(1 << 16);
     reset();
 }
 
-void Simulator::reset(void)
+void core::Simulator::reset(void)
 {
     for(uint32_t i = 0; i < 8; i += 1) {
         state.regs[i] = 0;
@@ -86,7 +84,7 @@ void Simulator::reset(void)
     state.running = true;
 }
 
-void Simulator::executeInstruction(void)
+void core::Simulator::executeInstruction(void)
 {
     uint32_t encoded_inst = state.mem[state.pc].getValue();
 
@@ -111,7 +109,7 @@ void Simulator::executeInstruction(void)
     }
 }
 
-void Simulator::simulate(void)
+void core::Simulator::simulate(void)
 {
     while(state.running && (state.mem[MCR].getValue() & 0x8000) != 0) {
         executeInstruction();
@@ -120,7 +118,7 @@ void Simulator::simulate(void)
     state.running = false;
 }
 
-void Simulator::updateDevices(void)
+void core::Simulator::updateDevices(void)
 {
     uint16_t value = state.mem[DSR].getValue();
     state.mem[DSR].setValue(value | 0x8000);

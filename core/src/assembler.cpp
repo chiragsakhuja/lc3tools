@@ -27,14 +27,12 @@
 
 #include "assembler.h"
 
-using namespace core;
-
 extern FILE * yyin;
 extern int yyparse(void);
 extern Token * root;
 extern int row_num, col_num;
 
-void Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
+void core::Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
 {
     std::map<std::string, uint32_t> symbols;
     AssemblerLogger logger(log_enable, printer);
@@ -69,7 +67,7 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     }
 }
 
-std::vector<utils::Statement> Assembler::assembleChain(Token * program,
+std::vector<utils::Statement> core::Assembler::assembleChain(Token * program,
     std::map<std::string, uint32_t> & symbols, AssemblerLogger & logger)
 {
     logger.printf(PRINT_TYPE_INFO, true, "beginning first pass ...");
@@ -98,7 +96,8 @@ std::vector<utils::Statement> Assembler::assembleChain(Token * program,
     return ret;
 }
 
-Token * Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & symbols, AssemblerLogger & logger)
+Token * core::Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & symbols,
+    AssemblerLogger & logger)
 {
     // TODO: make sure we aren't leaking tokens by changing the program start
     Token * program_start = removeNewlineTokens(program);
@@ -111,7 +110,7 @@ Token * Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & 
     return program_start;
 }
 
-Token * Assembler::removeNewlineTokens(Token * program)
+Token * core::Assembler::removeNewlineTokens(Token * program)
 {
     Token * program_start = program;
     Token * prev_tok = nullptr;
@@ -143,7 +142,7 @@ Token * Assembler::removeNewlineTokens(Token * program)
     return program_start;
 }
 
-void Assembler::toLower(Token * token_chain)
+void core::Assembler::toLower(Token * token_chain)
 {
     Token * cur_token = token_chain;
     while(cur_token != nullptr) {
@@ -158,7 +157,7 @@ void Assembler::toLower(Token * token_chain)
     }
 }
 
-void Assembler::separateLabels(Token * program, AssemblerLogger & logger)
+void core::Assembler::separateLabels(Token * program, AssemblerLogger & logger)
 {
     Token * cur_tok = program;
     // since the parser can't distinguish between an instruction and a label by design,
@@ -208,7 +207,7 @@ void Assembler::separateLabels(Token * program, AssemblerLogger & logger)
     }
 }
 
-Token * Assembler::findOrig(Token * program, AssemblerLogger & logger)
+Token * core::Assembler::findOrig(Token * program, AssemblerLogger & logger)
 {
     Token * program_start = program;
     Token * cur_tok = program;
@@ -261,7 +260,7 @@ Token * Assembler::findOrig(Token * program, AssemblerLogger & logger)
 }
 
 // precondition: first token is valid .orig
-void Assembler::processStatements(Token * program, AssemblerLogger & logger)
+void core::Assembler::processStatements(Token * program, AssemblerLogger & logger)
 {
     uint32_t pc = program->pc;
     uint32_t pc_offset = 0;
@@ -315,7 +314,7 @@ void Assembler::processStatements(Token * program, AssemblerLogger & logger)
     }
 }
 
-void Assembler::processInstOperands(Token * inst)
+void core::Assembler::processInstOperands(Token * inst)
 {
     Token * oper = inst->opers;
     // reassign operand types
@@ -334,7 +333,7 @@ void Assembler::processInstOperands(Token * inst)
     }
 }
 
-void Assembler::processStringzOperands(Token * stringz)
+void core::Assembler::processStringzOperands(Token * stringz)
 {
     Token * oper = stringz->opers;
     if(oper->type == STRING) {
@@ -366,7 +365,7 @@ void Assembler::processStringzOperands(Token * stringz)
     }
 }
 
-void Assembler::saveSymbols(Token * program, std::map<std::string, uint32_t> & symbols, AssemblerLogger & logger)
+void core::Assembler::saveSymbols(Token * program, std::map<std::string, uint32_t> & symbols, AssemblerLogger & logger)
 {
     Token * cur_tok = program;
     while(cur_tok != nullptr) {
@@ -387,7 +386,7 @@ void Assembler::saveSymbols(Token * program, std::map<std::string, uint32_t> & s
 }
 
 // precondition: first token is orig
-std::vector<utils::Statement> Assembler::secondPass(Token * program,
+std::vector<utils::Statement> core::Assembler::secondPass(Token * program,
     std::map<std::string, uint32_t> symbols, AssemblerLogger & logger)
 {
     bool success = true;
@@ -417,7 +416,7 @@ std::vector<utils::Statement> Assembler::secondPass(Token * program,
     return ret;
 }
 
-uint32_t Assembler::encodeInstruction(Token * inst, std::map<std::string, uint32_t> symbols,
+uint32_t core::Assembler::encodeInstruction(Token * inst, std::map<std::string, uint32_t> symbols,
     AssemblerLogger & logger)
 {
     std::vector<IInstruction const *> candidates;
@@ -444,7 +443,7 @@ uint32_t Assembler::encodeInstruction(Token * inst, std::map<std::string, uint32
     throw core::exception("matched instruction with a candidate, but some operands were incorrect");
 }
 
-std::vector<utils::Statement> Assembler::encodePseudo(Token * pseudo,
+std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
     std::map<std::string, uint32_t> symbols, AssemblerLogger & logger)
 {
     std::vector<utils::Statement> ret;
@@ -514,20 +513,8 @@ std::vector<utils::Statement> Assembler::encodePseudo(Token * pseudo,
     return ret;
 }
 
-/*
-
-void Assembler::processPseudo(std::string const & filename, Token const * inst,
-    std::vector<uint32_t> & object_file,
-    std::map<std::string, uint32_t> const & symbols) const
-{
-    } else if(inst->str == "stringz") {
-    } else if(inst->str == "blkw") {
-    }
-}
-*/
-
 // assumes the file is valid
-std::vector<std::string> Assembler::readFile(std::string const & filename)
+std::vector<std::string> core::Assembler::readFile(std::string const & filename)
 {
     std::vector<std::string> file_buffer;
     std::ifstream file(filename);

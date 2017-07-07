@@ -20,9 +20,7 @@
 
 #include "instructions.h"
 
-using namespace core;
-
-IOperand::IOperand(OperType type, std::string const & type_str, uint32_t width)
+core::IOperand::IOperand(OperType type, std::string const & type_str, uint32_t width)
 {
     this->type = type;
     this->type_str = type_str;
@@ -30,13 +28,13 @@ IOperand::IOperand(OperType type, std::string const & type_str, uint32_t width)
     this->value = 0;
 }
 
-IInstruction::IInstruction(std::string const & name, std::vector<IOperand *> const & operands)
+core::IInstruction::IInstruction(std::string const & name, std::vector<IOperand *> const & operands)
 {
     this->name = name;
     this->operands = operands;
 }
 
-IInstruction::IInstruction(IInstruction const & that)
+core::IInstruction::IInstruction(IInstruction const & that)
 {
     this->name = that.name;
     for(IOperand * op : that.operands) {
@@ -44,14 +42,14 @@ IInstruction::IInstruction(IInstruction const & that)
     }
 }
 
-IInstruction::~IInstruction(void)
+core::IInstruction::~IInstruction(void)
 {
     for(uint32_t i = 0; i < operands.size(); i += 1) {
         delete operands[i];
     }
 }
 
-uint32_t IInstruction::getNumOperands(void) const
+uint32_t core::IInstruction::getNumOperands(void) const
 {
     uint32_t ret = 0;
     for(IOperand * operand : operands) {
@@ -62,7 +60,7 @@ uint32_t IInstruction::getNumOperands(void) const
     return ret;
 }
 
-void IInstruction::assignOperands(uint32_t encoded_inst)
+void core::IInstruction::assignOperands(uint32_t encoded_inst)
 {
     uint32_t cur_pos = 15;
     for(IOperand * op : operands) {
@@ -73,7 +71,7 @@ void IInstruction::assignOperands(uint32_t encoded_inst)
     }
 }
 
-std::string IInstruction::toFormatString(void) const
+std::string core::IInstruction::toFormatString(void) const
 {
     std::stringstream assembly;
     assembly << name << " ";
@@ -87,7 +85,7 @@ std::string IInstruction::toFormatString(void) const
     return assembly.str();
 }
 
-std::string IInstruction::toValueString(void) const
+std::string core::IInstruction::toValueString(void) const
 {
     std::stringstream assembly;
     assembly << name << " ";
@@ -113,12 +111,12 @@ std::string IInstruction::toValueString(void) const
     return assembly.str();
 }
 
-bool IOperand::isEqualType(OperType other) const
+bool core::IOperand::isEqualType(OperType other) const
 {
     return type == other;
 }
 
-InstructionHandler::InstructionHandler(void)
+core::InstructionHandler::InstructionHandler(void)
 {
     regs["r0"] = 0;
     regs["r1"] = 1;
@@ -165,14 +163,14 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(new HALTInstruction());
 }
 
-InstructionHandler::~InstructionHandler(void)
+core::InstructionHandler::~InstructionHandler(void)
 {
     for(uint32_t i = 0; i < instructions.size(); i += 1) {
         delete instructions[i];
     }
 }
 
-uint32_t FixedOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
+uint32_t core::FixedOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
     std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
 {
     (void) oper;
@@ -184,7 +182,7 @@ uint32_t FixedOperand::encode(Token const * oper, uint32_t oper_count, std::map<
     return value & ((1 << width) - 1);
 }
 
-uint32_t RegOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
+uint32_t core::RegOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
     std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
 {
     (void) symbols;
@@ -197,7 +195,7 @@ uint32_t RegOperand::encode(Token const * oper, uint32_t oper_count, std::map<st
     return token_val;
 }
 
-uint32_t NumOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
+uint32_t core::NumOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
     std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
 {
     (void) regs;
@@ -225,7 +223,7 @@ uint32_t NumOperand::encode(Token const * oper, uint32_t oper_count, std::map<st
     return token_val;
 }
 
-uint32_t LabelOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
+uint32_t core::LabelOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
     std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
 {
     (void) regs;
@@ -245,7 +243,7 @@ uint32_t LabelOperand::encode(Token const * oper, uint32_t oper_count, std::map<
     return token_val;
 }
 
-std::vector<IStateChange const *> ADDRInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::ADDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
@@ -258,7 +256,7 @@ std::vector<IStateChange const *> ADDRInstruction::execute(MachineState const & 
     };
 }
 
-std::vector<IStateChange const *> ADDIInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::ADDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
@@ -271,7 +269,7 @@ std::vector<IStateChange const *> ADDIInstruction::execute(MachineState const & 
     };
 }
 
-std::vector<IStateChange const *> ANDRInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::ANDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
@@ -284,7 +282,7 @@ std::vector<IStateChange const *> ANDRInstruction::execute(MachineState const & 
     };
 }
 
-std::vector<IStateChange const *> ANDIInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::ANDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
@@ -297,7 +295,7 @@ std::vector<IStateChange const *> ANDIInstruction::execute(MachineState const & 
     };
 }
 
-std::vector<IStateChange const *> BRInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::BRInstruction::execute(MachineState const & state)
 {
     std::vector<IStateChange const *> ret;
     uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
@@ -309,14 +307,14 @@ std::vector<IStateChange const *> BRInstruction::execute(MachineState const & st
     return ret;
 }
 
-std::vector<IStateChange const *> JMPInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::JMPInstruction::execute(MachineState const & state)
 {
     return std::vector<IStateChange const *> {
         new PCStateChange(state.regs[operands[2]->value] & 0xffff)
     };
 }
 
-std::vector<IStateChange const *> JSRInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::JSRInstruction::execute(MachineState const & state)
 {
     return std::vector<IStateChange const *> {
         new RegStateChange(7, state.pc & 0xffff),
@@ -324,7 +322,7 @@ std::vector<IStateChange const *> JSRInstruction::execute(MachineState const & s
     };
 }
 
-std::vector<IStateChange const *> JSRRInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::JSRRInstruction::execute(MachineState const & state)
 {
     return std::vector<IStateChange const *> {
         new RegStateChange(7, state.pc & 0xffff),
@@ -332,7 +330,7 @@ std::vector<IStateChange const *> JSRRInstruction::execute(MachineState const & 
     };
 }
 
-std::vector<IStateChange const *> LDInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::LDInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
@@ -344,7 +342,7 @@ std::vector<IStateChange const *> LDInstruction::execute(MachineState const & st
     };
 }
 
-std::vector<IStateChange const *> LDIInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::LDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
@@ -357,7 +355,7 @@ std::vector<IStateChange const *> LDIInstruction::execute(MachineState const & s
     };
 }
 
-std::vector<IStateChange const *> LDRInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::LDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
@@ -370,7 +368,7 @@ std::vector<IStateChange const *> LDRInstruction::execute(MachineState const & s
     };
 }
 
-std::vector<IStateChange const *> LEAInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::LEAInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
@@ -381,7 +379,7 @@ std::vector<IStateChange const *> LEAInstruction::execute(MachineState const & s
     };
 }
 
-std::vector<IStateChange const *> NOTInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::NOTInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr_val = sextTo32(state.regs[operands[2]->value], operands[2]->width);
@@ -393,14 +391,14 @@ std::vector<IStateChange const *> NOTInstruction::execute(MachineState const & s
     };
 }
 
-std::vector<IStateChange const *> RTIInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::RTIInstruction::execute(MachineState const & state)
 {
     // TODO: update state to have system stack pointer (see how existing simulator does it)
     (void) state;
     return std::vector<IStateChange const *> {};
 }
 
-std::vector<IStateChange const *> STInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::STInstruction::execute(MachineState const & state)
 {
     uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
@@ -410,7 +408,7 @@ std::vector<IStateChange const *> STInstruction::execute(MachineState const & st
     };
 }
 
-std::vector<IStateChange const *> STIInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::STIInstruction::execute(MachineState const & state)
 {
     uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t addr2 = state.mem[addr1].getValue();
@@ -421,7 +419,7 @@ std::vector<IStateChange const *> STIInstruction::execute(MachineState const & s
     };
 }
 
-std::vector<IStateChange const *> STRInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::STRInstruction::execute(MachineState const & state)
 {
     uint32_t addr = computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
             operands[3]->width);
@@ -432,7 +430,7 @@ std::vector<IStateChange const *> STRInstruction::execute(MachineState const & s
     };
 }
 
-std::vector<IStateChange const *> TRAPInstruction::execute(MachineState const & state)
+std::vector<core::IStateChange const *> core::TRAPInstruction::execute(MachineState const & state)
 {
     return std::vector<IStateChange const *> {
         new PSRStateChange(state.psr & 0x7fff),

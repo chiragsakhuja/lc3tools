@@ -19,21 +19,19 @@
 #include "instructions.h"
 #include "instruction_encoder.h"
 
-using namespace core;
-
-InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
+core::InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
 {
     for(IInstruction const * inst : instructions) {
         instructions_by_name[inst->name].push_back(inst);
     }
 }
 
-bool InstructionEncoder::findInstructionByName(std::string const & search) const
+bool core::InstructionEncoder::findInstructionByName(std::string const & search) const
 {
     return instructions_by_name.find(search) != instructions_by_name.end();
 }
  
-bool InstructionEncoder::findInstruction(Token const * search, std::vector<IInstruction const *> & candidates) const
+bool core::InstructionEncoder::findInstruction(Token const * search, std::vector<IInstruction const *> & candidates) const
 {
     auto inst_list = instructions_by_name.find(search->str);
 
@@ -84,13 +82,13 @@ bool InstructionEncoder::findInstruction(Token const * search, std::vector<IInst
     }
 }
 
-bool InstructionEncoder::findReg(std::string const & search) const
+bool core::InstructionEncoder::findReg(std::string const & search) const
 {
     return regs.find(search) != regs.end();
 }
 
 // precondition: the instruction is of type pattern and is valid (no error checking)
-uint32_t InstructionEncoder::encodeInstruction(IInstruction const * pattern, Token const * inst,
+uint32_t core::InstructionEncoder::encodeInstruction(IInstruction const * pattern, Token const * inst,
     std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger) const
 {
     uint32_t oper_count = 1;

@@ -19,9 +19,7 @@
 #include "instructions.h"
 #include "instruction_decoder.h"
 
-using namespace core;
-
-InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
+core::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
 {
     for(IInstruction const * inst : instructions) {
         // assumption: every instruction will have a FixedOperand first, and that is the opcode
@@ -30,7 +28,7 @@ InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
     }
 }
 
-bool InstructionDecoder::findInstructionByEncoding(uint32_t encoding, IInstruction *& candidate) const
+bool core::InstructionDecoder::findInstructionByEncoding(uint32_t encoding, IInstruction *& candidate) const
 {
     auto search = instructions_by_opcode.find(getBits(encoding, 15, 12));
     candidate = nullptr;
