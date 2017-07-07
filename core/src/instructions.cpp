@@ -14,6 +14,8 @@
 #include "printer.h"
 #include "logger.h"
 
+#include "files.h"
+
 #include "state.h"
 
 #include "instructions.h"
@@ -334,7 +336,7 @@ std::vector<IStateChange const *> LDInstruction::execute(MachineState const & st
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
-    uint32_t value = state.mem[addr];
+    uint32_t value = state.mem[addr].getValue();
 
     return std::vector<IStateChange const *> {
         new PSRStateChange(computePSRCC(value, state.psr)),
@@ -346,8 +348,8 @@ std::vector<IStateChange const *> LDIInstruction::execute(MachineState const & s
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
-    uint32_t addr2 = state.mem[addr1];
-    uint32_t value = state.mem[addr2];
+    uint32_t addr2 = state.mem[addr1].getValue();
+    uint32_t value = state.mem[addr2].getValue();
 
     return std::vector<IStateChange const *> {
         new PSRStateChange(computePSRCC(value, state.psr)),
@@ -360,7 +362,7 @@ std::vector<IStateChange const *> LDRInstruction::execute(MachineState const & s
     uint32_t dr = operands[1]->value;
     uint32_t addr = computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
             operands[3]->width);
-    uint32_t value = state.mem[addr];
+    uint32_t value = state.mem[addr].getValue();
 
     return std::vector<IStateChange const *> {
         new PSRStateChange(computePSRCC(value, state.psr)),
@@ -411,7 +413,7 @@ std::vector<IStateChange const *> STInstruction::execute(MachineState const & st
 std::vector<IStateChange const *> STIInstruction::execute(MachineState const & state)
 {
     uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
-    uint32_t addr2 = state.mem[addr1];
+    uint32_t addr2 = state.mem[addr1].getValue();
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
     return std::vector<IStateChange const *> {
@@ -435,6 +437,6 @@ std::vector<IStateChange const *> TRAPInstruction::execute(MachineState const & 
     return std::vector<IStateChange const *> {
         new PSRStateChange(state.psr & 0x7fff),
         new RegStateChange(7, state.pc & 0xffff),
-        new PCStateChange(state.mem[operands[2]->value] & 0xffff)
+        new PCStateChange(state.mem[operands[2]->value].getValue() & 0xffff)
     };
 }

@@ -491,8 +491,10 @@ std::vector<utils::ObjectFileStatement> Assembler::encodePseudo(Token * pseudo,
             value = oper->str;
         }
 
+        bool first = true;
         for(char i : value) {
-            ret.emplace_back(((uint32_t) i) & 0xff, false, logger.asm_blob[oper->row_num]);
+            ret.emplace_back(((uint32_t) i) & 0xff, false, first ? logger.asm_blob[oper->row_num] : "");
+            first = false;
         }
         ret.emplace_back(0U, false, logger.asm_blob[oper->row_num]);
     } else if(pseudo->str == "blkw") {
@@ -505,7 +507,7 @@ std::vector<utils::ObjectFileStatement> Assembler::encodePseudo(Token * pseudo,
         }
 
         for(uint32_t i = 0; i < (uint32_t) oper->num; i += 1) {
-            ret.emplace_back(0U, false, logger.asm_blob[oper->row_num]);
+            ret.emplace_back(0U, false, (i == 0) ? logger.asm_blob[oper->row_num] : "");
         }
     }
 

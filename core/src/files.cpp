@@ -31,8 +31,9 @@ std::istream & utils::operator>>(std::istream & in, utils::ObjectFileStatement &
     in.read((char *) (&out.orig), 1);
     uint32_t num_chars;
     in.read((char *) (&num_chars), 4);
-    char * chars = new char[num_chars];
+    char * chars = new char[num_chars + 1];
     in.read(chars, num_chars);
+    chars[num_chars] = 0;
     out.line = std::string(chars);
     return in;
 }

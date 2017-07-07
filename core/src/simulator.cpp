@@ -46,11 +46,15 @@ void Simulator::loadObjectFile(std::string const & filename)
             state.pc = statement.getValue();
             offset = 0;
         } else {
-            state.mem[state.pc + offset] = statement.getValue();
+            logger.printf(PRINT_TYPE_EXTRA, true, "0x%0.4x: %s (0x%0.4x)", state.pc + offset,
+                statement.getLine().c_str(), statement.getValue());
+            state.mem[state.pc + offset] = statement;
             offset += 1;
         }
+
     }
-    state.mem[MCR] |= 0x8000;
+    uint16_t value = state.mem[MCR].getValue();
+    state.mem[MCR].setValue(value | 0x8000);
 }
 
 void Simulator::loadOS(void)
@@ -75,16 +79,16 @@ void Simulator::reset(void)
     state.psr = 0x8002;
 
     for(uint32_t i = 0; i < (1 << 16); i += 1) {
-        state.mem[i] = 0;
+        state.mem[i].setValue(0);
     }
 
-    state.mem[MCR] = 0x8000;  // indicate the machine is running
+    state.mem[MCR].setValue(0x8000);  // indicate the machine is running
     state.running = true;
 }
 
 void Simulator::executeInstruction(void)
 {
-    uint32_t encoded_inst = state.mem[state.pc];
+    uint32_t encoded_inst = state.mem[state.pc].getValue();
 
     IInstruction * candidate;
     if(! decoder.findInstructionByEncoding(encoded_inst, candidate)) {
@@ -94,7 +98,7 @@ void Simulator::executeInstruction(void)
 
     candidate->assignOperands(encoded_inst);
     logger.printf(PRINT_TYPE_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
-        candidate->toValueString().c_str(), encoded_inst);
+        state.mem[state.pc].getLine().c_str(), encoded_inst);
     state.pc += 1;
     std::vector<IStateChange const *> changes = candidate->execute(state);
     delete candidate;
@@ -109,7 +113,7 @@ void Simulator::executeInstruction(void)
 
 void Simulator::simulate(void)
 {
-    while(state.running && (state.mem[MCR] & 0x8000) != 0) {
+    while(state.running && (state.mem[MCR].getValue() & 0x8000) != 0) {
         executeInstruction();
         updateDevices();
     }
@@ -118,5 +122,6 @@ void Simulator::simulate(void)
 
 void Simulator::updateDevices(void)
 {
-    state.mem[DSR] |= 0x8000;
+    uint16_t value = state.mem[DSR].getValue();
+    state.mem[DSR].setValue(value | 0x8000);
 }

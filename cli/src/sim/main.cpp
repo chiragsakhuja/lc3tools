@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
      *    //printer->printf(utils::PRINT_TYPE_ERROR, "usage: %s file [file ...]", argv[0]);
      *} else {
      */
+        interface.initializeSimulator();
         for(int i = 1; i < argc; i += 1) {
             try {
-                interface.initializeSimulator();
                 interface.loadSimulatorWithFile(std::string(argv[i]));
             } catch (core::exception const & e) {
                 printer->print(e.what());
