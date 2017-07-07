@@ -18,7 +18,8 @@ int main(int argc, char *argv[])
      */
         for(int i = 1; i < argc; i += 1) {
             try {
-                interface.loadSimulator(std::string(argv[i]));
+                interface.initializeSimulator();
+                interface.loadSimulatorWithFile(std::string(argv[i]));
             } catch (core::exception const & e) {
                 printer->print(e.what());
                 printer->newline();

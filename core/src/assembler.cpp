@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
-#include <iostream>
 #include <list>
 #include <map>
 #include <sstream>
@@ -52,16 +51,21 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
 
         logger.filename = asm_filename;
         logger.asm_blob = readFile(asm_filename);
-        std::vector<utils::ObjectFileStatement> object_file = assembleChain(root, symbols, logger);
+        std::vector<utils::ObjectFileStatement> obj_file_blob = assembleChain(root, symbols, logger);
 
-/*
- *        ObjectFileWriter writer(obj_filename);
- *        for(ObjectFileStatement const & state : object_file) {
- *            writer.writeStatement(state);
- *        }
- *
- */
         fclose(yyin);
+
+        std::ofstream obj_file(obj_filename);
+        if(! obj_file) {
+            logger.printf(PRINT_TYPE_ERROR, true, "could not open file \'%s\' for writing", obj_filename.c_str());
+            throw core::exception("could not open file");
+        }
+
+        for(utils::ObjectFileStatement i : obj_file_blob) {
+            obj_file << i;
+        }
+
+        obj_file.close();
     }
 }
 
@@ -103,12 +107,6 @@ Token * Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & 
     program_start = findOrig(program_start, logger);
     processStatements(program_start, logger);
     saveSymbols(program_start, symbols, logger);
-
-    Token * temp = program_start;
-    while(temp != nullptr) {
-        std::cout << *temp;
-        temp = temp->next;
-    }
 
     return program_start;
 }
@@ -298,6 +296,7 @@ void Assembler::processStatements(Token * program, AssemblerLogger & logger)
                     pc_offset += cur_tok->opers->num;
                 }
             } else if(cur_tok->str == "end") {
+                cur_tok = cur_tok->next;
                 break;
             }
         }
@@ -393,14 +392,14 @@ std::vector<utils::ObjectFileStatement> Assembler::secondPass(Token * program,
 {
     bool success = true;
     std::vector<utils::ObjectFileStatement> ret;
-    ret.emplace_back(program->pc, true);
+    ret.emplace_back(program->pc, true, logger.asm_blob[program->row_num]);
 
     Token * cur_tok = program->next;
     while(cur_tok != nullptr) {
         try {
             if(cur_tok->type == INST) {
                 uint32_t encoded = encodeInstruction(cur_tok, symbols, logger);
-                ret.emplace_back(encoded, false);
+                ret.emplace_back(encoded, false, logger.asm_blob[cur_tok->row_num]);
             } else if(cur_tok->type == PSEUDO) {
                 std::vector<utils::ObjectFileStatement> encoded = encodePseudo(cur_tok, symbols, logger);
                 ret.insert(ret.end(), encoded.begin(), encoded.end());
@@ -462,11 +461,11 @@ std::vector<utils::ObjectFileStatement> Assembler::encodePseudo(Token * pseudo,
         }
 
         if(oper->type == NUM) {
-            ret.emplace_back(oper->num, false);
+            ret.emplace_back(oper->num, false, logger.asm_blob[oper->row_num]);
         } else if(oper->type == STRING) {
             auto search = symbols.find(oper->str);
             if(search != symbols.end()) {
-                ret.emplace_back((uint32_t) search->second, false);
+                ret.emplace_back((uint32_t) search->second, false, logger.asm_blob[oper->row_num]);
             } else {
                 logger.printfMessage(PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
                 logger.newline();
@@ -493,9 +492,9 @@ std::vector<utils::ObjectFileStatement> Assembler::encodePseudo(Token * pseudo,
         }
 
         for(char i : value) {
-            ret.emplace_back(((uint32_t) i) & 0xff, false);
+            ret.emplace_back(((uint32_t) i) & 0xff, false, logger.asm_blob[oper->row_num]);
         }
-        ret.emplace_back(0U, false);
+        ret.emplace_back(0U, false, logger.asm_blob[oper->row_num]);
     } else if(pseudo->str == "blkw") {
         Token * oper = pseudo->opers;
         if(pseudo->num_opers != 1 || oper->type != NUM) {
@@ -506,7 +505,7 @@ std::vector<utils::ObjectFileStatement> Assembler::encodePseudo(Token * pseudo,
         }
 
         for(uint32_t i = 0; i < (uint32_t) oper->num; i += 1) {
-            ret.emplace_back(0U, false);
+            ret.emplace_back(0U, false, logger.asm_blob[oper->row_num]);
         }
     }
 

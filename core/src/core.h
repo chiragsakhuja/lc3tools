@@ -36,7 +36,8 @@ namespace core {
         ~lc3(void) = default;
 
         void assemble(std::string const & asm_filename, std::string const & obj_filename);
-        void loadSimulator(std::string const & obj_filename);
+        void initializeSimulator(void);
+        void loadSimulatorWithFile(std::string const & obj_filename);
         void simulate(void);
         void resetSimulator(void);
 

@@ -5,8 +5,6 @@
 #include <stdexcept>
 #include <vector>
 
-#include <iostream>
-
 #include "utils.h"
 
 #include "tokens.h"

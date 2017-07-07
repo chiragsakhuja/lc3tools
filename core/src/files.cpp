@@ -8,32 +8,31 @@
 
 #include "files.h"
 
-using namespace utils;
-
-ObjectFileReader::ObjectFileReader(std::string const & filename) :
-    first_read(true)
+std::ostream & utils::operator<<(std::ostream & out, utils::ObjectFileStatement const & in)
 {
-    file.open(filename);
-    if(! file.is_open()) {
-        throw core::exception(core::ssprintf("could not open file \'%s\'", filename.c_str()));
-    }
+    // TODO: this is extrememly unportable, namely because it relies on the endianness not changing
+    // size of num_bytes + value + orig + line + nullptr
+    uint32_t num_bytes = 2 + 1 + 4 + in.line.size();
+    char * bytes = new char[num_bytes];
+    std::memcpy(bytes    , (char *) (&in.value), 2);
+    std::memcpy(bytes + 2, (char *) (&in.orig), 1);
+    uint32_t num_chars = in.line.size();
+    std::memcpy(bytes + 3, (char *) (&num_chars), 4);
+    char const * data = in.line.data();
+    std::memcpy(bytes + 7, data, num_chars);
+    out.write(bytes, num_bytes);
+    delete[] bytes;
+    return out;
 }
 
-ObjectFileStatement ObjectFileReader::readStatement(void)
+std::istream & utils::operator>>(std::istream & in, utils::ObjectFileStatement & out)
 {
-    uint32_t value = (*file_stream) & 0xff;
-    ++file_stream;
-    value = (value << 8) | ((*file_stream) & 0xff);
-    ++file_stream;
-
-    ObjectFileStatement ret(value & 0xffff, first_read);
-    first_read = false;
-
-    return ret;
-}
-
-ObjectFileStatement::ObjectFileStatement(uint32_t value, bool orig)
-{
-    this->value = value;
-    this->orig = orig;
+    in.read((char *) (&out.value), 2);
+    in.read((char *) (&out.orig), 1);
+    uint32_t num_chars;
+    in.read((char *) (&num_chars), 4);
+    char * chars = new char[num_chars];
+    in.read(chars, num_chars);
+    out.line = std::string(chars);
+    return in;
 }

@@ -5,29 +5,20 @@ namespace utils {
     class ObjectFileStatement
     {
     public:
-        ObjectFileStatement(uint32_t value, bool orig);
+        ObjectFileStatement(void) = default;
+        ObjectFileStatement(uint16_t value, bool orig, std::string const & line) : value(value), orig(orig),
+            line(line) {}
 
-        uint32_t getValue(void) { return value; }
+        uint16_t getValue(void) { return value; }
         bool isOrig(void) { return orig; }
 
+        friend std::ostream & operator<<(std::ostream & out, ObjectFileStatement const & in);
+        friend std::istream & operator>>(std::istream & in, ObjectFileStatement & out);
+
     private:
-        uint32_t value;
+        uint16_t value;
         bool orig;
-    };
-
-    class ObjectFileReader : public std::ifstream
-    {
-    public:
-        ObjectFileReader(std::string const & filename);
-        ~ObjectFileReader(void) { if(file.is_open()) { file.close(); } }
-
-        ObjectFileStatement readStatement(void);
-        bool atEnd(void) { return file_stream == std::istreambuf_iterator<char>(); }
-
-    private:
-        std::ifstream file;
-        std::istreambuf_iterator<char> file_stream;
-        bool first_read;
+        std::string line;
     };
 };
 

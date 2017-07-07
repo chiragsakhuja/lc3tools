@@ -20,7 +20,7 @@ namespace core {
         utils::IPrinter & printer;
         bool log_enable;
     public:
-        Logger(bool log_enable, utils::IPrinter & printer) :  printer(printer), log_enable(log_enable) {}
+        Logger(bool log_enable, utils::IPrinter & printer) : printer(printer), log_enable(log_enable) {}
 
         template<typename ... Args>
         void printf(int level, bool bold, std::string const & format, Args ... args) const;

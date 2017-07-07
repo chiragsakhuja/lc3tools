@@ -189,7 +189,7 @@ uint32_t RegOperand::encode(Token const * oper, uint32_t oper_count, std::map<st
 
     uint32_t token_val = regs.at(std::string(oper->str)) & ((1 << width) - 1);
 
-    logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: reg %s => %s", oper->row_num, oper_count, oper->str.c_str(),
+    logger.printf(PRINT_TYPE_EXTRA, true, "%d.%d: reg %s => %s", oper->row_num, oper_count, oper->str.c_str(),
         udecToBin(token_val, width).c_str());
 
     return token_val;
@@ -217,7 +217,7 @@ uint32_t NumOperand::encode(Token const * oper, uint32_t oper_count, std::map<st
         }
     }
 
-    logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: imm %d => %s", oper->row_num, oper_count, oper->num,
+    logger.printf(PRINT_TYPE_EXTRA, true, "%d.%d: imm %d => %s", oper->row_num, oper_count, oper->num,
         udecToBin(token_val, width).c_str());
 
     return token_val;
@@ -232,12 +232,12 @@ uint32_t LabelOperand::encode(Token const * oper, uint32_t oper_count, std::map<
     if(search == symbols.end()) {
         logger.printfMessage(PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
         logger.newline();
-        throw std::runtime_error("unknown label");
+        throw core::exception("unknown label");
     }
 
     uint32_t token_val = (((int32_t) search->second) - (oper->pc + 1)) & ((1 << width) - 1);
 
-    logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: label %s (0x%0.4x) => %s", oper->row_num, oper_count,
+    logger.printf(PRINT_TYPE_EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper->row_num, oper_count,
         oper->str.c_str(), search->second, udecToBin((uint32_t) token_val, width).c_str());
 
     return token_val;

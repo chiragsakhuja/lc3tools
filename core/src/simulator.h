@@ -10,6 +10,7 @@ namespace core
         ~Simulator(void) = default;
 
         void loadObjectFile(std::string const & obj_file);
+        void loadOS(void);
         void simulate(void);
         void reset(void);
     private:
@@ -18,7 +19,6 @@ namespace core
         MachineState state;
 
         Logger logger;
-        bool log_enable;
 
         void executeInstruction(void);
         void updateDevices(void);
