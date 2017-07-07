@@ -21,7 +21,7 @@ namespace core
         bool log_enable;
         InstructionEncoder encoder;
 
-        std::vector<utils::ObjectFileStatement> assembleChain(Token * program,
+        std::vector<utils::Statement> assembleChain(Token * program,
             std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
         Token * firstPass(Token * program, std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
         Token * removeNewlineTokens(Token * program);
@@ -33,10 +33,10 @@ namespace core
         void processStringzOperands(Token * stringz);
         void saveSymbols(Token * program, std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
 
-        std::vector<utils::ObjectFileStatement> secondPass(Token * program, std::map<std::string, uint32_t> symbols,
+        std::vector<utils::Statement> secondPass(Token * program, std::map<std::string, uint32_t> symbols,
             AssemblerLogger & logger);
         uint32_t encodeInstruction(Token * program, std::map<std::string, uint32_t> symbols, AssemblerLogger & logger);
-        std::vector<utils::ObjectFileStatement> encodePseudo(Token * program, std::map<std::string, uint32_t> symbols,
+        std::vector<utils::Statement> encodePseudo(Token * program, std::map<std::string, uint32_t> symbols,
             AssemblerLogger & logger);
         void processInstruction(std::string const & filename, Token const * inst, AssemblerLogger & logger);
         void processPseudo(std::string const & filename, Token const * inst, std::map<std::string, uint32_t> symbols,

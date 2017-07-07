@@ -7,7 +7,7 @@ namespace core
     {
         MachineState(Logger & logger) : logger(logger) {}
 
-        std::vector<utils::ObjectFileStatement> mem;
+        std::vector<utils::Statement> mem;
         std::array<uint32_t, 8> regs;
         uint32_t pc;
         uint32_t psr;

@@ -18,7 +18,7 @@
 #include "printer.h"
 #include "logger.h"
 
-#include "files.h"
+#include "statement.h"
 
 #include "state.h"
 
@@ -51,7 +51,7 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
 
         logger.filename = asm_filename;
         logger.asm_blob = readFile(asm_filename);
-        std::vector<utils::ObjectFileStatement> obj_file_blob = assembleChain(root, symbols, logger);
+        std::vector<utils::Statement> obj_file_blob = assembleChain(root, symbols, logger);
 
         fclose(yyin);
 
@@ -61,7 +61,7 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
             throw core::exception("could not open file");
         }
 
-        for(utils::ObjectFileStatement i : obj_file_blob) {
+        for(utils::Statement i : obj_file_blob) {
             obj_file << i;
         }
 
@@ -69,7 +69,7 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     }
 }
 
-std::vector<utils::ObjectFileStatement> Assembler::assembleChain(Token * program,
+std::vector<utils::Statement> Assembler::assembleChain(Token * program,
     std::map<std::string, uint32_t> & symbols, AssemblerLogger & logger)
 {
     logger.printf(PRINT_TYPE_INFO, true, "beginning first pass ...");
@@ -85,7 +85,7 @@ std::vector<utils::ObjectFileStatement> Assembler::assembleChain(Token * program
 
     logger.printf(PRINT_TYPE_INFO, true, "first pass completed successfully, beginning second pass ...");
 
-    std::vector<utils::ObjectFileStatement> ret;
+    std::vector<utils::Statement> ret;
     try {
         ret = secondPass(program_start, symbols, logger);
     } catch(core::exception const & e) {
@@ -387,11 +387,11 @@ void Assembler::saveSymbols(Token * program, std::map<std::string, uint32_t> & s
 }
 
 // precondition: first token is orig
-std::vector<utils::ObjectFileStatement> Assembler::secondPass(Token * program,
+std::vector<utils::Statement> Assembler::secondPass(Token * program,
     std::map<std::string, uint32_t> symbols, AssemblerLogger & logger)
 {
     bool success = true;
-    std::vector<utils::ObjectFileStatement> ret;
+    std::vector<utils::Statement> ret;
     ret.emplace_back(program->pc, true, logger.asm_blob[program->row_num]);
 
     Token * cur_tok = program->next;
@@ -401,7 +401,7 @@ std::vector<utils::ObjectFileStatement> Assembler::secondPass(Token * program,
                 uint32_t encoded = encodeInstruction(cur_tok, symbols, logger);
                 ret.emplace_back(encoded, false, logger.asm_blob[cur_tok->row_num]);
             } else if(cur_tok->type == PSEUDO) {
-                std::vector<utils::ObjectFileStatement> encoded = encodePseudo(cur_tok, symbols, logger);
+                std::vector<utils::Statement> encoded = encodePseudo(cur_tok, symbols, logger);
                 ret.insert(ret.end(), encoded.begin(), encoded.end());
             }
         } catch(core::exception const & e) {
@@ -444,10 +444,10 @@ uint32_t Assembler::encodeInstruction(Token * inst, std::map<std::string, uint32
     throw core::exception("matched instruction with a candidate, but some operands were incorrect");
 }
 
-std::vector<utils::ObjectFileStatement> Assembler::encodePseudo(Token * pseudo,
+std::vector<utils::Statement> Assembler::encodePseudo(Token * pseudo,
     std::map<std::string, uint32_t> symbols, AssemblerLogger & logger)
 {
-    std::vector<utils::ObjectFileStatement> ret;
+    std::vector<utils::Statement> ret;
 
     // TODO: is it worth making this like the instruction encoder?
     if(pseudo->str == "fill") {

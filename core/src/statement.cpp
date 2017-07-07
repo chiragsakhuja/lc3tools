@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <stdexcept>
 #include <string>
@@ -6,9 +7,9 @@
 
 #include "utils.h"
 
-#include "files.h"
+#include "statement.h"
 
-std::ostream & utils::operator<<(std::ostream & out, utils::ObjectFileStatement const & in)
+std::ostream & utils::operator<<(std::ostream & out, utils::Statement const & in)
 {
     // TODO: this is extrememly unportable, namely because it relies on the endianness not changing
     // size of num_bytes + value + orig + line + nullptr
@@ -25,7 +26,7 @@ std::ostream & utils::operator<<(std::ostream & out, utils::ObjectFileStatement 
     return out;
 }
 
-std::istream & utils::operator>>(std::istream & in, utils::ObjectFileStatement & out)
+std::istream & utils::operator>>(std::istream & in, utils::Statement & out)
 {
     in.read((char *) (&out.value), 2);
     in.read((char *) (&out.orig), 1);

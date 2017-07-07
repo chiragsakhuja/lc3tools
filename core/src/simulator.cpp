@@ -16,7 +16,7 @@
 #include "printer.h"
 #include "logger.h"
 
-#include "files.h"
+#include "statement.h"
 
 #include "state.h"
 
@@ -39,7 +39,7 @@ void Simulator::loadObjectFile(std::string const & filename)
 
     uint32_t offset = 0;
     while(! file.eof()) {
-        utils::ObjectFileStatement statement;
+        utils::Statement statement;
         file >> statement;
 
         if(statement.isOrig()) {
