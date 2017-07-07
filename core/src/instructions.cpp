@@ -94,7 +94,9 @@ std::string IInstruction::toValueString(void) const
         if(operand->type != OPER_TYPE_FIXED) {
             std::string oper_str;
             if(operand->type == OPER_TYPE_NUM || operand->type == OPER_TYPE_LABEL) {
-                if((operand->type == OPER_TYPE_NUM && ((NumOperand *) operand)->sext) || operand->type == OPER_TYPE_LABEL) {
+                if((operand->type == OPER_TYPE_NUM && ((NumOperand *) operand)->sext) ||
+                    operand->type == OPER_TYPE_LABEL)
+                {
                     oper_str = "#" + std::to_string((int32_t) sextTo32(operand->value, operand->width));
                 } else {
                     oper_str = "#" + std::to_string(operand->value);
@@ -168,103 +170,75 @@ InstructionHandler::~InstructionHandler(void)
     }
 }
 
-// TODO: remove all these nasty parameters (maybe by returning an error message chain?)
-uint32_t FixedOperand::encode(bool log_enable, AssemblerLogger const & logger,
-    std::string const & filename, std::string const & line, Token const * inst,
-    Token const * operand, uint32_t oper_count, 
-    std::map<std::string, uint32_t> const & registers,
-    std::map<std::string, uint32_t> const & labels)
+uint32_t FixedOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
+    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
 {
-    (void) log_enable;
-    (void) logger;
-    (void) filename;
-    (void) line;
-    (void) inst;
-    (void) operand;
+    (void) oper;
     (void) oper_count;
-    (void) registers;
-    (void) labels;
+    (void) regs;
+    (void) symbols;
+    (void) logger;
 
     return value & ((1 << width) - 1);
 }
 
-uint32_t RegOperand::encode(bool log_enable, AssemblerLogger const & logger,
-    std::string const & filename, std::string const & line, Token const * inst,
-    Token const * operand, uint32_t oper_count, 
-    std::map<std::string, uint32_t> const & registers,
-    std::map<std::string, uint32_t> const & labels)
+uint32_t RegOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
+    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
 {
-    (void) filename;
-    (void) line;
-    (void) labels;
+    (void) symbols;
 
-    uint32_t token_val = registers.at(std::string(operand->str)) & ((1 << width) - 1);
+    uint32_t token_val = regs.at(std::string(oper->str)) & ((1 << width) - 1);
 
-    if(log_enable) {
-        logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: reg %s => %s", inst->row_num, oper_count,
-            operand->str.c_str(), udecToBin(token_val, width).c_str());
-    }
+    logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: reg %s => %s", oper->row_num, oper_count, oper->str.c_str(),
+        udecToBin(token_val, width).c_str());
 
     return token_val;
 }
 
-uint32_t NumOperand::encode(bool log_enable, AssemblerLogger const & logger,
-    std::string const & filename, std::string const & line, Token const * inst,
-    Token const * operand, uint32_t oper_count, 
-    std::map<std::string, uint32_t> const & registers,
-    std::map<std::string, uint32_t> const & labels)
+uint32_t NumOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
+    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
 {
-    (void) registers;
-    (void) labels;
+    (void) regs;
+    (void) symbols;
 
-    uint32_t token_val = operand->num & ((1 << width) - 1);
+    uint32_t token_val = oper->num & ((1 << width) - 1);
 
     if(sext) {
-        if((int32_t) operand->num < -(1 << (width - 1)) || (int32_t) operand->num > ((1 << (width - 1)) - 1)) {
-            logger.printfMessage(PRINT_TYPE_WARNING, operand, "immediate %d truncated to %d",
-                operand->num, sextTo32(token_val, width));
+        if((int32_t) oper->num < -(1 << (width - 1)) || (int32_t) oper->num > ((1 << (width - 1)) - 1)) {
+            logger.printfMessage(PRINT_TYPE_WARNING, oper, "immediate %d truncated to %d", oper->num,
+                sextTo32(token_val, width));
             logger.newline();
         }
     } else {
-        if(operand->num > ((1 << width) - 1)) {
-            logger.printfMessage(PRINT_TYPE_WARNING, operand, "immediate %d truncated to %u",
-                operand->num, token_val);
+        if(oper->num > ((1 << width) - 1)) {
+            logger.printfMessage(PRINT_TYPE_WARNING, oper, "immediate %d truncated to %u",
+                oper->num, token_val);
             logger.newline();
         }
     }
 
-    if(log_enable) {
-        logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: imm %d => %s", inst->row_num, oper_count, operand->num,
-            udecToBin(token_val, width).c_str());
-    }
+    logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: imm %d => %s", oper->row_num, oper_count, oper->num,
+        udecToBin(token_val, width).c_str());
 
     return token_val;
 }
 
-uint32_t LabelOperand::encode(bool log_enable, AssemblerLogger const & logger,
-    std::string const & filename, std::string const & line, Token const * inst,
-    Token const * operand, uint32_t oper_count, 
-    std::map<std::string, uint32_t> const & registers,
-    std::map<std::string, uint32_t> const & labels)
+uint32_t LabelOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
+    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
 {
-    (void) registers;
+    (void) regs;
 
-    auto search = labels.find(operand->str);
-    if(search == labels.end()) {
-        if(log_enable) {
-            logger.printfMessage(PRINT_TYPE_ERROR, operand, "unknown label \'%s\'",
-                operand->str.c_str());
-            logger.newline();
-        }
+    auto search = symbols.find(oper->str);
+    if(search == symbols.end()) {
+        logger.printfMessage(PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
+        logger.newline();
         throw std::runtime_error("unknown label");
     }
 
-    uint32_t token_val = (((int32_t) search->second) - (inst->pc + 1)) & ((1 << width) - 1);
+    uint32_t token_val = (((int32_t) search->second) - (oper->pc + 1)) & ((1 << width) - 1);
 
-    if(log_enable) {
-        logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: label %s (0x%0.4x) => %s", inst->row_num, oper_count,
-            operand->str.c_str(), search->second, udecToBin((uint32_t) token_val, width).c_str());
-    }
+    logger.printf(PRINT_TYPE_DEBUG, true, "%d.%d: label %s (0x%0.4x) => %s", oper->row_num, oper_count,
+        oper->str.c_str(), search->second, udecToBin((uint32_t) token_val, width).c_str());
 
     return token_val;
 }

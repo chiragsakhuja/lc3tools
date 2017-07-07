@@ -31,7 +31,7 @@ bool InstructionEncoder::findInstructionByName(std::string const & search) const
 {
     return instructions_by_name.find(search) != instructions_by_name.end();
 }
-
+ 
 bool InstructionEncoder::findInstruction(Token const * search, std::vector<IInstruction const *> & candidates) const
 {
     auto inst_list = instructions_by_name.find(search->str);
@@ -89,22 +89,22 @@ bool InstructionEncoder::findReg(std::string const & search) const
 }
 
 // precondition: the instruction is of type pattern and is valid (no error checking)
-void InstructionEncoder::encodeInstruction(bool log_enable, AssemblerLogger const & logger,
-    std::string const & filename, std::string const & line, IInstruction const * pattern,
-    Token const * inst, uint32_t & encoded_instruction,
-    std::map<std::string, uint32_t> const & labels) const
+uint32_t InstructionEncoder::encodeInstruction(IInstruction const * pattern, Token const * inst,
+    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger) const
 {
     uint32_t oper_count = 1;
-    encoded_instruction = 0;
+    uint32_t encoding = 0;
 
     Token const * cur_oper = inst->opers;
     for(IOperand * pattern_op : pattern->operands) {
-        encoded_instruction <<= pattern_op->width;
-        encoded_instruction |= pattern_op->encode(log_enable, logger, filename, line, inst, cur_oper, oper_count, regs, labels);
+        encoding <<= pattern_op->width;
+        encoding |= pattern_op->encode(cur_oper, oper_count, regs, symbols, logger);
 
         if(pattern_op->type != OPER_TYPE_FIXED) {
             cur_oper = cur_oper->next;
             oper_count += 1;
         }
     }
+
+    return encoding;
 }

@@ -24,9 +24,9 @@ namespace core {
         IOperand(OperType type, std::string const & type_str, uint32_t width);
         virtual ~IOperand(void) = default;
 
-        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
-            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) = 0;
+        virtual uint32_t encode(Token const * oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
+            AssemblerLogger & logger) = 0;
         virtual IOperand * clone(void) const = 0;
         bool isEqualType(OperType other) const;
     };
@@ -65,10 +65,11 @@ namespace core {
     class FixedOperand : public IOperand
     {
     public:
-        FixedOperand(uint32_t width, uint32_t value) : IOperand(OPER_TYPE_FIXED, "fixed", width) { this->value = value; }
-        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
-            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
+        FixedOperand(uint32_t width, uint32_t value) : IOperand(OPER_TYPE_FIXED, "fixed", width)
+            { this->value = value; }
+        virtual uint32_t encode(Token const * oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
+            AssemblerLogger & logger) override;
         virtual FixedOperand * clone(void) const override { return new FixedOperand(*this); }
     };
 
@@ -76,9 +77,9 @@ namespace core {
     {
     public:
         RegOperand(uint32_t width) : IOperand(OPER_TYPE_REG, "reg", width) {}
-        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
-            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
+        virtual uint32_t encode(Token const * oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
+            AssemblerLogger & logger) override;
         virtual RegOperand * clone(void) const override { return new RegOperand(*this); }
     };
 
@@ -88,9 +89,9 @@ namespace core {
         bool sext;
 
         NumOperand(uint32_t width, bool sext) : IOperand(OPER_TYPE_NUM, "imm", width) { this->sext = sext; }
-        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
-            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
+        virtual uint32_t encode(Token const * oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
+            AssemblerLogger & logger) override;
         virtual NumOperand * clone(void) const override { return new NumOperand(*this); }
     };
 
@@ -98,9 +99,9 @@ namespace core {
     {
     public:
         LabelOperand(uint32_t width) : IOperand(OPER_TYPE_LABEL, "label", width) {}
-        virtual uint32_t encode(bool log_enable, AssemblerLogger const & logger, std::string const & filename,
-            std::string const & line, Token const * inst, Token const * operand, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels) override;
+        virtual uint32_t encode(Token const * oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
+            AssemblerLogger & logger) override;
         virtual LabelOperand * clone(void) const override { return new LabelOperand(*this); }
     };
 
