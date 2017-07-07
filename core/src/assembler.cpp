@@ -56,7 +56,7 @@ void core::Assembler::assemble(std::string const & asm_filename, std::string con
         std::ofstream obj_file(obj_filename);
         if(! obj_file) {
             logger.printf(PRINT_TYPE_ERROR, true, "could not open file \'%s\' for writing", obj_filename.c_str());
-            throw core::exception("could not open file");
+            throw utils::exception("could not open file");
         }
 
         for(utils::Statement i : obj_file_blob) {
@@ -76,7 +76,7 @@ std::vector<utils::Statement> core::Assembler::assembleChain(Token * program,
 
     try {
         program_start = firstPass(program, symbols, logger);
-    } catch(core::exception const & e) {
+    } catch(utils::exception const & e) {
         logger.printf(PRINT_TYPE_ERROR, true, "first pass failed");
         throw e;
     }
@@ -86,7 +86,7 @@ std::vector<utils::Statement> core::Assembler::assembleChain(Token * program,
     std::vector<utils::Statement> ret;
     try {
         ret = secondPass(program_start, symbols, logger);
-    } catch(core::exception const & e) {
+    } catch(utils::exception const & e) {
         logger.printf(PRINT_TYPE_ERROR, true, "second pass failed");
         throw e;
     }
@@ -223,13 +223,13 @@ Token * core::Assembler::findOrig(Token * program, AssemblerLogger & logger)
             if(cur_tok->num_opers != 1) {
                 logger.printfMessage(PRINT_TYPE_ERROR, cur_tok, "incorrect number of operands");
                 logger.newline();
-                throw core::exception("incorrect number of operands to .orig");
+                throw utils::exception("incorrect number of operands to .orig");
             }
 
             if(cur_tok->opers->type != NUM) {
                 logger.printfMessage(PRINT_TYPE_ERROR, cur_tok->opers, "illegal operand");
                 logger.newline();
-                throw core::exception("illegal operand to .orig");
+                throw utils::exception("illegal operand to .orig");
             }
 
             // TODO: use encode function
@@ -249,7 +249,7 @@ Token * core::Assembler::findOrig(Token * program, AssemblerLogger & logger)
 
     if(! found_valid_orig) {
         logger.printf(PRINT_TYPE_ERROR, true, "could not find valid .orig in program");
-        throw core::exception("could not find valid .orig");
+        throw utils::exception("could not find valid .orig");
     } else {
         if(invalid_statement_count > 0) {
             logger.printf(PRINT_TYPE_WARNING, true, "ignoring %d statements before .orig", invalid_statement_count);
@@ -403,14 +403,14 @@ std::vector<utils::Statement> core::Assembler::secondPass(Token * program,
                 std::vector<utils::Statement> encoded = encodePseudo(cur_tok, symbols, logger);
                 ret.insert(ret.end(), encoded.begin(), encoded.end());
             }
-        } catch(core::exception const & e) {
+        } catch(utils::exception const & e) {
             success = false;
         }
         cur_tok = cur_tok->next;
     }
 
     if(! success) {
-        throw core::exception("second pass failed");
+        throw utils::exception("second pass failed");
     }
 
     return ret;
@@ -423,7 +423,7 @@ uint32_t core::Assembler::encodeInstruction(Token * inst, std::map<std::string, 
     if(encoder.findInstruction(inst, candidates)) {
         uint32_t encoding = encoder.encodeInstruction(candidates[0], inst, symbols, logger);
         logger.printf(PRINT_TYPE_DEBUG, true, "%s => %s", logger.asm_blob[inst->row_num].c_str(),
-            udecToBin(encoding, 16).c_str());
+            utils::udecToBin(encoding, 16).c_str());
         return encoding;
     }
 
@@ -431,7 +431,7 @@ uint32_t core::Assembler::encodeInstruction(Token * inst, std::map<std::string, 
         // this shouldn't happen, because if there are no candidates it should've been retyped as a LABEL
         logger.printfMessage(PRINT_TYPE_ERROR, inst, "\'%s\' is not a valid instruction", inst->str.c_str());
         logger.newline();
-        throw core::exception("could not find a valid candidate for instruction");
+        throw utils::exception("could not find a valid candidate for instruction");
     }
 
     logger.printfMessage(PRINT_TYPE_ERROR, inst, "not a valid usage of \'%s\' instruction", inst->str.c_str());
@@ -440,7 +440,7 @@ uint32_t core::Assembler::encodeInstruction(Token * inst, std::map<std::string, 
     }
     logger.newline();
 
-    throw core::exception("matched instruction with a candidate, but some operands were incorrect");
+    throw utils::exception("matched instruction with a candidate, but some operands were incorrect");
 }
 
 std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
@@ -456,7 +456,7 @@ std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
             logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.fill num\'?");
             logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.fill label\'?");
             logger.newline();
-            throw core::exception("not a valid usage of .fill pseudo-op");
+            throw utils::exception("not a valid usage of .fill pseudo-op");
         }
 
         if(oper->type == NUM) {

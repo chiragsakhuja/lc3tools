@@ -44,7 +44,7 @@ namespace core
 
         virtual void updateState(MachineState & state) const override { state.regs[reg] = value; }
         virtual std::string getOutputString(MachineState const & state) const override {
-            return ssprintf("R%d: 0x%0.4x => 0x%0.4x", reg, state.regs[reg], value); }
+            return utils::ssprintf("R%d: 0x%0.4x => 0x%0.4x", reg, state.regs[reg], value); }
     private:
         uint32_t reg;
         uint32_t value;
@@ -57,7 +57,7 @@ namespace core
 
         virtual void updateState(MachineState & state) const override { state.psr = value; }
         virtual std::string getOutputString(MachineState const & state) const override {
-            return ssprintf("PSR: 0x%0.4x => 0x%0.4x", state.psr, value); }
+            return utils::ssprintf("PSR: 0x%0.4x => 0x%0.4x", state.psr, value); }
     private:
         uint32_t value;
     };
@@ -69,7 +69,7 @@ namespace core
 
         virtual void updateState(MachineState & state) const override { state.pc = value; }
         virtual std::string getOutputString(MachineState const & state) const override {
-            return ssprintf("PC: 0x%0.4x => 0x%0.4x", state.pc, value); }
+            return utils::ssprintf("PC: 0x%0.4x => 0x%0.4x", state.pc, value); }
     private:
         uint32_t value;
     };
@@ -81,7 +81,7 @@ namespace core
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {
-            return ssprintf("MEM[0x%0.4x]: 0x%0.4x => 0x%0.4x", addr, state.mem[addr].getValue(), value); }
+            return utils::ssprintf("MEM[0x%0.4x]: 0x%0.4x => 0x%0.4x", addr, state.mem[addr].getValue(), value); }
     private:
         uint32_t addr;
         uint32_t value;

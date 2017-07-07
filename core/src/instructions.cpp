@@ -65,7 +65,7 @@ void core::IInstruction::assignOperands(uint32_t encoded_inst)
     uint32_t cur_pos = 15;
     for(IOperand * op : operands) {
         if(op->type != OPER_TYPE_FIXED) {
-            op->value = getBits(encoded_inst, cur_pos, cur_pos - op->width + 1);
+            op->value = utils::getBits(encoded_inst, cur_pos, cur_pos - op->width + 1);
         }
         cur_pos -= op->width;
     }
@@ -97,7 +97,7 @@ std::string core::IInstruction::toValueString(void) const
                 if((operand->type == OPER_TYPE_NUM && ((NumOperand *) operand)->sext) ||
                     operand->type == OPER_TYPE_LABEL)
                 {
-                    oper_str = "#" + std::to_string((int32_t) sextTo32(operand->value, operand->width));
+                    oper_str = "#" + std::to_string((int32_t) utils::sextTo32(operand->value, operand->width));
                 } else {
                     oper_str = "#" + std::to_string(operand->value);
                 }
@@ -190,7 +190,7 @@ uint32_t core::RegOperand::encode(Token const * oper, uint32_t oper_count, std::
     uint32_t token_val = regs.at(std::string(oper->str)) & ((1 << width) - 1);
 
     logger.printf(PRINT_TYPE_EXTRA, true, "%d.%d: reg %s => %s", oper->row_num, oper_count, oper->str.c_str(),
-        udecToBin(token_val, width).c_str());
+        utils::udecToBin(token_val, width).c_str());
 
     return token_val;
 }
@@ -206,7 +206,7 @@ uint32_t core::NumOperand::encode(Token const * oper, uint32_t oper_count, std::
     if(sext) {
         if((int32_t) oper->num < -(1 << (width - 1)) || (int32_t) oper->num > ((1 << (width - 1)) - 1)) {
             logger.printfMessage(PRINT_TYPE_WARNING, oper, "immediate %d truncated to %d", oper->num,
-                sextTo32(token_val, width));
+                utils::sextTo32(token_val, width));
             logger.newline();
         }
     } else {
@@ -218,7 +218,7 @@ uint32_t core::NumOperand::encode(Token const * oper, uint32_t oper_count, std::
     }
 
     logger.printf(PRINT_TYPE_EXTRA, true, "%d.%d: imm %d => %s", oper->row_num, oper_count, oper->num,
-        udecToBin(token_val, width).c_str());
+        utils::udecToBin(token_val, width).c_str());
 
     return token_val;
 }
@@ -232,13 +232,13 @@ uint32_t core::LabelOperand::encode(Token const * oper, uint32_t oper_count, std
     if(search == symbols.end()) {
         logger.printfMessage(PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
         logger.newline();
-        throw core::exception("unknown label");
+        throw utils::exception("unknown label");
     }
 
     uint32_t token_val = (((int32_t) search->second) - (oper->pc + 1)) & ((1 << width) - 1);
 
     logger.printf(PRINT_TYPE_EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper->row_num, oper_count,
-        oper->str.c_str(), search->second, udecToBin((uint32_t) token_val, width).c_str());
+        oper->str.c_str(), search->second, utils::udecToBin((uint32_t) token_val, width).c_str());
 
     return token_val;
 }
@@ -246,12 +246,12 @@ uint32_t core::LabelOperand::encode(Token const * oper, uint32_t oper_count, std
 std::vector<core::IStateChange const *> core::ADDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
-    uint32_t sr2_val = sextTo32(state.regs[operands[4]->value], 16);
+    uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
+    uint32_t sr2_val = utils::sextTo32(state.regs[operands[4]->value], 16);
     uint32_t result = (sr1_val + sr2_val) & 0xffff;
 
     return std::vector<IStateChange const *> {
-        new PSRStateChange(computePSRCC(result, state.psr)),
+        new PSRStateChange(utils::computePSRCC(result, state.psr)),
         new RegStateChange(dr, result)
     };
 }
@@ -259,12 +259,12 @@ std::vector<core::IStateChange const *> core::ADDRInstruction::execute(MachineSt
 std::vector<core::IStateChange const *> core::ADDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
-    uint32_t imm_val = sextTo32(operands[4]->value, operands[4]->width);
+    uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
+    uint32_t imm_val = utils::sextTo32(operands[4]->value, operands[4]->width);
     uint32_t result = (sr1_val + imm_val) & 0xffff;
 
     return std::vector<IStateChange const *> {
-        new PSRStateChange(computePSRCC(result, state.psr)),
+        new PSRStateChange(utils::computePSRCC(result, state.psr)),
         new RegStateChange(dr, result)
     };
 }
@@ -272,12 +272,12 @@ std::vector<core::IStateChange const *> core::ADDIInstruction::execute(MachineSt
 std::vector<core::IStateChange const *> core::ANDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
-    uint32_t sr2_val = sextTo32(state.regs[operands[4]->value], 16);
+    uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
+    uint32_t sr2_val = utils::sextTo32(state.regs[operands[4]->value], 16);
     uint32_t result = (sr1_val & sr2_val) & 0xffff;
 
     return std::vector<IStateChange const *> {
-        new PSRStateChange(computePSRCC(result, state.psr)),
+        new PSRStateChange(utils::computePSRCC(result, state.psr)),
         new RegStateChange(dr, result)
     };
 }
@@ -285,12 +285,12 @@ std::vector<core::IStateChange const *> core::ANDRInstruction::execute(MachineSt
 std::vector<core::IStateChange const *> core::ANDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t sr1_val = sextTo32(state.regs[operands[2]->value], 16);
-    uint32_t imm_val = sextTo32(operands[4]->value, operands[4]->width);
+    uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
+    uint32_t imm_val = utils::sextTo32(operands[4]->value, operands[4]->width);
     uint32_t result = (sr1_val & imm_val) & 0xffff;
 
     return std::vector<IStateChange const *> {
-        new PSRStateChange(computePSRCC(result, state.psr)),
+        new PSRStateChange(utils::computePSRCC(result, state.psr)),
         new RegStateChange(dr, result)
     };
 }
@@ -298,7 +298,7 @@ std::vector<core::IStateChange const *> core::ANDIInstruction::execute(MachineSt
 std::vector<core::IStateChange const *> core::BRInstruction::execute(MachineState const & state)
 {
     std::vector<IStateChange const *> ret;
-    uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
     if((operands[1]->value & (state.psr & 0x0007)) != 0) {
         ret.push_back(new PCStateChange(addr));
@@ -318,7 +318,7 @@ std::vector<core::IStateChange const *> core::JSRInstruction::execute(MachineSta
 {
     return std::vector<IStateChange const *> {
         new RegStateChange(7, state.pc & 0xffff),
-        new PCStateChange(computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width))
+        new PCStateChange(utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width))
     };
 }
 
@@ -333,11 +333,11 @@ std::vector<core::IStateChange const *> core::JSRRInstruction::execute(MachineSt
 std::vector<core::IStateChange const *> core::LDInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t value = state.mem[addr].getValue();
 
     return std::vector<IStateChange const *> {
-        new PSRStateChange(computePSRCC(value, state.psr)),
+        new PSRStateChange(utils::computePSRCC(value, state.psr)),
         new RegStateChange(dr, value)
     };
 }
@@ -345,12 +345,12 @@ std::vector<core::IStateChange const *> core::LDInstruction::execute(MachineStat
 std::vector<core::IStateChange const *> core::LDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t addr1 = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t addr2 = state.mem[addr1].getValue();
     uint32_t value = state.mem[addr2].getValue();
 
     return std::vector<IStateChange const *> {
-        new PSRStateChange(computePSRCC(value, state.psr)),
+        new PSRStateChange(utils::computePSRCC(value, state.psr)),
         new RegStateChange(dr, value)
     };
 }
@@ -358,12 +358,12 @@ std::vector<core::IStateChange const *> core::LDIInstruction::execute(MachineSta
 std::vector<core::IStateChange const *> core::LDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t addr = computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
+    uint32_t addr = utils::computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
             operands[3]->width);
     uint32_t value = state.mem[addr].getValue();
 
     return std::vector<IStateChange const *> {
-        new PSRStateChange(computePSRCC(value, state.psr)),
+        new PSRStateChange(utils::computePSRCC(value, state.psr)),
         new RegStateChange(dr, value)
     };
 }
@@ -371,10 +371,10 @@ std::vector<core::IStateChange const *> core::LDRInstruction::execute(MachineSta
 std::vector<core::IStateChange const *> core::LEAInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
     return std::vector<IStateChange const *> {
-        new PSRStateChange(computePSRCC(addr, state.psr)),
+        new PSRStateChange(utils::computePSRCC(addr, state.psr)),
         new RegStateChange(dr, addr)
     };
 }
@@ -382,11 +382,11 @@ std::vector<core::IStateChange const *> core::LEAInstruction::execute(MachineSta
 std::vector<core::IStateChange const *> core::NOTInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t sr_val = sextTo32(state.regs[operands[2]->value], operands[2]->width);
+    uint32_t sr_val = utils::sextTo32(state.regs[operands[2]->value], operands[2]->width);
     uint32_t result = (~sr_val) & 0xffff;
 
     return std::vector<IStateChange const *> {
-        new PSRStateChange(computePSRCC(result, state.psr)),
+        new PSRStateChange(utils::computePSRCC(result, state.psr)),
         new RegStateChange(dr, result)
     };
 }
@@ -400,7 +400,7 @@ std::vector<core::IStateChange const *> core::RTIInstruction::execute(MachineSta
 
 std::vector<core::IStateChange const *> core::STInstruction::execute(MachineState const & state)
 {
-    uint32_t addr = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
     return std::vector<IStateChange const *> {
@@ -410,7 +410,7 @@ std::vector<core::IStateChange const *> core::STInstruction::execute(MachineStat
 
 std::vector<core::IStateChange const *> core::STIInstruction::execute(MachineState const & state)
 {
-    uint32_t addr1 = computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+    uint32_t addr1 = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t addr2 = state.mem[addr1].getValue();
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
@@ -421,8 +421,8 @@ std::vector<core::IStateChange const *> core::STIInstruction::execute(MachineSta
 
 std::vector<core::IStateChange const *> core::STRInstruction::execute(MachineState const & state)
 {
-    uint32_t addr = computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
-            operands[3]->width);
+    uint32_t addr = utils::computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
+        operands[3]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
     return std::vector<IStateChange const *> {

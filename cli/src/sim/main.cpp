@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
         for(int i = 1; i < argc; i += 1) {
             try {
                 interface.loadSimulatorWithFile(std::string(argv[i]));
-            } catch (core::exception const & e) {
+            } catch (utils::exception const & e) {
                 printer->print(e.what());
                 printer->newline();
             }
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
         try {
             interface.simulate();
-        } catch(core::exception const & e) {
+        } catch(utils::exception const & e) {
             printer->print(e.what());
             printer->newline();
         }

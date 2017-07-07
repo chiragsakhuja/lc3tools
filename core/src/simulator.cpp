@@ -32,7 +32,7 @@ void core::Simulator::loadObjectFile(std::string const & filename)
     std::ifstream file(filename);
     if(! file) {
         logger.printf(PRINT_TYPE_ERROR, true, "could not open file \'%s\' for reading", filename.c_str());
-        throw core::exception("could not open file");
+        throw utils::exception("could not open file");
     }
 
     uint32_t offset = 0;
@@ -91,7 +91,7 @@ void core::Simulator::executeInstruction(void)
     IInstruction * candidate;
     if(! decoder.findInstructionByEncoding(encoded_inst, candidate)) {
         logger.printf(PRINT_TYPE_ERROR, true, "invalid instruction 0x%0.4x", encoded_inst);
-        throw core::exception("invalid instruction");
+        throw utils::exception("invalid instruction");
     }
 
     candidate->assignOperands(encoded_inst);

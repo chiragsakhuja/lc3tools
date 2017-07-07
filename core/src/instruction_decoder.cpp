@@ -30,7 +30,7 @@ core::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
 
 bool core::InstructionDecoder::findInstructionByEncoding(uint32_t encoding, IInstruction *& candidate) const
 {
-    auto search = instructions_by_opcode.find(getBits(encoding, 15, 12));
+    auto search = instructions_by_opcode.find(utils::getBits(encoding, 15, 12));
     candidate = nullptr;
 
     if(search != instructions_by_opcode.end()) {
@@ -39,8 +39,7 @@ bool core::InstructionDecoder::findInstructionByEncoding(uint32_t encoding, IIns
             bool valid = true;
             for(IOperand const * op : inst->operands) {
                 if(op->type == OPER_TYPE_FIXED) {
-                    //printf("checking [%d, %d] => %s ?= %s\n", cur_pos, cur_pos - op->width + 1, udecToBin(getBits(encoding, cur_pos, cur_pos - op->width + 1), op->width).c_str(), udecToBin(((FixedOperand *) op)->value, op->width).c_str());
-                    if(getBits(encoding, cur_pos, cur_pos - op->width + 1) != ((FixedOperand *) op)->value) {
+                    if(utils::getBits(encoding, cur_pos, cur_pos - op->width + 1) != ((FixedOperand *) op)->value) {
                         valid = false;
                         break;
                     }
