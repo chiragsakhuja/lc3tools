@@ -1,4 +1,5 @@
 #include <array>
+#include <atomic>
 #include <cstdint>
 #include <fstream>
 #include <functional>
