@@ -3,6 +3,8 @@
 
 namespace core
 {
+    class IStateChange;
+
     struct MachineState
     {
         MachineState(Logger & logger) : logger(logger) {}
@@ -11,11 +13,14 @@ namespace core
         std::array<uint32_t, 8> regs;
         uint32_t pc;
         uint32_t psr;
+        uint32_t backup_sp;
 
         Logger & logger;
         std::vector<char> console_buffer;
 
         bool running;
+
+        uint32_t readMem(uint32_t addr, bool & change_mem, IStateChange *& change) const;
     };
 
     typedef enum {
@@ -23,6 +28,7 @@ namespace core
         , STATE_CHANGE_PSR
         , STATE_CHANGE_PC
         , STATE_CHANGE_MEM
+        , STATE_CHANGE_SWAP_SP
     } StateChangeType;
 
     class IStateChange
@@ -74,10 +80,10 @@ namespace core
         uint32_t value;
     };
 
-    class MemStateChange : public IStateChange
+    class MemWriteStateChange : public IStateChange
     {
     public:
-        MemStateChange(uint32_t addr, uint32_t value) : IStateChange(STATE_CHANGE_MEM), addr(addr), value(value) {}
+        MemWriteStateChange(uint32_t addr, uint32_t value) : IStateChange(STATE_CHANGE_MEM), addr(addr), value(value) {}
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {
@@ -85,6 +91,17 @@ namespace core
     private:
         uint32_t addr;
         uint32_t value;
+    };
+
+    class SwapSPStateChange : public IStateChange
+    {
+    public:
+        SwapSPStateChange() : IStateChange(STATE_CHANGE_SWAP_SP) {}
+
+        virtual void updateState(MachineState & state) const override;
+        virtual std::string getOutputString(MachineState const & state) const override {
+            return utils::ssprintf("R7 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[7], state.backup_sp);
+        }
     };
 };
 

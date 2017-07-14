@@ -1,5 +1,5 @@
 # find directories with includes
-include_directories(${PROJECT_SOURCE_DIR}/core/src)
+include_directories(${PROJECT_SOURCE_DIR}/core/src ${PROJECT_SOURCE_DIR}/cli/src/common)
 
 # get all necessary files
 file(GLOB ASM_CXX_SOURCES ${PROJECT_SOURCE_DIR}/cli/src/asm/*.cpp)

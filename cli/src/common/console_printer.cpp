@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "core.h"
 #include "console_printer.h"
 
 void utils::ConsolePrinter::setColor(int color)

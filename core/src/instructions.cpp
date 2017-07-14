@@ -334,25 +334,52 @@ std::vector<core::IStateChange const *> core::LDInstruction::execute(MachineStat
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
-    uint32_t value = state.mem[addr].getValue();
 
-    return std::vector<IStateChange const *> {
+    bool change_mem;
+    IStateChange * change;
+    uint32_t value = state.readMem(addr, change_mem, change);
+
+    std::vector<IStateChange const *> ret {
         new PSRStateChange(utils::computePSRCC(value, state.psr)),
         new RegStateChange(dr, value)
     };
+
+    if(change_mem) {
+        ret.push_back(change);
+    }
+
+    return ret;
 }
 
 std::vector<core::IStateChange const *> core::LDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr1 = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
-    uint32_t addr2 = state.mem[addr1].getValue();
-    uint32_t value = state.mem[addr2].getValue();
 
-    return std::vector<IStateChange const *> {
+    bool change_mem1;
+    IStateChange * change1;
+    uint32_t addr2 = state.readMem(addr1, change_mem1, change1);
+
+    bool change_mem2;
+    IStateChange * change2;
+    uint32_t value = state.readMem(addr2, change_mem2, change2);
+
+    std::vector<IStateChange const *> ret {
         new PSRStateChange(utils::computePSRCC(value, state.psr)),
         new RegStateChange(dr, value)
     };
+
+    // TODO: what if the changes are the same?
+    if(change_mem1) {
+        ret.push_back(change1);
+    }
+
+    if(change_mem2) {
+        ret.push_back(change2);
+    }
+
+
+    return ret;
 }
 
 std::vector<core::IStateChange const *> core::LDRInstruction::execute(MachineState const & state)
@@ -360,12 +387,21 @@ std::vector<core::IStateChange const *> core::LDRInstruction::execute(MachineSta
     uint32_t dr = operands[1]->value;
     uint32_t addr = utils::computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
             operands[3]->width);
-    uint32_t value = state.mem[addr].getValue();
 
-    return std::vector<IStateChange const *> {
+    bool change_mem;
+    IStateChange * change;
+    uint32_t value = state.readMem(addr, change_mem, change);
+
+    std::vector<IStateChange const *> ret {
         new PSRStateChange(utils::computePSRCC(value, state.psr)),
         new RegStateChange(dr, value)
     };
+
+    if(change_mem) {
+        ret.push_back(change);
+    }
+
+    return ret;
 }
 
 std::vector<core::IStateChange const *> core::LEAInstruction::execute(MachineState const & state)
@@ -404,7 +440,7 @@ std::vector<core::IStateChange const *> core::STInstruction::execute(MachineStat
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
     return std::vector<IStateChange const *> {
-        new MemStateChange(addr, value)
+        new MemWriteStateChange(addr, value)
     };
 }
 
@@ -415,7 +451,7 @@ std::vector<core::IStateChange const *> core::STIInstruction::execute(MachineSta
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
     return std::vector<IStateChange const *> {
-        new MemStateChange(addr2, value)
+        new MemWriteStateChange(addr2, value)
     };
 }
 
@@ -426,7 +462,7 @@ std::vector<core::IStateChange const *> core::STRInstruction::execute(MachineSta
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
     return std::vector<IStateChange const *> {
-        new MemStateChange(addr, value)
+        new MemWriteStateChange(addr, value)
     };
 }
 
