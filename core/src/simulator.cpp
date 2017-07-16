@@ -57,6 +57,10 @@ void core::Simulator::loadObjectFile(std::string const & filename)
         utils::Statement statement;
         file >> statement;
 
+        if(file.eof()) {
+            break;
+        }
+
         if(statement.isOrig()) {
             state.pc = statement.getValue();
             offset = 0;
