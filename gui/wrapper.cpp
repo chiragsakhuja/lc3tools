@@ -4,7 +4,7 @@
     #define _PRINT_LEVEL 4
 #endif
 
-#include "../../core/src/core.h"
+#include "core.h"
 #include "ui_printer.h"
 
 namespace utils
