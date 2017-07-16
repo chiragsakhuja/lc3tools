@@ -1,31 +1,26 @@
 #include <nan.h>
 
-#include <array>
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
-
 #ifndef _PRINT_LEVEL
     #define _PRINT_LEVEL 4
 #endif
 
-
-#include "../../core/src/tokens.h"
-
-#include "../../core/src/printer.h"
-#include "../../core/src/logger.h"
+#include "../../core/src/core.h"
 #include "ui_printer.h"
 
-#include "../../core/src/state.h"
+namespace utils
+{
+    class UIInputter : public IInputter
+    {
+    public:
+        void beginInput(void) {}
+        bool getChar(char & c) { return false; }
+        void endInput(void) {}
+    };
+};
 
-#include "../../core/src/instructions.h"
-#include "../../core/src/instruction_encoder.h"
-
-#include "../../core/src/assembler.h"
-
-utils::IPrinter * printer = nullptr;
-core::Assembler * assembler = nullptr;
+utils::UIPrinter printer;
+utils::UIInputter inputter;
+core::lc3 interface(printer, inputter);
 
 NAN_METHOD(Assemble)
 {
@@ -35,12 +30,20 @@ NAN_METHOD(Assemble)
     }
 
     v8::String::Utf8Value str(info[0]->ToString());
-    assembler->genObjectFile((char const *) (*str));
+
+    std::string asm_filename((char const *) (*str));
+    std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
+
+    try {
+        interface.assemble(asm_filename, obj_filename);
+    } catch(utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_METHOD(GetOutput)
 {
-    std::vector<std::string> const & output = ((utils::UIPrinter *) printer)->getOutputBuffer();
+    std::vector<std::string> const & output = printer.getOutputBuffer();
     std::string joined = "";
     for(std::string const & str : output) { joined += str; }
     auto ret = Nan::New<v8::String>(joined).ToLocalChecked();
@@ -51,9 +54,6 @@ NAN_MODULE_INIT(Initialize)
 {
     NAN_EXPORT(target, Assemble);
     NAN_EXPORT(target, GetOutput);
-
-    printer = new utils::UIPrinter();
-    assembler = new core::Assembler(true, *printer);
 }
 
 NODE_MODULE(wrapper, Initialize);
