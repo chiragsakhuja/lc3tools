@@ -2,7 +2,47 @@ const lc3interface = require('bindings')('addon');
 const {dialog} = require('electron').remote;
 const fs = require('fs');
 
-var activeFileName = undefined;
+var activeFileName = null;
+
+function saveFile()
+{
+    if(activeFileName === null) {
+        dialog.showSaveDialog({filters: [{name: 'lc3', extensions: ['asm']}]},
+            function(fileName) {
+                if(fileName === undefined) return;
+                activeFileName = fileName;
+                fs.writeFile(activeFileName, window.editor.getValue(), function(err) {
+                    dialog.showErrorBox('File save error', err.message);
+                });
+            }
+        );
+    }
+
+    if(activeFileName !== undefined) {
+        fs.writeFile(activeFileName, window.editor.getValue(), function(err) {
+            if(err !== null) {
+                dialog.showErrorBox('File save error', err.message);
+            }
+        });
+    }
+}
+
+function openFile()
+{
+    dialog.showOpenDialog({filters: [{name: 'lc3', extensions: ['asm']}]},
+        function(fileNames) {
+            if(fileNames === undefined) return;
+            activeFileName = fileNames[0];
+            fs.readFile(activeFileName, 'utf-8', function(err, data) {
+                if(err !== null) {
+                    dialog.showErrorBox('File open error', err.message);
+                    return;
+                }
+                window.editor.setValue(data);
+            });
+        }
+    );
+}
 
 $('#toolbar-build').on('click', function(e) {
     try {
@@ -17,38 +57,6 @@ $('#toolbar-build').on('click', function(e) {
     }, 200);
 })
 
-$('#toolbar-save').on('click', function(e) {
-    if(activeFileName === undefined) {
-        dialog.showSaveDialog({filters: [{name: 'lc3', extensions: ['asm']}]},
-            function(fileName) {
-                if(fileName === undefined) return;
-                activeFileName = fileName;
-                fs.writeFile(activeFileName, window.editor.getValue(), function(err) {
-                    dialog.showErrorBox('File save error', err.message);
-                });
-            }
-        );
-    }
+$('#toolbar-save').on('click', function(e) { saveFile(); });
 
-    if(activeFileName !== undefined) {
-        fs.writeFile(activeFileName, window.editor.getValue(), function(err) {
-            dialog.showErrorBox('File save error', err.message);
-        });
-    }
-});
-
-$('#toolbar-open').on('click', function(e) {
-    dialog.showOpenDialog({filters: [{name: 'lc3', extensions: ['asm']}]},
-        function(fileNames) {
-            if(fileNames === undefined) return;
-            activeFileName = fileNames[0];
-            fs.readFile(activeFileName, 'utf-8', function(err, data) {
-                if(err !== undefined) {
-                    dialog.showErrorBox('File open error', err.message);
-                    return;
-                }
-                window.editor.setValue(data);
-            });
-        }
-    );
-});
+$('#toolbar-open').on('click', function(e) { openFile(); });

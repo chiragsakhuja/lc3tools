@@ -1,12 +1,12 @@
 {
-    "name": "lc3sim",
+    "name": "lc3edit",
     "version": "0.1.0",
-    "description": "A modern LC-3 assembler and simulator",
+    "description": "A modern LC-3 assembler",
     "main": "main.js",
     "scripts": {
         "start": "electron ."
     },
-    "repository": "https://github.com/chiragsakhuja/lc3sim.git",
+    "repository": "https://github.com/chiragsakhuja/lc3v2.git",
     "author": "Chirag Sakhuja",
     "license": "MIT",
     "dependencies": {
