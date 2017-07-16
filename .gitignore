@@ -44,3 +44,8 @@ build/*
 # Ignore generated files
 core/src/parser_gen/*
 core/src/configured_paths.h
+
+# Ignore node files
+gui/.electron-gyp
+gui/node_modules
+gui/build
