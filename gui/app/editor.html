@@ -21,6 +21,7 @@
         <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
         <script src="../node_modules/css-element-queries/src/ResizeSensor.js"></script>
         <script src="../node_modules/css-element-queries/src/ElementQueries.js"></script>
+
         <script>
             var ElementQueries = require('css-element-queries/src/ElementQueries');
 
@@ -39,7 +40,6 @@
             var amdRequire = global.require;
             global.require = nodeRequire;
         </script>
-
         <script>
             // require node modules before loader.js comes in
             var path = require('path');
@@ -64,11 +64,7 @@
 
             amdRequire(['vs/editor/editor.main'], function() {
                 window.editor = monaco.editor.create(document.getElementById('editor'), {
-                    value: [
-                        'function x() {',
-                        '\tconsole.log("Hello world!");',
-                        '}'
-                    ].join('\n'),
+                    value: "",
                     language: 'javascript',
                     theme: 'vs-dark'
                 });
@@ -101,26 +97,10 @@
 
         </div>
 
+        <script src="js/disableButtonBlur.js"></script>
+        <script src="js/editor.js"></script>
+
         <script>
-            $(".btn").click(function(e) {
-                // Removes focus of the button.
-                $(this).blur();
-            });
-
-            const myAddon = require('bindings')('addon')
-            $('#toolbar-build').on('click', function(e) {
-                myAddon.Assemble('test.asm');
-                $('#console').empty();
-                $('#console').html(myAddon.GetOutput());
-                $('#console-panel').stop().animate({
-                    scrollTop: $('#console-panel')[0].scrollHeight
-                }, 200);
-            })
-
-            $('#toolbar-save').on('click', function(e) {
-                console.log(window.editor.getValue());
-            });
-
             $(window).resize(function() {
                 console.log("resize");
             });
