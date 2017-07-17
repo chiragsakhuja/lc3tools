@@ -1,0 +1,48 @@
+#reg-panel {
+    position: fixed;
+    top: 38px;
+    left: 0px;
+    right: 0px;
+    height: 200px;
+    box-shadow: 0 0px 6px 2px #000;
+    z-index: 2;
+}
+
+#reg-panel-body {
+    height: 100%;
+}
+
+#mem-panel {
+    position: fixed;
+    top: 238px;
+    bottom: 200px;
+    left: 0px;
+    right: 0px;
+}
+
+#mem-panel-body {
+    height: 100%;
+}
+
+#console-panel {
+    position: fixed;
+    padding: 5px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    height: 200px;
+    box-shadow: 0 0px 6px 2px #000;
+    z-index: 2;
+    overflow: scroll;
+}
+
+#console-panel-body {
+    height: 100%;
+}
+
+#console {
+    font-family: Consolas,monaco,monospace;
+    color: #eeeeee;
+    font-weight: lighter;
+    font-size: 0.9em;
+}

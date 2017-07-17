@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>lc3edit</title>
+        <!-- Bootstrap -->
+        <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="css/styles.css" rel="stylesheet">
+        <link href="css/simulator.css" rel="stylesheet">
+
+        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+        <script>window.$ = window.jQuery = require('jquery');</script>
+        <!-- Include all compiled plugins (below), or include individual files as needed -->
+        <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    </head>
+
+    <body>
+        <div class="container-fluid">
+            <div class="panel panel-default" id="toolbar-panel">
+                <div class="panel-body" id="toolbary-panel-body">
+                    <div class="btn-group" role="group" aria-label="...">
+                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-save">
+                            <span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span>
+                        </a>
+                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-open">
+                            <span class="glyphicon glyphicon-folder-open glyphicon-toolbar"></span>
+                        </a>
+                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-build">
+                            <span class="glyphicon glyphicon-wrench glyphicon-toolbar"></span>
+                        </a>
+                    </div>  
+                </div>
+            </div>
+
+            <div class="panel panel-default" id="reg-panel">
+                <div class="panel-body" id="reg-panel-body">
+                </div>
+            </div>
+
+            <div class="panel panel-default" id="mem-panel">
+                <div class="panel-body" id="mem-panel-body">
+                </div>
+            </div>
+
+            <div class="panel panel-default" id="console-panel">
+                <div class="panel-body" id="console-panel-body">
+                    <div id="console"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <script src="js/common.js"></script>
+    </body>
+
+</html>
