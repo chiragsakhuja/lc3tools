@@ -23,9 +23,17 @@ html, body {
 
 .btn-default {
     border-radius: 0px;
-    border: 0px
+    border: 0px;
+    background-color: #1e1e1e;
+    color: #5a5a5a;
 }
 
+.btn-default:hover {
+    border-radius: 0px;
+    border: 0px;
+    background-color: #1e1e1e;
+    color: #eeeeee
+}
 
 .glyphicon-toolbar {
     font-size: 1.5em;
@@ -38,7 +46,7 @@ html, body {
     right: 0;
     height: 38px;
     box-shadow: 0 0px 6px 2px #000;
-    z-index: 2;
+    z-index: 3;
 }
 
 #toolbar-panel-body {
@@ -46,78 +54,4 @@ html, body {
     bottom: 0;
     left: 0;
     right: 0;
-}
-
-#editor-panel {
-    position: fixed;
-    top: 38px;
-    bottom: 200px;
-    left: 0;
-    right: 0;
-}
-
-#editor-panel-body {
-    height: 100%;
-    padding: 5px;
-}
-
-#console-panel {
-    position: fixed;
-    padding: 5px;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 200px;
-    box-shadow: 0 0px 6px 2px #000;
-    z-index: 2;
-    overflow: scroll;
-}
-
-#editor {
-    height: 100%;
-}
-
-.btn-toolbar {
-    background-color: #1e1e1e;
-    color: #5a5a5a;
-}
-
-.btn-toolbar:hover {
-    background-color: #1e1e1e;
-    color: #eeeeee
-}
-
-#console {
-    font-family: Consolas,monaco,monospace;
-    color: #eeeeee;
-    font-weight: lighter;
-    font-size: 0.9em;
-}
-
-.console-text-red {
-   color: red; 
-}
-
-.console-text-yellow {
-   color: yellow; 
-}
-
-.console-text-green {
-   color: green; 
-}
-
-.console-text-magenta {
-   color: magenta; 
-}
-
-.console-text-blue {
-   color: blue; 
-}
-
-.console-text-gray {
-   color: gray; 
-}
-
-.console-text-bold {
-    font-weight: bold;
 }
