@@ -25,7 +25,7 @@ function saveFile()
             }
         });
     }
-}
+}        
 
 function openFile()
 {
@@ -60,3 +60,7 @@ $('#toolbar-build').on('click', function(e) {
 $('#toolbar-save').on('click', function(e) { saveFile(); });
 
 $('#toolbar-open').on('click', function(e) { openFile(); });
+
+$(window).resize(function() {
+    window.editor.layout();
+});

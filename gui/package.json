@@ -20,6 +20,7 @@
         "remote": "^0.2.6"
     },
     "devDependencies": {
+        "electron-packager": "^8.7.2",
         "electron-rebuild": "^1.5.11"
     }
 }

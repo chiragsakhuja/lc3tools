@@ -8,26 +8,10 @@
         <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="css/styles.css" rel="stylesheet">
 
-        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-        <!--[if lt IE 9]>
-            <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-            <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-        <![endif]-->
-
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script>window.$ = window.jQuery = require('jquery');</script>
         <!-- Include all compiled plugins (below), or include individual files as needed -->
         <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
-        <script src="../node_modules/css-element-queries/src/ResizeSensor.js"></script>
-        <script src="../node_modules/css-element-queries/src/ElementQueries.js"></script>
-
-        <script>
-            var ElementQueries = require('css-element-queries/src/ElementQueries');
-
-            // attaches to DOMLoadContent and does anything for you
-            ElementQueries.listen();
-        </script>
 
         <script>
             // Monaco uses a custom amd loader that over-rides node's require.
@@ -40,36 +24,7 @@
             var amdRequire = global.require;
             global.require = nodeRequire;
         </script>
-        <script>
-            // require node modules before loader.js comes in
-            var path = require('path');
-
-            function uriFromPath(_path) {
-                var pathName = path.resolve(_path).replace(/\\/g, '/');
-                if (pathName.length > 0 && pathName.charAt(0) !== '/') {
-                    pathName = '/' + pathName;
-                }
-                return encodeURI('file://' + pathName);
-            }
-
-            amdRequire.config({
-                baseUrl: uriFromPath(path.join(__dirname, '../node_modules/monaco-editor/min'))
-            });
-
-            // workaround monaco-css not understanding the environment
-            self.module = undefined;
-
-            // workaround monaco-typescript not understanding the environment
-            self.process.browser = true;
-
-            amdRequire(['vs/editor/editor.main'], function() {
-                window.editor = monaco.editor.create(document.getElementById('editor'), {
-                    value: "",
-                    language: 'javascript',
-                    theme: 'vs-dark'
-                });
-            });
-        </script>
+        <script src="js/monaco.js"></script>
     </head>
 
     <body>
@@ -77,9 +32,15 @@
             <div class="panel panel-default" id="toolbar-panel">
                 <div class="panel-body" id="toolbary-panel-body">
                     <div class="btn-group" role="group" aria-label="...">
-                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-save"><span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span></a>
-                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-open"><span class="glyphicon glyphicon-folder-open glyphicon-toolbar"></span></a>
-                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-build"><span class="glyphicon glyphicon-wrench glyphicon-toolbar"></span></a>
+                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-save">
+                            <span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span>
+                        </a>
+                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-open">
+                            <span class="glyphicon glyphicon-folder-open glyphicon-toolbar"></span>
+                        </a>
+                        <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-build">
+                            <span class="glyphicon glyphicon-wrench glyphicon-toolbar"></span>
+                        </a>
                     </div>  
                 </div>
             </div>
@@ -99,20 +60,6 @@
 
         <script src="js/disableButtonBlur.js"></script>
         <script src="js/editor.js"></script>
-
-        <script>
-            $(window).resize(function() {
-                console.log("resize");
-            });
-        </script>
-
-        <script>
-            var element = document.getElementById('editor-panel');
-            new ResizeSensor(element, function() {
-                console.log('Changed to ' + element.clientWidth);
-            });
-        </script>
-
     </body>
 
 </html>
