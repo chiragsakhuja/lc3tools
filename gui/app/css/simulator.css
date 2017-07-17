@@ -3,24 +3,25 @@
     top: 38px;
     left: 0px;
     right: 0px;
-    height: 200px;
     box-shadow: 0 0px 6px 2px #000;
     z-index: 2;
 }
 
 #reg-panel-body {
+    font-family: Consolas,monaco,monospace;
     height: 100%;
+    padding: 4px;
 }
 
 #mem-panel {
     position: fixed;
-    top: 238px;
     bottom: 200px;
     left: 0px;
     right: 0px;
 }
 
 #mem-panel-body {
+    font-family: Consolas,monaco,monospace;
     height: 100%;
 }
 
@@ -45,4 +46,25 @@
     color: #eeeeee;
     font-weight: lighter;
     font-size: 0.9em;
+}
+
+.table {
+    margin-bottom: 0px;
+}
+
+.table-borderless > tbody > tr > td,
+.table-borderless > tbody > tr > th,
+.table-borderless > tfoot > tr > td,
+.table-borderless > tfoot > tr > th,
+.table-borderless > thead > tr > td,
+.table-borderless > thead > tr > th {
+    border: none;
+}
+
+.table-hover > tbody > tr:hover {
+    background-color: #5a5a5a;
+}
+
+#reg-table td {
+    padding: 2px;
 }

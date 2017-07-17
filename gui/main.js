@@ -14,7 +14,7 @@ function createWindow()
 
     // load index.html
     win.loadURL(url.format({
-        pathname: path.join(__dirname, 'app/editor.html'),
+        pathname: path.join(__dirname, 'app/simulator.html'),
         protocol: 'file',
         slashes: true
     }))
