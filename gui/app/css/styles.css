@@ -56,3 +56,54 @@ html, body {
     left: 0;
     right: 0;
 }
+
+#console {
+    height: 100%;
+    font-family: Consolas,monaco,monospace;
+    font-weight: lighter;
+    font-size: 0.9em;
+}
+
+#console-panel {
+    position: fixed;
+    padding: 5px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 200px;
+    box-shadow: 0 0px 6px 2px #000;
+    z-index: 2;
+    overflow: scroll;
+}
+
+#console-panel-body {
+    height: 100%;
+}
+
+.console-text-red {
+   color: red; 
+}
+
+.console-text-yellow {
+   color: yellow; 
+}
+
+.console-text-green {
+   color: green; 
+}
+
+.console-text-magenta {
+   color: magenta; 
+}
+
+.console-text-blue {
+   color: blue; 
+}
+
+.console-text-gray {
+   color: gray; 
+}
+
+.console-text-bold {
+    font-weight: bold;
+}

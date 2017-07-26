@@ -68,3 +68,15 @@
 #reg-table td {
     padding: 2px;
 }
+
+.reg-name {
+    width: 50px;
+}
+
+.reg-val {
+    width: 200px;
+}
+
+#mem-table td {
+    padding: 2px;
+}

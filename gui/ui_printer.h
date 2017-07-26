@@ -16,6 +16,7 @@ namespace utils
         virtual void newline(void) override;
 
         std::vector<std::string> const & getOutputBuffer(void) { return output_buffer; }
+        void clearOutputBuffer(void) { output_buffer.clear(); }
     };
 };
 
