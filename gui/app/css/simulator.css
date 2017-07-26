@@ -15,9 +15,10 @@
 
 #mem-panel {
     position: fixed;
-    bottom: 200px;
+    top: 0px;
     left: 0px;
     right: 0px;
+    height: 100%;
 }
 
 #mem-panel-body {
@@ -66,6 +67,7 @@
 }
 
 #reg-table td {
+    height: 22px;
     padding: 2px;
 }
 
@@ -78,5 +80,6 @@
 }
 
 #mem-table td {
-    padding: 2px;
+    height: 22px;
+    padding: 3px;
 }
