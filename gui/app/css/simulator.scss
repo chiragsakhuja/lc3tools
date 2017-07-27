@@ -27,7 +27,8 @@ $value-row-padding: 2px;
 
         #reg-table {
             .reg-name { width: 50px; }
-            .reg-val { width: 200px; }
+            .reg-hex { width: 70px; }
+            .reg-dec { width: 150px; }
         }
     }
 }
@@ -37,18 +38,27 @@ $value-row-padding: 2px;
     top: $toolbar-height + $reg-panel-height;
     bottom: $console-height;
     left: 0px;
-    right: 0px;
-    overflow: scroll;
+    right: 15px;
+    overflow: hidden;
 
     #mem-panel-body {
+        position: relative;
         font-family: $monospace-font;
+        width: 100vw;
+        height: 100%;
         padding: 4px;
+        overflow: scroll;
 
         #mem-table {
             .mem-bp { width: 30px; }
             .mem-addr { width: 90px; }
             .mem-bin { width: 140px; }
             .mem-hex { width: 70px; }
+        }
+
+        #mem-scrollbar {
+            top: $toolbar-height + $reg-panel-height;
+            bottom: $console-height;
         }
     }
 }
