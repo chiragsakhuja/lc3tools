@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# for file in app/css/*.scss
+# do
+#     node-sass "$file" "${file%.scss}.css"
+# done
+node-sass app/css/skin.scss app/css/skin.css
+node-sass app/css/template.scss app/css/template.css
+node-sass app/css/editor.scss app/css/editor.css
+node-sass app/css/simulator.scss app/css/simulator.css

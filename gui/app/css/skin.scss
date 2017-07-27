@@ -1,0 +1,81 @@
+@import "variables.scss";
+
+html, body {
+    height: 100vh;
+    color: $accent-color;
+}
+
+.container-fluid {
+    margin: 0;
+    padding: 0;
+}
+
+.panel-default {
+    border: 0px;
+    margin: 0px;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    border-radius: 0px;
+    background-color: $primary-color;
+
+    .panel-body {
+        padding: 0px;
+    }
+}
+
+.btn-default {
+    border-radius: 0px;
+    border: 0px;
+    background-color: $primary-color;
+    color: $secondary-color;
+
+    &:hover {
+        background-color: $primary-color;
+        color: $accent-color;
+    }
+}
+
+.table {
+    margin-bottom: 0px;
+}
+
+.table-borderless > tbody > tr > td,
+.table-borderless > tbody > tr > th,
+.table-borderless > tfoot > tr > td,
+.table-borderless > tfoot > tr > th,
+.table-borderless > thead > tr > td,
+.table-borderless > thead > tr > th {
+    border: none;
+}
+
+.table-hover > tbody > tr:hover {
+    background-color: $secondary-color;
+}
+
+.text-red {
+   color: red; 
+}
+
+.text-yellow {
+   color: yellow; 
+}
+
+.text-green {
+   color: green; 
+}
+
+.text-magenta {
+   color: magenta; 
+}
+
+.text-blue {
+   color: blue; 
+}
+
+.text-gray {
+   color: gray; 
+}
+
+.text-bold {
+    font-weight: bold;
+}

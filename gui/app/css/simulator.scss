@@ -1,0 +1,50 @@
+@import "variables.scss";
+
+$reg-panel-height: 105px;
+
+$value-row-height: 22px;
+$value-row-padding: 2px;
+
+.table-value tbody > tr > td {
+    height: $value-row-height;
+    padding: $value-row-padding;
+}
+
+#reg-panel {
+    position: fixed;
+    top: $toolbar-height;
+    left: 0px;
+    right: 0px;
+    height: $reg-panel-height;
+    box-shadow: 0 0px 6px 2px #000;
+    z-index: 2;
+
+    #reg-panel-body {
+        font-family: $monospace-font;
+        height: 100%;
+        padding: 4px;
+
+        #reg-table {
+            .reg-name { width: 50px; }
+            .reg-val { width: 200px; }
+        }
+    }
+}
+
+#mem-panel {
+    position: fixed;
+    top: $toolbar-height + $reg-panel-height;
+    left: 0px;
+    right: 0px;
+    height: 100%;
+
+    #mem-panel-body {
+        font-family: $monospace-font;
+        height: 100%;
+        padding: 4px;
+
+        #mem-table {
+        }
+    }
+}
+

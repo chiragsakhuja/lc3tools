@@ -6,7 +6,8 @@
         <title>lc3sim</title>
         <!-- Bootstrap -->
         <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="css/styles.css" rel="stylesheet">
+        <link href="css/skin.css" rel="stylesheet">
+        <link href="css/template.css" rel="stylesheet">
         <link href="css/simulator.css" rel="stylesheet">
 
         <!-- jQuery necessary for Bootstrap's JavaScript plugins) -->
@@ -18,7 +19,7 @@
     <body>
         <div class="container-fluid">
             <div class="panel panel-default" id="toolbar-panel">
-                <div class="panel-body" id="toolbary-panel-body">
+                <div class="panel-body" id="toolbar-panel-body">
                     <div class="btn-group" role="group" aria-label="...">
                         <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-save">
                             <span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span>
@@ -35,7 +36,7 @@
 
             <div class="panel panel-default" id="reg-panel">
                 <div class="panel-body" id="reg-panel-body">
-                    <table class="table table-borderless" id="reg-table">
+                    <table class="table table-borderless table-value" id="reg-table">
                         <tr>
                             <td class="reg-name">R0</td>
                             <td class="reg-val" id="r0-val"></td>
@@ -75,7 +76,7 @@
 
             <div class="panel panel-default" id="mem-panel">
                 <div class="panel-body" id="mem-panel-body">
-                    <table class="table table-borderless table-hover" id="mem-table">
+                    <table class="table table-borderless table-hover table-value" id="mem-table">
                     </table>
                 </div>
             </div>

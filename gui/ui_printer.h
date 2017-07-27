@@ -33,7 +33,7 @@ void utils::UIPrinter::setColor(int color)
             pending_colors -= 1;
         }
     } else {
-        std::string format = "<span class=\"console-text-";
+        std::string format = "<span class=\"text-";
         switch(color)
         {
             case PRINT_COLOR_RED      : format += "red"    ; break;
