@@ -19,7 +19,8 @@
         "jquery": "^3.2.1",
         "monaco-editor": "^0.8.3",
         "nan": "^2.6.2",
-        "remote": "^0.2.6"
+        "remote": "^0.2.6",
+        "sprintf-js": "^1.1.1"
     },
     "devDependencies": {
         "electron-packager": "^8.7.2",

@@ -8,6 +8,7 @@ $value-row-padding: 2px;
 .table-value tbody > tr > td {
     height: $value-row-height;
     padding: $value-row-padding;
+    vertical-align: middle;
 }
 
 #reg-panel {
@@ -34,16 +35,20 @@ $value-row-padding: 2px;
 #mem-panel {
     position: fixed;
     top: $toolbar-height + $reg-panel-height;
+    bottom: $console-height;
     left: 0px;
     right: 0px;
-    height: 100%;
+    overflow: scroll;
 
     #mem-panel-body {
         font-family: $monospace-font;
-        height: 100%;
         padding: 4px;
 
         #mem-table {
+            .mem-bp { width: 30px; }
+            .mem-addr { width: 90px; }
+            .mem-bin { width: 140px; }
+            .mem-hex { width: 70px; }
         }
     }
 }
