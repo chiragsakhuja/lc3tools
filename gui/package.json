@@ -6,7 +6,7 @@
     "scripts": {
         "start": "electron .",
         "build-css": "bin/build-css",
-        "watch-css": "nodemon -e app/css -x \"npm run build-css\""
+        "watch-css": "nodemon -e scss -w app/css -x \"npm run build-css\""
     },
     "repository": "https://github.com/chiragsakhuja/lc3v2.git",
     "author": "Chirag Sakhuja",
