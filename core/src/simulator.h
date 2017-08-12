@@ -17,7 +17,7 @@ namespace core
         void registerPreInstructionCallback(std::function<void(MachineState & state)> func);
         void registerPostInstructionCallback(std::function<void(MachineState & state)> func);
 
-        MachineState const & getMachineState(void) { return state; }
+        MachineState & getMachineState(void) { return state; }
     private:
         InstructionDecoder decoder;
         bool pre_instruction_callback_v;

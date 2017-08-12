@@ -15,6 +15,7 @@ namespace core
         uint32_t psr;
         uint32_t backup_sp;
 
+
         Logger & logger;
         std::vector<char> console_buffer;
 

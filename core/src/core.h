@@ -43,7 +43,7 @@ namespace core {
             as.assemble(asm_filename, obj_filename);
         }
 
-        void initializeSimulator(void) { sim.loadOS(); sim.simulate(); }
+        void initializeSimulator(void) { sim.loadOS(); }
         void loadSimulatorWithFile(std::string const & obj_filename) { sim.loadObjectFile(obj_filename); }
         void simulate(void) { sim.simulate(); }
         void resetSimulator(void) { sim.reset(); }
@@ -53,7 +53,7 @@ namespace core {
         void registerPostInstructionCallback(std::function<void(MachineState & state)> func) {
             sim.registerPostInstructionCallback(func);
         }
-        MachineState const & getMachineState(void) { return sim.getMachineState(); }
+        MachineState & getMachineState(void) { return sim.getMachineState(); }
 
     private:
         Assembler as;

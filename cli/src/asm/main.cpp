@@ -17,10 +17,7 @@ int main(int argc, char *argv[])
             std::string asm_filename(argv[i]);
             std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
             interface.assemble(asm_filename, obj_filename);
-        } catch(utils::exception const & e) {
-            printer.print(e.what());
-            printer.newline();
-        }
+        } catch(utils::exception const & e) { return 1; }
     }
 
     return 0;
