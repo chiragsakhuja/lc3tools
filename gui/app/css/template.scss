@@ -1,0 +1,39 @@
+@import "variables.scss";
+
+#toolbar-panel {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    height: $toolbar-height;
+    box-shadow: 0 0px 6px 2px #000;
+    z-index: 3;
+
+    .btn-toolbar {
+        padding: 5px 9px;
+    }
+}
+
+#console-panel {
+    position: fixed;
+    padding: 5px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    height: $console-height;
+    box-shadow: 0 0px 6px 2px #000;
+    z-index: 2;
+    overflow: scroll;
+
+    #console-panel-body {
+        height: 100%;
+
+        #console {
+            height: 100%;
+            font-family: $monospace-font;
+            font-weight: lighter;
+            font-size: 0.9em;
+        }
+    }
+}
+

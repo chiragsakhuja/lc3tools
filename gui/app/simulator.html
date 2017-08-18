@@ -6,7 +6,8 @@
         <title>lc3sim</title>
         <!-- Bootstrap -->
         <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="css/styles.css" rel="stylesheet">
+        <link href="css/skin.css" rel="stylesheet">
+        <link href="css/template.css" rel="stylesheet">
         <link href="css/simulator.css" rel="stylesheet">
 
         <!-- jQuery necessary for Bootstrap's JavaScript plugins) -->
@@ -18,7 +19,7 @@
     <body>
         <div class="container-fluid">
             <div class="panel panel-default" id="toolbar-panel">
-                <div class="panel-body" id="toolbary-panel-body">
+                <div class="panel-body" id="toolbar-panel-body">
                     <div class="btn-group" role="group" aria-label="...">
                         <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-save">
                             <span class="glyphicon glyphicon-floppy-disk glyphicon-toolbar"></span>
@@ -29,13 +30,13 @@
                         <a href="#" role="button" class="btn btn-default btn-toolbar" id="toolbar-build">
                             <span class="glyphicon glyphicon-wrench glyphicon-toolbar"></span>
                         </a>
-                    </div>  
+                    </div>
                 </div>
             </div>
 
             <div class="panel panel-default" id="reg-panel">
                 <div class="panel-body" id="reg-panel-body">
-                    <table class="table table-borderless" id="reg-table">
+                    <table class="table table-borderless table-value" id="reg-table"><tbody>
                         <tr>
                             <td class="reg-name">R0</td>
                             <td class="reg-hex" id="r0-hex"></td>
@@ -77,49 +78,21 @@
                             <td class="reg-hex" id="r7-hex"></td>
                             <td class="reg-dec" id="r7-dec"></td>
                             <td class="reg-name">CC</td>
-                            <td class="reg-hex" id="cc-hex"></td>
-                            <td class="reg-dec" id="cc-dec"></td>
+                            <td class="reg-hex" id="cc-str"></td>
+                            <td class="reg-dec"></td>
+                            <td></td>
                         </tr>
-                    </table>
+                    </tbody></table>
                 </div>
             </div>
 
             <div class="panel panel-default" id="mem-panel">
                 <div class="panel-body" id="mem-panel-body">
-                    <table class="table table-borderless table-hover" id="mem-table">
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                        <tr> <td class="reg-name">R3</td> </tr>
-                    </table>
+                    <table class="table table-borderless table-hover table-value" id="mem-table"><tbody>
+                    </tbody></table>
+                    <div class="scrollbar" id="mem-scrollbar">
+                        <div class="scrollbar-bar" id="mem-scrollbar-bar"></div>
+                    </div>
                 </div>
             </div>
 
@@ -132,6 +105,8 @@
         </div>
 
         <script src="js/common.js"></script>
+        <script src="js/simulator.js"></script>
+        <script src="js/mem_display.js"></script>
     </body>
 
 </html>

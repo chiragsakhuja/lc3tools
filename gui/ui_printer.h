@@ -16,6 +16,7 @@ namespace utils
         virtual void newline(void) override;
 
         std::vector<std::string> const & getOutputBuffer(void) { return output_buffer; }
+        void clearOutputBuffer(void) { output_buffer.clear(); }
     };
 };
 
@@ -32,7 +33,7 @@ void utils::UIPrinter::setColor(int color)
             pending_colors -= 1;
         }
     } else {
-        std::string format = "<span class=\"console-text-";
+        std::string format = "<span class=\"text-";
         switch(color)
         {
             case PRINT_COLOR_RED      : format += "red"    ; break;

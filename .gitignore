@@ -49,3 +49,6 @@ core/src/configured_paths.h
 gui/.electron-gyp
 gui/node_modules
 gui/build
+
+# Ignore css (since we're using scss)
+gui/app/css/*.css

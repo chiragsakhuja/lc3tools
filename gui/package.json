@@ -4,7 +4,9 @@
     "description": "A modern LC-3 assembler",
     "main": "main.js",
     "scripts": {
-        "start": "electron ."
+        "start": "electron .",
+        "build-css": "bin/build-css",
+        "watch-css": "nodemon -e scss -w app/css -x \"npm run build-css\""
     },
     "repository": "https://github.com/chiragsakhuja/lc3v2.git",
     "author": "Chirag Sakhuja",
@@ -17,10 +19,13 @@
         "jquery": "^3.2.1",
         "monaco-editor": "^0.8.3",
         "nan": "^2.6.2",
-        "remote": "^0.2.6"
+        "remote": "^0.2.6",
+        "sprintf-js": "^1.1.1"
     },
     "devDependencies": {
         "electron-packager": "^8.7.2",
-        "electron-rebuild": "^1.5.11"
+        "electron-rebuild": "^1.5.11",
+        "node-sass": "^4.5.3",
+        "nodemon": "^1.11.0"
     }
 }
