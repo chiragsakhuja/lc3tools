@@ -13,7 +13,9 @@ namespace utils {
         virtual void endInput(void) override;
 
     private:
+#if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32))
         int kbhit(void);
+#endif
     };
 };
 

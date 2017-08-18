@@ -20,7 +20,7 @@ namespace utils
 
 utils::UIPrinter printer;
 utils::UIInputter inputter;
-core::lc3 interface(printer, inputter);
+core::lc3 lc3interface(printer, inputter);
 
 NAN_METHOD(Assemble)
 {
@@ -35,7 +35,7 @@ NAN_METHOD(Assemble)
     std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
 
     try {
-        interface.assemble(asm_filename, obj_filename);
+        lc3interface.assemble(asm_filename, obj_filename);
     } catch(utils::exception const & e) {
         Nan::ThrowError(e.what());
     }

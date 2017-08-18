@@ -1,6 +1,4 @@
 #include <string>
-#include <unistd.h>
-#include <termios.h>
 
 #include "core.h"
 #include "console_printer.h"

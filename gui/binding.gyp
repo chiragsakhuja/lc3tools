@@ -14,10 +14,7 @@
                     'GCC_ENABLE_CPP_EXCEPTIONS': 'YES'
                 }
             }]],
-            'link_settings': {
-                'libraries': ['-Wl,-rpath,/Users/chirag/work/lc3v2/build/lib',
-                    '-L/Users/chirag/work/lc3v2/build/lib','-llc3core']
-            }
+	    'libraries': ['<(module_root_dir)/liblc3core.a']
         }
     ]
 }

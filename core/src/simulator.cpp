@@ -78,7 +78,7 @@ void core::Simulator::loadObjectFile(std::string const & filename)
 
 void core::Simulator::loadOS(void)
 {
-    loadObjectFile(std::string(GLOBAL_RES_PATH) + "/lc3os.obj");
+    loadObjectFile("lc3os.obj");
     state.pc = RESET_PC;
 }
 
