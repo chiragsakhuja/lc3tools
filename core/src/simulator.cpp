@@ -90,9 +90,15 @@ void core::Simulator::simulate(void)
     std::thread input_thread(&core::Simulator::handleInput, this);
 
     while(state.running && (state.mem[MCR].getValue() & 0x8000) != 0) {
-        if(pre_instruction_callback_v) {
+        if(!state.hit_breakpoint && pre_instruction_callback_v) {
             pre_instruction_callback(state);
+            // in case the pre instruction callback wants to disable simulation
+            if(state.hit_breakpoint) {
+                break;
+            }
         }
+        state.hit_breakpoint = false;
+
         std::vector<IStateChange const *> changes = executeInstruction();
         executeChangeChain(changes);
         updateDevices();
@@ -181,6 +187,7 @@ void core::Simulator::reset(void)
 
     state.mem[MCR].setValue(0x8000);  // indicate the machine is running
     state.running = true;
+    state.hit_breakpoint = false;
 }
 
 void core::Simulator::registerPreInstructionCallback(std::function<void(MachineState & state)> func)

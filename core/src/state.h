@@ -20,6 +20,7 @@ namespace core
         std::vector<char> console_buffer;
 
         bool running;
+        bool hit_breakpoint;
 
         uint32_t readMem(uint32_t addr, bool & change_mem, IStateChange *& change) const;
     };

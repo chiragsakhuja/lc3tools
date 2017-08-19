@@ -34,7 +34,7 @@ NAN_METHOD(GetRegValue)
     v8::String::Utf8Value str(info[0]->ToString());
     std::string reg_name((char const *) *str);
 
-    core::MachineState const & state = interface.getMachineState();
+    core::MachineState const & state = lc3interface.getMachineState();
     if(reg_name[0] == 'r') {
         uint32_t reg_num = reg_name[1] - '0';
         if(reg_num > 7) {
@@ -62,7 +62,7 @@ NAN_METHOD(GetMemValue)
     }
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
-    core::MachineState const & state = interface.getMachineState();
+    core::MachineState const & state = lc3interface.getMachineState();
     auto ret = Nan::New<v8::Number>(state.mem[addr].getValue());
     info.GetReturnValue().Set(ret);
 }
@@ -75,12 +75,12 @@ NAN_METHOD(GetMemLine)
     }
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
-    core::MachineState const & state = interface.getMachineState();
+    core::MachineState const & state = lc3interface.getMachineState();
     auto ret = Nan::New<v8::String>(state.mem[addr].getLine()).ToLocalChecked();
     info.GetReturnValue().Set(ret);
 }
 
-NAN_METHOD(InitializeSimulator) { interface.initializeSimulator(); }
+NAN_METHOD(InitializeSimulator) { lc3interface.initializeSimulator(); }
 NAN_METHOD(ClearOutputBuffer) { printer.clearOutputBuffer(); }
 
 NAN_METHOD(Assemble)

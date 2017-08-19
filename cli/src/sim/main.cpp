@@ -6,8 +6,11 @@
 #include "console_printer.h"
 #include "console_inputter.h"
 
+std::string getMemDisplayString(uint32_t addr);
 void help(void);
 bool prompt(void);
+bool promptMain(std::stringstream & command_tokens);
+void promptBreak(std::stringstream & command_tokens);
 void preInstructionCallback(core::MachineState & state);
 void postInstructionCallback(core::MachineState & state);
 
@@ -18,6 +21,22 @@ core::lc3 interface(printer, inputter);
 uint32_t total_instructions = 0;
 uint32_t target_instructions = 0;
 bool limited_run = false;
+
+struct Breakpoint
+{
+    uint32_t id, loc;
+
+    friend std::ostream & operator<<(std::ostream &, Breakpoint &);
+};
+
+std::ostream & operator<<(std::ostream & out, Breakpoint & x)
+{
+    out << "#" << x.id << ": " << getMemDisplayString(x.loc);
+    return out;
+}
+
+uint32_t breakpoint_id = 0;
+std::vector<Breakpoint> breakpoints;
 
 int main(int argc, char * argv[])
 {
@@ -39,20 +58,35 @@ int main(int argc, char * argv[])
 
 void help(void)
 {
-    std::cout << "help               - display this information\n"
-              << "list               - display the next instruction to be executed\n"
-              << "load filename      - loads an object file\n"
-              << "mem start end      - display values in memory addresses start to end\n"
-              << "quit               - exit the simulator\n"
-              << "regs               - display register values\n"
-              << "run [instructions] - runs to end of program or, if specified, the number of instructions\n"
+    std::cout << "break <action> [args...] - performs action (set, clear, or help)\n"
+              << "help                     - display this message\n"
+              << "list                     - display the next instruction to be executed\n"
+              << "load filename            - loads an object file\n"
+              << "mem <start> <end>        - display values in memory addresses start to end\n"
+              << "quit                     - exit the simulator\n"
+              << "regs                     - display register values\n"
+              << "run [instructions]       - runs to end of program or, if specified, the number of instructions\n"
+              << "set <loc> <value>        - sets loc (either register name or memoery address) to value\n"
               ;
 }
 
-void displayMem(core::MachineState const & state, uint32_t addr)
+void breakHelp(void)
 {
-    std::cout << utils::ssprintf("0x%0.4X: 0x%0.4X %s", addr, state.mem[addr].getValue(),
+    std::cout << "break clear <id>  - clears the given breakpoint\n"
+              << "break help        - display this message\n"
+              << "break list        - display the active breakpoints\n"
+              << "break set <loc>   - sets a breakpoint at the given location\n"
+              ;
+}
+
+std::string getMemDisplayString(uint32_t addr)
+{
+    core::MachineState & state = interface.getMachineState();
+
+    std::stringstream out;
+    out << utils::ssprintf("0x%0.4X: 0x%0.4X %s", addr, state.mem[addr].getValue(),
         state.mem[addr].getLine().c_str());
+    return out.str();
 }
 
 bool prompt(void)
@@ -61,12 +95,20 @@ bool prompt(void)
     std::string command_line;
     std::getline(std::cin, command_line);
     std::stringstream command_tokens(command_line);
+
+    return promptMain(command_tokens);
+}
+
+bool promptMain(std::stringstream & command_tokens)
+{
     std::string command;
     command_tokens >> command;
 
     core::MachineState & state = interface.getMachineState();
 
-    if(command == "help") {
+    if(command == "break") {
+        promptBreak(command_tokens);
+    } else if(command == "help") {
         help();
     } else if(command == "list") {
         for(int32_t pos = -2; pos <= 2; pos += 1) {
@@ -76,8 +118,7 @@ bool prompt(void)
                 } else {
                     std::cout << "    ";
                 }
-                displayMem(state, state.pc + pos);
-                std::cout << "\n";
+                std::cout << getMemDisplayString(state.pc + pos) << "\n";
             }
         }
     } else if(command == "mem") {
@@ -99,8 +140,7 @@ bool prompt(void)
 
         for(uint32_t addr = start; addr <= end; addr += 1) {
             if(addr < 0xffff) {
-                displayMem(state, addr);
-                std::cout << "\n";
+                std::cout << getMemDisplayString(addr) << "\n";
             }
         }
     } else if(command == "load") {
@@ -147,8 +187,67 @@ bool prompt(void)
     return true;
 }
 
+void promptBreak(std::stringstream & command_tokens)
+{
+    std::string command;
+    command_tokens >> command;
+    if(command_tokens.fail()) {
+        std::cout << "must provide action\n";
+        return;
+    }
+
+    if(command == "clear") {
+        uint32_t id;
+        command_tokens >> id;
+        if(command_tokens.fail()) {
+            std::cout << "must supply\n";
+            return;
+        }
+
+        if(id >= breakpoints.size()) {
+            std::cout << "invalid id\n";
+            return;
+        }
+
+        breakpoints.erase(breakpoints.begin() + id);
+    } else if(command == "help") {
+        breakHelp();
+    } else if(command == "list") {
+        for(auto x : breakpoints) {
+            std::cout << x << "\n";
+        }
+    } else if(command == "set") {
+        std::string loc_s;
+        command_tokens >> loc_s;
+        if(command_tokens.fail()) {
+            std::cout << "must supply location\n";
+            return;
+        }
+
+        uint32_t loc;
+        try {
+            loc = std::stoi(loc_s, 0, 0);
+        } catch(std::exception const & e) {
+            std::cout << "invalid arguments\n";
+            return;
+        }
+
+        if(loc < 0xffff) {
+            breakpoints.push_back(Breakpoint{breakpoint_id, loc});
+            breakpoint_id += 1;
+        }
+    }
+}
+
 void preInstructionCallback(core::MachineState & state)
 {
+    for(auto x : breakpoints) {
+        if(state.pc == x.loc) {
+            std::cout << "hit a breakpoint\n" << x << "\n";
+            state.hit_breakpoint = true;
+            break;
+        }
+    }
 }
 
 void postInstructionCallback(core::MachineState & state)
