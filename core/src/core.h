@@ -53,6 +53,12 @@ namespace core {
         void registerPostInstructionCallback(std::function<void(MachineState & state)> func) {
             sim.registerPostInstructionCallback(func);
         }
+        void registerInterruptEnterCallback(std::function<void(MachineState & state)> func) {
+            sim.registerInterruptEnterCallback(func);
+        }
+        void registerInterruptExitCallback(std::function<void(MachineState & state)> func) {
+            sim.registerInterruptExitCallback(func);
+        }
         MachineState & getMachineState(void) { return sim.getMachineState(); }
 
     private:

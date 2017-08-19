@@ -29,6 +29,13 @@ namespace utils {
         exception(std::string const & msg) : std::runtime_error(msg) {}
         virtual const char * what(void) const noexcept override { return std::runtime_error::what(); }
     };
+
+    class fatal_exception : public std::runtime_error
+    {
+    public:
+        fatal_exception(std::string const & msg) : std::runtime_error(msg) {}
+        virtual const char * what(void) const noexcept override { return std::runtime_error::what(); }
+    };
 };
 
 #endif

@@ -429,8 +429,32 @@ std::vector<core::IStateChange const *> core::NOTInstruction::execute(MachineSta
 
 std::vector<core::IStateChange const *> core::RTIInstruction::execute(MachineState const & state)
 {
-    // TODO: update state to have system stack pointer (see how existing simulator does it)
-    (void) state;
+    if((state.pc & 0x8000) == 0x0000) {
+        bool pc_change_mem;
+        IStateChange * pc_change;
+        uint32_t pc_value = state.readMem(state.regs[6], pc_change_mem, pc_change);
+
+        bool psr_change_mem;
+        IStateChange * psr_change;
+        uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
+
+        std::vector<IStateChange const *> ret {
+            new PCStateChange(pc_value),
+            new PSRStateChange(psr_value)
+        };
+
+        if(pc_change_mem) {
+            ret.push_back(pc_change);
+        }
+
+        if(psr_change_mem) {
+            ret.push_back(psr_change);
+        }
+
+        return ret;
+    }
+
+    // TODO: trigger exception
     return std::vector<IStateChange const *> {};
 }
 

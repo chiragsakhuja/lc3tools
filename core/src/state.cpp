@@ -1,4 +1,5 @@
 #include <array>
+#include <cassert>
 #include <cstdint>
 #include <mutex>
 #include <string>
@@ -22,6 +23,8 @@ namespace core
 
 uint32_t core::MachineState::readMem(uint32_t addr, bool & change_mem, IStateChange *& change) const
 {
+    assert(addr < 0xffff);
+
     change_mem = false;
     change = nullptr;
 
@@ -41,10 +44,15 @@ uint32_t core::MachineState::readMem(uint32_t addr, bool & change_mem, IStateCha
 
 void core::MemWriteStateChange::updateState(MachineState & state) const
 {
+    assert(addr < 0xffff);
+
     if(addr == DDR) {
         char char_value = (char) (value & 0xff);
         state.logger.print(std::string(1, char_value));
         state.console_buffer.push_back(char_value);
+    } else if(addr == KBSR) {
+        state.mem[addr].setValue(value & 0x4000);
+        return;
     }
 
     state.mem[addr].setValue(value);
@@ -52,7 +60,7 @@ void core::MemWriteStateChange::updateState(MachineState & state) const
 
 void core::SwapSPStateChange::updateState(MachineState & state) const
 {
-    uint32_t old_sp = state.regs[7];
-    state.regs[7] = state.backup_sp;
+    uint32_t old_sp = state.regs[6];
+    state.regs[6] = state.backup_sp;
     state.backup_sp = old_sp;
 }

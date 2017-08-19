@@ -13,6 +13,7 @@ bool promptMain(std::stringstream & command_tokens);
 void promptBreak(std::stringstream & command_tokens);
 void preInstructionCallback(core::MachineState & state);
 void postInstructionCallback(core::MachineState & state);
+void interruptEnterCallback(core::MachineState & state);
 
 utils::ConsolePrinter printer;
 utils::ConsoleInputter inputter;
@@ -44,6 +45,7 @@ int main(int argc, char * argv[])
 
     interface.registerPreInstructionCallback(preInstructionCallback);
     interface.registerPostInstructionCallback(postInstructionCallback);
+    interface.registerInterruptEnterCallback(interruptEnterCallback);
     interface.initializeSimulator();
     for(int i = 1; i < argc; i += 1) {
         try {
@@ -256,4 +258,9 @@ void postInstructionCallback(core::MachineState & state)
     if(limited_run && total_instructions == target_instructions) {
         state.running = false;
     }
+}
+
+void interruptEnterCallback(core::MachineState & state)
+{
+    std::cout << "entered interrupt\n";
 }

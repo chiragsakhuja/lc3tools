@@ -392,7 +392,7 @@ namespace core {
     {
     public:
         RTIInstruction(void) : IInstruction("rti", {
-            new FixedOperand(4, 0x0),
+            new FixedOperand(4, 0x8),
             new FixedOperand(12, 0x0)
         }) {}
         virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
@@ -430,7 +430,7 @@ namespace core {
             new FixedOperand(4, 0x7),
             new RegOperand(3),
             new RegOperand(3),
-            new LabelOperand(6)
+            new NumOperand(6, true)
         }) {}
         virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
         virtual STRInstruction * clone(void) const override { return new STRInstruction(*this); }

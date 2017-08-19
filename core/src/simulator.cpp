@@ -17,7 +17,7 @@
 #include "tokens.h"
 
 #include "inputter.h"
- 
+
 #include "printer.h"
 #include "logger.h"
 
@@ -37,8 +37,9 @@ namespace core {
 };
 
 core::Simulator::Simulator(bool log_enable, utils::IPrinter & printer, utils::IInputter & inputter) :
-    pre_instruction_callback_v(false), post_instruction_callback_v(false), state(logger), logger(log_enable, printer),
-    inputter(inputter), collecting_input(false)
+    pre_instruction_callback_v(false), post_instruction_callback_v(false), interrupt_enter_callback_v(false),
+    interrupt_exit_callback_v(false), state(logger), logger(log_enable, printer), inputter(inputter),
+    collecting_input(false)
 {
     state.mem.resize(1 << 16);
     reset();
@@ -105,8 +106,15 @@ void core::Simulator::simulate(void)
         if(post_instruction_callback_v) {
             post_instruction_callback(state);
         }
-        changes = checkAndSetupInterrupts();
-        executeChangeChain(changes);
+
+        bool interrupt_triggered;
+        changes = checkAndSetupInterrupts(interrupt_triggered);
+        if(interrupt_triggered) {
+            executeChangeChain(changes);
+            if(interrupt_enter_callback_v) {
+                interrupt_enter_callback(state);
+            }
+        }
     }
 
     state.running = false;
@@ -141,19 +149,21 @@ void core::Simulator::updateDevices(void)
     state.mem[DSR].setValue(value | 0x8000);
 }
 
-std::vector<core::IStateChange const *> core::Simulator::checkAndSetupInterrupts(void)
+std::vector<core::IStateChange const *> core::Simulator::checkAndSetupInterrupts(bool & interrupt_triggered)
 {
     std::vector<IStateChange const *> ret;
 
     uint32_t value = state.mem[KBSR].getValue();
+    interrupt_triggered = false;
     if((value & 0xC000) == 0xC000) {
-        ret.push_back(new SwapSPStateChange());
-        ret.push_back(new RegStateChange(7, state.regs[7] - 1));
-        ret.push_back(new MemWriteStateChange(state.regs[7], state.pc));
-        ret.push_back(new RegStateChange(7, state.regs[7] - 1));
-        ret.push_back(new MemWriteStateChange(state.regs[7], state.psr));
+        ret.push_back(new RegStateChange(6, state.regs[6] - 1));
+        ret.push_back(new MemWriteStateChange(state.regs[6] - 1, state.psr));
+        ret.push_back(new RegStateChange(6, state.regs[6] - 2));
+        ret.push_back(new MemWriteStateChange(state.regs[6] - 2, state.pc));
         ret.push_back(new PSRStateChange((state.psr & 0x78FF) | 0x0400));
         ret.push_back(new PCStateChange(state.mem[0x0180].getValue()));
+        ret.push_back(new MemWriteStateChange(KBSR, state.mem[KBSR].getValue() & 0x7fff));
+        interrupt_triggered = true;
     }
 
     return ret;
@@ -200,6 +210,18 @@ void core::Simulator::registerPostInstructionCallback(std::function<void(Machine
 {
     post_instruction_callback_v = true;
     post_instruction_callback = func;
+}
+
+void core::Simulator::registerInterruptEnterCallback(std::function<void(MachineState & state)> func)
+{
+    interrupt_enter_callback_v = true;
+    interrupt_enter_callback = func;
+}
+
+void core::Simulator::registerInterruptExitCallback(std::function<void(MachineState & state)> func)
+{
+    interrupt_exit_callback_v = true;
+    interrupt_exit_callback = func;
 }
 
 void core::Simulator::handleInput(void)

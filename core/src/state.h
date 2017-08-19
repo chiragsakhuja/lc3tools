@@ -102,7 +102,7 @@ namespace core
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("R7 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[7], state.backup_sp);
+            return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.backup_sp);
         }
     };
 };
