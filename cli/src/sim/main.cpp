@@ -10,6 +10,9 @@ void help(void);
 bool prompt(void);
 bool promptMain(std::stringstream & command_tokens);
 void promptBreak(std::stringstream & command_tokens);
+std::string formatMem(uint32_t addr);
+std::ostream & operator<<(std::ostream & out, Breakpoint const & x);
+void breakpointHitCallback(core::MachineState & state, Breakpoint const & bp);
 
 int main(int argc, char * argv[])
 {
@@ -18,6 +21,8 @@ int main(int argc, char * argv[])
     utils::ConsolePrinter printer;
     utils::ConsoleInputter inputter;
     coreInit(printer, inputter);
+
+    coreRegisterBreakpointHitCallback(breakpointHitCallback);
 
     for(int i = 1; i < argc; i += 1) {
         coreLoadSimulatorWithFile(std::string(argv[i]));
@@ -79,7 +84,7 @@ bool promptMain(std::stringstream & command_tokens)
                 } else {
                     std::cout << "    ";
                 }
-                std::cout << coreFormatMem(pc + pos) << "\n";
+                std::cout << formatMem(pc + pos) << "\n";
             }
         }
     } else if(command == "mem") {
@@ -101,7 +106,7 @@ bool promptMain(std::stringstream & command_tokens)
 
         for(uint32_t addr = start; addr <= end; addr += 1) {
             if(addr < 0xffff) {
-                std::cout << coreFormatMem(addr) << "\n";
+                std::cout << formatMem(addr) << "\n";
             }
         }
     } else if(command == "load") {
@@ -194,3 +199,23 @@ void promptBreak(std::stringstream & command_tokens)
     }
 }
 
+std::string formatMem(uint32_t addr)
+{
+    std::stringstream out;
+    uint32_t value = coreGetMemVal(addr);
+    std::string line = coreGetMemLine(addr);
+    out << utils::ssprintf("0x%0.4X: 0x%0.4X %s", addr, value, line.c_str());
+    return out.str();
+}
+
+std::ostream & operator<<(std::ostream & out, Breakpoint const & x)
+{
+    out << "#" << x.id << ": " << formatMem(x.loc);
+    return out;
+}
+
+void breakpointHitCallback(core::MachineState & state, Breakpoint const & bp)
+{
+    (void) state;
+    std::cout << "hit a breakpoint\n" << bp << "\n";
+}

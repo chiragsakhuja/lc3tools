@@ -18,16 +18,14 @@ void coreRegisterPreInstructionCallback(core::callback_func_t func);
 void coreRegisterPostInstructionCallback(core::callback_func_t func);
 void coreRegisterInterruptEnterCallback(core::callback_func_t func);
 void coreRegisterInterruptExitCallback(core::callback_func_t func);
+void coreRegisterBreakpointHitCallback(std::function<void(core::MachineState & state, Breakpoint const & bp)> func);
 
 uint32_t coreGetReg(uint32_t id);
 uint32_t coreGetPC(void);
 uint32_t coreGetMemVal(uint32_t addr);
 std::string coreGetMemLine(uint32_t addr);
 
-std::ostream & operator<<(std::ostream & out, Breakpoint & x);
 Breakpoint coreSetBreakpoint(uint32_t addr);
 bool coreRemoveBreakpoint(uint32_t id);
-
-std::string coreFormatMem(uint32_t addr);
 
 #endif

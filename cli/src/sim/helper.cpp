@@ -23,6 +23,8 @@ bool interrupt_enter_callback_v = false;
 core::callback_func_t interrupt_enter_callback;
 bool interrupt_exit_callback_v = false;
 core::callback_func_t interrupt_exit_callback;
+bool breakpoint_hit_callback_v = false;
+std::function<void(core::MachineState & state, Breakpoint const & bp)> breakpoint_hit_callback;
 
 void corePreInstructionCallback(core::MachineState & state);
 void corePostInstructionCallback(core::MachineState & state);
@@ -53,21 +55,6 @@ void coreLoadSimulatorWithFile(std::string const & filename)
     } catch (utils::exception const & e) {}
 }
 
-void corePreInstructionCallback(core::MachineState & state)
-{
-    for(auto x : breakpoints) {
-        if(state.pc == x.loc) {
-            std::cout << "hit a breakpoint\n" << x << "\n";
-            state.hit_breakpoint = true;
-            break;
-        }
-    }
-
-    if(pre_instruction_callback_v) {
-        pre_instruction_callback(state);
-    }
-}
-
 bool coreRun(void)
 {
     limited_run = false;
@@ -89,6 +76,54 @@ bool coreRunFor(uint32_t inst_count)
         return false;
     }
     return true;
+}
+
+void coreRegisterPreInstructionCallback(core::callback_func_t func)
+{
+    pre_instruction_callback_v = true;
+    pre_instruction_callback = func;
+}
+
+void coreRegisterPostInstructionCallback(core::callback_func_t func)
+{
+    post_instruction_callback_v = true;
+    post_instruction_callback = func;
+}
+
+void coreRegisterInterruptEnterCallback(core::callback_func_t func)
+{
+    interrupt_enter_callback_v = true;
+    interrupt_enter_callback = func;
+}
+
+
+void coreRegisterInterruptExitCallback(core::callback_func_t func)
+{
+    interrupt_exit_callback_v = true;
+    interrupt_exit_callback = func;
+}
+
+void coreRegisterBreakpointHitCallback(std::function<void(core::MachineState & state, Breakpoint const & bp)> func)
+{
+    breakpoint_hit_callback_v = true;
+    breakpoint_hit_callback = func;
+}
+
+void corePreInstructionCallback(core::MachineState & state)
+{
+    for(auto const & x : breakpoints) {
+        if(state.pc == x.loc) {
+            if(breakpoint_hit_callback_v) {
+                breakpoint_hit_callback(state, x);
+            }
+            state.hit_breakpoint = true;
+            break;
+        }
+    }
+
+    if(pre_instruction_callback_v) {
+        pre_instruction_callback(state);
+    }
 }
 
 void corePostInstructionCallback(core::MachineState & state)
@@ -174,19 +209,4 @@ bool coreRemoveBreakpoint(uint32_t id)
     }
 
     return found;
-}
-
-std::ostream & operator<<(std::ostream & out, Breakpoint & x)
-{
-    out << "#" << x.id << ": " << coreFormatMem(x.loc);
-    return out;
-}
-
-std::string coreFormatMem(uint32_t addr)
-{
-    std::stringstream out;
-    uint32_t value = coreGetMemVal(addr);
-    std::string line = coreGetMemLine(addr);
-    out << utils::ssprintf("0x%0.4X: 0x%0.4X %s", addr, value, line.c_str());
-    return out.str();
 }
