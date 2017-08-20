@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -140,7 +141,12 @@ bool promptMain(std::stringstream & command_tokens)
         uint32_t inst_count;
         command_tokens >> inst_count;
         if(command_tokens.fail()) {
+            auto start_count = inst_exec_count;
+            auto start_time = std::chrono::steady_clock::now();
             coreRun();
+            auto end_time = std::chrono::steady_clock::now();
+            auto end_count = inst_exec_count;
+            std::cout << "Executed " << (end_count - start_count) << " instructions in " << std::chrono::duration<double, std::milli>(end_time - start_time).count() << " ms\n";
         } else {
             coreRunFor(inst_count);
         }
