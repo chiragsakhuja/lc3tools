@@ -2,55 +2,25 @@
 #include <sstream>
 #include <string>
 
-#include "core.h"
+#include "helper.h"
 #include "console_printer.h"
 #include "console_inputter.h"
 
-std::string getMemDisplayString(uint32_t addr);
 void help(void);
 bool prompt(void);
 bool promptMain(std::stringstream & command_tokens);
 void promptBreak(std::stringstream & command_tokens);
-void preInstructionCallback(core::MachineState & state);
-void postInstructionCallback(core::MachineState & state);
-void interruptEnterCallback(core::MachineState & state);
-
-utils::ConsolePrinter printer;
-utils::ConsoleInputter inputter;
-core::lc3 interface(printer, inputter);
-
-uint32_t total_instructions = 0;
-uint32_t target_instructions = 0;
-bool limited_run = false;
-
-struct Breakpoint
-{
-    uint32_t id, loc;
-
-    friend std::ostream & operator<<(std::ostream &, Breakpoint &);
-};
-
-std::ostream & operator<<(std::ostream & out, Breakpoint & x)
-{
-    out << "#" << x.id << ": " << getMemDisplayString(x.loc);
-    return out;
-}
-
-uint32_t breakpoint_id = 0;
-std::vector<Breakpoint> breakpoints;
 
 int main(int argc, char * argv[])
 {
     help();
 
-    interface.registerPreInstructionCallback(preInstructionCallback);
-    interface.registerPostInstructionCallback(postInstructionCallback);
-    interface.registerInterruptEnterCallback(interruptEnterCallback);
-    interface.initializeSimulator();
+    utils::ConsolePrinter printer;
+    utils::ConsoleInputter inputter;
+    coreInit(printer, inputter);
+
     for(int i = 1; i < argc; i += 1) {
-        try {
-            interface.loadSimulatorWithFile(std::string(argv[i]));
-        } catch (utils::exception const & e) {}
+        coreLoadSimulatorWithFile(std::string(argv[i]));
     }
 
     while(prompt()) {}
@@ -81,16 +51,6 @@ void breakHelp(void)
               ;
 }
 
-std::string getMemDisplayString(uint32_t addr)
-{
-    core::MachineState & state = interface.getMachineState();
-
-    std::stringstream out;
-    out << utils::ssprintf("0x%0.4X: 0x%0.4X %s", addr, state.mem[addr].getValue(),
-        state.mem[addr].getLine().c_str());
-    return out.str();
-}
-
 bool prompt(void)
 {
     std::cout << "> ";
@@ -106,21 +66,20 @@ bool promptMain(std::stringstream & command_tokens)
     std::string command;
     command_tokens >> command;
 
-    core::MachineState & state = interface.getMachineState();
-
     if(command == "break") {
         promptBreak(command_tokens);
     } else if(command == "help") {
         help();
     } else if(command == "list") {
+        uint32_t pc = coreGetPC();
         for(int32_t pos = -2; pos <= 2; pos += 1) {
-            if(state.pc + pos > 0) {
+            if(((int32_t) pc) + pos > 0) {
                 if(pos == 0) {
                     std::cout << "--> ";
                 } else {
                     std::cout << "    ";
                 }
-                std::cout << getMemDisplayString(state.pc + pos) << "\n";
+                std::cout << coreFormatMem(pc + pos) << "\n";
             }
         }
     } else if(command == "mem") {
@@ -142,7 +101,7 @@ bool promptMain(std::stringstream & command_tokens)
 
         for(uint32_t addr = start; addr <= end; addr += 1) {
             if(addr < 0xffff) {
-                std::cout << getMemDisplayString(addr) << "\n";
+                std::cout << coreFormatMem(addr) << "\n";
             }
         }
     } else if(command == "load") {
@@ -153,16 +112,15 @@ bool promptMain(std::stringstream & command_tokens)
             return true;
         }
 
-        try {
-            interface.loadSimulatorWithFile(filename);
-        } catch(utils::exception const & e) {}
+        coreLoadSimulatorWithFile(filename);
     } else if(command == "quit") {
         return false;
     } else if(command == "regs") {
         for(uint32_t i = 0; i < 2; i += 1) {
             for(uint32_t j = 0; j < 4; j += 1) {
                 uint32_t reg = i * 4 + j;
-                std::cout << utils::ssprintf("R%u: 0x%0.4X (%5d)", reg, state.regs[reg], state.regs[reg]);
+                uint32_t value = coreGetReg(reg);
+                std::cout << utils::ssprintf("R%u: 0x%0.4X (%5d)", reg, value, value);
                 if(j != 3) {
                     std::cout << "    ";
                 }
@@ -170,18 +128,13 @@ bool promptMain(std::stringstream & command_tokens)
             std::cout << "\n";
         }
     } else if(command == "run") {
-        uint32_t num_instructions;
-        command_tokens >> num_instructions;
+        uint32_t inst_count;
+        command_tokens >> inst_count;
         if(command_tokens.fail()) {
-            limited_run = false;
+            coreRun();
         } else {
-            target_instructions = total_instructions + num_instructions;
-            limited_run = true;
+            coreRunFor(inst_count);
         }
-
-        try {
-            interface.simulate();
-        } catch(utils::exception const & e) {}
     } else {
         std::cout << "unknown command\n";
     }
@@ -202,16 +155,15 @@ void promptBreak(std::stringstream & command_tokens)
         uint32_t id;
         command_tokens >> id;
         if(command_tokens.fail()) {
-            std::cout << "must supply\n";
+            std::cout << "must supply id\n";
             return;
         }
 
-        if(id >= breakpoints.size()) {
+        bool removed = coreRemoveBreakpoint(id);
+        if(! removed) {
             std::cout << "invalid id\n";
             return;
         }
-
-        breakpoints.erase(breakpoints.begin() + id);
     } else if(command == "help") {
         breakHelp();
     } else if(command == "list") {
@@ -234,32 +186,11 @@ void promptBreak(std::stringstream & command_tokens)
             return;
         }
 
-        if(loc < 0xffff) {
-            breakpoints.push_back(Breakpoint{breakpoint_id, loc});
-            breakpoint_id += 1;
-        }
+        Breakpoint bp = coreSetBreakpoint(loc);
+        std::cout << bp << "\n";
+
+    } else  {
+        std::cout << "unknown command\n";
     }
 }
 
-void preInstructionCallback(core::MachineState & state)
-{
-    for(auto x : breakpoints) {
-        if(state.pc == x.loc) {
-            std::cout << "hit a breakpoint\n" << x << "\n";
-            state.hit_breakpoint = true;
-            break;
-        }
-    }
-}
-
-void postInstructionCallback(core::MachineState & state)
-{
-    total_instructions += 1;
-    if(limited_run && total_instructions == target_instructions) {
-        state.running = false;
-    }
-}
-
-void interruptEnterCallback(core::MachineState & state)
-{
-}

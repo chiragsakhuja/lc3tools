@@ -1,5 +1,6 @@
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <string>
 #include <stdexcept>

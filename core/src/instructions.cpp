@@ -1,4 +1,5 @@
 #include <array>
+#include <functional>
 #include <map>
 #include <sstream>
 #include <stdexcept>

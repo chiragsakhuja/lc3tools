@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <functional>
 #include <fstream>
 #include <list>
 #include <map>

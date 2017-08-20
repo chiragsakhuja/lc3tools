@@ -367,7 +367,7 @@ namespace core {
     {
     public:
         NOTInstruction(void) : IInstruction("not", {
-            new FixedOperand(4, 0x0),
+            new FixedOperand(4, 0x9),
             new RegOperand(3),
             new RegOperand(3),
             new FixedOperand(6, 0x3f)

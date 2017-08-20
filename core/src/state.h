@@ -23,6 +23,18 @@ namespace core
         bool hit_breakpoint;
 
         uint32_t readMem(uint32_t addr, bool & change_mem, IEvent *& change) const;
+
+    private:
+        bool pre_instruction_callback_v;
+        bool post_instruction_callback_v;
+        bool interrupt_enter_callback_v;;
+        bool interrupt_exit_callback_v;;
+        std::function<void(MachineState & state)> pre_instruction_callback;
+        std::function<void(MachineState & state)> post_instruction_callback;
+        std::function<void(MachineState & state)> interrupt_enter_callback;
+        std::function<void(MachineState & state)> interrupt_exit_callback;
+
+        friend class Simulator;
     };
 
     enum class EventType {
@@ -31,6 +43,7 @@ namespace core
         , EVENT_PC
         , EVENT_MEM
         , EVENT_SWAP_SP
+        , EVENT_CALLBACK
     };
 
     class IEvent
@@ -104,6 +117,18 @@ namespace core
         virtual std::string getOutputString(MachineState const & state) const override {
             return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.backup_sp);
         }
+    };
+
+    class CallbackEvent : public IEvent
+    {
+    public:
+        CallbackEvent(bool callback_v, std::function<void(MachineState & state)> callback) :
+            IEvent(EventType::EVENT_CALLBACK), callback_v(callback_v), callback(callback) {}
+        virtual void updateState(MachineState & state) const override { if(callback_v) { callback(state); } }
+        virtual std::string getOutputString(MachineState const & state) const override { (void)state; return ""; }
+    private:
+        bool callback_v;
+        std::function<void(MachineState & state)> callback;
     };
 };
 

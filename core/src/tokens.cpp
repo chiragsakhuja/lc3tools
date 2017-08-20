@@ -1,5 +1,6 @@
 #include <array>
 #include <iostream>
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>

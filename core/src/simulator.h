@@ -22,14 +22,6 @@ namespace core
         MachineState & getMachineState(void) { return state; }
     private:
         InstructionDecoder decoder;
-        bool pre_instruction_callback_v;
-        bool post_instruction_callback_v;
-        bool interrupt_enter_callback_v;;
-        bool interrupt_exit_callback_v;;
-        std::function<void(MachineState & state)> pre_instruction_callback;
-        std::function<void(MachineState & state)> post_instruction_callback;
-        std::function<void(MachineState & state)> interrupt_enter_callback;
-        std::function<void(MachineState & state)> interrupt_exit_callback;
 
         MachineState state;
 
@@ -39,8 +31,9 @@ namespace core
         std::atomic<bool> collecting_input;
 
         std::vector<core::IEvent const *> executeInstruction(void);
-        std::vector<core::IEvent const *> checkAndSetupInterrupts(bool & interrupt_triggered);
+        std::vector<core::IEvent const *> checkAndSetupInterrupts();
         void executeEventChain(std::vector<core::IEvent const *> & events);
+        void executeEvent(core::IEvent const & event);
         void updateDevices(void);
         void handleInput(void);
     };

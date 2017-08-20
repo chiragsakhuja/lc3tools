@@ -32,6 +32,8 @@
 #include "assembler.h"
 
 namespace core {
+    using callback_func_t = std::function<void(MachineState & state)>;
+
     class lc3
     {
     public:
@@ -47,16 +49,16 @@ namespace core {
         void loadSimulatorWithFile(std::string const & obj_filename) { sim.loadObjectFile(obj_filename); }
         void simulate(void) { sim.simulate(); }
         void resetSimulator(void) { sim.reset(); }
-        void registerPreInstructionCallback(std::function<void(MachineState & state)> func) {
+        void registerPreInstructionCallback(callback_func_t func) {
             sim.registerPreInstructionCallback(func);
         }
-        void registerPostInstructionCallback(std::function<void(MachineState & state)> func) {
+        void registerPostInstructionCallback(callback_func_t func) {
             sim.registerPostInstructionCallback(func);
         }
-        void registerInterruptEnterCallback(std::function<void(MachineState & state)> func) {
+        void registerInterruptEnterCallback(callback_func_t func) {
             sim.registerInterruptEnterCallback(func);
         }
-        void registerInterruptExitCallback(std::function<void(MachineState & state)> func) {
+        void registerInterruptExitCallback(callback_func_t func) {
             sim.registerInterruptExitCallback(func);
         }
         MachineState & getMachineState(void) { return sim.getMachineState(); }
