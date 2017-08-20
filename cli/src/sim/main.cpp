@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -35,7 +36,7 @@ int main(int argc, char * argv[])
 
 void help(void)
 {
-    std::cout << "break <action> [args...] - performs action (set, clear, or help)\n"
+    std::cout << "break <action> [args...] - performs action (see break help for details)\n"
               << "help                     - display this message\n"
               << "list                     - display the next instruction to be executed\n"
               << "load filename            - loads an object file\n"
@@ -100,7 +101,7 @@ bool promptMain(std::stringstream & command_tokens)
             start = std::stoi(start_s, 0, 0);
             end = std::stoi(end_s, 0, 0);
         } catch(std::exception const & e) {
-            std::cout << "invalid arguments\n";
+            std::cout << "invalid value\n";
             return true;
         }
 
@@ -132,6 +133,9 @@ bool promptMain(std::stringstream & command_tokens)
             }
             std::cout << "\n";
         }
+        std::cout << utils::ssprintf("PC: 0x%0.4X\n", coreGetPC());
+        std::cout << utils::ssprintf("PSR: 0x%0.4X\n", coreGetPSR());
+        std::cout << utils::ssprintf("CC: %c\n", coreGetCC());
     } else if(command == "run") {
         uint32_t inst_count;
         command_tokens >> inst_count;
@@ -139,6 +143,37 @@ bool promptMain(std::stringstream & command_tokens)
             coreRun();
         } else {
             coreRunFor(inst_count);
+        }
+    } else if(command == "set") {
+        std::string loc_s, val_s;
+        command_tokens >> loc_s >> val_s;
+        if(command_tokens.fail()) {
+            std::cout << "must supply location and value\n";
+            return true;
+        }
+
+        uint32_t val;
+        try {
+            val = std::stoi(val_s, 0, 0);
+        } catch(std::exception const & e) {
+            std::cout << "invalid value\n";
+            return true;
+        }
+
+        std::transform(loc_s.begin(), loc_s.end(), loc_s.begin(), ::tolower);
+        if(loc_s[0] == 'r') {
+            if(loc_s.size() != 2 || loc_s[1] > '7') {
+                std::cout << "invalid register\n";
+                return true;
+            }
+            uint32_t id = loc_s[1] - '0';
+            coreSetReg(id, val);
+        } else if(loc_s == "pc") {
+            coreSetPC(val);
+        } else if(loc_s == "psr") {
+            coreSetPSR(val);
+        } else {
+            std::cout << "invalid location\n";
         }
     } else {
         std::cout << "unknown command\n";
@@ -187,7 +222,7 @@ void promptBreak(std::stringstream & command_tokens)
         try {
             loc = std::stoi(loc_s, 0, 0);
         } catch(std::exception const & e) {
-            std::cout << "invalid arguments\n";
+            std::cout << "invalid value\n";
             return;
         }
 

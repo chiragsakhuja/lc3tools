@@ -1,3 +1,4 @@
+#include <cassert>
 #include <exception>
 #include <iostream>
 #include <string>
@@ -154,39 +155,118 @@ void coreInterruptExitCallback(core::MachineState & state)
 
 uint32_t coreGetReg(uint32_t id)
 {
-    if(id > 7) {
-        throw std::invalid_argument("invalid id");
-    }
+#ifdef _ENABLE_DEBUG
+    assert(id <= 7);
+#else
+    id &= 0x7;
+#endif
     return interface->getMachineState().regs[id];
 }
 
-uint32_t coreGetPC(void)
-{
-    return interface->getMachineState().pc;
+uint32_t coreGetPC(void) { return interface->getMachineState().pc; }
+uint32_t coreGetPSR(void) { return interface->getMachineState().psr; }
+
+char coreGetCC(void) {
+    uint32_t cc = coreGetPSR() & 0x7;
+#ifdef _ENABLE_DEBUG
+    assert(cc == 0x4 || cc == 0x2 || cc == 0x1);
+#else
+    if(cc == 0x4 || cc == 0x2 || cc == 0x1) {
+        cc = 0x1;
+    }
+#endif
+    if(cc == 0x4) { return 'N'; }
+    else if(cc == 0x2) { return 'Z'; }
+    else { return 'P'; }
 }
 
 uint32_t coreGetMemVal(uint32_t addr)
 {
-    if(addr > 0xffff) {
-        throw std::invalid_argument("invalid addr");
-    }
+#ifdef _ENABLE_DEBUG
+    assert(addr <= 0xffff);
+#else
+    addr &= 0xffff;
+#endif
     return interface->getMachineState().mem[addr].getValue();
 }
 
 std::string coreGetMemLine(uint32_t addr)
 {
-    if(addr > 0xffff) {
-        throw std::invalid_argument("invalid addr");
-    }
+#ifdef _ENABLE_DEBUG
+    assert(addr <= 0xffff);
+#else
+    addr &= 0xffff;
+#endif
     return interface->getMachineState().mem[addr].getLine();
+}
+
+void coreSetReg(uint32_t id, uint32_t value)
+{
+#ifdef _ENABLE_DEBUG
+    assert(id <= 7);
+    assert(value <= 0xffff);
+#else
+    id &= 0x7;
+    value &= 0xffff;
+#endif
+    interface->getMachineState().regs[id] = value;
+}
+
+void coreSetPC(uint32_t value)
+{
+#ifdef _ENABLE_DEBUG
+    assert(value <= 0xfe00u);
+#else
+    value = std::min(value & 0xffff, 0xfe00u);
+#endif
+    interface->getMachineState().pc = value;
+}
+
+void coreSetPSR(uint32_t value)
+{
+#ifdef _ENABLE_DEBUG
+    assert((value & ((~0x8707) & 0xffff)) == 0x0000);
+#else
+    value &= ((~0x8707) & 0xffff);
+#endif
+    interface->getMachineState().psr = value;
+}
+
+void coreSetCC(char cc)
+{
+    cc |= 0x20;
+#ifdef _ENABLE_DEBUG
+    assert(cc == 'n' || cc == 'z' || cc == 'p');
+#else
+    if(! (cc == 'n' || cc == 'z' || cc == 'p')) { return; }
+#endif
+    uint32_t new_cc = 0;
+    if(cc == 'n') { new_cc = 0x4; }
+    else if(cc == 'z') { new_cc = 0x2; }
+    else { new_cc = 0x1; }
+    uint32_t & psr = interface->getMachineState().psr;
+    psr = (psr & 0xfff8) | new_cc;
+}
+
+void coreSetMemVal(uint32_t addr, uint32_t value)
+{
+#ifdef _ENABLE_DEBUG
+    assert(addr <= 0xfe00);
+    assert(value <= 0xffff);
+#else
+    addr = std::min(addr & 0xffffu, 0xfe00u);
+    value &= 0xffff;
+#endif
+    interface->getMachineState().mem[addr].setValue(value);
 }
 
 Breakpoint coreSetBreakpoint(uint32_t addr)
 {
-    if(addr > 0xffff) {
-        throw std::invalid_argument("invalid addr");
-    }
-
+#ifdef _ENABLE_DEBUG
+    assert(addr <= 0xffff);
+#else
+    addr &= 0xffff;
+#endif
     Breakpoint bp{breakpoint_id, addr};
     breakpoints.push_back(bp);
     breakpoint_id += 1;
