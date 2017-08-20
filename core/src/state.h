@@ -3,7 +3,7 @@
 
 namespace core
 {
-    class IStateChange;
+    class IEvent;
 
     struct MachineState
     {
@@ -22,33 +22,33 @@ namespace core
         bool running;
         bool hit_breakpoint;
 
-        uint32_t readMem(uint32_t addr, bool & change_mem, IStateChange *& change) const;
+        uint32_t readMem(uint32_t addr, bool & change_mem, IEvent *& change) const;
     };
 
-    typedef enum {
-          STATE_CHANGE_REG
-        , STATE_CHANGE_PSR
-        , STATE_CHANGE_PC
-        , STATE_CHANGE_MEM
-        , STATE_CHANGE_SWAP_SP
-    } StateChangeType;
+    enum class EventType {
+          EVENT_REG
+        , EVENT_PSR
+        , EVENT_PC
+        , EVENT_MEM
+        , EVENT_SWAP_SP
+    };
 
-    class IStateChange
+    class IEvent
     {
     public:
-        StateChangeType type;
+        EventType type;
 
-        IStateChange(StateChangeType type) : type(type) {}
-        virtual ~IStateChange(void) = default;
+        IEvent(EventType type) : type(type) {}
+        virtual ~IEvent(void) = default;
 
         virtual void updateState(MachineState & state) const = 0;
         virtual std::string getOutputString(MachineState const & state) const = 0;
     };
 
-    class RegStateChange : public IStateChange
+    class RegEvent : public IEvent
     {
     public:
-        RegStateChange(uint32_t reg, uint32_t value) : IStateChange(STATE_CHANGE_REG), reg(reg), value(value) {}
+        RegEvent(uint32_t reg, uint32_t value) : IEvent(EventType::EVENT_REG), reg(reg), value(value) {}
 
         virtual void updateState(MachineState & state) const override { state.regs[reg] = value; }
         virtual std::string getOutputString(MachineState const & state) const override {
@@ -58,10 +58,10 @@ namespace core
         uint32_t value;
     };
 
-    class PSRStateChange : public IStateChange
+    class PSREvent : public IEvent
     {
     public:
-        PSRStateChange(uint32_t value) : IStateChange(STATE_CHANGE_PSR), value(value) {}
+        PSREvent(uint32_t value) : IEvent(EventType::EVENT_PSR), value(value) {}
 
         virtual void updateState(MachineState & state) const override { state.psr = value; }
         virtual std::string getOutputString(MachineState const & state) const override {
@@ -70,10 +70,10 @@ namespace core
         uint32_t value;
     };
 
-    class PCStateChange : public IStateChange
+    class PCEvent : public IEvent
     {
     public:
-        PCStateChange(uint32_t value) : IStateChange(STATE_CHANGE_PC), value(value) {}
+        PCEvent(uint32_t value) : IEvent(EventType::EVENT_PC), value(value) {}
 
         virtual void updateState(MachineState & state) const override { state.pc = value; }
         virtual std::string getOutputString(MachineState const & state) const override {
@@ -82,10 +82,10 @@ namespace core
         uint32_t value;
     };
 
-    class MemWriteStateChange : public IStateChange
+    class MemWriteEvent : public IEvent
     {
     public:
-        MemWriteStateChange(uint32_t addr, uint32_t value) : IStateChange(STATE_CHANGE_MEM), addr(addr), value(value) {}
+        MemWriteEvent(uint32_t addr, uint32_t value) : IEvent(EventType::EVENT_MEM), addr(addr), value(value) {}
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {
@@ -95,10 +95,10 @@ namespace core
         uint32_t value;
     };
 
-    class SwapSPStateChange : public IStateChange
+    class SwapSPEvent : public IEvent
     {
     public:
-        SwapSPStateChange() : IStateChange(STATE_CHANGE_SWAP_SP) {}
+        SwapSPEvent() : IEvent(EventType::EVENT_SWAP_SP) {}
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {

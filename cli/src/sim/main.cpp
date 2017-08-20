@@ -262,5 +262,4 @@ void postInstructionCallback(core::MachineState & state)
 
 void interruptEnterCallback(core::MachineState & state)
 {
-    std::cout << "entered interrupt\n";
 }

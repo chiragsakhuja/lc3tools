@@ -100,17 +100,17 @@ void core::Simulator::simulate(void)
         }
         state.hit_breakpoint = false;
 
-        std::vector<IStateChange const *> changes = executeInstruction();
-        executeChangeChain(changes);
+        std::vector<IEvent const *> events = executeInstruction();
+        executeEventChain(events);
         updateDevices();
         if(post_instruction_callback_v) {
             post_instruction_callback(state);
         }
 
         bool interrupt_triggered;
-        changes = checkAndSetupInterrupts(interrupt_triggered);
+        events = checkAndSetupInterrupts(interrupt_triggered);
         if(interrupt_triggered) {
-            executeChangeChain(changes);
+            executeEventChain(events);
             if(interrupt_enter_callback_v) {
                 interrupt_enter_callback(state);
             }
@@ -123,7 +123,7 @@ void core::Simulator::simulate(void)
     inputter.endInput();
 }
 
-std::vector<core::IStateChange const *> core::Simulator::executeInstruction(void)
+std::vector<core::IEvent const *> core::Simulator::executeInstruction(void)
 {
     uint32_t encoded_inst = state.mem[state.pc].getValue();
 
@@ -137,10 +137,10 @@ std::vector<core::IStateChange const *> core::Simulator::executeInstruction(void
     logger.printf(PRINT_TYPE_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
         state.mem[state.pc].getLine().c_str(), encoded_inst);
     state.pc += 1;
-    std::vector<IStateChange const *> changes = candidate->execute(state);
+    std::vector<IEvent const *> events = candidate->execute(state);
     delete candidate;
 
-    return changes;
+    return events;
 }
 
 void core::Simulator::updateDevices(void)
@@ -149,36 +149,36 @@ void core::Simulator::updateDevices(void)
     state.mem[DSR].setValue(value | 0x8000);
 }
 
-std::vector<core::IStateChange const *> core::Simulator::checkAndSetupInterrupts(bool & interrupt_triggered)
+std::vector<core::IEvent const *> core::Simulator::checkAndSetupInterrupts(bool & interrupt_triggered)
 {
-    std::vector<IStateChange const *> ret;
+    std::vector<IEvent const *> ret;
 
     uint32_t value = state.mem[KBSR].getValue();
     interrupt_triggered = false;
     if((value & 0xC000) == 0xC000) {
-        ret.push_back(new RegStateChange(6, state.regs[6] - 1));
-        ret.push_back(new MemWriteStateChange(state.regs[6] - 1, state.psr));
-        ret.push_back(new RegStateChange(6, state.regs[6] - 2));
-        ret.push_back(new MemWriteStateChange(state.regs[6] - 2, state.pc));
-        ret.push_back(new PSRStateChange((state.psr & 0x78FF) | 0x0400));
-        ret.push_back(new PCStateChange(state.mem[0x0180].getValue()));
-        ret.push_back(new MemWriteStateChange(KBSR, state.mem[KBSR].getValue() & 0x7fff));
+        ret.push_back(new RegEvent(6, state.regs[6] - 1));
+        ret.push_back(new MemWriteEvent(state.regs[6] - 1, state.psr));
+        ret.push_back(new RegEvent(6, state.regs[6] - 2));
+        ret.push_back(new MemWriteEvent(state.regs[6] - 2, state.pc));
+        ret.push_back(new PSREvent((state.psr & 0x78FF) | 0x0400));
+        ret.push_back(new PCEvent(state.mem[0x0180].getValue()));
+        ret.push_back(new MemWriteEvent(KBSR, state.mem[KBSR].getValue() & 0x7fff));
         interrupt_triggered = true;
     }
 
     return ret;
 }
 
-void core::Simulator::executeChangeChain(std::vector<core::IStateChange const *> & changes)
+void core::Simulator::executeEventChain(std::vector<core::IEvent const *> & events)
 {
-    for(uint32_t i = 0; i < changes.size(); i += 1) {
-        logger.printf(PRINT_TYPE_EXTRA, false, "  %s", changes[i]->getOutputString(state).c_str());
-        changes[i]->updateState(state);
+    for(uint32_t i = 0; i < events.size(); i += 1) {
+        logger.printf(PRINT_TYPE_EXTRA, false, "  %s", events[i]->getOutputString(state).c_str());
+        events[i]->updateState(state);
 
-        delete changes[i];
+        delete events[i];
     }
 
-    changes.clear();
+    events.clear();
 }
 
 void core::Simulator::reset(void)

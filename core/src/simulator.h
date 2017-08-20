@@ -38,9 +38,9 @@ namespace core
 
         std::atomic<bool> collecting_input;
 
-        std::vector<core::IStateChange const *> executeInstruction(void);
-        std::vector<core::IStateChange const *> checkAndSetupInterrupts(bool & interrupt_triggered);
-        void executeChangeChain(std::vector<core::IStateChange const *> & changes);
+        std::vector<core::IEvent const *> executeInstruction(void);
+        std::vector<core::IEvent const *> checkAndSetupInterrupts(bool & interrupt_triggered);
+        void executeEventChain(std::vector<core::IEvent const *> & events);
         void updateDevices(void);
         void handleInput(void);
     };

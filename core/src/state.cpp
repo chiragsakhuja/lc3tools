@@ -21,7 +21,7 @@ namespace core
     extern std::mutex g_io_lock;
 };
 
-uint32_t core::MachineState::readMem(uint32_t addr, bool & change_mem, IStateChange *& change) const
+uint32_t core::MachineState::readMem(uint32_t addr, bool & change_mem, IEvent *& change) const
 {
     assert(addr < 0xffff);
 
@@ -34,7 +34,7 @@ uint32_t core::MachineState::readMem(uint32_t addr, bool & change_mem, IStateCha
         value = mem[addr].getValue();
         if(addr == KBDR) {
             change_mem = true;
-            change = new MemWriteStateChange(KBSR, mem[KBSR].getValue() & 0x7FFF);
+            change = new MemWriteEvent(KBSR, mem[KBSR].getValue() & 0x7FFF);
         }
     } else {
         value = mem[addr].getValue();
@@ -42,7 +42,7 @@ uint32_t core::MachineState::readMem(uint32_t addr, bool & change_mem, IStateCha
     return value;
 }
 
-void core::MemWriteStateChange::updateState(MachineState & state) const
+void core::MemWriteEvent::updateState(MachineState & state) const
 {
     assert(addr < 0xffff);
 
@@ -58,7 +58,7 @@ void core::MemWriteStateChange::updateState(MachineState & state) const
     state.mem[addr].setValue(value);
 }
 
-void core::SwapSPStateChange::updateState(MachineState & state) const
+void core::SwapSPEvent::updateState(MachineState & state) const
 {
     uint32_t old_sp = state.regs[6];
     state.regs[6] = state.backup_sp;

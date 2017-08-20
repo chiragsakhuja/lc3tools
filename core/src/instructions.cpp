@@ -243,105 +243,105 @@ uint32_t core::LabelOperand::encode(Token const * oper, uint32_t oper_count, std
     return token_val;
 }
 
-std::vector<core::IStateChange const *> core::ADDRInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::ADDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
     uint32_t sr2_val = utils::sextTo32(state.regs[operands[4]->value], 16);
     uint32_t result = (sr1_val + sr2_val) & 0xffff;
 
-    return std::vector<IStateChange const *> {
-        new PSRStateChange(utils::computePSRCC(result, state.psr)),
-        new RegStateChange(dr, result)
+    return std::vector<IEvent const *> {
+        new PSREvent(utils::computePSRCC(result, state.psr)),
+        new RegEvent(dr, result)
     };
 }
 
-std::vector<core::IStateChange const *> core::ADDIInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::ADDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
     uint32_t imm_val = utils::sextTo32(operands[4]->value, operands[4]->width);
     uint32_t result = (sr1_val + imm_val) & 0xffff;
 
-    return std::vector<IStateChange const *> {
-        new PSRStateChange(utils::computePSRCC(result, state.psr)),
-        new RegStateChange(dr, result)
+    return std::vector<IEvent const *> {
+        new PSREvent(utils::computePSRCC(result, state.psr)),
+        new RegEvent(dr, result)
     };
 }
 
-std::vector<core::IStateChange const *> core::ANDRInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::ANDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
     uint32_t sr2_val = utils::sextTo32(state.regs[operands[4]->value], 16);
     uint32_t result = (sr1_val & sr2_val) & 0xffff;
 
-    return std::vector<IStateChange const *> {
-        new PSRStateChange(utils::computePSRCC(result, state.psr)),
-        new RegStateChange(dr, result)
+    return std::vector<IEvent const *> {
+        new PSREvent(utils::computePSRCC(result, state.psr)),
+        new RegEvent(dr, result)
     };
 }
 
-std::vector<core::IStateChange const *> core::ANDIInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::ANDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
     uint32_t imm_val = utils::sextTo32(operands[4]->value, operands[4]->width);
     uint32_t result = (sr1_val & imm_val) & 0xffff;
 
-    return std::vector<IStateChange const *> {
-        new PSRStateChange(utils::computePSRCC(result, state.psr)),
-        new RegStateChange(dr, result)
+    return std::vector<IEvent const *> {
+        new PSREvent(utils::computePSRCC(result, state.psr)),
+        new RegEvent(dr, result)
     };
 }
 
-std::vector<core::IStateChange const *> core::BRInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::BRInstruction::execute(MachineState const & state)
 {
-    std::vector<IStateChange const *> ret;
+    std::vector<IEvent const *> ret;
     uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
     if((operands[1]->value & (state.psr & 0x0007)) != 0) {
-        ret.push_back(new PCStateChange(addr));
+        ret.push_back(new PCEvent(addr));
     }
 
     return ret;
 }
 
-std::vector<core::IStateChange const *> core::JMPInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::JMPInstruction::execute(MachineState const & state)
 {
-    return std::vector<IStateChange const *> {
-        new PCStateChange(state.regs[operands[2]->value] & 0xffff)
+    return std::vector<IEvent const *> {
+        new PCEvent(state.regs[operands[2]->value] & 0xffff)
     };
 }
 
-std::vector<core::IStateChange const *> core::JSRInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::JSRInstruction::execute(MachineState const & state)
 {
-    return std::vector<IStateChange const *> {
-        new RegStateChange(7, state.pc & 0xffff),
-        new PCStateChange(utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width))
+    return std::vector<IEvent const *> {
+        new RegEvent(7, state.pc & 0xffff),
+        new PCEvent(utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width))
     };
 }
 
-std::vector<core::IStateChange const *> core::JSRRInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::JSRRInstruction::execute(MachineState const & state)
 {
-    return std::vector<IStateChange const *> {
-        new RegStateChange(7, state.pc & 0xffff),
-        new PCStateChange(state.regs[operands[3]->value])
+    return std::vector<IEvent const *> {
+        new RegEvent(7, state.pc & 0xffff),
+        new PCEvent(state.regs[operands[3]->value])
     };
 }
 
-std::vector<core::IStateChange const *> core::LDInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::LDInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
     bool change_mem;
-    IStateChange * change;
+    IEvent * change;
     uint32_t value = state.readMem(addr, change_mem, change);
 
-    std::vector<IStateChange const *> ret {
-        new PSRStateChange(utils::computePSRCC(value, state.psr)),
-        new RegStateChange(dr, value)
+    std::vector<IEvent const *> ret {
+        new PSREvent(utils::computePSRCC(value, state.psr)),
+        new RegEvent(dr, value)
     };
 
     if(change_mem) {
@@ -351,22 +351,22 @@ std::vector<core::IStateChange const *> core::LDInstruction::execute(MachineStat
     return ret;
 }
 
-std::vector<core::IStateChange const *> core::LDIInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::LDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr1 = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
     bool change_mem1;
-    IStateChange * change1;
+    IEvent * change1;
     uint32_t addr2 = state.readMem(addr1, change_mem1, change1);
 
     bool change_mem2;
-    IStateChange * change2;
+    IEvent * change2;
     uint32_t value = state.readMem(addr2, change_mem2, change2);
 
-    std::vector<IStateChange const *> ret {
-        new PSRStateChange(utils::computePSRCC(value, state.psr)),
-        new RegStateChange(dr, value)
+    std::vector<IEvent const *> ret {
+        new PSREvent(utils::computePSRCC(value, state.psr)),
+        new RegEvent(dr, value)
     };
 
     // TODO: what if the changes are the same?
@@ -382,19 +382,19 @@ std::vector<core::IStateChange const *> core::LDIInstruction::execute(MachineSta
     return ret;
 }
 
-std::vector<core::IStateChange const *> core::LDRInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::LDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = utils::computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
             operands[3]->width);
 
     bool change_mem;
-    IStateChange * change;
+    IEvent * change;
     uint32_t value = state.readMem(addr, change_mem, change);
 
-    std::vector<IStateChange const *> ret {
-        new PSRStateChange(utils::computePSRCC(value, state.psr)),
-        new RegStateChange(dr, value)
+    std::vector<IEvent const *> ret {
+        new PSREvent(utils::computePSRCC(value, state.psr)),
+        new RegEvent(dr, value)
     };
 
     if(change_mem) {
@@ -404,43 +404,43 @@ std::vector<core::IStateChange const *> core::LDRInstruction::execute(MachineSta
     return ret;
 }
 
-std::vector<core::IStateChange const *> core::LEAInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::LEAInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
-    return std::vector<IStateChange const *> {
-        new PSRStateChange(utils::computePSRCC(addr, state.psr)),
-        new RegStateChange(dr, addr)
+    return std::vector<IEvent const *> {
+        new PSREvent(utils::computePSRCC(addr, state.psr)),
+        new RegEvent(dr, addr)
     };
 }
 
-std::vector<core::IStateChange const *> core::NOTInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::NOTInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr_val = utils::sextTo32(state.regs[operands[2]->value], operands[2]->width);
     uint32_t result = (~sr_val) & 0xffff;
 
-    return std::vector<IStateChange const *> {
-        new PSRStateChange(utils::computePSRCC(result, state.psr)),
-        new RegStateChange(dr, result)
+    return std::vector<IEvent const *> {
+        new PSREvent(utils::computePSRCC(result, state.psr)),
+        new RegEvent(dr, result)
     };
 }
 
-std::vector<core::IStateChange const *> core::RTIInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::RTIInstruction::execute(MachineState const & state)
 {
     if((state.pc & 0x8000) == 0x0000) {
         bool pc_change_mem;
-        IStateChange * pc_change;
+        IEvent * pc_change;
         uint32_t pc_value = state.readMem(state.regs[6], pc_change_mem, pc_change);
 
         bool psr_change_mem;
-        IStateChange * psr_change;
+        IEvent * psr_change;
         uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
 
-        std::vector<IStateChange const *> ret {
-            new PCStateChange(pc_value),
-            new PSRStateChange(psr_value)
+        std::vector<IEvent const *> ret {
+            new PCEvent(pc_value),
+            new PSREvent(psr_value)
         };
 
         if(pc_change_mem) {
@@ -455,46 +455,46 @@ std::vector<core::IStateChange const *> core::RTIInstruction::execute(MachineSta
     }
 
     // TODO: trigger exception
-    return std::vector<IStateChange const *> {};
+    return std::vector<IEvent const *> {};
 }
 
-std::vector<core::IStateChange const *> core::STInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::STInstruction::execute(MachineState const & state)
 {
     uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
-    return std::vector<IStateChange const *> {
-        new MemWriteStateChange(addr, value)
+    return std::vector<IEvent const *> {
+        new MemWriteEvent(addr, value)
     };
 }
 
-std::vector<core::IStateChange const *> core::STIInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::STIInstruction::execute(MachineState const & state)
 {
     uint32_t addr1 = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t addr2 = state.mem[addr1].getValue();
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
-    return std::vector<IStateChange const *> {
-        new MemWriteStateChange(addr2, value)
+    return std::vector<IEvent const *> {
+        new MemWriteEvent(addr2, value)
     };
 }
 
-std::vector<core::IStateChange const *> core::STRInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::STRInstruction::execute(MachineState const & state)
 {
     uint32_t addr = utils::computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
         operands[3]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
-    return std::vector<IStateChange const *> {
-        new MemWriteStateChange(addr, value)
+    return std::vector<IEvent const *> {
+        new MemWriteEvent(addr, value)
     };
 }
 
-std::vector<core::IStateChange const *> core::TRAPInstruction::execute(MachineState const & state)
+std::vector<core::IEvent const *> core::TRAPInstruction::execute(MachineState const & state)
 {
-    return std::vector<IStateChange const *> {
-        new PSRStateChange(state.psr & 0x7fff),
-        new RegStateChange(7, state.pc & 0xffff),
-        new PCStateChange(state.mem[operands[2]->value].getValue() & 0xffff)
+    return std::vector<IEvent const *> {
+        new PSREvent(state.psr & 0x7fff),
+        new RegEvent(7, state.pc & 0xffff),
+        new PCEvent(state.mem[operands[2]->value].getValue() & 0xffff)
     };
 }

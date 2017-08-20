@@ -44,7 +44,7 @@ namespace core {
         uint32_t getNumOperands(void) const;
         void assignOperands(uint32_t encoded_inst);
 
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) = 0;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) = 0;
         virtual IInstruction * clone(void) const = 0;
         std::string toFormatString(void) const;
         std::string toValueString(void) const;
@@ -115,7 +115,7 @@ namespace core {
             new FixedOperand(3, 0x0),
             new RegOperand(3)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual ADDRInstruction * clone(void) const override { return new ADDRInstruction(*this); }
     };
 
@@ -129,7 +129,7 @@ namespace core {
             new FixedOperand(1, 0x1),
             new NumOperand(5, true)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual ADDIInstruction * clone(void) const override { return new ADDIInstruction(*this); }
     };
 
@@ -143,7 +143,7 @@ namespace core {
             new FixedOperand(3, 0x0),
             new RegOperand(3)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual ANDRInstruction * clone(void) const override { return new ANDRInstruction(*this); }
     };
 
@@ -157,7 +157,7 @@ namespace core {
             new FixedOperand(1, 0x1),
             new NumOperand(5, true)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual ANDIInstruction * clone(void) const override { return new ANDIInstruction(*this); }
     };
 
@@ -170,7 +170,7 @@ namespace core {
             new FixedOperand(3, 0x7),
             new LabelOperand(9)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual BRInstruction * clone(void) const override { return new BRInstruction(*this); }
     };
 
@@ -283,7 +283,7 @@ namespace core {
             new RegOperand(3),
             new FixedOperand(6, 0x0)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual JMPInstruction * clone(void) const override { return new JMPInstruction(*this); }
     };
 
@@ -296,7 +296,7 @@ namespace core {
             new FixedOperand(1, 0x1),
             new LabelOperand(11)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual JSRInstruction * clone(void) const override { return new JSRInstruction(*this); }
     };
 
@@ -310,7 +310,7 @@ namespace core {
             new RegOperand(3),
             new FixedOperand(6, 0x0)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual JSRRInstruction * clone(void) const override { return new JSRRInstruction(*this); }
     };
 
@@ -322,7 +322,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual LDInstruction * clone(void) const override { return new LDInstruction(*this); }
     };
 
@@ -334,7 +334,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual LDIInstruction * clone(void) const override { return new LDIInstruction(*this); }
     };
 
@@ -347,7 +347,7 @@ namespace core {
             new RegOperand(3),
             new NumOperand(6, true)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual LDRInstruction * clone(void) const override { return new LDRInstruction(*this); }
     };
 
@@ -359,7 +359,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual LEAInstruction * clone(void) const override { return new LEAInstruction(*this); }
     };
 
@@ -372,7 +372,7 @@ namespace core {
             new RegOperand(3),
             new FixedOperand(6, 0x3f)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual NOTInstruction * clone(void) const override { return new NOTInstruction(*this); }
     };
 
@@ -395,7 +395,7 @@ namespace core {
             new FixedOperand(4, 0x8),
             new FixedOperand(12, 0x0)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual RTIInstruction * clone(void) const override { return new RTIInstruction(*this); }
     };
 
@@ -407,7 +407,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual STInstruction * clone(void) const override { return new STInstruction(*this); }
     };
 
@@ -419,7 +419,7 @@ namespace core {
             new RegOperand(3),
             new LabelOperand(9)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual STIInstruction * clone(void) const override { return new STIInstruction(*this); }
     };
 
@@ -432,7 +432,7 @@ namespace core {
             new RegOperand(3),
             new NumOperand(6, true)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual STRInstruction * clone(void) const override { return new STRInstruction(*this); }
     };
 
@@ -445,7 +445,7 @@ namespace core {
             new FixedOperand(4, 0x0),
             new NumOperand(8, false)
         }) {}
-        virtual std::vector<IStateChange const *> execute(MachineState const & state) override;
+        virtual std::vector<IEvent const *> execute(MachineState const & state) override;
         virtual TRAPInstruction * clone(void) const override { return new TRAPInstruction(*this); }
     };
 
