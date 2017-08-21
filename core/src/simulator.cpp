@@ -220,6 +220,18 @@ void core::Simulator::registerInterruptExitCallback(std::function<void(MachineSt
     state.interrupt_exit_callback = func;
 }
 
+void core::Simulator::registerSubEnterCallback(std::function<void(MachineState & state)> func)
+{
+    state.sub_enter_callback_v = true;
+    state.sub_enter_callback = func;
+}
+
+void core::Simulator::registerSubExitCallback(std::function<void(MachineState & state)> func)
+{
+    state.sub_exit_callback_v = true;
+    state.sub_exit_callback = func;
+}
+
 void core::Simulator::handleInput(void)
 {
     while(collecting_input) {

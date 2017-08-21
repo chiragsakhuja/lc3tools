@@ -61,6 +61,12 @@ namespace core {
         void registerInterruptExitCallback(callback_func_t func) {
             sim.registerInterruptExitCallback(func);
         }
+        void registerSubEnterCallback(callback_func_t func) {
+            sim.registerSubEnterCallback(func);
+        }
+        void registerSubExitCallback(callback_func_t func) {
+            sim.registerSubExitCallback(func);
+        }
         MachineState & getMachineState(void) { return sim.getMachineState(); }
 
     private:

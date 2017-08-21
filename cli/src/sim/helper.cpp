@@ -15,6 +15,7 @@ bool limited_run = false;
 
 uint32_t breakpoint_id = 0;
 std::vector<Breakpoint> breakpoints;
+int32_t sub_depth = 0;
 
 bool pre_instruction_callback_v = false;
 core::callback_func_t pre_instruction_callback;
@@ -25,12 +26,18 @@ core::callback_func_t interrupt_enter_callback;
 bool interrupt_exit_callback_v = false;
 core::callback_func_t interrupt_exit_callback;
 bool breakpoint_hit_callback_v = false;
+bool sub_enter_callback_v = false;
+core::callback_func_t sub_enter_callback;
+bool sub_exit_callback_v = false;
+core::callback_func_t sub_exit_callback;
 std::function<void(core::MachineState & state, Breakpoint const & bp)> breakpoint_hit_callback;
 
 void corePreInstructionCallback(core::MachineState & state);
 void corePostInstructionCallback(core::MachineState & state);
 void coreInterruptEnterCallback(core::MachineState & state);
 void coreInterruptExitCallback(core::MachineState & state);
+void coreSubEnterCallback(core::MachineState & state);
+void coreSubExitCallback(core::MachineState & state);
 
 void coreInit(utils::IPrinter & printer, utils::IInputter & inputter)
 {
@@ -38,7 +45,9 @@ void coreInit(utils::IPrinter & printer, utils::IInputter & inputter)
     interface->registerPreInstructionCallback(corePreInstructionCallback);
     interface->registerPostInstructionCallback(corePostInstructionCallback);
     interface->registerInterruptEnterCallback(coreInterruptEnterCallback);
-    interface->registerInterruptExitCallback(coreInterruptEnterCallback);
+    interface->registerInterruptExitCallback(coreInterruptExitCallback);
+    interface->registerSubEnterCallback(coreSubEnterCallback);
+    interface->registerSubExitCallback(coreSubExitCallback);
     interface->initializeSimulator();
 }
 
@@ -79,6 +88,33 @@ bool coreRunFor(uint32_t inst_count)
     return true;
 }
 
+bool coreStepOver(void)
+{
+    limited_run = true;
+    // this will immediately be incremented by the sub enter callback
+    sub_depth = 0;
+
+    try {
+        interface->simulate();
+    } catch(utils::exception const & e) {
+        return false;
+    }
+    return true;
+}
+
+bool coreStepOut(void)
+{
+    limited_run = true;
+    // act like we are already in a subroutine
+    sub_depth = 1;
+    try {
+        interface->simulate();
+    } catch(utils::exception const & e) {
+        return false;
+    }
+    return true;
+}
+
 void coreRegisterPreInstructionCallback(core::callback_func_t func)
 {
     pre_instruction_callback_v = true;
@@ -102,6 +138,19 @@ void coreRegisterInterruptExitCallback(core::callback_func_t func)
 {
     interrupt_exit_callback_v = true;
     interrupt_exit_callback = func;
+}
+
+void coreRegisterSubEnterCallback(core::callback_func_t func)
+{
+    sub_enter_callback_v = true;
+    sub_enter_callback = func;
+}
+
+
+void coreRegisterSubExitCallback(core::callback_func_t func)
+{
+    sub_exit_callback_v = true;
+    sub_exit_callback = func;
 }
 
 void coreRegisterBreakpointHitCallback(std::function<void(core::MachineState & state, Breakpoint const & bp)> func)
@@ -130,7 +179,8 @@ void corePreInstructionCallback(core::MachineState & state)
 void corePostInstructionCallback(core::MachineState & state)
 {
     inst_exec_count += 1;
-    if(limited_run && inst_exec_count == target_inst_count) {
+    if(limited_run && (inst_exec_count == target_inst_count || sub_depth == 0)) {
+        limited_run = false;
         state.running = false;
     }
 
@@ -150,6 +200,22 @@ void coreInterruptExitCallback(core::MachineState & state)
 {
     if(interrupt_exit_callback_v) {
         interrupt_exit_callback(state);
+    }
+}
+
+void coreSubEnterCallback(core::MachineState & state)
+{
+    sub_depth += 1;
+    if(sub_enter_callback_v) {
+        sub_enter_callback(state);
+    }
+}
+
+void coreSubExitCallback(core::MachineState & state)
+{
+    sub_depth -= 1;
+    if(sub_exit_callback_v) {
+        sub_exit_callback(state);
     }
 }
 

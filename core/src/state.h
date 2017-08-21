@@ -24,17 +24,18 @@ namespace core
 
         uint32_t readMem(uint32_t addr, bool & change_mem, IEvent *& change) const;
 
-    private:
         bool pre_instruction_callback_v;
         bool post_instruction_callback_v;
         bool interrupt_enter_callback_v;;
         bool interrupt_exit_callback_v;;
+        bool sub_enter_callback_v;;
+        bool sub_exit_callback_v;;
         std::function<void(MachineState & state)> pre_instruction_callback;
         std::function<void(MachineState & state)> post_instruction_callback;
         std::function<void(MachineState & state)> interrupt_enter_callback;
         std::function<void(MachineState & state)> interrupt_exit_callback;
-
-        friend class Simulator;
+        std::function<void(MachineState & state)> sub_enter_callback;
+        std::function<void(MachineState & state)> sub_exit_callback;
     };
 
     enum class EventType {

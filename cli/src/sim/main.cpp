@@ -32,6 +32,8 @@ int main(int argc, char * argv[])
 
     while(prompt()) {}
 
+    coreShutdown();
+
     return 0;
 }
 
@@ -46,6 +48,10 @@ void help(void)
               << "regs                     - display register values\n"
               << "run [instructions]       - runs to end of program or, if specified, the number of instructions\n"
               << "set <loc> <value>        - sets loc (either register name or memoery address) to value\n"
+              << "step in                  - executes a single instruction\n"
+              << "step over                - executes a single instruction (treats subroutine calls as a single\n"
+              << "                           instruction)\n"
+              << "step out                 - steps out of a subroutine if in one\n"
               ;
 }
 
@@ -140,16 +146,21 @@ bool promptMain(std::stringstream & command_tokens)
     } else if(command == "run") {
         uint32_t inst_count;
         command_tokens >> inst_count;
+#ifdef _ENABLE_DEBUG
+        auto start_count = inst_exec_count;
+        auto start_time = std::chrono::steady_clock::now();
+#endif
         if(command_tokens.fail()) {
-            auto start_count = inst_exec_count;
-            auto start_time = std::chrono::steady_clock::now();
             coreRun();
-            auto end_time = std::chrono::steady_clock::now();
-            auto end_count = inst_exec_count;
-            std::cout << "Executed " << (end_count - start_count) << " instructions in " << std::chrono::duration<double, std::milli>(end_time - start_time).count() << " ms\n";
         } else {
             coreRunFor(inst_count);
         }
+#ifdef _ENABLE_DEBUG
+        auto end_time = std::chrono::steady_clock::now();
+        auto end_count = inst_exec_count;
+        std::cout << "executed " << (end_count - start_count) << " instructions in "
+                  << std::chrono::duration<double, std::milli>(end_time - start_time).count() << " ms\n";
+#endif
     } else if(command == "set") {
         std::string loc_s, val_s;
         command_tokens >> loc_s >> val_s;
@@ -181,6 +192,24 @@ bool promptMain(std::stringstream & command_tokens)
         } else {
             std::cout << "invalid location\n";
         }
+    } else if(command == "step") {
+        std::string sub_command;
+        command_tokens >> sub_command;
+        if(command_tokens.fail()) {
+            std::cout << "must specify type of step\n";
+            return true;
+        }
+
+        if(sub_command == "in") {
+            coreRunFor(1);
+        } else if(sub_command == "out") {
+            coreStepOut();
+        } else if(sub_command == "over") {
+            coreStepOver();
+        } else {
+            std::cout << "invalid step operation\n";
+        }
+        return true;
     } else {
         std::cout << "unknown command\n";
     }

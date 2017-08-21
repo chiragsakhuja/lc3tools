@@ -18,6 +18,8 @@ namespace core
         void registerPostInstructionCallback(std::function<void(MachineState & state)> func);
         void registerInterruptEnterCallback(std::function<void(MachineState & state)> func);
         void registerInterruptExitCallback(std::function<void(MachineState & state)> func);
+        void registerSubEnterCallback(std::function<void(MachineState & state)> func);
+        void registerSubExitCallback(std::function<void(MachineState & state)> func);
 
         MachineState & getMachineState(void) { return state; }
     private:

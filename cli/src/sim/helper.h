@@ -14,6 +14,8 @@ void coreShutdown(void);
 void coreLoadSimulatorWithFile(std::string const & filename);
 bool coreRun(void);
 bool coreRunFor(uint32_t inst_count);
+bool coreStepOver(void);
+bool coreStepOut(void);
 void coreRegisterPreInstructionCallback(core::callback_func_t func);
 void coreRegisterPostInstructionCallback(core::callback_func_t func);
 void coreRegisterInterruptEnterCallback(core::callback_func_t func);

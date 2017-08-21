@@ -310,16 +310,21 @@ std::vector<core::IEvent const *> core::BRInstruction::execute(MachineState cons
 
 std::vector<core::IEvent const *> core::JMPInstruction::execute(MachineState const & state)
 {
-    return std::vector<IEvent const *> {
+    std::vector<IEvent const *> ret {
         new PCEvent(state.regs[operands[2]->value] & 0xffff)
     };
+    if(operands[2]->value == 7) {
+        ret.push_back(new CallbackEvent(state.sub_exit_callback_v, state.sub_exit_callback));
+    }
+    return ret;
 }
 
 std::vector<core::IEvent const *> core::JSRInstruction::execute(MachineState const & state)
 {
     return std::vector<IEvent const *> {
         new RegEvent(7, state.pc & 0xffff),
-        new PCEvent(utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width))
+        new PCEvent(utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width)),
+        new CallbackEvent(state.sub_enter_callback_v, state.sub_enter_callback)
     };
 }
 
@@ -327,7 +332,8 @@ std::vector<core::IEvent const *> core::JSRRInstruction::execute(MachineState co
 {
     return std::vector<IEvent const *> {
         new RegEvent(7, state.pc & 0xffff),
-        new PCEvent(state.regs[operands[3]->value])
+        new PCEvent(state.regs[operands[3]->value]),
+        new CallbackEvent(state.sub_enter_callback_v, state.sub_enter_callback)
     };
 }
 
@@ -441,7 +447,8 @@ std::vector<core::IEvent const *> core::RTIInstruction::execute(MachineState con
 
         std::vector<IEvent const *> ret {
             new PCEvent(pc_value),
-            new PSREvent(psr_value)
+            new PSREvent(psr_value),
+            new CallbackEvent(state.interrupt_exit_callback_v, state.interrupt_exit_callback)
         };
 
         if(pc_change_mem) {
@@ -496,6 +503,7 @@ std::vector<core::IEvent const *> core::TRAPInstruction::execute(MachineState co
     return std::vector<IEvent const *> {
         new PSREvent(state.psr & 0x7fff),
         new RegEvent(7, state.pc & 0xffff),
-        new PCEvent(state.mem[operands[2]->value].getValue() & 0xffff)
+        new PCEvent(state.mem[operands[2]->value].getValue() & 0xffff),
+        new CallbackEvent(state.sub_enter_callback_v, state.sub_enter_callback)
     };
 }
