@@ -493,10 +493,10 @@ std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
 
         bool first = true;
         for(char i : value) {
-            ret.emplace_back(((uint32_t) i) & 0xff, false, first ? logger.asm_blob[oper->row_num] : "");
+            ret.emplace_back(((uint32_t) i) & 0xff, false, first ? ("(start) " + logger.asm_blob[oper->row_num]) : "");
             first = false;
         }
-        ret.emplace_back(0U, false, logger.asm_blob[oper->row_num]);
+        ret.emplace_back(0U, false, "(end) " + logger.asm_blob[oper->row_num]);
     } else if(pseudo->str == "blkw") {
         Token * oper = pseudo->opers;
         if(pseudo->num_opers != 1 || oper->type != NUM) {
