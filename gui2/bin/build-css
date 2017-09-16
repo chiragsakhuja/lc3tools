@@ -1,0 +1,8 @@
+#!/bin/bash
+
+SCSS_PATH=./src/scss
+CSS_PATH=./src/css
+
+for f in $SCSS_PATH/*.scss; do
+    node-sass "$f" "$CSS_PATH/$(basename ${f%.scss}.css)"
+done

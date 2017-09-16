@@ -1,0 +1,54 @@
+html {
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    -webkit-app-region: drag;
+}
+
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    cursor: default;
+    overflow: hidden;
+    -webkit-user-select: none;
+}
+
+.full-height {
+    height: 100%;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.full-size {
+    height: 100%;
+    width: 100%;
+}
+
+.font-10x {
+    font-size: 10em;
+}
+
+.vert-center {
+    display: flex;
+    align-items: center;
+}
+
+.horiz-center {
+    text-align: center;
+}
+
+.vert-padding {
+    height: 1em;
+}
+
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+input[type="text"],
+button,
+textarea {
+    -webkit-app-region: no-drag;
+}
