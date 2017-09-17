@@ -38,12 +38,29 @@ void core::Assembler::assemble(std::string const & asm_filename, std::string con
     std::map<std::string, uint32_t> symbols;
     AssemblerLogger logger(log_enable, printer);
 
-    if((yyin = fopen(asm_filename.c_str(), "r")) == nullptr) {
+    FILE * orig_file = fopen(asm_filename.c_str(), "r");
+
+    if(orig_file == nullptr) {
         logger.printf(PRINT_TYPE_WARNING, true, "skipping file %s ...", asm_filename.c_str());
     } else {
         row_num = 0;
         col_num = 0;
+
+        // FIXME
+        // this is a terrible hack that adds a newline to the end of the file because flex
+        // can't properly parse EOF without a newline (aka I'm really bad at writing a lexer)
+        std::ifstream orig_file_stream(asm_filename);
+        std::stringstream buffer;
+        buffer << orig_file_stream.rdbuf() << "\n";
+        std::string mod_filename = "." + asm_filename;
+        std::ofstream mod_file_stream(mod_filename);
+        mod_file_stream << buffer.rdbuf();
+        mod_file_stream.close();
+        
+        yyin = fopen(mod_filename.c_str(), "r");
         yyparse();
+
+        remove(mod_filename.c_str());
 
         logger.printf(PRINT_TYPE_INFO, true, "assembling \'%s\' into \'%s\'", asm_filename.c_str(),
             obj_filename.c_str());
