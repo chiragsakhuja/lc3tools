@@ -1,1 +1,64 @@
-Hi!
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+        <meta charset="UTF-8">
+
+        <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+
+        <script>window.$ = window.jQuery = require('jquery');</script>
+        <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+
+        <script>
+            // Monaco uses a custom amd loader that over-rides node's require.
+            // Keep a reference to node's require so we can restore it after executing the amd loader file.
+            var nodeRequire = global.require;
+        </script>
+        <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+        <script>
+            // Save Monaco's amd require and restore Node's require
+            var amdRequire = global.require;
+            global.require = nodeRequire;
+        </script>
+        <script src="js/monaco.js"></script>
+
+        <link href="css/theme.css" rel="stylesheet">
+        <link href="css/components.css" rel="stylesheet">
+        <link href="css/editor.css" rel="stylesheet">
+    </head>
+
+    <body>
+        <div class="wrapper">
+            <nav id="sidebar">
+                <div class="vert-padding draggable"></div>
+                <div class="vert-padding draggable"></div>
+
+                <div class="btn-group" role="group" aria-label="...">
+                    <ul class="list-unstyled components">
+                        <li><a href="#" role="button" class="btn btn-default"><span class="glyphicon glyphicon-floppy-disk sidebar-icon"></span></a>
+                        <li><a href="#" role="button" class="btn btn-default"><span class="glyphicon glyphicon-folder-open sidebar-icon"></span></a>
+                        <li><a href="#" role="button" class="btn btn-default"><span class="glyphicon glyphicon-wrench sidebar-icon"></span></a>
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="container-fluid" id="content">
+                <div class="draggable" id="titlebar">
+                    <span id="titlebar-name">&lt;Untitled&gt;</span>
+                </div>
+                <div class="panel panel-default" id="editor-panel">
+                    <div class="panel-body" id="editor-panel-body">
+                        <div id="editor"></div>
+                    </div>
+                </div>
+                <div id="console"></div>
+            </div>
+        </div>
+        <script>
+            $('.btn').click((e) => {
+                $(this).blur();
+            });
+        </script>
+    </body>
+</html>
+

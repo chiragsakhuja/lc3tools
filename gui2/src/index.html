@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
     <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
         <meta charset="UTF-8">
@@ -11,18 +10,19 @@
         <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
 
         <link href="css/theme.css" rel="stylesheet">
+        <link href="css/components.css" rel="stylesheet">
         <link href="css/launcher.css" rel="stylesheet">
 
     </head>
     <body>
         <div class="container-fluid full-height">
-            <div class="vert-padding"></div>
-            <div class="row full-height">
+            <div class="vert-padding draggable"></div>
+            <div class="row full-height draggable">
                 <div class="col-xs-6 full-height vert-center">
                     <div class="full-width horiz-center">
                         <div class="btn-group" role="group" aria-label="...">
                             <a href="#" role="button" class="btn btn-default" id="launch-editor">
-                                <span class="glyphicon glyphicon-edit font-10x"></span> <br /> <h3>Editor</h3>
+                                <span class="glyphicon glyphicon-edit"></span> <br /> <h3>Editor</h3>
                             </a>
                         </div>
                     </div>
@@ -31,7 +31,7 @@
                     <div class="full-width horiz-center">
                         <div class="btn-group" role="group" aria-label="...">
                             <a href="#" role="button" class="btn btn-default" id="launch-simulator">
-                                <span class="glyphicon glyphicon-play font-10x"></span> <br /> <h3>Simulator</h3>
+                                <span class="glyphicon glyphicon-play"></span> <br /> <h3>Simulator</h3>
                             </a>
                         </div>
                     </div>
@@ -39,6 +39,11 @@
             </div>
         </div>
 
+        <script>
+            $('.btn').click((e) => {
+                $(this).blur();
+            });
+        </script>
         <script>
             const ipc = require('electron').ipcRenderer;
 

@@ -1,14 +1,34 @@
 html, body {
-  background-color: #535760; }
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+  background-color: #1d1d1d;
+  -webkit-app-region: no-drag; }
 
 body {
-  font: caption; }
+  font: caption;
+  color: #5a5a5a;
+  cursor: default;
+  overflow: hidden;
+  -webkit-user-select: none; }
+
+.container-fluid {
+  margin: 0px;
+  padding: 0px;
+  overflow: hidden; }
+
+.panel-default {
+  border: 0px;
+  margin: 0px;
+  background-color: #1d1d1d; }
+  .panel-default .panel-body {
+    padding: 0px; }
 
 .btn-default {
   border-radius: 0px;
   border: 0px;
-  background-color: #535760;
-  color: #747881; }
+  background-color: #1d1d1d;
+  color: #5a5a5a; }
   .btn-default:hover {
-    background-color: #535760;
-    color: #FAFBFC; }
+    background-color: #1d1d1d;
+    color: #fafbfc; }

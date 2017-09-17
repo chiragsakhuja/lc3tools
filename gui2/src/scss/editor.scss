@@ -1,0 +1,39 @@
+.wrapper {
+    display: flex;
+    align-items: stretch;
+}
+
+#sidebar {
+    min-height: 100vh;
+    text-align: center;
+
+    .sidebar-icon {
+        font-size: 1.5em;
+    }
+}
+
+#titlebar {
+    padding: 5px 5px 5px 30px;
+}
+
+#editor-panel {
+    width: 100vw;
+    height: 70vh;
+
+    border: 2px solid #181818;
+
+    #editor-panel-body {
+        height: 100%;
+
+        #editor {
+            width: 100%;
+            height: 100%;
+        }
+    }
+}
+
+#console {
+    max-height: 30vh;
+    min-height: 30vh;
+    width: 100vw;
+}

@@ -21,7 +21,7 @@ function createWindow()
     mainWindow = new BrowserWindow({
         title: 'LC-3 Launcher',
         width: 450,
-        height: 250,
+        height: 275,
         useConentSize: true,
         titleBarStyle: 'hidden',
         fullscreenWindowTitle: true,
