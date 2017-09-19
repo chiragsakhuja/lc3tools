@@ -29,6 +29,9 @@ body {
   border: 0px;
   background-color: #1e1e1e;
   color: #5a5a5a; }
+  .btn-default:focus {
+    background-color: #1e1e1e;
+    color: #5a5a5a; }
   .btn-default:hover {
     background-color: #1e1e1e;
     color: #fafbfc; }

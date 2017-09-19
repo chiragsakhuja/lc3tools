@@ -40,6 +40,11 @@ body {
     background-color: $background-color;
     color: $accent-color;
 
+    &:focus {
+        background-color: $background-color;
+        color: $accent-color;
+    }
+
     &:hover {
         background-color: $background-color;
         color: $foreground-color;
