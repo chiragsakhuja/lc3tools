@@ -15,7 +15,7 @@
                 }
             }]],
             'link_settings': {
-                'libraries': ['-Wl,-rpath,<(module_root_dir)', '-L<(module_root_dir)', '-llc3core']
+                'libraries': ['-L<(module_root_dir)', '-llc3core']
             }
         }
     ]

@@ -28,6 +28,6 @@ file(GLOB CXX_HEADERS ${PROJECT_SOURCE_DIR}/core/src/*.h)
 add_custom_target(parser DEPENDS ${PROJECT_SOURCE_DIR}/core/src/parser_gen/parser.cpp)
 
 # generate library out of assembler
-add_library(lc3core SHARED ${BISON_Parser_OUTPUTS} ${FLEX_Scanner_OUTPUTS} ${CXX_SOURCES} ${CXX_HEADERS})
+add_library(lc3core STATIC ${BISON_Parser_OUTPUTS} ${FLEX_Scanner_OUTPUTS} ${CXX_SOURCES} ${CXX_HEADERS})
 target_link_libraries(lc3core ${CMAKE_THREAD_LIBS_INIT})
 add_dependencies(lc3core parser)
