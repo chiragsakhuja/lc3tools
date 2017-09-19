@@ -36,9 +36,9 @@
             <nav class="bordered" id="sidebar">
                 <div class="btn-group" role="group" aria-label="...">
                     <ul class="list-unstyled components">
-                        <li><a href="#" role="button" class="btn btn-default"><i class="fa fa-floppy-o fa-lg"></i></a>
-                        <li><a href="#" role="button" class="btn btn-default"><i class="fa fa-folder-open-o fa-lg"></i></a>
-                        <li><a href="#" role="button" class="btn btn-default"><i class="fa fa-wrench fa-lg"></i></a>
+                        <li><a href="#" role="button" class="btn btn-default"><i class="fa fa-floppy-o fa-lg" id="save-button"></i></a>
+                        <li><a href="#" role="button" class="btn btn-default"><i class="fa fa-folder-open-o fa-lg" id="open-button"></i></a>
+                        <li><a href="#" role="button" class="btn btn-default"><i class="fa fa-wrench fa-lg" id="build-button"></i></a>
                     </ul>
                 </div>
             </nav>
@@ -54,9 +54,11 @@
         </div>
         <script>
             $('.btn').click((e) => {
+                console.log('here');
                 $(this).blur();
             });
         </script>
+        <script src="js/editor.js"></script>
     </body>
 </html>
 

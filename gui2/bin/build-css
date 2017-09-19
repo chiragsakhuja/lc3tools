@@ -3,6 +3,31 @@
 SCSS_PATH=./src/scss
 CSS_PATH=./src/css
 
-for f in $SCSS_PATH/*.scss; do
-    node-sass "$f" "$CSS_PATH/$(basename ${f%.scss}.css)"
+for FILE in $SCSS_PATH/*.scss; do
+    node-sass "$FILE" "$CSS_PATH/$(basename ${FILE%.scss}.css)"
 done
+
+exit 0
+
+# The following can monitor files individually in Linux
+BASEDIR=$(dirname "$0")
+MODIFY_FILE="$BASEDIR/.date-modified"
+MODIFY_FILE_TMP="$MODIFY_FILE.tmp"
+
+if [[ ! -f "$MODIFY_FILE" ]]; then
+    touch "$MODIFY_FILE"
+fi
+
+for FILE in $SCSS_PATH/*.scss; do
+    RECORDED_MODIFIED=$(grep "$FILE" "$MODIFY_FILE" | cut -d' ' -f2)
+    ACTUAL_MODIFIED=$(date +%s -r "$FILE")
+    echo $RECORDED_MODIFIED $ACTUAL_MODIFIED
+    if [[ ( -z "$RECORDED_MODIFIED" ) || ( "$ACTUAL_MODIFIED" > "$RECORDED_MODIFIED" )  ]]; then
+        node-sass "$FILE" "$CSS_PATH/$(basename ${FILE%.scss}.css)"
+        echo "$FILE $ACTUAL_MODIFIED" >> "$MODIFY_FILE_TMP"
+    else
+        echo "$FILE $RECORDED_MODIFIED" >> "$MODIFY_FILE_TMP"
+    fi
+done
+
+mv $MODIFY_FILE_TMP $MODIFY_FILE
