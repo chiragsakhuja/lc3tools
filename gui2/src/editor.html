@@ -5,6 +5,7 @@
         <meta charset="UTF-8">
 
         <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="../node_modules/font-awesome/css/font-awesome.min.css" rel="stylesheet">
 
         <script>window.$ = window.jQuery = require('jquery');</script>
         <script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
@@ -28,30 +29,27 @@
     </head>
 
     <body>
+        <div class="draggable" id="titlebar">
+            <span id="titlebar-name">&lt;Untitled&gt;</span>
+        </div>
         <div class="wrapper">
-            <nav id="sidebar">
-                <div class="vert-padding draggable"></div>
-                <div class="vert-padding draggable"></div>
-
+            <nav class="bordered" id="sidebar">
                 <div class="btn-group" role="group" aria-label="...">
                     <ul class="list-unstyled components">
-                        <li><a href="#" role="button" class="btn btn-default"><span class="glyphicon glyphicon-floppy-disk sidebar-icon"></span></a>
-                        <li><a href="#" role="button" class="btn btn-default"><span class="glyphicon glyphicon-folder-open sidebar-icon"></span></a>
-                        <li><a href="#" role="button" class="btn btn-default"><span class="glyphicon glyphicon-wrench sidebar-icon"></span></a>
+                        <li><a href="#" role="button" class="btn btn-default"><i class="fa fa-floppy-o fa-lg"></i></a>
+                        <li><a href="#" role="button" class="btn btn-default"><i class="fa fa-folder-open-o fa-lg"></i></a>
+                        <li><a href="#" role="button" class="btn btn-default"><i class="fa fa-wrench fa-lg"></i></a>
                     </ul>
                 </div>
             </nav>
 
             <div class="container-fluid" id="content">
-                <div class="draggable" id="titlebar">
-                    <span id="titlebar-name">&lt;Untitled&gt;</span>
-                </div>
-                <div class="panel panel-default" id="editor-panel">
+                <div class="panel panel-default bordered" id="editor-panel">
                     <div class="panel-body" id="editor-panel-body">
                         <div id="editor"></div>
                     </div>
                 </div>
-                <div id="console"></div>
+                <div class="bordered" id="console"></div>
             </div>
         </div>
         <script>

@@ -32,3 +32,7 @@ body {
   .btn-default:hover {
     background-color: #1e1e1e;
     color: #fafbfc; }
+
+.bordered {
+  border-color: #181818;
+  border-style: solid; }
