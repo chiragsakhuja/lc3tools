@@ -51,8 +51,11 @@ gui/node_modules
 gui/build
 gui/package-lock.json
 gui2/.electron-gyp
+gui2/bin/.date-modified
 gui2/node_modules
-gui2/build
+gui2/addon/node_modules
+gui2/addon/package-lock.json
+gui2/addon/build
 gui2/package-lock.json
 
 # Ignore css (since we're using scss)

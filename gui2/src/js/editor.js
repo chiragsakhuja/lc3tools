@@ -1,4 +1,4 @@
-const lc3interface = require('bindings')('lc3interface')
+const lc3interface = require('lc3interface')
 
 $('#build-button').on('click', (e) => {
     try {

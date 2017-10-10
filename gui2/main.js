@@ -2,6 +2,7 @@ const electron = require('electron');
 const app = electron.app;
 const BrowserWindow = electron.BrowserWindow;
 const ipcMain = electron.ipcMain;
+const lc3interface = require('lc3interface');
 
 var JSONStorage = require('node-localstorage').JSONStorage;
 var storageLocation = app.getPath('userData');
