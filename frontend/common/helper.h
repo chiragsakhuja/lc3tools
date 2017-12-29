@@ -16,14 +16,17 @@ void simRandomizeMachine(void);
 void simShutdown(void);
 void simRestart(void);
 bool simLoadSimulatorWithFile(std::string const & filename);
+void simSetRunInstLimit(uint32_t inst_count);
 bool simRun(void);
-bool simRunFor(uint32_t inst_count);
+bool simRunUntilBeforeHalt(void);
 bool simStepOver(void);
 bool simStepOut(void);
 void simRegisterPreInstructionCallback(core::callback_func_t func);
 void simRegisterPostInstructionCallback(core::callback_func_t func);
 void simRegisterInterruptEnterCallback(core::callback_func_t func);
 void simRegisterInterruptExitCallback(core::callback_func_t func);
+void simRegisterSubEnterCallback(core::callback_func_t func);
+void simRegisterSubExitCallback(core::callback_func_t func);
 void simRegisterBreakpointHitCallback(std::function<void(core::MachineState & state, Breakpoint const & bp)> func);
 
 uint32_t simGetReg(uint32_t id);

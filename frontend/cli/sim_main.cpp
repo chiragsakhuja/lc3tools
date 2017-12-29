@@ -171,7 +171,8 @@ bool promptMain(std::stringstream & command_tokens)
         if(command_tokens.fail()) {
             simRun();
         } else {
-            simRunFor(inst_count);
+            simSetRunInstLimit(inst_count);
+            simRun();
         }
 #ifdef _ENABLE_DEBUG
         auto end_time = std::chrono::steady_clock::now();
@@ -226,7 +227,8 @@ bool promptMain(std::stringstream & command_tokens)
         }
 
         if(sub_command == "in") {
-            simRunFor(1);
+            simSetRunInstLimit(1);
+            simRun();
         } else if(sub_command == "out") {
             simStepOut();
         } else if(sub_command == "over") {

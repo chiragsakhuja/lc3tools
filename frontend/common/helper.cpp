@@ -15,6 +15,7 @@ uint32_t inst_exec_count = 0;
 uint32_t target_inst_count = 0;
 bool counted_run = false;
 bool step_out_run = false;
+bool until_halt_run = false;
 
 uint32_t breakpoint_id = 0;
 std::vector<Breakpoint> breakpoints;
@@ -73,6 +74,7 @@ void simInit(utils::IPrinter & printer, utils::IInputter & inputter)
     interface->registerInterruptExitCallback(simInterruptExitCallback);
     interface->registerSubEnterCallback(simSubEnterCallback);
     interface->registerSubExitCallback(simSubExitCallback);
+    interface->initializeSimulator();
     simRestart();
 }
 
@@ -84,7 +86,7 @@ void simRandomizeMachine(void)
     std::mt19937 gen(dev());
     std::uniform_int_distribution<> dis(0x0000, 0xffff);
 
-    for(uint32_t i = 0x0; i < 0xfe00; i += 1) {
+    for(uint32_t i = 0x3000; i < 0xfe00; i += 1) {
         simSetMemVal(i, dis(gen));
     }
 
@@ -106,10 +108,9 @@ void simRestart(void)
 {
     assert(interface != nullptr);
 
-    interface->initializeSimulator();
-
     counted_run = false;
     step_out_run = false;
+    until_halt_run = false;
 
     uint32_t mcr = interface->getMachineState().mem[0xfffe].getValue();
     interface->getMachineState().mem[0xfffe].setValue(mcr | 0x8000);
@@ -128,12 +129,19 @@ bool simLoadSimulatorWithFile(std::string const & filename)
     return true;
 }
 
+void simSetRunInstLimit(uint32_t inst_count)
+{
+    assert(interface != nullptr);
+
+    target_inst_count = inst_exec_count + inst_count;
+    counted_run = true;
+    step_out_run = false;
+}
+
 bool simRun(void)
 {
     assert(interface != nullptr);
 
-    counted_run = false;
-    step_out_run = false;
     try {
         interface->simulate();
     } catch(utils::exception const & e) {
@@ -142,13 +150,11 @@ bool simRun(void)
     return true;
 }
 
-bool simRunFor(uint32_t inst_count)
+bool simRunUntilBeforeHalt(void)
 {
     assert(interface != nullptr);
 
-    target_inst_count = inst_exec_count + inst_count;
-    counted_run = true;
-    step_out_run = false;
+    until_halt_run = true;
     try {
         interface->simulate();
     } catch(utils::exception const & e) {
@@ -163,6 +169,7 @@ bool simStepOver(void)
 
     counted_run = false;
     step_out_run = true;
+    until_halt_run = false;
     // this will immediately be incremented by the sub enter callback if
     // it is about to enter a subroutine
     sub_depth = 0;
@@ -181,6 +188,7 @@ bool simStepOut(void)
 
     counted_run = false;
     step_out_run = true;
+    until_halt_run = false;
     // act like we are already in a subroutine
     sub_depth = 1;
     try {
@@ -208,7 +216,6 @@ void simRegisterInterruptEnterCallback(core::callback_func_t func)
     interrupt_enter_callback_v = true;
     interrupt_enter_callback = func;
 }
-
 
 void simRegisterInterruptExitCallback(core::callback_func_t func)
 {
@@ -245,6 +252,13 @@ void simPreInstructionCallback(core::MachineState & state)
             state.hit_breakpoint = true;
             break;
         }
+    }
+
+    if(until_halt_run && state.mem[state.pc].getValue() == 0xf025) {
+        counted_run = false;
+        step_out_run = false;
+        until_halt_run = false;
+        state.hit_breakpoint = true;
     }
 
     if(pre_instruction_callback_v) {
