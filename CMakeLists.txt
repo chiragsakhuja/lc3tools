@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 
 # set project name
-project(lc3sim)
+project(lc3tools)
 
 # if no build mode is specified, pick release
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -13,7 +13,7 @@ endif()
 # give option to build tests (download google test/google mock)
 option(test "Build all tests." OFF)
 
-# if no print type is specified or auto created, select 2, which shows info
+# if no print type is specified or auto created, select 4, which shows info
 if(NOT DEFINED PRINT_LEVEL)
     if(CMAKE_BUILD_TYPE MATCHES "Debug")
         message(STATUS "Setting print level to 9")
@@ -69,5 +69,5 @@ cmake_policy(SET CMP0042 NEW)
     #subdirs(test)
 #endif()
 
-add_subdirectory(core)
-add_subdirectory(cli)
+add_subdirectory(backend)
+add_subdirectory(frontend)

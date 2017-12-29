@@ -42,21 +42,21 @@ build/*
 *.asm
 
 # Ignore generated files
-core/src/parser_gen/*
-core/src/configured_paths.h
+backend/src/parser_gen/*
+backend/src/configured_paths.h
 
 # Ignore node files
-gui/.electron-gyp
-gui/node_modules
-gui/build
-gui/package-lock.json
-gui2/.electron-gyp
-gui2/bin/.date-modified
-gui2/node_modules
-gui2/addon/node_modules
-gui2/addon/package-lock.json
-gui2/addon/build
-gui2/package-lock.json
+frontend/gui/.electron-gyp
+frontend/gui/node_modules
+frontend/gui/build
+frontend/gui/package-lock.json
+frontend/gui2/.electron-gyp
+frontend/gui2/bin/.date-modified
+frontend/gui2/node_modules
+frontend/gui2/addon/node_modules
+frontend/gui2/addon/package-lock.json
+frontend/gui2/addon/build
+frontend/gui2/package-lock.json
 
 # Ignore css (since we're using scss)
-gui/app/css/*.css
+frontend/gui/app/css/*.css
