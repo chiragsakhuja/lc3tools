@@ -32,40 +32,40 @@ bool sub_exit_callback_v = false;
 core::callback_func_t sub_exit_callback;
 std::function<void(core::MachineState & state, Breakpoint const & bp)> breakpoint_hit_callback;
 
-void corePreInstructionCallback(core::MachineState & state);
-void corePostInstructionCallback(core::MachineState & state);
-void coreInterruptEnterCallback(core::MachineState & state);
-void coreInterruptExitCallback(core::MachineState & state);
-void coreSubEnterCallback(core::MachineState & state);
-void coreSubExitCallback(core::MachineState & state);
+void simPreInstructionCallback(core::MachineState & state);
+void simPostInstructionCallback(core::MachineState & state);
+void simInterruptEnterCallback(core::MachineState & state);
+void simInterruptExitCallback(core::MachineState & state);
+void simSubEnterCallback(core::MachineState & state);
+void simSubExitCallback(core::MachineState & state);
 
-void coreInit(utils::IPrinter & printer, utils::IInputter & inputter)
+void simInit(utils::IPrinter & printer, utils::IInputter & inputter)
 {
     interface = new core::lc3(printer, inputter);
-    interface->registerPreInstructionCallback(corePreInstructionCallback);
-    interface->registerPostInstructionCallback(corePostInstructionCallback);
-    interface->registerInterruptEnterCallback(coreInterruptEnterCallback);
-    interface->registerInterruptExitCallback(coreInterruptExitCallback);
-    interface->registerSubEnterCallback(coreSubEnterCallback);
-    interface->registerSubExitCallback(coreSubExitCallback);
+    interface->registerPreInstructionCallback(simPreInstructionCallback);
+    interface->registerPostInstructionCallback(simPostInstructionCallback);
+    interface->registerInterruptEnterCallback(simInterruptEnterCallback);
+    interface->registerInterruptExitCallback(simInterruptExitCallback);
+    interface->registerSubEnterCallback(simSubEnterCallback);
+    interface->registerSubExitCallback(simSubExitCallback);
     interface->initializeSimulator();
 }
 
-void coreShutdown(void)
+void simShutdown(void)
 {
     if(interface != 0) {
         delete interface;
     }
 }
 
-void coreLoadSimulatorWithFile(std::string const & filename)
+void simLoadSimulatorWithFile(std::string const & filename)
 {
     try {
         interface->loadSimulatorWithFile(filename);
     } catch (utils::exception const & e) {}
 }
 
-bool coreRun(void)
+bool simRun(void)
 {
     limited_run = false;
     try {
@@ -76,7 +76,7 @@ bool coreRun(void)
     return true;
 }
 
-bool coreRunFor(uint32_t inst_count)
+bool simRunFor(uint32_t inst_count)
 {
     target_inst_count = inst_exec_count + inst_count;
     limited_run = true;
@@ -88,7 +88,7 @@ bool coreRunFor(uint32_t inst_count)
     return true;
 }
 
-bool coreStepOver(void)
+bool simStepOver(void)
 {
     limited_run = true;
     // this will immediately be incremented by the sub enter callback
@@ -102,7 +102,7 @@ bool coreStepOver(void)
     return true;
 }
 
-bool coreStepOut(void)
+bool simStepOut(void)
 {
     limited_run = true;
     // act like we are already in a subroutine
@@ -115,51 +115,51 @@ bool coreStepOut(void)
     return true;
 }
 
-void coreRegisterPreInstructionCallback(core::callback_func_t func)
+void simRegisterPreInstructionCallback(core::callback_func_t func)
 {
     pre_instruction_callback_v = true;
     pre_instruction_callback = func;
 }
 
-void coreRegisterPostInstructionCallback(core::callback_func_t func)
+void simRegisterPostInstructionCallback(core::callback_func_t func)
 {
     post_instruction_callback_v = true;
     post_instruction_callback = func;
 }
 
-void coreRegisterInterruptEnterCallback(core::callback_func_t func)
+void simRegisterInterruptEnterCallback(core::callback_func_t func)
 {
     interrupt_enter_callback_v = true;
     interrupt_enter_callback = func;
 }
 
 
-void coreRegisterInterruptExitCallback(core::callback_func_t func)
+void simRegisterInterruptExitCallback(core::callback_func_t func)
 {
     interrupt_exit_callback_v = true;
     interrupt_exit_callback = func;
 }
 
-void coreRegisterSubEnterCallback(core::callback_func_t func)
+void simRegisterSubEnterCallback(core::callback_func_t func)
 {
     sub_enter_callback_v = true;
     sub_enter_callback = func;
 }
 
 
-void coreRegisterSubExitCallback(core::callback_func_t func)
+void simRegisterSubExitCallback(core::callback_func_t func)
 {
     sub_exit_callback_v = true;
     sub_exit_callback = func;
 }
 
-void coreRegisterBreakpointHitCallback(std::function<void(core::MachineState & state, Breakpoint const & bp)> func)
+void simRegisterBreakpointHitCallback(std::function<void(core::MachineState & state, Breakpoint const & bp)> func)
 {
     breakpoint_hit_callback_v = true;
     breakpoint_hit_callback = func;
 }
 
-void corePreInstructionCallback(core::MachineState & state)
+void simPreInstructionCallback(core::MachineState & state)
 {
     for(auto const & x : breakpoints) {
         if(state.pc == x.loc) {
@@ -176,7 +176,7 @@ void corePreInstructionCallback(core::MachineState & state)
     }
 }
 
-void corePostInstructionCallback(core::MachineState & state)
+void simPostInstructionCallback(core::MachineState & state)
 {
     inst_exec_count += 1;
     if(limited_run && (inst_exec_count == target_inst_count || sub_depth == 0)) {
@@ -189,21 +189,21 @@ void corePostInstructionCallback(core::MachineState & state)
     }
 }
 
-void coreInterruptEnterCallback(core::MachineState & state)
+void simInterruptEnterCallback(core::MachineState & state)
 {
     if(interrupt_enter_callback_v) {
         interrupt_enter_callback(state);
     }
 }
 
-void coreInterruptExitCallback(core::MachineState & state)
+void simInterruptExitCallback(core::MachineState & state)
 {
     if(interrupt_exit_callback_v) {
         interrupt_exit_callback(state);
     }
 }
 
-void coreSubEnterCallback(core::MachineState & state)
+void simSubEnterCallback(core::MachineState & state)
 {
     sub_depth += 1;
     if(sub_enter_callback_v) {
@@ -211,7 +211,7 @@ void coreSubEnterCallback(core::MachineState & state)
     }
 }
 
-void coreSubExitCallback(core::MachineState & state)
+void simSubExitCallback(core::MachineState & state)
 {
     sub_depth -= 1;
     if(sub_exit_callback_v) {
@@ -219,7 +219,7 @@ void coreSubExitCallback(core::MachineState & state)
     }
 }
 
-uint32_t coreGetReg(uint32_t id)
+uint32_t simGetReg(uint32_t id)
 {
 #ifdef _ENABLE_DEBUG
     assert(id <= 7);
@@ -229,11 +229,11 @@ uint32_t coreGetReg(uint32_t id)
     return interface->getMachineState().regs[id];
 }
 
-uint32_t coreGetPC(void) { return interface->getMachineState().pc; }
-uint32_t coreGetPSR(void) { return interface->getMachineState().psr; }
+uint32_t simGetPC(void) { return interface->getMachineState().pc; }
+uint32_t simGetPSR(void) { return interface->getMachineState().psr; }
 
-char coreGetCC(void) {
-    uint32_t cc = coreGetPSR() & 0x7;
+char simGetCC(void) {
+    uint32_t cc = simGetPSR() & 0x7;
 #ifdef _ENABLE_DEBUG
     assert(cc == 0x4 || cc == 0x2 || cc == 0x1);
 #else
@@ -246,7 +246,7 @@ char coreGetCC(void) {
     else { return 'P'; }
 }
 
-uint32_t coreGetMemVal(uint32_t addr)
+uint32_t simGetMemVal(uint32_t addr)
 {
 #ifdef _ENABLE_DEBUG
     assert(addr <= 0xffff);
@@ -256,7 +256,7 @@ uint32_t coreGetMemVal(uint32_t addr)
     return interface->getMachineState().mem[addr].getValue();
 }
 
-std::string coreGetMemLine(uint32_t addr)
+std::string simGetMemLine(uint32_t addr)
 {
 #ifdef _ENABLE_DEBUG
     assert(addr <= 0xffff);
@@ -266,7 +266,7 @@ std::string coreGetMemLine(uint32_t addr)
     return interface->getMachineState().mem[addr].getLine();
 }
 
-void coreSetReg(uint32_t id, uint32_t value)
+void simSetReg(uint32_t id, uint32_t value)
 {
 #ifdef _ENABLE_DEBUG
     assert(id <= 7);
@@ -278,7 +278,7 @@ void coreSetReg(uint32_t id, uint32_t value)
     interface->getMachineState().regs[id] = value;
 }
 
-void coreSetPC(uint32_t value)
+void simSetPC(uint32_t value)
 {
 #ifdef _ENABLE_DEBUG
     assert(value <= 0xfe00u);
@@ -286,9 +286,13 @@ void coreSetPC(uint32_t value)
     value = std::min(value & 0xffff, 0xfe00u);
 #endif
     interface->getMachineState().pc = value;
+
+    // re-enable system
+    uint32_t mcr = interface->getMachineState().mem[0xfffe].getValue();
+    interface->getMachineState().mem[0xfffe].setValue(mcr | 0x8000);
 }
 
-void coreSetPSR(uint32_t value)
+void simSetPSR(uint32_t value)
 {
 #ifdef _ENABLE_DEBUG
     assert((value & ((~0x8707) & 0xffff)) == 0x0000);
@@ -298,7 +302,7 @@ void coreSetPSR(uint32_t value)
     interface->getMachineState().psr = value;
 }
 
-void coreSetCC(char cc)
+void simSetCC(char cc)
 {
     cc |= 0x20;
 #ifdef _ENABLE_DEBUG
@@ -314,7 +318,7 @@ void coreSetCC(char cc)
     psr = (psr & 0xfff8) | new_cc;
 }
 
-void coreSetMemVal(uint32_t addr, uint32_t value)
+void simSetMemVal(uint32_t addr, uint32_t value)
 {
 #ifdef _ENABLE_DEBUG
     assert(addr <= 0xfe00);
@@ -326,7 +330,7 @@ void coreSetMemVal(uint32_t addr, uint32_t value)
     interface->getMachineState().mem[addr].setValue(value);
 }
 
-Breakpoint coreSetBreakpoint(uint32_t addr)
+Breakpoint simSetBreakpoint(uint32_t addr)
 {
 #ifdef _ENABLE_DEBUG
     assert(addr <= 0xffff);
@@ -339,7 +343,7 @@ Breakpoint coreSetBreakpoint(uint32_t addr)
     return bp;
 }
 
-bool coreRemoveBreakpoint(uint32_t id)
+bool simRemoveBreakpoint(uint32_t id)
 {
     auto it = breakpoints.begin();
     bool found = false;

@@ -20,7 +20,7 @@ void utils::ConsolePrinter::setColor(int color)
 
 void utils::ConsolePrinter::print(std::string const & string)
 {
-    std::cout << string;
+    std::cout << string << std::flush;
 }
 
 void utils::ConsolePrinter::newline(void)

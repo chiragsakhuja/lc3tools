@@ -20,19 +20,21 @@ int main(int argc, char * argv[])
 {
     help();
 
-    utils::ConsolePrinter printer;
-    utils::ConsoleInputter inputter;
-    coreInit(printer, inputter);
+    try {
+        utils::ConsolePrinter printer;
+        utils::ConsoleInputter inputter;
+        simInit(printer, inputter);
 
-    coreRegisterBreakpointHitCallback(breakpointHitCallback);
+        simRegisterBreakpointHitCallback(breakpointHitCallback);
 
-    for(int i = 1; i < argc; i += 1) {
-        coreLoadSimulatorWithFile(std::string(argv[i]));
-    }
+        for(int i = 1; i < argc; i += 1) {
+            simLoadSimulatorWithFile(std::string(argv[i]));
+        }
 
-    while(prompt()) {}
+        while(prompt()) {}
 
-    coreShutdown();
+        simShutdown();
+    } catch(utils::exception) { return 1; }
 
     return 0;
 }
@@ -84,7 +86,7 @@ bool promptMain(std::stringstream & command_tokens)
     } else if(command == "help") {
         help();
     } else if(command == "list") {
-        uint32_t pc = coreGetPC();
+        uint32_t pc = simGetPC();
         for(int32_t pos = -2; pos <= 2; pos += 1) {
             if(((int32_t) pc) + pos > 0) {
                 if(pos == 0) {
@@ -125,14 +127,14 @@ bool promptMain(std::stringstream & command_tokens)
             return true;
         }
 
-        coreLoadSimulatorWithFile(filename);
+        simLoadSimulatorWithFile(filename);
     } else if(command == "quit") {
         return false;
     } else if(command == "regs") {
         for(uint32_t i = 0; i < 2; i += 1) {
             for(uint32_t j = 0; j < 4; j += 1) {
                 uint32_t reg = i * 4 + j;
-                uint32_t value = coreGetReg(reg);
+                uint32_t value = simGetReg(reg);
                 std::cout << utils::ssprintf("R%u: 0x%0.4X (%5d)", reg, value, value);
                 if(j != 3) {
                     std::cout << "    ";
@@ -140,9 +142,9 @@ bool promptMain(std::stringstream & command_tokens)
             }
             std::cout << "\n";
         }
-        std::cout << utils::ssprintf("PC: 0x%0.4X\n", coreGetPC());
-        std::cout << utils::ssprintf("PSR: 0x%0.4X\n", coreGetPSR());
-        std::cout << utils::ssprintf("CC: %c\n", coreGetCC());
+        std::cout << utils::ssprintf("PC: 0x%0.4X\n", simGetPC());
+        std::cout << utils::ssprintf("PSR: 0x%0.4X\n", simGetPSR());
+        std::cout << utils::ssprintf("CC: %c\n", simGetCC());
     } else if(command == "run") {
         uint32_t inst_count;
         command_tokens >> inst_count;
@@ -151,9 +153,9 @@ bool promptMain(std::stringstream & command_tokens)
         auto start_time = std::chrono::steady_clock::now();
 #endif
         if(command_tokens.fail()) {
-            coreRun();
+            simRun();
         } else {
-            coreRunFor(inst_count);
+            simRunFor(inst_count);
         }
 #ifdef _ENABLE_DEBUG
         auto end_time = std::chrono::steady_clock::now();
@@ -184,11 +186,11 @@ bool promptMain(std::stringstream & command_tokens)
                 return true;
             }
             uint32_t id = loc_s[1] - '0';
-            coreSetReg(id, val);
+            simSetReg(id, val);
         } else if(loc_s == "pc") {
-            coreSetPC(val);
+            simSetPC(val);
         } else if(loc_s == "psr") {
-            coreSetPSR(val);
+            simSetPSR(val);
         } else {
             std::cout << "invalid location\n";
         }
@@ -201,11 +203,11 @@ bool promptMain(std::stringstream & command_tokens)
         }
 
         if(sub_command == "in") {
-            coreRunFor(1);
+            simRunFor(1);
         } else if(sub_command == "out") {
-            coreStepOut();
+            simStepOut();
         } else if(sub_command == "over") {
-            coreStepOver();
+            simStepOver();
         } else {
             std::cout << "invalid step operation\n";
         }
@@ -234,7 +236,7 @@ void promptBreak(std::stringstream & command_tokens)
             return;
         }
 
-        bool removed = coreRemoveBreakpoint(id);
+        bool removed = simRemoveBreakpoint(id);
         if(! removed) {
             std::cout << "invalid id\n";
             return;
@@ -261,7 +263,7 @@ void promptBreak(std::stringstream & command_tokens)
             return;
         }
 
-        Breakpoint bp = coreSetBreakpoint(loc);
+        Breakpoint bp = simSetBreakpoint(loc);
         std::cout << bp << "\n";
 
     } else  {
@@ -272,8 +274,8 @@ void promptBreak(std::stringstream & command_tokens)
 std::string formatMem(uint32_t addr)
 {
     std::stringstream out;
-    uint32_t value = coreGetMemVal(addr);
-    std::string line = coreGetMemLine(addr);
+    uint32_t value = simGetMemVal(addr);
+    std::string line = simGetMemLine(addr);
     out << utils::ssprintf("0x%0.4X: 0x%0.4X %s", addr, value, line.c_str());
     return out.str();
 }
