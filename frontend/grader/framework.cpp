@@ -37,6 +37,17 @@ bool StringInputter::getChar(char & c)
 
 int main(int argc, char ** argv)
 {
+    std::vector<std::string> obj_filenames;
+    for(int i = 1; i < argc; i += 1) {
+        std::string asm_filename(argv[i]);
+        try {
+            obj_filenames.emplace_back(assemble(asm_filename));
+        } catch(utils::exception e) {
+            std::cout << "could not assemble " << asm_filename << ": " << e.what() << "\n";
+            return 1;
+        }
+    }
+
     setup();
 
     uint32_t total_points_earned = 0;
@@ -53,22 +64,26 @@ int main(int argc, char ** argv)
 
         try {
             simInit(printer, inputter);
+            for(std::string const & obj_filename : obj_filenames) {
+                simLoadSimulatorWithFile(obj_filename);
+            }
         } catch(utils::exception const & e) {
-            std::cout << e.what();
-            return 1;
+            std::cout << "could not init simulator: " << e.what() << "\n";
+            return 2;
         }
 
         std::cout << "Test Case: " << test.name;
         if(test.randomize) {
-            // TODO: randomize machine
+            simRandomizeMachine();
             std::cout << " (Randomized Machine)";
         }
         std::cout << std::endl;
 
-
         try {
             test.test_func();
-        } catch(utils::exception const & e) { }
+        } catch(utils::exception const & e) {
+            continue;
+        }
 
         float percent_points_earned = ((float) verify_valid) / verify_count;
         uint32_t points_earned = (uint32_t) ( percent_points_earned * test.points);
