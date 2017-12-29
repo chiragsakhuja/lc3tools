@@ -62,8 +62,14 @@ int main(int argc, char ** argv)
 
         total_possible_points += test.points;
 
+        std::cout << "Test: " << test.name;
         try {
             simInit(printer, inputter);
+            if(test.randomize) {
+                simRandomizeMachine();
+                std::cout << " (Randomized Machine)";
+            }
+            std::cout << std::endl;
             for(std::string const & obj_filename : obj_filenames) {
                 simLoadSimulatorWithFile(obj_filename);
             }
@@ -72,12 +78,6 @@ int main(int argc, char ** argv)
             return 2;
         }
 
-        std::cout << "Test Case: " << test.name;
-        if(test.randomize) {
-            simRandomizeMachine();
-            std::cout << " (Randomized Machine)";
-        }
-        std::cout << std::endl;
 
         try {
             test.test_func();

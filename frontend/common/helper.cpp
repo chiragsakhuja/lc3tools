@@ -13,7 +13,8 @@ core::lc3 * interface = nullptr;
 
 uint32_t inst_exec_count = 0;
 uint32_t target_inst_count = 0;
-bool limited_run = false;
+bool counted_run = false;
+bool step_out_run = false;
 
 uint32_t breakpoint_id = 0;
 std::vector<Breakpoint> breakpoints;
@@ -72,7 +73,7 @@ void simInit(utils::IPrinter & printer, utils::IInputter & inputter)
     interface->registerInterruptExitCallback(simInterruptExitCallback);
     interface->registerSubEnterCallback(simSubEnterCallback);
     interface->registerSubExitCallback(simSubExitCallback);
-    interface->initializeSimulator();
+    simRestart();
 }
 
 void simRandomizeMachine(void)
@@ -91,7 +92,7 @@ void simRandomizeMachine(void)
         simSetReg(i, dis(gen));
     }
 
-    interface->initializeSimulator();
+    simRestart();
 }
 
 void simShutdown(void)
@@ -99,6 +100,19 @@ void simShutdown(void)
     assert(interface != nullptr);
 
     delete interface;
+}
+
+void simRestart(void)
+{
+    assert(interface != nullptr);
+
+    interface->initializeSimulator();
+
+    counted_run = false;
+    step_out_run = false;
+
+    uint32_t mcr = interface->getMachineState().mem[0xfffe].getValue();
+    interface->getMachineState().mem[0xfffe].setValue(mcr | 0x8000);
 }
 
 bool simLoadSimulatorWithFile(std::string const & filename)
@@ -118,7 +132,8 @@ bool simRun(void)
 {
     assert(interface != nullptr);
 
-    limited_run = false;
+    counted_run = false;
+    step_out_run = false;
     try {
         interface->simulate();
     } catch(utils::exception const & e) {
@@ -132,7 +147,8 @@ bool simRunFor(uint32_t inst_count)
     assert(interface != nullptr);
 
     target_inst_count = inst_exec_count + inst_count;
-    limited_run = true;
+    counted_run = true;
+    step_out_run = false;
     try {
         interface->simulate();
     } catch(utils::exception const & e) {
@@ -145,8 +161,10 @@ bool simStepOver(void)
 {
     assert(interface != nullptr);
 
-    limited_run = true;
-    // this will immediately be incremented by the sub enter callback
+    counted_run = false;
+    step_out_run = true;
+    // this will immediately be incremented by the sub enter callback if
+    // it is about to enter a subroutine
     sub_depth = 0;
 
     try {
@@ -161,7 +179,8 @@ bool simStepOut(void)
 {
     assert(interface != nullptr);
 
-    limited_run = true;
+    counted_run = false;
+    step_out_run = true;
     // act like we are already in a subroutine
     sub_depth = 1;
     try {
@@ -236,8 +255,9 @@ void simPreInstructionCallback(core::MachineState & state)
 void simPostInstructionCallback(core::MachineState & state)
 {
     inst_exec_count += 1;
-    if(limited_run && (inst_exec_count == target_inst_count || sub_depth == 0)) {
-        limited_run = false;
+    if((counted_run && inst_exec_count == target_inst_count) || (step_out_run && sub_depth == 0)) {
+        counted_run = false;
+        step_out_run = false;
         state.running = false;
     }
 
@@ -357,8 +377,7 @@ void simSetPC(uint32_t value)
     interface->getMachineState().pc = value;
 
     // re-enable system
-    uint32_t mcr = interface->getMachineState().mem[0xfffe].getValue();
-    interface->getMachineState().mem[0xfffe].setValue(mcr | 0x8000);
+    simRestart();
 }
 
 void simSetPSR(uint32_t value)

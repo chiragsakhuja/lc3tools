@@ -14,6 +14,7 @@ std::string assemble(std::string const & asm_filename);
 void simInit(utils::IPrinter & printer, utils::IInputter & inputter);
 void simRandomizeMachine(void);
 void simShutdown(void);
+void simRestart(void);
 bool simLoadSimulatorWithFile(std::string const & filename);
 bool simRun(void);
 bool simRunFor(uint32_t inst_count);

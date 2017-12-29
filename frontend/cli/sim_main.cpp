@@ -8,6 +8,8 @@
 #include "console_printer.h"
 #include "console_inputter.h"
 
+std::string previous_command = "";
+
 void help(void);
 bool prompt(void);
 bool promptMain(std::stringstream & command_tokens);
@@ -44,12 +46,13 @@ void help(void)
     std::cout << "break <action> [args...] - performs action (see break help for details)\n"
               << "help                     - display this message\n"
               << "list                     - display the next instruction to be executed\n"
-              << "load filename            - loads an object file\n"
-              << "mem <start> <end>        - display values in memory addresses start to end\n"
+              << "load <filename>          - loads an object file\n"
+              << "mem <start> [<end>]      - display values in memory addresses start to end\n"
               << "quit                     - exit the simulator\n"
+              << "randomize                - randomize the memory and general purpose registers\n"
               << "regs                     - display register values\n"
-              << "run [instructions]       - runs to end of program or, if specified, the number of instructions\n"
-              << "set <loc> <value>        - sets loc (either register name or memoery address) to value\n"
+              << "run [<instructions>]     - runs to end of program or, if specified, the number of instructions\n"
+              << "set <loc> <value>        - sets loc (either register name or memory address) to value\n"
               << "step in                  - executes a single instruction\n"
               << "step over                - executes a single instruction (treats subroutine calls as a single\n"
               << "                           instruction)\n"
@@ -71,9 +74,16 @@ bool prompt(void)
     std::cout << "> ";
     std::string command_line;
     std::getline(std::cin, command_line);
-    std::stringstream command_tokens(command_line);
+    if(command_line == "") {
+        command_line = previous_command;
+    }
 
-    return promptMain(command_tokens);
+    std::stringstream command_tokens(command_line);
+    bool result = promptMain(command_tokens);
+
+    previous_command = command_line;
+
+    return result;
 }
 
 bool promptMain(std::stringstream & command_tokens)
@@ -99,10 +109,14 @@ bool promptMain(std::stringstream & command_tokens)
         }
     } else if(command == "mem") {
         std::string start_s, end_s;
-        command_tokens >> start_s >> end_s;
+        command_tokens >> start_s;
         if(command_tokens.fail()) {
-            std::cout << "must supply start and end addresses\n";
+            std::cout << "must supply start address\n";
             return true;
+        }
+        command_tokens >> end_s;
+        if(command_tokens.fail()) {
+            end_s = start_s;
         }
 
         uint32_t start, end;
@@ -110,7 +124,7 @@ bool promptMain(std::stringstream & command_tokens)
             start = std::stoi(start_s, 0, 0);
             end = std::stoi(end_s, 0, 0);
         } catch(std::exception const & e) {
-            std::cout << "invalid value\n";
+            std::cout << "invalid address\n";
             return true;
         }
 
@@ -130,6 +144,8 @@ bool promptMain(std::stringstream & command_tokens)
         simLoadSimulatorWithFile(filename);
     } else if(command == "quit") {
         return false;
+    } else if(command == "randomize") {
+        simRandomizeMachine();
     } else if(command == "regs") {
         for(uint32_t i = 0; i < 2; i += 1) {
             for(uint32_t j = 0; j < 4; j += 1) {
@@ -192,7 +208,14 @@ bool promptMain(std::stringstream & command_tokens)
         } else if(loc_s == "psr") {
             simSetPSR(val);
         } else {
-            std::cout << "invalid location\n";
+            uint32_t addr;
+            try {
+                addr = std::stoi(loc_s, 0, 0);
+            } catch(std::exception const & e) {
+                std::cout << "invalid address\n";
+                return true;
+            }
+            simSetMemVal(addr, val);
         }
     } else if(command == "step") {
         std::string sub_command;
