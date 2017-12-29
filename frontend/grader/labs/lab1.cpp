@@ -1,4 +1,4 @@
-#include "framework.h"
+#include "../framework.h"
 
 void zero_test(void)
 {
@@ -27,8 +27,7 @@ void all_power_test(void)
 }
 
 void setup(void) {
-    REGISTER_TEST(Zero, zero_test, 20);
-    REGISTER_RANDOM_TEST(Zero, zero_test, 10);
+    REGISTER_RANDOM_TEST(Zero, zero_test, 30);
     REGISTER_TEST(AllPowers, all_power_test, 60);
     REGISTER_RANDOM_TEST(AllPowers, all_power_test, 10);
 }
