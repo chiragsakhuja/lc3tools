@@ -1,12 +1,14 @@
 #ifndef CONSOLE_PRINTER_H
 #define CONSOLE_PRINTER_H
 
-namespace utils
+#include "printer.h"
+
+namespace lc3
 {
-    class ConsolePrinter : public IPrinter
+    class ConsolePrinter : public utils::IPrinter
     {
     public:
-        virtual void setColor(int color) override;
+        virtual void setColor(utils::PrintColor color) override;
         virtual void print(std::string const & string) override;
         virtual void newline(void) override;
     };

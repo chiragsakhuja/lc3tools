@@ -1,26 +1,8 @@
-#include <array>
 #include <cstdint>
-#include <functional>
-#include <map>
-#include <string>
-#include <stdexcept>
-#include <vector>
 
-#include "utils.h"
-
-#include "tokens.h"
-
-#include "printer.h"
-#include "logger.h"
-
-#include "statement.h"
-
-#include "state.h"
-
-#include "instructions.h"
 #include "instruction_decoder.h"
 
-core::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
+lc3::core::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
 {
     for(IInstruction const * inst : instructions) {
         // assumption: every instruction will have a FixedOperand first, and that is the opcode
@@ -29,7 +11,8 @@ core::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
     }
 }
 
-bool core::InstructionDecoder::findInstructionByEncoding(uint32_t encoding, IInstruction *& candidate) const
+bool lc3::core::InstructionDecoder::findInstructionByEncoding(uint32_t encoding,
+    lc3::core::IInstruction *& candidate) const
 {
     auto search = instructions_by_opcode.find(utils::getBits(encoding, 15, 12));
     candidate = nullptr;
@@ -39,7 +22,7 @@ bool core::InstructionDecoder::findInstructionByEncoding(uint32_t encoding, IIns
             uint32_t cur_pos = 15;
             bool valid = true;
             for(IOperand const * op : inst->operands) {
-                if(op->type == OPER_TYPE_FIXED) {
+                if(op->type == OperType::OPER_TYPE_FIXED) {
                     if(utils::getBits(encoding, cur_pos, cur_pos - op->width + 1) != ((FixedOperand *) op)->value) {
                         valid = false;
                         break;

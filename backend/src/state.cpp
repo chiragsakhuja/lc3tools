@@ -1,28 +1,15 @@
-#include <array>
 #include <cassert>
-#include <cstdint>
-#include <functional>
 #include <mutex>
-#include <string>
-#include <vector>
-
-#include "tokens.h"
-
-#include "printer.h"
-#include "logger.h"
-
-#include "statement.h"
 
 #include "device_regs.h"
-
 #include "state.h"
 
-namespace core
+namespace lc3::core
 {
     extern std::mutex g_io_lock;
 };
 
-uint32_t core::MachineState::readMem(uint32_t addr, bool & change_mem, IEvent *& change) const
+uint32_t lc3::core::MachineState::readMem(uint32_t addr, bool & change_mem, lc3::core::IEvent *& change) const
 {
     assert(addr < 0xffff);
 
@@ -43,7 +30,7 @@ uint32_t core::MachineState::readMem(uint32_t addr, bool & change_mem, IEvent *&
     return value;
 }
 
-void core::MemWriteEvent::updateState(MachineState & state) const
+void lc3::core::MemWriteEvent::updateState(lc3::core::MachineState & state) const
 {
     assert(addr < 0xffff);
 
@@ -59,7 +46,7 @@ void core::MemWriteEvent::updateState(MachineState & state) const
     state.mem[addr].setValue(value);
 }
 
-void core::SwapSPEvent::updateState(MachineState & state) const
+void lc3::core::SwapSPEvent::updateState(MachineState & state) const
 {
     uint32_t old_sp = state.regs[6];
     state.regs[6] = state.backup_sp;

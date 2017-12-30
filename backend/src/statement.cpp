@@ -1,22 +1,17 @@
-#include <cstdint>
 #include <cstring>
 #include <fstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
-
-#include "utils.h"
 
 #include "statement.h"
 
-namespace utils {
-    std::ostream & operator<<(std::ostream & out, utils::Statement const & in)
+namespace lc3::core 
+{
+    std::ostream & operator<<(std::ostream & out, lc3::core::Statement const & in)
     {
         // TODO: this is extrememly unportable, namely because it relies on the endianness not changing
         // size of num_bytes + value + orig + line + nullptr
         uint32_t num_bytes = 2 + 1 + 4 + in.line.size();
         char * bytes = new char[num_bytes];
-        std::memcpy(bytes    , (char *) (&in.value), 2);
+        std::memcpy(bytes, (char *) (&in.value), 2);
         std::memcpy(bytes + 2, (char *) (&in.orig), 1);
         uint32_t num_chars = in.line.size();
         std::memcpy(bytes + 3, (char *) (&num_chars), 4);
@@ -27,7 +22,7 @@ namespace utils {
         return out;
     }
 
-    std::istream & operator>>(std::istream & in, utils::Statement & out)
+    std::istream & operator>>(std::istream & in, lc3::core::Statement & out)
     {
         in.read((char *) (&out.value), 2);
         in.read((char *) (&out.orig), 1);

@@ -1,27 +1,8 @@
-#include <array>
-#include <functional>
-#include <map>
 #include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
-
-#include <iostream>
-
-#include "utils.h"
-
-#include "tokens.h"
-
-#include "printer.h"
-#include "logger.h"
-
-#include "statement.h"
-
-#include "state.h"
 
 #include "instructions.h"
 
-core::IOperand::IOperand(OperType type, std::string const & type_str, uint32_t width)
+lc3::core::IOperand::IOperand(OperType type, std::string const & type_str, uint32_t width)
 {
     this->type = type;
     this->type_str = type_str;
@@ -29,13 +10,13 @@ core::IOperand::IOperand(OperType type, std::string const & type_str, uint32_t w
     this->value = 0;
 }
 
-core::IInstruction::IInstruction(std::string const & name, std::vector<IOperand *> const & operands)
+lc3::core::IInstruction::IInstruction(std::string const & name, std::vector<IOperand *> const & operands)
 {
     this->name = name;
     this->operands = operands;
 }
 
-core::IInstruction::IInstruction(IInstruction const & that)
+lc3::core::IInstruction::IInstruction(IInstruction const & that)
 {
     this->name = that.name;
     for(IOperand * op : that.operands) {
@@ -43,42 +24,42 @@ core::IInstruction::IInstruction(IInstruction const & that)
     }
 }
 
-core::IInstruction::~IInstruction(void)
+lc3::core::IInstruction::~IInstruction(void)
 {
     for(uint32_t i = 0; i < operands.size(); i += 1) {
         delete operands[i];
     }
 }
 
-uint32_t core::IInstruction::getNumOperands(void) const
+uint32_t lc3::core::IInstruction::getNumOperands(void) const
 {
     uint32_t ret = 0;
     for(IOperand * operand : operands) {
-        if(operand->type != OPER_TYPE_FIXED) {
+        if(operand->type != OperType::OPER_TYPE_FIXED) {
             ret += 1;
         }
     }
     return ret;
 }
 
-void core::IInstruction::assignOperands(uint32_t encoded_inst)
+void lc3::core::IInstruction::assignOperands(uint32_t encoded_inst)
 {
     uint32_t cur_pos = 15;
     for(IOperand * op : operands) {
-        if(op->type != OPER_TYPE_FIXED) {
+        if(op->type != OperType::OPER_TYPE_FIXED) {
             op->value = utils::getBits(encoded_inst, cur_pos, cur_pos - op->width + 1);
         }
         cur_pos -= op->width;
     }
 }
 
-std::string core::IInstruction::toFormatString(void) const
+std::string lc3::core::IInstruction::toFormatString(void) const
 {
     std::stringstream assembly;
     assembly << name << " ";
     std::string prefix = "";
     for(IOperand * operand : operands) {
-        if(operand->type != OPER_TYPE_FIXED) {
+        if(operand->type != OperType::OPER_TYPE_FIXED) {
             assembly << prefix << operand->type_str;
             prefix = ", ";
         }
@@ -86,23 +67,23 @@ std::string core::IInstruction::toFormatString(void) const
     return assembly.str();
 }
 
-std::string core::IInstruction::toValueString(void) const
+std::string lc3::core::IInstruction::toValueString(void) const
 {
     std::stringstream assembly;
     assembly << name << " ";
     std::string prefix = "";
     for(IOperand * operand : operands) {
-        if(operand->type != OPER_TYPE_FIXED) {
+        if(operand->type != OperType::OPER_TYPE_FIXED) {
             std::string oper_str;
-            if(operand->type == OPER_TYPE_NUM || operand->type == OPER_TYPE_LABEL) {
-                if((operand->type == OPER_TYPE_NUM && ((NumOperand *) operand)->sext) ||
-                    operand->type == OPER_TYPE_LABEL)
+            if(operand->type == OperType::OPER_TYPE_NUM || operand->type == OperType::OPER_TYPE_LABEL) {
+                if((operand->type == OperType::OPER_TYPE_NUM && ((NumOperand *) operand)->sext) ||
+                    operand->type == OperType::OPER_TYPE_LABEL)
                 {
                     oper_str = "#" + std::to_string((int32_t) utils::sextTo32(operand->value, operand->width));
                 } else {
                     oper_str = "#" + std::to_string(operand->value);
                 }
-            } else if(operand->type == OPER_TYPE_REG) {
+            } else if(operand->type == OperType::OPER_TYPE_REG) {
                 oper_str = "r" + std::to_string(operand->value);
             }
             assembly << prefix << oper_str;
@@ -112,12 +93,12 @@ std::string core::IInstruction::toValueString(void) const
     return assembly.str();
 }
 
-bool core::IOperand::isEqualType(OperType other) const
+bool lc3::core::IOperand::isEqualType(OperType other) const
 {
     return type == other;
 }
 
-core::InstructionHandler::InstructionHandler(void)
+lc3::core::InstructionHandler::InstructionHandler(void)
 {
     regs["r0"] = 0;
     regs["r1"] = 1;
@@ -164,15 +145,16 @@ core::InstructionHandler::InstructionHandler(void)
     instructions.push_back(new HALTInstruction());
 }
 
-core::InstructionHandler::~InstructionHandler(void)
+lc3::core::InstructionHandler::~InstructionHandler(void)
 {
     for(uint32_t i = 0; i < instructions.size(); i += 1) {
         delete instructions[i];
     }
 }
 
-uint32_t core::FixedOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
-    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
+uint32_t lc3::core::FixedOperand::encode(Token const * oper, uint32_t oper_count,
+    std::map<std::string, uint32_t> const & regs, std::map<std::string, uint32_t> const & symbols,
+    lc3::utils::AssemblerLogger & logger)
 {
     (void) oper;
     (void) oper_count;
@@ -183,21 +165,23 @@ uint32_t core::FixedOperand::encode(Token const * oper, uint32_t oper_count, std
     return value & ((1 << width) - 1);
 }
 
-uint32_t core::RegOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
-    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
+uint32_t lc3::core::RegOperand::encode(Token const * oper, uint32_t oper_count, 
+    std::map<std::string, uint32_t> const & regs, std::map<std::string, uint32_t> const & symbols,
+    lc3::utils::AssemblerLogger & logger)
 {
     (void) symbols;
 
     uint32_t token_val = regs.at(std::string(oper->str)) & ((1 << width) - 1);
 
-    logger.printf(PRINT_TYPE_EXTRA, true, "%d.%d: reg %s => %s", oper->row_num, oper_count, oper->str.c_str(),
-        utils::udecToBin(token_val, width).c_str());
+    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, true, "%d.%d: reg %s => %s", oper->row_num, oper_count,
+        oper->str.c_str(), utils::udecToBin(token_val, width).c_str());
 
     return token_val;
 }
 
-uint32_t core::NumOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
-    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
+uint32_t lc3::core::NumOperand::encode(Token const * oper, uint32_t oper_count,
+    std::map<std::string, uint32_t> const & regs, std::map<std::string, uint32_t> const & symbols,
+    lc3::utils::AssemblerLogger & logger)
 {
     (void) regs;
     (void) symbols;
@@ -206,45 +190,46 @@ uint32_t core::NumOperand::encode(Token const * oper, uint32_t oper_count, std::
 
     if(sext) {
         if((int32_t) oper->num < -(1 << (width - 1)) || (int32_t) oper->num > ((1 << (width - 1)) - 1)) {
-            logger.printfMessage(PRINT_TYPE_WARNING, oper, "immediate %d truncated to %d", oper->num,
-                utils::sextTo32(token_val, width));
+            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, oper, "immediate %d truncated to %d",
+                oper->num, utils::sextTo32(token_val, width));
             logger.newline();
         }
     } else {
         if(oper->num > ((1 << width) - 1)) {
-            logger.printfMessage(PRINT_TYPE_WARNING, oper, "immediate %d truncated to %u",
+            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, oper, "immediate %d truncated to %u",
                 oper->num, token_val);
             logger.newline();
         }
     }
 
-    logger.printf(PRINT_TYPE_EXTRA, true, "%d.%d: imm %d => %s", oper->row_num, oper_count, oper->num,
-        utils::udecToBin(token_val, width).c_str());
+    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, true, "%d.%d: imm %d => %s", oper->row_num, oper_count,
+        oper->num, utils::udecToBin(token_val, width).c_str());
 
     return token_val;
 }
 
-uint32_t core::LabelOperand::encode(Token const * oper, uint32_t oper_count, std::map<std::string, uint32_t> const & regs,
-    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger)
+uint32_t lc3::core::LabelOperand::encode(Token const * oper, uint32_t oper_count,
+    std::map<std::string, uint32_t> const & regs, std::map<std::string, uint32_t> const & symbols,
+    lc3::utils::AssemblerLogger & logger)
 {
     (void) regs;
 
     auto search = symbols.find(oper->str);
     if(search == symbols.end()) {
-        logger.printfMessage(PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
+        logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
         logger.newline();
         throw utils::exception("unknown label");
     }
 
     uint32_t token_val = (((int32_t) search->second) - (oper->pc + 1)) & ((1 << width) - 1);
 
-    logger.printf(PRINT_TYPE_EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper->row_num, oper_count,
-        oper->str.c_str(), search->second, utils::udecToBin((uint32_t) token_val, width).c_str());
+    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper->row_num,
+        oper_count, oper->str.c_str(), search->second, utils::udecToBin((uint32_t) token_val, width).c_str());
 
     return token_val;
 }
 
-std::vector<core::IEvent const *> core::ADDRInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::ADDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
@@ -257,7 +242,7 @@ std::vector<core::IEvent const *> core::ADDRInstruction::execute(MachineState co
     };
 }
 
-std::vector<core::IEvent const *> core::ADDIInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::ADDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
@@ -270,7 +255,7 @@ std::vector<core::IEvent const *> core::ADDIInstruction::execute(MachineState co
     };
 }
 
-std::vector<core::IEvent const *> core::ANDRInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::ANDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
@@ -283,7 +268,7 @@ std::vector<core::IEvent const *> core::ANDRInstruction::execute(MachineState co
     };
 }
 
-std::vector<core::IEvent const *> core::ANDIInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::ANDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = utils::sextTo32(state.regs[operands[2]->value], 16);
@@ -296,7 +281,7 @@ std::vector<core::IEvent const *> core::ANDIInstruction::execute(MachineState co
     };
 }
 
-std::vector<core::IEvent const *> core::BRInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::BRInstruction::execute(MachineState const & state)
 {
     std::vector<IEvent const *> ret;
     uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
@@ -308,7 +293,7 @@ std::vector<core::IEvent const *> core::BRInstruction::execute(MachineState cons
     return ret;
 }
 
-std::vector<core::IEvent const *> core::JMPInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::JMPInstruction::execute(MachineState const & state)
 {
     std::vector<IEvent const *> ret {
         new PCEvent(state.regs[operands[2]->value] & 0xffff)
@@ -319,7 +304,7 @@ std::vector<core::IEvent const *> core::JMPInstruction::execute(MachineState con
     return ret;
 }
 
-std::vector<core::IEvent const *> core::JSRInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::JSRInstruction::execute(MachineState const & state)
 {
     return std::vector<IEvent const *> {
         new RegEvent(7, state.pc & 0xffff),
@@ -328,7 +313,7 @@ std::vector<core::IEvent const *> core::JSRInstruction::execute(MachineState con
     };
 }
 
-std::vector<core::IEvent const *> core::JSRRInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::JSRRInstruction::execute(MachineState const & state)
 {
     return std::vector<IEvent const *> {
         new RegEvent(7, state.pc & 0xffff),
@@ -337,7 +322,7 @@ std::vector<core::IEvent const *> core::JSRRInstruction::execute(MachineState co
     };
 }
 
-std::vector<core::IEvent const *> core::LDInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::LDInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
@@ -358,7 +343,7 @@ std::vector<core::IEvent const *> core::LDInstruction::execute(MachineState cons
     return ret;
 }
 
-std::vector<core::IEvent const *> core::LDIInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::LDIInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr1 = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
@@ -389,7 +374,7 @@ std::vector<core::IEvent const *> core::LDIInstruction::execute(MachineState con
     return ret;
 }
 
-std::vector<core::IEvent const *> core::LDRInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::LDRInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = utils::computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
@@ -411,7 +396,7 @@ std::vector<core::IEvent const *> core::LDRInstruction::execute(MachineState con
     return ret;
 }
 
-std::vector<core::IEvent const *> core::LEAInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::LEAInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
@@ -422,7 +407,7 @@ std::vector<core::IEvent const *> core::LEAInstruction::execute(MachineState con
     };
 }
 
-std::vector<core::IEvent const *> core::NOTInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::NOTInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr_val = utils::sextTo32(state.regs[operands[2]->value], operands[2]->width);
@@ -434,7 +419,7 @@ std::vector<core::IEvent const *> core::NOTInstruction::execute(MachineState con
     };
 }
 
-std::vector<core::IEvent const *> core::RTIInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::RTIInstruction::execute(MachineState const & state)
 {
     if((state.pc & 0x8000) == 0x0000) {
         bool pc_change_mem;
@@ -466,7 +451,7 @@ std::vector<core::IEvent const *> core::RTIInstruction::execute(MachineState con
     return std::vector<IEvent const *> {};
 }
 
-std::vector<core::IEvent const *> core::STInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::STInstruction::execute(MachineState const & state)
 {
     uint32_t addr = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
@@ -476,7 +461,7 @@ std::vector<core::IEvent const *> core::STInstruction::execute(MachineState cons
     };
 }
 
-std::vector<core::IEvent const *> core::STIInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::STIInstruction::execute(MachineState const & state)
 {
     uint32_t addr1 = utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t addr2 = state.mem[addr1].getValue();
@@ -487,7 +472,7 @@ std::vector<core::IEvent const *> core::STIInstruction::execute(MachineState con
     };
 }
 
-std::vector<core::IEvent const *> core::STRInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::STRInstruction::execute(MachineState const & state)
 {
     uint32_t addr = utils::computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
         operands[3]->width);
@@ -498,7 +483,7 @@ std::vector<core::IEvent const *> core::STRInstruction::execute(MachineState con
     };
 }
 
-std::vector<core::IEvent const *> core::TRAPInstruction::execute(MachineState const & state)
+std::vector<lc3::core::IEvent const *> lc3::core::TRAPInstruction::execute(MachineState const & state)
 {
     return std::vector<IEvent const *> {
         new PSREvent(state.psr & 0x7fff),

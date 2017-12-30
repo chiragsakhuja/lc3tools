@@ -1,21 +1,9 @@
-#include <array>
-#include <iostream>
-#include <functional>
-#include <map>
-#include <string>
-#include <vector>
-
-#include "tokens.h"
-#include "parser_gen/parser.hpp"
-
-#include "printer.h"
-#include "logger.h"
-
-#include "statement.h"
-
-#include "state.h"
+#include <fstream>
 
 #include "instructions.h"
+#include "tokens.h"
+
+#include "parser_gen/parser.hpp"
 
 Token::Token(void)
 {
@@ -56,19 +44,20 @@ void Token::print(std::ostream & out, int indent_level) const
     }
 
     if(type == STRING || type == PSEUDO || type == LABEL || type == INST ||
-        type == core::OPER_TYPE_LABEL || type == core::OPER_TYPE_REG)
+        type == static_cast<int>(lc3::core::OperType::OPER_TYPE_LABEL) ||
+        type == static_cast<int>(lc3::core::OperType::OPER_TYPE_REG))
     {
         out << str;
        if(type == PSEUDO) {
           out << " (characters)";
-       } else if(type == LABEL || type == core::OPER_TYPE_LABEL) {
+       } else if(type == LABEL || type == static_cast<int>(lc3::core::OperType::OPER_TYPE_LABEL)) {
           out << " (label)";
        } else if(type == INST) {
            out << " (inst)";
-       } else if(type == core::OPER_TYPE_REG) {
+       } else if(type == static_cast<int>(lc3::core::OperType::OPER_TYPE_REG)) {
            out << " (reg)";
        }
-    } else if(type == NUM || type == core::OPER_TYPE_NUM) {
+    } else if(type == NUM || type == static_cast<int>(lc3::core::OperType::OPER_TYPE_NUM)) {
         out << num << " (number)";
     } else if(type == NEWLINE) {
         out << "NEWLINE";
@@ -80,7 +69,7 @@ void Token::print(std::ostream & out, int indent_level) const
         out << "Unknown token";
     }
 
-    out << " " << (row_num + 1) << ":" << (col_num + 1) << "+" << length << std::endl;
+    out << " " << (row_num + 1) << ":" << (col_num + 1) << "+" << length << "\n";
     Token * cur_oper = opers;
     while(cur_oper != nullptr) {
         cur_oper->print(out, indent_level + 1);

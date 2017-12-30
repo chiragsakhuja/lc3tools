@@ -1,15 +1,15 @@
-#include <unistd.h>
+#include <iostream>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
     #include <conio.h>
 #else
     #include <termios.h>
+    #include <unistd.h>
 #endif
 
-#include "core.h"
 #include "console_inputter.h"
 
-void utils::ConsoleInputter::beginInput(void)
+void lc3::ConsoleInputter::beginInput(void)
 {
 #if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32))
     struct termios ttystate;
@@ -23,7 +23,7 @@ void utils::ConsoleInputter::beginInput(void)
 #endif
 }
 
-bool utils::ConsoleInputter::getChar(char & c)
+bool lc3::ConsoleInputter::getChar(char & c)
 {
     if(kbhit() != 0) {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
@@ -37,7 +37,7 @@ bool utils::ConsoleInputter::getChar(char & c)
     return false;
 }
 
-void utils::ConsoleInputter::endInput(void)
+void lc3::ConsoleInputter::endInput(void)
 {
 #if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32))
     struct termios ttystate;
@@ -49,7 +49,7 @@ void utils::ConsoleInputter::endInput(void)
 }
 
 #if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32))
-int utils::ConsoleInputter::kbhit(void)
+int lc3::ConsoleInputter::kbhit(void)
 {
     struct timeval tv;
     fd_set fds;

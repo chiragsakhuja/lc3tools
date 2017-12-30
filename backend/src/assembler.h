@@ -1,12 +1,17 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 
-namespace core
+#include <vector>
+
+#include "instruction_encoder.h"
+#include "printer.h"
+
+namespace lc3::core
 {
     class Assembler
     {
     public:
-        Assembler(bool log_enable, utils::IPrinter & printer) : printer(printer), log_enable(log_enable) {}
+        Assembler(bool log_enable, lc3::utils::IPrinter & printer) : printer(printer), log_enable(log_enable) {}
         Assembler(Assembler const &) = default;
         Assembler & operator=(Assembler const &) = default;
         // TODO: make sure program is not leaked
@@ -16,31 +21,35 @@ namespace core
 
     private:
         std::vector<std::string> file_buffer;
-        utils::IPrinter & printer;
+        lc3::utils::IPrinter & printer;
 
         bool log_enable;
         InstructionEncoder encoder;
 
-        std::vector<utils::Statement> assembleChain(Token * program,
-            std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
-        Token * firstPass(Token * program, std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
+        std::vector<lc3::core::Statement> assembleChain(Token * program,
+            std::map<std::string, uint32_t> & labels, lc3::utils::AssemblerLogger & logger);
+        Token * firstPass(Token * program, std::map<std::string, uint32_t> & labels,
+            lc3::utils::AssemblerLogger & logger);
         Token * removeNewlineTokens(Token * program);
         void toLower(Token * token_chain);
-        void separateLabels(Token * program, AssemblerLogger & logger);
-        Token * findOrig(Token * program, AssemblerLogger & logger);
-        void processStatements(Token * program, AssemblerLogger & logger);
+        void separateLabels(Token * program, lc3::utils::AssemblerLogger & logger);
+        Token * findOrig(Token * program, lc3::utils::AssemblerLogger & logger);
+        void processStatements(Token * program, lc3::utils::AssemblerLogger & logger);
         void processInstOperands(Token * inst);
         void processStringzOperands(Token * stringz);
-        void saveSymbols(Token * program, std::map<std::string, uint32_t> & labels, AssemblerLogger & logger);
+        void saveSymbols(Token * program, std::map<std::string, uint32_t> & labels,
+            lc3::utils::AssemblerLogger & logger);
 
-        std::vector<utils::Statement> secondPass(Token * program, std::map<std::string, uint32_t> symbols,
-            AssemblerLogger & logger);
-        uint32_t encodeInstruction(Token * program, std::map<std::string, uint32_t> symbols, AssemblerLogger & logger);
-        std::vector<utils::Statement> encodePseudo(Token * program, std::map<std::string, uint32_t> symbols,
-            AssemblerLogger & logger);
-        void processInstruction(std::string const & filename, Token const * inst, AssemblerLogger & logger);
-        void processPseudo(std::string const & filename, Token const * inst, std::map<std::string, uint32_t> symbols,
-            AssemblerLogger & logger);
+        std::vector<lc3::core::Statement> secondPass(Token * program, std::map<std::string, uint32_t> symbols,
+            lc3::utils::AssemblerLogger & logger);
+        uint32_t encodeInstruction(Token * program, std::map<std::string, uint32_t> symbols,
+            lc3::utils::AssemblerLogger & logger);
+        std::vector<lc3::core::Statement> encodePseudo(Token * program, std::map<std::string, uint32_t> symbols,
+            lc3::utils::AssemblerLogger & logger);
+        void processInstruction(std::string const & filename, Token const * inst,
+            lc3::utils::AssemblerLogger & logger);
+        void processPseudo(std::string const & filename, Token const * inst,
+            std::map<std::string, uint32_t> symbols, lc3::utils::AssemblerLogger & logger);
 
         std::vector<std::string> readFile(std::string const & filename);
     };

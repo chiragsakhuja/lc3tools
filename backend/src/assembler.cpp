@@ -1,47 +1,25 @@
 #include <algorithm>
-#include <array>
-#include <cstdint>
-#include <cstring>
-#include <functional>
 #include <fstream>
-#include <list>
-#include <map>
 #include <sstream>
-#include <stdexcept>
-#include <string>
 #include <vector>
 
-#include "utils.h"
-
-#include "tokens.h"
-#include "parser_gen/parser.hpp"
-
-#include "printer.h"
-#include "logger.h"
-
-#include "statement.h"
-
-#include "state.h"
-
-#include "instructions.h"
-#include "instruction_encoder.h"
-
 #include "assembler.h"
+#include "parser_gen/parser.hpp"
 
 extern FILE * yyin;
 extern int yyparse(void);
 extern Token * root;
 extern int row_num, col_num;
 
-void core::Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
+void lc3::core::Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
 {
     std::map<std::string, uint32_t> symbols;
-    AssemblerLogger logger(log_enable, printer);
+    lc3::utils::AssemblerLogger logger(log_enable, printer);
 
     FILE * orig_file = fopen(asm_filename.c_str(), "r");
 
     if(orig_file == nullptr) {
-        logger.printf(PRINT_TYPE_WARNING, true, "skipping file %s ...", asm_filename.c_str());
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_WARNING, true, "skipping file %s ...", asm_filename.c_str());
     } else {
         row_num = 0;
         col_num = 0;
@@ -62,22 +40,22 @@ void core::Assembler::assemble(std::string const & asm_filename, std::string con
 
         remove(mod_filename.c_str());
 
-        logger.printf(PRINT_TYPE_INFO, true, "assembling \'%s\' into \'%s\'", asm_filename.c_str(),
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "assembling \'%s\' into \'%s\'", asm_filename.c_str(),
             obj_filename.c_str());
 
         logger.filename = asm_filename;
         logger.asm_blob = readFile(asm_filename);
-        std::vector<utils::Statement> obj_file_blob = assembleChain(root, symbols, logger);
+        std::vector<Statement> obj_file_blob = assembleChain(root, symbols, logger);
 
         fclose(yyin);
 
         std::ofstream obj_file(obj_filename);
         if(! obj_file) {
-            logger.printf(PRINT_TYPE_ERROR, true, "could not open file \'%s\' for writing", obj_filename.c_str());
+            logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "could not open file \'%s\' for writing", obj_filename.c_str());
             throw utils::exception("could not open file");
         }
 
-        for(utils::Statement i : obj_file_blob) {
+        for(Statement i : obj_file_blob) {
             obj_file << i;
         }
 
@@ -85,37 +63,37 @@ void core::Assembler::assemble(std::string const & asm_filename, std::string con
     }
 }
 
-std::vector<utils::Statement> core::Assembler::assembleChain(Token * program,
-    std::map<std::string, uint32_t> & symbols, AssemblerLogger & logger)
+std::vector<lc3::core::Statement> lc3::core::Assembler::assembleChain(Token * program,
+    std::map<std::string, uint32_t> & symbols, lc3::utils::AssemblerLogger & logger)
 {
-    logger.printf(PRINT_TYPE_INFO, true, "beginning first pass ...");
+    logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "beginning first pass ...");
 
     Token * program_start = nullptr;
 
     try {
         program_start = firstPass(program, symbols, logger);
     } catch(utils::exception const & e) {
-        logger.printf(PRINT_TYPE_ERROR, true, "first pass failed");
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "first pass failed");
         throw e;
     }
 
-    logger.printf(PRINT_TYPE_INFO, true, "first pass completed successfully, beginning second pass ...");
+    logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "first pass completed successfully, beginning second pass ...");
 
-    std::vector<utils::Statement> ret;
+    std::vector<Statement> ret;
     try {
         ret = secondPass(program_start, symbols, logger);
     } catch(utils::exception const & e) {
-        logger.printf(PRINT_TYPE_ERROR, true, "second pass failed");
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "second pass failed");
         throw e;
     }
 
-    logger.printf(PRINT_TYPE_INFO, true, "second pass completed successfully");
+    logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "second pass completed successfully");
 
     return ret;
 }
 
-Token * core::Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & symbols,
-    AssemblerLogger & logger)
+Token * lc3::core::Assembler::firstPass(Token * program, std::map<std::string, uint32_t> & symbols,
+    lc3::utils::AssemblerLogger & logger)
 {
     // TODO: make sure we aren't leaking tokens by changing the program start
     Token * program_start = removeNewlineTokens(program);
@@ -128,7 +106,7 @@ Token * core::Assembler::firstPass(Token * program, std::map<std::string, uint32
     return program_start;
 }
 
-Token * core::Assembler::removeNewlineTokens(Token * program)
+Token * lc3::core::Assembler::removeNewlineTokens(Token * program)
 {
     Token * program_start = program;
     Token * prev_tok = nullptr;
@@ -160,7 +138,7 @@ Token * core::Assembler::removeNewlineTokens(Token * program)
     return program_start;
 }
 
-void core::Assembler::toLower(Token * token_chain)
+void lc3::core::Assembler::toLower(Token * token_chain)
 {
     Token * cur_token = token_chain;
     while(cur_token != nullptr) {
@@ -175,7 +153,7 @@ void core::Assembler::toLower(Token * token_chain)
     }
 }
 
-void core::Assembler::separateLabels(Token * program, AssemblerLogger & logger)
+void lc3::core::Assembler::separateLabels(Token * program, lc3::utils::AssemblerLogger & logger)
 {
     Token * cur_tok = program;
     // since the parser can't distinguish between an instruction and a label by design,
@@ -214,7 +192,7 @@ void core::Assembler::separateLabels(Token * program, AssemblerLogger & logger)
                     cur_tok->opers = nullptr;
                     cur_tok->num_opers = 0;
                 } else {
-                    logger.printfMessage(PRINT_TYPE_WARNING, cur_tok,
+                    logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, cur_tok,
                         "\'%s\' is being interpreted as a label, did you mean for it to be an instruction?",
                         cur_tok->str.c_str());
                     logger.newline();
@@ -225,7 +203,7 @@ void core::Assembler::separateLabels(Token * program, AssemblerLogger & logger)
     }
 }
 
-Token * core::Assembler::findOrig(Token * program, AssemblerLogger & logger)
+Token * lc3::core::Assembler::findOrig(Token * program, lc3::utils::AssemblerLogger & logger)
 {
     Token * program_start = program;
     Token * cur_tok = program;
@@ -239,13 +217,13 @@ Token * core::Assembler::findOrig(Token * program, AssemblerLogger & logger)
         } else {
             found_valid_orig = true;
             if(cur_tok->num_opers != 1) {
-                logger.printfMessage(PRINT_TYPE_ERROR, cur_tok, "incorrect number of operands");
+                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, cur_tok, "incorrect number of operands");
                 logger.newline();
                 throw utils::exception("incorrect number of operands to .orig");
             }
 
             if(cur_tok->opers->type != NUM) {
-                logger.printfMessage(PRINT_TYPE_ERROR, cur_tok->opers, "illegal operand");
+                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, cur_tok->opers, "illegal operand");
                 logger.newline();
                 throw utils::exception("illegal operand to .orig");
             }
@@ -254,7 +232,7 @@ Token * core::Assembler::findOrig(Token * program, AssemblerLogger & logger)
             uint32_t oper_val = (uint32_t) cur_tok->opers->num;
             uint32_t trunc_oper_val =((uint32_t) oper_val) & 0xffff;
             if(oper_val > 0xffff) {
-                logger.printfMessage(PRINT_TYPE_WARNING, cur_tok->opers, "truncating 0x%0.8x to 0x%0.4x",
+                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, cur_tok->opers, "truncating 0x%0.8x to 0x%0.4x",
                     oper_val, trunc_oper_val);
                 logger.newline();
             }
@@ -266,11 +244,11 @@ Token * core::Assembler::findOrig(Token * program, AssemblerLogger & logger)
     }
 
     if(! found_valid_orig) {
-        logger.printf(PRINT_TYPE_ERROR, true, "could not find valid .orig in program");
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "could not find valid .orig in program");
         throw utils::exception("could not find valid .orig");
     } else {
         if(invalid_statement_count > 0) {
-            logger.printf(PRINT_TYPE_WARNING, true, "ignoring %d statements before .orig", invalid_statement_count);
+            logger.printf(lc3::utils::PrintType::PRINT_TYPE_WARNING, true, "ignoring %d statements before .orig", invalid_statement_count);
         }
     }
 
@@ -278,7 +256,7 @@ Token * core::Assembler::findOrig(Token * program, AssemblerLogger & logger)
 }
 
 // precondition: first token is valid .orig
-void core::Assembler::processStatements(Token * program, AssemblerLogger & logger)
+void lc3::core::Assembler::processStatements(Token * program, lc3::utils::AssemblerLogger & logger)
 {
     uint32_t pc = program->pc;
     uint32_t pc_offset = 0;
@@ -328,30 +306,30 @@ void core::Assembler::processStatements(Token * program, AssemblerLogger & logge
     }
 
     if(leftover_statement_count > 0) {
-        logger.printf(PRINT_TYPE_WARNING, true, "ignoring %d statements after .end", leftover_statement_count);
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_WARNING, true, "ignoring %d statements after .end", leftover_statement_count);
     }
 }
 
-void core::Assembler::processInstOperands(Token * inst)
+void lc3::core::Assembler::processInstOperands(Token * inst)
 {
     Token * oper = inst->opers;
     // reassign operand types
     while(oper != nullptr) {
         if(oper->type == STRING) {
             if(encoder.findReg(oper->str)) {
-                oper->type = OPER_TYPE_REG;
+                oper->type = static_cast<int>(OperType::OPER_TYPE_REG);
             } else {
-                oper->type = OPER_TYPE_LABEL;
+                oper->type = static_cast<int>(OperType::OPER_TYPE_LABEL);
             }
         } else if(oper->type == NUM) {
-            oper->type = OPER_TYPE_NUM;
+            oper->type = static_cast<int>(OperType::OPER_TYPE_NUM);
         }
 
         oper = oper->next;
     }
 }
 
-void core::Assembler::processStringzOperands(Token * stringz)
+void lc3::core::Assembler::processStringzOperands(Token * stringz)
 {
     Token * oper = stringz->opers;
     if(oper->type == STRING) {
@@ -383,7 +361,8 @@ void core::Assembler::processStringzOperands(Token * stringz)
     }
 }
 
-void core::Assembler::saveSymbols(Token * program, std::map<std::string, uint32_t> & symbols, AssemblerLogger & logger)
+void lc3::core::Assembler::saveSymbols(Token * program, std::map<std::string, uint32_t> & symbols,
+    lc3::utils::AssemblerLogger & logger)
 {
     Token * cur_tok = program;
     while(cur_tok != nullptr) {
@@ -391,24 +370,24 @@ void core::Assembler::saveSymbols(Token * program, std::map<std::string, uint32_
             std::string const & label = cur_tok->str;
 
             if(symbols.find(label) != symbols.end()) {
-                logger.printfMessage(PRINT_TYPE_WARNING, cur_tok, "redefining label \'%s\'", cur_tok->str.c_str());
+                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, cur_tok, "redefining label \'%s\'", cur_tok->str.c_str());
                 logger.newline();
             }
 
             symbols[label] = cur_tok->pc;
 
-            logger.printf(PRINT_TYPE_DEBUG, true, "setting label \'%s\' to 0x%X", label.c_str(), cur_tok->pc);
+            logger.printf(lc3::utils::PrintType::PRINT_TYPE_DEBUG, true, "setting label \'%s\' to 0x%X", label.c_str(), cur_tok->pc);
         }
         cur_tok = cur_tok->next;
     }
 }
 
 // precondition: first token is orig
-std::vector<utils::Statement> core::Assembler::secondPass(Token * program,
-    std::map<std::string, uint32_t> symbols, AssemblerLogger & logger)
+std::vector<lc3::core::Statement> lc3::core::Assembler::secondPass(Token * program,
+    std::map<std::string, uint32_t> symbols, lc3::utils::AssemblerLogger & logger)
 {
     bool success = true;
-    std::vector<utils::Statement> ret;
+    std::vector<Statement> ret;
     ret.emplace_back(program->pc, true, logger.asm_blob[program->row_num]);
 
     Token * cur_tok = program->next;
@@ -418,7 +397,7 @@ std::vector<utils::Statement> core::Assembler::secondPass(Token * program,
                 uint32_t encoded = encodeInstruction(cur_tok, symbols, logger);
                 ret.emplace_back(encoded, false, logger.asm_blob[cur_tok->row_num]);
             } else if(cur_tok->type == PSEUDO) {
-                std::vector<utils::Statement> encoded = encodePseudo(cur_tok, symbols, logger);
+                std::vector<Statement> encoded = encodePseudo(cur_tok, symbols, logger);
                 ret.insert(ret.end(), encoded.begin(), encoded.end());
             }
         } catch(utils::exception const & e) {
@@ -434,45 +413,45 @@ std::vector<utils::Statement> core::Assembler::secondPass(Token * program,
     return ret;
 }
 
-uint32_t core::Assembler::encodeInstruction(Token * inst, std::map<std::string, uint32_t> symbols,
-    AssemblerLogger & logger)
+uint32_t lc3::core::Assembler::encodeInstruction(Token * inst, std::map<std::string, uint32_t> symbols,
+    lc3::utils::AssemblerLogger & logger)
 {
     std::vector<IInstruction const *> candidates;
     if(encoder.findInstruction(inst, candidates)) {
         uint32_t encoding = encoder.encodeInstruction(candidates[0], inst, symbols, logger);
-        logger.printf(PRINT_TYPE_DEBUG, true, "%s => %s", logger.asm_blob[inst->row_num].c_str(),
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_DEBUG, true, "%s => %s", logger.asm_blob[inst->row_num].c_str(),
             utils::udecToBin(encoding, 16).c_str());
         return encoding;
     }
 
     if(candidates.size() == 0) {
         // this shouldn't happen, because if there are no candidates it should've been retyped as a LABEL
-        logger.printfMessage(PRINT_TYPE_ERROR, inst, "\'%s\' is not a valid instruction", inst->str.c_str());
+        logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, inst, "\'%s\' is not a valid instruction", inst->str.c_str());
         logger.newline();
         throw utils::exception("could not find a valid candidate for instruction");
     }
 
-    logger.printfMessage(PRINT_TYPE_ERROR, inst, "not a valid usage of \'%s\' instruction", inst->str.c_str());
+    logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, inst, "not a valid usage of \'%s\' instruction", inst->str.c_str());
     for(IInstruction const * candidate : candidates) {
-        logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'%s\'?", candidate->toFormatString().c_str());
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'%s\'?", candidate->toFormatString().c_str());
     }
     logger.newline();
 
     throw utils::exception("matched instruction with a candidate, but some operands were incorrect");
 }
 
-std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
-    std::map<std::string, uint32_t> symbols, AssemblerLogger & logger)
+std::vector<lc3::core::Statement> lc3::core::Assembler::encodePseudo(Token * pseudo,
+    std::map<std::string, uint32_t> symbols, lc3::utils::AssemblerLogger & logger)
 {
-    std::vector<utils::Statement> ret;
+    std::vector<Statement> ret;
 
     // TODO: is it worth making this like the instruction encoder?
     if(pseudo->str == "fill") {
         Token * oper = pseudo->opers;
         if(pseudo->num_opers != 1 || (oper->type != NUM && oper->type != STRING)) {
-            logger.printfMessage(PRINT_TYPE_ERROR, pseudo, "not a valid usage of .fill pseudo-op");
-            logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.fill num\'?");
-            logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.fill label\'?");
+            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, pseudo, "not a valid usage of .fill pseudo-op");
+            logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'.fill num\'?");
+            logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'.fill label\'?");
             logger.newline();
             throw utils::exception("not a valid usage of .fill pseudo-op");
         }
@@ -484,7 +463,7 @@ std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
             if(search != symbols.end()) {
                 ret.emplace_back((uint32_t) search->second, false, logger.asm_blob[oper->row_num]);
             } else {
-                logger.printfMessage(PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
+                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
                 logger.newline();
                 throw std::runtime_error("unknown label");
             }
@@ -492,8 +471,8 @@ std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
     } else if(pseudo->str == "stringz") {
         Token * oper = pseudo->opers;
         if(pseudo->num_opers != 1 || (oper->type != NUM && oper->type != STRING)) {
-            logger.printfMessage(PRINT_TYPE_ERROR, pseudo, "not a valid usage of .stringz pseudo-op");
-            logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.stringz string\'?");
+            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, pseudo, "not a valid usage of .stringz pseudo-op");
+            logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'.stringz string\'?");
             logger.newline();
             throw std::runtime_error("not a valid usage of .stringz pseudo-op");
         }
@@ -501,7 +480,7 @@ std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
         std::string value;
         if(oper->type == NUM) {
             value = std::to_string(oper->num);
-            logger.printfMessage(PRINT_TYPE_WARNING, oper, "interpreting numeric value as decimal string \'%s\'",
+            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, oper, "interpreting numeric value as decimal string \'%s\'",
                 value.c_str());
             logger.newline();
         } else if(oper->type == STRING) {
@@ -517,8 +496,8 @@ std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
     } else if(pseudo->str == "blkw") {
         Token * oper = pseudo->opers;
         if(pseudo->num_opers != 1 || oper->type != NUM) {
-            logger.printfMessage(PRINT_TYPE_ERROR, pseudo, "not a valid usage of .blkw pseudo-op");
-            logger.printf(PRINT_TYPE_NOTE, false, "did you mean \'.blkw num\'?");
+            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, pseudo, "not a valid usage of .blkw pseudo-op");
+            logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'.blkw num\'?");
             logger.newline();
             throw std::runtime_error("not a valid usage of .blkw pseudo-op");
         }
@@ -532,7 +511,7 @@ std::vector<utils::Statement> core::Assembler::encodePseudo(Token * pseudo,
 }
 
 // assumes the file is valid
-std::vector<std::string> core::Assembler::readFile(std::string const & filename)
+std::vector<std::string> lc3::core::Assembler::readFile(std::string const & filename)
 {
     std::vector<std::string> file_buffer;
     std::ifstream file(filename);

@@ -1,38 +1,18 @@
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <functional>
-#include <fstream>
-#include <list>
-#include <map>
-#include <string>
-#include <vector>
-
-#include "tokens.h"
-
-#include "printer.h"
-#include "logger.h"
-
-#include "statement.h"
-
-#include "state.h"
-
-#include "instructions.h"
 #include "instruction_encoder.h"
 
-core::InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
+lc3::core::InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
 {
     for(IInstruction const * inst : instructions) {
         instructions_by_name[inst->name].push_back(inst);
     }
 }
 
-bool core::InstructionEncoder::findInstructionByName(std::string const & search) const
+bool lc3::core::InstructionEncoder::findInstructionByName(std::string const & search) const
 {
     return instructions_by_name.find(search) != instructions_by_name.end();
 }
  
-bool core::InstructionEncoder::findInstruction(Token const * search, std::vector<IInstruction const *> & candidates) const
+bool lc3::core::InstructionEncoder::findInstruction(Token const * search, std::vector<IInstruction const *> & candidates) const
 {
     auto inst_list = instructions_by_name.find(search->str);
 
@@ -51,7 +31,7 @@ bool core::InstructionEncoder::findInstruction(Token const * search, std::vector
                 // iterate through the oeprand types to see if the assembly matches
                 for(IOperand const * oper : cur_candidate->operands) {
                     // if the operand is fixed, it won't show up in the assembly so skip it
-                    if(oper->type == OPER_TYPE_FIXED) {
+                    if(oper->type == OperType::OPER_TYPE_FIXED) {
                         continue;
                     }
 
@@ -83,14 +63,14 @@ bool core::InstructionEncoder::findInstruction(Token const * search, std::vector
     }
 }
 
-bool core::InstructionEncoder::findReg(std::string const & search) const
+bool lc3::core::InstructionEncoder::findReg(std::string const & search) const
 {
     return regs.find(search) != regs.end();
 }
 
 // precondition: the instruction is of type pattern and is valid (no error checking)
-uint32_t core::InstructionEncoder::encodeInstruction(IInstruction const * pattern, Token const * inst,
-    std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger) const
+uint32_t lc3::core::InstructionEncoder::encodeInstruction(IInstruction const * pattern, Token const * inst,
+    std::map<std::string, uint32_t> const & symbols, lc3::utils::AssemblerLogger & logger) const
 {
     uint32_t oper_count = 1;
     uint32_t encoding = 0;
@@ -100,7 +80,7 @@ uint32_t core::InstructionEncoder::encodeInstruction(IInstruction const * patter
         encoding <<= pattern_op->width;
         encoding |= pattern_op->encode(cur_oper, oper_count, regs, symbols, logger);
 
-        if(pattern_op->type != OPER_TYPE_FIXED) {
+        if(pattern_op->type != OperType::OPER_TYPE_FIXED) {
             cur_oper = cur_oper->next;
             oper_count += 1;
         }

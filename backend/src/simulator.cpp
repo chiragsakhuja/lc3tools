@@ -1,57 +1,33 @@
-#include <array>
-#include <atomic>
-#include <cstdint>
 #include <fstream>
-#include <functional>
-#include <map>
 #include <mutex>
-#include <stdexcept>
-#include <string>
 #include <thread>
-#include <vector>
-
-#include "utils.h"
-
-#include "tokens.h"
-
-#include "inputter.h"
-
-#include "printer.h"
-#include "logger.h"
-
-#include "statement.h"
-
-#include "state.h"
-
-#include "instructions.h"
-#include "instruction_decoder.h"
 
 #include "device_regs.h"
-
 #include "simulator.h"
 
-namespace core {
+namespace lc3::core {
     std::mutex g_io_lock;
 };
 
-core::Simulator::Simulator(bool log_enable, utils::IPrinter & printer, utils::IInputter & inputter) : state(logger),
-    logger(log_enable, printer), inputter(inputter), collecting_input(false)
+lc3::core::Simulator::Simulator(bool log_enable, utils::IPrinter & printer, utils::IInputter & inputter) :
+    state(logger), logger(log_enable, printer), inputter(inputter), collecting_input(false)
 {
     state.mem.resize(1 << 16);
     reset();
 }
 
-void core::Simulator::loadObjectFile(std::string const & filename)
+void lc3::core::Simulator::loadObjectFile(std::string const & filename)
 {
     std::ifstream file(filename);
     if(! file) {
-        logger.printf(PRINT_TYPE_ERROR, true, "could not open file \'%s\' for reading", filename.c_str());
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "could not open file \'%s\' for reading",
+            filename.c_str());
         throw utils::exception("could not open file");
     }
 
     uint32_t offset = 0;
     while(! file.eof()) {
-        utils::Statement statement;
+        Statement statement;
         file >> statement;
 
         if(file.eof()) {
@@ -62,7 +38,7 @@ void core::Simulator::loadObjectFile(std::string const & filename)
             state.pc = statement.getValue();
             offset = 0;
         } else {
-            logger.printf(PRINT_TYPE_DEBUG, true, "0x%0.4x: %s (0x%0.4x)", state.pc + offset,
+            logger.printf(lc3::utils::PrintType::PRINT_TYPE_DEBUG, true, "0x%0.4x: %s (0x%0.4x)", state.pc + offset,
                 statement.getLine().c_str(), statement.getValue());
             state.mem[state.pc + offset] = statement;
             offset += 1;
@@ -73,13 +49,13 @@ void core::Simulator::loadObjectFile(std::string const & filename)
     state.mem[MCR].setValue(value | 0x8000);
 }
 
-void core::Simulator::loadOS(void)
+void lc3::core::Simulator::loadOS(void)
 {
     loadObjectFile("lc3os.obj");
     state.pc = RESET_PC;
 }
 
-void core::Simulator::simulate(void)
+void lc3::core::Simulator::simulate(void)
 {
     state.running = true;
     collecting_input = true;
@@ -109,18 +85,18 @@ void core::Simulator::simulate(void)
     inputter.endInput();
 }
 
-std::vector<core::IEvent const *> core::Simulator::executeInstruction(void)
+std::vector<lc3::core::IEvent const *> lc3::core::Simulator::executeInstruction(void)
 {
     uint32_t encoded_inst = state.mem[state.pc].getValue();
 
     IInstruction * candidate;
     if(! decoder.findInstructionByEncoding(encoded_inst, candidate)) {
-        logger.printf(PRINT_TYPE_ERROR, true, "invalid instruction 0x%0.4x", encoded_inst);
+        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "invalid instruction 0x%0.4x", encoded_inst);
         throw utils::exception("invalid instruction");
     }
 
     candidate->assignOperands(encoded_inst);
-    logger.printf(PRINT_TYPE_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
+    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
         state.mem[state.pc].getLine().c_str(), encoded_inst);
     state.pc += 1;
     std::vector<IEvent const *> events = candidate->execute(state);
@@ -129,13 +105,13 @@ std::vector<core::IEvent const *> core::Simulator::executeInstruction(void)
     return events;
 }
 
-void core::Simulator::updateDevices(void)
+void lc3::core::Simulator::updateDevices(void)
 {
     uint16_t value = state.mem[DSR].getValue();
     state.mem[DSR].setValue(value | 0x8000);
 }
 
-std::vector<core::IEvent const *> core::Simulator::checkAndSetupInterrupts(void)
+std::vector<lc3::core::IEvent const *> lc3::core::Simulator::checkAndSetupInterrupts(void)
 {
     std::vector<IEvent const *> ret;
 
@@ -154,7 +130,7 @@ std::vector<core::IEvent const *> core::Simulator::checkAndSetupInterrupts(void)
     return ret;
 }
 
-void core::Simulator::executeEventChain(std::vector<core::IEvent const *> & events)
+void lc3::core::Simulator::executeEventChain(std::vector<core::IEvent const *> & events)
 {
     for(uint32_t i = 0; i < events.size(); i += 1) {
         executeEvent(*events[i]);
@@ -164,13 +140,13 @@ void core::Simulator::executeEventChain(std::vector<core::IEvent const *> & even
     events.clear();
 }
 
-void core::Simulator::executeEvent(core::IEvent const & event)
+void lc3::core::Simulator::executeEvent(core::IEvent const & event)
 {
-    logger.printf(PRINT_TYPE_EXTRA, false, "  %s", event.getOutputString(state).c_str());
+    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, false, "  %s", event.getOutputString(state).c_str());
     event.updateState(state);
 }
 
-void core::Simulator::reset(void)
+void lc3::core::Simulator::reset(void)
 {
     for(uint32_t i = 0; i < 8; i += 1) {
         state.regs[i] = 0;
@@ -194,43 +170,43 @@ void core::Simulator::reset(void)
     state.interrupt_exit_callback_v = false;
 }
 
-void core::Simulator::registerPreInstructionCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerPreInstructionCallback(std::function<void(MachineState & state)> func)
 {
     state.pre_instruction_callback_v = true;
     state.pre_instruction_callback = func;
 }
 
-void core::Simulator::registerPostInstructionCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerPostInstructionCallback(std::function<void(MachineState & state)> func)
 {
     state.post_instruction_callback_v = true;
     state.post_instruction_callback = func;
 }
 
-void core::Simulator::registerInterruptEnterCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerInterruptEnterCallback(std::function<void(MachineState & state)> func)
 {
     state.interrupt_enter_callback_v = true;
     state.interrupt_enter_callback = func;
 }
 
-void core::Simulator::registerInterruptExitCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerInterruptExitCallback(std::function<void(MachineState & state)> func)
 {
     state.interrupt_exit_callback_v = true;
     state.interrupt_exit_callback = func;
 }
 
-void core::Simulator::registerSubEnterCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerSubEnterCallback(std::function<void(MachineState & state)> func)
 {
     state.sub_enter_callback_v = true;
     state.sub_enter_callback = func;
 }
 
-void core::Simulator::registerSubExitCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerSubExitCallback(std::function<void(MachineState & state)> func)
 {
     state.sub_exit_callback_v = true;
     state.sub_exit_callback = func;
 }
 
-void core::Simulator::handleInput(void)
+void lc3::core::Simulator::handleInput(void)
 {
     while(collecting_input) {
         char c;

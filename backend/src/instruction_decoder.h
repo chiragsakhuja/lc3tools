@@ -1,7 +1,12 @@
 #ifndef INSTRUCTION_DECODER_H
 #define INSTRUCTION_DECODER_H
 
-namespace core
+#include <cstdint>
+#include <map>
+
+#include "instructions.h"
+
+namespace lc3::core
 {
     class InstructionDecoder : public InstructionHandler
     {

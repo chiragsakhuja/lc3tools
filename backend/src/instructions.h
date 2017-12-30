@@ -1,13 +1,21 @@
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
 
-namespace core {
-    typedef enum {
+#include <map>
+#include <string>
+#include <vector>
+
+#include "logger.h"
+#include "state.h"
+#include "tokens.h"
+
+namespace lc3::core {
+    enum class OperType {
           OPER_TYPE_FIXED = 2
         , OPER_TYPE_NUM
         , OPER_TYPE_LABEL
         , OPER_TYPE_REG
-    } OperType;
+    };
 
     class IOperand
     {
@@ -26,7 +34,7 @@ namespace core {
 
         virtual uint32_t encode(Token const * oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            AssemblerLogger & logger) = 0;
+            lc3::utils::AssemblerLogger & logger) = 0;
         virtual IOperand * clone(void) const = 0;
         bool isEqualType(OperType other) const;
     };
@@ -65,21 +73,21 @@ namespace core {
     class FixedOperand : public IOperand
     {
     public:
-        FixedOperand(uint32_t width, uint32_t value) : IOperand(OPER_TYPE_FIXED, "fixed", width)
+        FixedOperand(uint32_t width, uint32_t value) : IOperand(OperType::OPER_TYPE_FIXED, "fixed", width)
             { this->value = value; }
         virtual uint32_t encode(Token const * oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            AssemblerLogger & logger) override;
+            lc3::utils::AssemblerLogger & logger) override;
         virtual FixedOperand * clone(void) const override { return new FixedOperand(*this); }
     };
 
     class RegOperand : public IOperand
     {
     public:
-        RegOperand(uint32_t width) : IOperand(OPER_TYPE_REG, "reg", width) {}
+        RegOperand(uint32_t width) : IOperand(OperType::OPER_TYPE_REG, "reg", width) {}
         virtual uint32_t encode(Token const * oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            AssemblerLogger & logger) override;
+            lc3::utils::AssemblerLogger & logger) override;
         virtual RegOperand * clone(void) const override { return new RegOperand(*this); }
     };
 
@@ -88,20 +96,20 @@ namespace core {
     public:
         bool sext;
 
-        NumOperand(uint32_t width, bool sext) : IOperand(OPER_TYPE_NUM, "imm", width) { this->sext = sext; }
+        NumOperand(uint32_t width, bool sext) : IOperand(OperType::OPER_TYPE_NUM, "imm", width) { this->sext = sext; }
         virtual uint32_t encode(Token const * oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            AssemblerLogger & logger) override;
+            lc3::utils::AssemblerLogger & logger) override;
         virtual NumOperand * clone(void) const override { return new NumOperand(*this); }
     };
 
     class LabelOperand : public IOperand
     {
     public:
-        LabelOperand(uint32_t width) : IOperand(OPER_TYPE_LABEL, "label", width) {}
+        LabelOperand(uint32_t width) : IOperand(OperType::OPER_TYPE_LABEL, "label", width) {}
         virtual uint32_t encode(Token const * oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            AssemblerLogger & logger) override;
+            lc3::utils::AssemblerLogger & logger) override;
         virtual LabelOperand * clone(void) const override { return new LabelOperand(*this); }
     };
 

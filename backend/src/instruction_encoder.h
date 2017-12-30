@@ -1,7 +1,10 @@
 #ifndef INSTRUCTION_ENCODER_H
 #define INSTRUCTION_ENCODER_H
 
-namespace core
+#include "instructions.h"
+#include "logger.h"
+
+namespace lc3::core
 {
     class InstructionEncoder : public InstructionHandler
     {
@@ -14,7 +17,7 @@ namespace core
 
         // precondition: the instruction is of type pattern and is valid (no error checking)
         uint32_t encodeInstruction(IInstruction const * pattern, Token const * inst,
-            std::map<std::string, uint32_t> const & symbols, AssemblerLogger & logger) const;
+            std::map<std::string, uint32_t> const & symbols, lc3::utils::AssemblerLogger & logger) const;
     private:
         std::map<std::string, std::vector<IInstruction const *>> instructions_by_name;
     };

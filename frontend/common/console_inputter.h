@@ -1,8 +1,10 @@
 #ifndef CONSOLE_INPUTTER_H
 #define CONSOLE_INPUTTER_H
 
-namespace utils {
-    class ConsoleInputter : public IInputter
+#include "inputter.h"
+
+namespace lc3 {
+    class ConsoleInputter : public utils::IInputter
     {
     public:
         ConsoleInputter(void) = default;
