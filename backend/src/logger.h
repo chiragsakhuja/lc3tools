@@ -24,10 +24,10 @@ namespace lc3::utils
     protected:
         lc3::utils::IPrinter & printer;
         bool log_enable;
-        uint32_t log_level;
+        uint32_t print_level;
 
     public:
-        Logger(bool log_enable, utils::IPrinter & printer) : printer(printer), log_enable(log_enable) {}
+        Logger(utils::IPrinter & printer, uint32_t print_level) : printer(printer), print_level(print_level) {}
 
         template<typename ... Args>
         void printf(PrintType level, bool bold, std::string const & format, Args ... args) const;
@@ -58,7 +58,7 @@ void lc3::utils::Logger::printf(lc3::utils::PrintType type, bool bold, std::stri
     lc3::utils::PrintColor color = lc3::utils::PrintColor::PRINT_COLOR_RESET;
     std::string label = "";
 
-    if(static_cast<uint32_t>(type) <= log_level) {
+    if(static_cast<uint32_t>(type) <= print_level) {
         switch(type) {
             case PrintType::PRINT_TYPE_ERROR:
                 color = lc3::utils::PrintColor::PRINT_COLOR_RED;

@@ -1,6 +1,10 @@
 #ifndef CORE_H
 #define CORE_H
 
+#ifndef _PRINT_LEVEL
+    #define _PRINT_LEVEL 9
+#endif
+
 #include <functional>
 
 #include "assembler.h"
@@ -12,7 +16,10 @@ namespace lc3 {
     class sim
     {
     public:
-        sim(utils::IPrinter & printer, utils::IInputter & inputter) : simulator(true, printer, inputter) {
+        sim(utils::IPrinter & printer, utils::IInputter & inputter) : sim(printer, inputter, _PRINT_LEVEL) {}
+        sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level) :
+            simulator(printer, inputter, print_level)
+        {
             simulator.loadOS();
         }
         ~sim(void) = default;
@@ -35,7 +42,8 @@ namespace lc3 {
     class as
     {
     public:
-        as(utils::IPrinter & printer) : assembler(true, printer) {}
+        as(utils::IPrinter & printer) : as(printer, _PRINT_LEVEL) {}
+        as(utils::IPrinter & printer, uint32_t print_level) : assembler(printer, print_level) {}
         ~as(void) = default;
 
         void assemble(std::string const & asm_filename, std::string const & obj_filename) {

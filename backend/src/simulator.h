@@ -17,7 +17,7 @@ namespace lc3
         class Simulator
         {
         public:
-            Simulator(bool log_enable, lc3::utils::IPrinter & printer, utils::IInputter & inputter);
+            Simulator(lc3::utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level);
             ~Simulator(void) = default;
 
             void loadObjectFile(std::string const & obj_file);

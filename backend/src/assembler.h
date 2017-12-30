@@ -11,7 +11,7 @@ namespace lc3::core
     class Assembler
     {
     public:
-        Assembler(bool log_enable, lc3::utils::IPrinter & printer) : printer(printer), log_enable(log_enable) {}
+        Assembler(lc3::utils::IPrinter & printer, uint32_t print_level) : printer(printer), print_level(print_level) {}
         Assembler(Assembler const &) = default;
         Assembler & operator=(Assembler const &) = default;
         // TODO: make sure program is not leaked
@@ -23,7 +23,7 @@ namespace lc3::core
         std::vector<std::string> file_buffer;
         lc3::utils::IPrinter & printer;
 
-        bool log_enable;
+        uint32_t print_level;
         InstructionEncoder encoder;
 
         std::vector<lc3::core::Statement> assembleChain(Token * program,

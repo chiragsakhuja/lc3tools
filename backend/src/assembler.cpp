@@ -14,7 +14,7 @@ extern int row_num, col_num;
 void lc3::core::Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
 {
     std::map<std::string, uint32_t> symbols;
-    lc3::utils::AssemblerLogger logger(log_enable, printer);
+    lc3::utils::AssemblerLogger logger(printer, print_level);
 
     FILE * orig_file = fopen(asm_filename.c_str(), "r");
 

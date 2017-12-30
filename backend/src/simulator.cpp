@@ -9,8 +9,8 @@ namespace lc3::core {
     std::mutex g_io_lock;
 };
 
-lc3::core::Simulator::Simulator(bool log_enable, utils::IPrinter & printer, utils::IInputter & inputter) :
-    state(logger), logger(log_enable, printer), inputter(inputter), collecting_input(false)
+lc3::core::Simulator::Simulator(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t log_level) :
+    state(logger), logger(printer, log_level), inputter(inputter), collecting_input(false)
 {
     state.mem.resize(1 << 16);
     reset();

@@ -13,19 +13,8 @@ endif()
 # give option to build tests (download google test/google mock)
 option(test "Build all tests." OFF)
 
-# if no print type is specified or auto created, select 4, which shows info
-if(NOT DEFINED PRINT_LEVEL)
-    if(CMAKE_BUILD_TYPE MATCHES "Debug")
-        message(STATUS "Setting print level to 9")
-        set(PRINT_LEVEL 9 CACHE STRING "Print level" FORCE)
-    else()
-        message(STATUS "Setting print level to 4")
-        set(PRINT_LEVEL 4 CACHE STRING "Print level" FORCE)
-    endif()
-endif()
-
 # simple error check on print level
-if(NOT PRINT_LEVEL MATCHES "^[0-9]$")
+if((DEFINED PRINT_LEVEL) AND (NOT PRINT_LEVEL MATCHES "^[0-9]$"))
     message(FATAL_ERROR "PRINT_LEVEL must be a number from 0 to 9")
 endif()
 
