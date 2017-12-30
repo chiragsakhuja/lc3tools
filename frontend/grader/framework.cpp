@@ -1,6 +1,10 @@
+#include "console_printer.h"
+#include "console_inputter.h"
 #include "framework.h"
 
 void setup(void);
+void testBringup(lc3::sim & sim);
+void testTeardown(lc3::sim & sim);
 
 std::vector<TestCase> tests;
 uint32_t verify_count;
@@ -37,15 +41,17 @@ bool StringInputter::getChar(char & c)
 
 int main(int argc, char ** argv)
 {
+    lc3::ConsolePrinter asm_printer;
+    lc3::as assembler(asm_printer);
+
     std::vector<std::string> obj_filenames;
+    bool valid_assembly = true;
     for(int i = 1; i < argc; i += 1) {
         std::string asm_filename(argv[i]);
-        try {
-            obj_filenames.emplace_back(assemble(asm_filename));
-        } catch(utils::exception e) {
-            std::cout << "could not assemble " << asm_filename << ": " << e.what() << "\n";
-            return 1;
-        }
+
+        auto result = assembler.assemble(asm_filename);
+        if(! result.first) { valid_assembly = false; }
+        obj_filenames.push_back(result.second);
     }
 
     setup();
@@ -53,47 +59,48 @@ int main(int argc, char ** argv)
     uint32_t total_points_earned = 0;
     uint32_t total_possible_points = 0;
 
-    for(TestCase const & test : tests) {
-        BufferedPrinter printer;
-        FileInputter inputter;
+    if(valid_assembly) {
+        for(TestCase const & test : tests) {
+            lc3::utils::NullPrinter sim_printer;
+            FileInputter sim_inputter;
+            lc3::sim simulator(sim_printer, sim_inputter, 0);
 
-        verify_count = 0;
-        verify_valid = 0;
+            testBringup(simulator);
 
-        total_possible_points += test.points;
+            verify_count = 0;
+            verify_valid = 0;
 
-        std::cout << "Test: " << test.name;
-        try {
-            simInit(printer, inputter);
+            total_possible_points += test.points;
+
+            std::cout << "Test: " << test.name;
             if(test.randomize) {
-                simRandomizeMachine();
+                simulator.randomize();
                 std::cout << " (Randomized Machine)";
             }
             std::cout << std::endl;
             for(std::string const & obj_filename : obj_filenames) {
-                simLoadSimulatorWithFile(obj_filename);
+                if(! simulator.loadObjectFile(obj_filename)) {
+                    std::cout << "could not init simulator\n";
+                    return 2;
+                }
             }
-        } catch(utils::exception const & e) {
-            std::cout << "could not init simulator: " << e.what() << "\n";
-            return 2;
+
+            try {
+                test.test_func(simulator);
+            } catch(lc3::utils::exception const & e) {
+                continue;
+            }
+
+            testTeardown(simulator);
+
+            float percent_points_earned = ((float) verify_valid) / verify_count;
+            uint32_t points_earned = (uint32_t) ( percent_points_earned * test.points);
+            std::cout << "test points earned: " << points_earned << "/" << test.points << " ("
+                      << (percent_points_earned * 100) << "%)\n";
+            std::cout << "==========\n";
+
+            total_points_earned += points_earned;
         }
-
-
-        try {
-            test.test_func();
-        } catch(utils::exception const & e) {
-            continue;
-        }
-
-        float percent_points_earned = ((float) verify_valid) / verify_count;
-        uint32_t points_earned = (uint32_t) ( percent_points_earned * test.points);
-        std::cout << "test points earned: " << points_earned << "/" << test.points << " ("
-                  << (percent_points_earned * 100) << "%)\n";
-        std::cout << "==========\n";
-
-        total_points_earned += points_earned;
-
-        simShutdown();
     }
 
     std::cout << "==========\n";

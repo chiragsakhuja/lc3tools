@@ -10,20 +10,25 @@
 
 namespace lc3
 {
+    class sim;
+
     namespace core
     {
         class IEvent;
+        struct MachineState;
+
+        using callback_func_t = std::function<void(sim &, MachineState &)>;
 
         struct MachineState
         {
-            MachineState(lc3::utils::Logger & logger) : logger(logger) {}
+            MachineState(sim & simulator, lc3::utils::Logger & logger) : logger(logger), simulator(simulator) {}
 
-            std::vector<lc3::core::Statement> mem;
+            std::vector<Statement> mem;
             std::array<uint32_t, 8> regs;
             uint32_t pc;
             uint32_t psr;
-            uint32_t backup_sp;
 
+            uint32_t backup_sp;
 
             lc3::utils::Logger & logger;
             std::vector<char> console_buffer;
@@ -39,12 +44,14 @@ namespace lc3
             bool interrupt_exit_callback_v;;
             bool sub_enter_callback_v;;
             bool sub_exit_callback_v;;
-            std::function<void(MachineState & state)> pre_instruction_callback;
-            std::function<void(MachineState & state)> post_instruction_callback;
-            std::function<void(MachineState & state)> interrupt_enter_callback;
-            std::function<void(MachineState & state)> interrupt_exit_callback;
-            std::function<void(MachineState & state)> sub_enter_callback;
-            std::function<void(MachineState & state)> sub_exit_callback;
+            callback_func_t pre_instruction_callback;
+            callback_func_t post_instruction_callback;
+            callback_func_t interrupt_enter_callback;
+            callback_func_t interrupt_exit_callback;
+            callback_func_t sub_enter_callback;
+            callback_func_t sub_exit_callback;
+
+            sim & simulator;
         };
 
         enum class EventType {
@@ -132,13 +139,15 @@ namespace lc3
         class CallbackEvent : public IEvent
         {
         public:
-            CallbackEvent(bool callback_v, std::function<void(MachineState & state)> callback) :
+            CallbackEvent(bool callback_v, callback_func_t callback) :
                 IEvent(EventType::EVENT_CALLBACK), callback_v(callback_v), callback(callback) {}
-            virtual void updateState(MachineState & state) const override { if(callback_v) { callback(state); } }
+            virtual void updateState(MachineState & state) const override {
+                if(callback_v) { callback(state.simulator, state); }
+            }
             virtual std::string getOutputString(MachineState const & state) const override { (void)state; return ""; }
         private:
             bool callback_v;
-            std::function<void(MachineState & state)> callback;
+            callback_func_t callback;
         };
     };
 };

@@ -4,39 +4,35 @@
 #include <sstream>
 #include <string>
 
-#include "helper.h"
 #include "console_printer.h"
 #include "console_inputter.h"
+#include "interface.h"
 
 std::string previous_command = "";
 
 void help(void);
-bool prompt(void);
-bool promptMain(std::stringstream & command_tokens);
-void promptBreak(std::stringstream & command_tokens);
-std::string formatMem(uint32_t addr);
-std::ostream & operator<<(std::ostream & out, Breakpoint const & x);
-void breakpointHitCallback(core::MachineState & state, Breakpoint const & bp);
+bool prompt(lc3::sim & simulator);
+bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens);
+void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens);
+std::string formatMem(lc3::sim const & simulator, uint32_t addr);
+std::ostream & operator<<(std::ostream & out, lc3::Breakpoint const & x);
+void breakpointCallback(lc3::core::MachineState & state, lc3::Breakpoint const & bp);
 
 int main(int argc, char * argv[])
 {
     help();
 
-    try {
-        utils::ConsolePrinter printer;
-        utils::ConsoleInputter inputter;
-        simInit(printer, inputter);
+    lc3::ConsolePrinter printer;
+    lc3::ConsoleInputter inputter;
+    lc3::sim simulator(printer, inputter);
 
-        simRegisterBreakpointHitCallback(breakpointHitCallback);
+    simulator.registerBreakpointCallback(breakpointCallback);
 
-        for(int i = 1; i < argc; i += 1) {
-            simLoadSimulatorWithFile(std::string(argv[i]));
-        }
+    for(int i = 1; i < argc; i += 1) {
+        simulator.loadObjectFile(std::string(argv[i]));
+    }
 
-        while(prompt()) {}
-
-        simShutdown();
-    } catch(utils::exception) { return 1; }
+    while(prompt(simulator)) {}
 
     return 0;
 }
@@ -69,7 +65,7 @@ void breakHelp(void)
               ;
 }
 
-bool prompt(void)
+bool prompt(lc3::sim & simulator)
 {
     std::cout << "> ";
     std::string command_line;
@@ -79,24 +75,24 @@ bool prompt(void)
     }
 
     std::stringstream command_tokens(command_line);
-    bool result = promptMain(command_tokens);
+    bool result = promptMain(simulator, command_tokens);
 
     previous_command = command_line;
 
     return result;
 }
 
-bool promptMain(std::stringstream & command_tokens)
+bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
 {
     std::string command;
     command_tokens >> command;
 
     if(command == "break") {
-        promptBreak(command_tokens);
+        promptBreak(simulator, command_tokens);
     } else if(command == "help") {
         help();
     } else if(command == "list") {
-        uint32_t pc = simGetPC();
+        uint32_t pc = simulator.getPC();
         for(int32_t pos = -2; pos <= 2; pos += 1) {
             if(((int32_t) pc) + pos > 0) {
                 if(pos == 0) {
@@ -104,7 +100,7 @@ bool promptMain(std::stringstream & command_tokens)
                 } else {
                     std::cout << "    ";
                 }
-                std::cout << formatMem(pc + pos) << "\n";
+                std::cout << formatMem(simulator, pc + pos) << "\n";
             }
         }
     } else if(command == "mem") {
@@ -130,7 +126,7 @@ bool promptMain(std::stringstream & command_tokens)
 
         for(uint32_t addr = start; addr <= end; addr += 1) {
             if(addr < 0xffff) {
-                std::cout << formatMem(addr) << "\n";
+                std::cout << formatMem(simulator, addr) << "\n";
             }
         }
     } else if(command == "load") {
@@ -141,42 +137,42 @@ bool promptMain(std::stringstream & command_tokens)
             return true;
         }
 
-        simLoadSimulatorWithFile(filename);
+        simulator.loadObjectFile(filename);
     } else if(command == "quit") {
         return false;
     } else if(command == "randomize") {
-        simRandomizeMachine();
+        simulator.randomize();
     } else if(command == "regs") {
         for(uint32_t i = 0; i < 2; i += 1) {
             for(uint32_t j = 0; j < 4; j += 1) {
                 uint32_t reg = i * 4 + j;
-                uint32_t value = simGetReg(reg);
-                std::cout << utils::ssprintf("R%u: 0x%0.4X (%5d)", reg, value, value);
+                uint32_t value = simulator.getReg(reg);
+                std::cout << lc3::utils::ssprintf("R%u: 0x%0.4X (%5d)", reg, value, value);
                 if(j != 3) {
                     std::cout << "    ";
                 }
             }
             std::cout << "\n";
         }
-        std::cout << utils::ssprintf("PC: 0x%0.4X\n", simGetPC());
-        std::cout << utils::ssprintf("PSR: 0x%0.4X\n", simGetPSR());
-        std::cout << utils::ssprintf("CC: %c\n", simGetCC());
+        std::cout << lc3::utils::ssprintf("PC: 0x%0.4X\n", simulator.getPC());
+        std::cout << lc3::utils::ssprintf("PSR: 0x%0.4X\n", simulator.getPSR());
+        std::cout << lc3::utils::ssprintf("CC: %c\n", simulator.getCC());
     } else if(command == "run") {
-        uint32_t inst_count;
-        command_tokens >> inst_count;
+        uint32_t inst_limit;
+        command_tokens >> inst_limit;
 #ifdef _ENABLE_DEBUG
-        auto start_count = inst_exec_count;
+        uint32_t start_count = simulator.getInstExecCount();
         auto start_time = std::chrono::steady_clock::now();
 #endif
         if(command_tokens.fail()) {
-            simRun();
+            simulator.run();
         } else {
-            simSetRunInstLimit(inst_count);
-            simRun();
+            simulator.setRunInstLimit(inst_limit);
+            simulator.run();
         }
 #ifdef _ENABLE_DEBUG
         auto end_time = std::chrono::steady_clock::now();
-        auto end_count = inst_exec_count;
+        uint32_t end_count = simulator.getInstExecCount();
         std::cout << "executed " << (end_count - start_count) << " instructions in "
                   << std::chrono::duration<double, std::milli>(end_time - start_time).count() << " ms\n";
 #endif
@@ -203,11 +199,11 @@ bool promptMain(std::stringstream & command_tokens)
                 return true;
             }
             uint32_t id = loc_s[1] - '0';
-            simSetReg(id, val);
+            simulator.setReg(id, val);
         } else if(loc_s == "pc") {
-            simSetPC(val);
+            simulator.setPC(val);
         } else if(loc_s == "psr") {
-            simSetPSR(val);
+            simulator.setPSR(val);
         } else {
             uint32_t addr;
             try {
@@ -216,7 +212,7 @@ bool promptMain(std::stringstream & command_tokens)
                 std::cout << "invalid address\n";
                 return true;
             }
-            simSetMemVal(addr, val);
+            simulator.setMem(addr, val);
         }
     } else if(command == "step") {
         std::string sub_command;
@@ -227,12 +223,11 @@ bool promptMain(std::stringstream & command_tokens)
         }
 
         if(sub_command == "in") {
-            simSetRunInstLimit(1);
-            simRun();
+            simulator.stepIn();
         } else if(sub_command == "out") {
-            simStepOut();
+            simulator.stepOut();
         } else if(sub_command == "over") {
-            simStepOver();
+            simulator.stepOver();
         } else {
             std::cout << "invalid step operation\n";
         }
@@ -244,7 +239,7 @@ bool promptMain(std::stringstream & command_tokens)
     return true;
 }
 
-void promptBreak(std::stringstream & command_tokens)
+void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens)
 {
     std::string command;
     command_tokens >> command;
@@ -261,7 +256,7 @@ void promptBreak(std::stringstream & command_tokens)
             return;
         }
 
-        bool removed = simRemoveBreakpoint(id);
+        bool removed = simulator.removeBreakpoint(id);
         if(! removed) {
             std::cout << "invalid id\n";
             return;
@@ -269,7 +264,7 @@ void promptBreak(std::stringstream & command_tokens)
     } else if(command == "help") {
         breakHelp();
     } else if(command == "list") {
-        for(auto x : breakpoints) {
+        for(auto x : simulator.getBreakpoints()) {
             std::cout << x << "\n";
         }
     } else if(command == "set") {
@@ -288,7 +283,7 @@ void promptBreak(std::stringstream & command_tokens)
             return;
         }
 
-        Breakpoint bp = simSetBreakpoint(loc);
+        lc3::Breakpoint bp = simulator.setBreakpoint(loc);
         std::cout << bp << "\n";
 
     } else  {
@@ -296,22 +291,22 @@ void promptBreak(std::stringstream & command_tokens)
     }
 }
 
-std::string formatMem(uint32_t addr)
+std::string formatMem(lc3::sim const & simulator, uint32_t addr)
 {
     std::stringstream out;
-    uint32_t value = simGetMemVal(addr);
-    std::string line = simGetMemLine(addr);
-    out << utils::ssprintf("0x%0.4X: 0x%0.4X %s", addr, value, line.c_str());
+    uint32_t value = simulator.getMem(addr);
+    std::string line = simulator.getMemLine(addr);
+    out << lc3::utils::ssprintf("0x%0.4X: 0x%0.4X %s", addr, value, line.c_str());
     return out.str();
 }
 
-std::ostream & operator<<(std::ostream & out, Breakpoint const & x)
+std::ostream & operator<<(std::ostream & out, lc3::Breakpoint const & x)
 {
-    out << "#" << x.id << ": " << formatMem(x.loc);
+    out << "#" << x.id << ": " << formatMem(*x.sim_int, x.loc);
     return out;
 }
 
-void breakpointHitCallback(core::MachineState & state, Breakpoint const & bp)
+void breakpointCallback(lc3::core::MachineState & state, lc3::Breakpoint const & bp)
 {
     (void) state;
     std::cout << "hit a breakpoint\n" << bp << "\n";

@@ -1,10 +1,13 @@
 #include <cstdint>
 #include <iostream>
+#include <functional>
 #include <map>
 #include <string>
 #include <vector>
 
-#include "helper.h"
+#include "inputter.h"
+#include "interface.h"
+#include "printer.h"
 
 struct TestCase;
 
@@ -12,7 +15,7 @@ extern std::vector<TestCase> tests;
 extern uint32_t verify_count;
 extern uint32_t verify_valid;
 
-class BufferedPrinter : public utils::IPrinter
+class BufferedPrinter : public lc3::utils::IPrinter
 {
 public:
     std::vector<char> display_buffer;
@@ -22,7 +25,7 @@ public:
     void newline(void);
 };
 
-class FileInputter : public utils::IInputter
+class FileInputter : public lc3::utils::IInputter
 {
 public:
     void beginInput(void) {}
@@ -30,7 +33,7 @@ public:
     void endInput(void) {}
 };
 
-class StringInputter : public utils::IInputter
+class StringInputter : public lc3::utils::IInputter
 {
 public:
     StringInputter(std::string const & source);
@@ -47,11 +50,11 @@ private:
 struct TestCase
 {
     std::string name;
-    std::function<void(void)> test_func;
+    std::function<void(lc3::sim &)> test_func;
     uint32_t points;
     bool randomize;
 
-    TestCase(char const * name, std::function<void(void)> test_func, uint32_t points, bool randomize)
+    TestCase(char const * name, std::function<void(lc3::sim &)> test_func, uint32_t points, bool randomize)
     {
         this->name = name;
         this->test_func = test_func;

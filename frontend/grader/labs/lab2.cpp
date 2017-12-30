@@ -2,29 +2,37 @@
 
 uint32_t sub_count = 0;
 
-void BasicTest(void)
+void BasicTest(lc3::sim & sim)
 {
     // Setup
     sub_count = 0;
 
     // Run
-    simSetRunInstLimit(10000);
-    simRunUntilBeforeHalt();
+    sim.setRunInstLimit(10000);
+    sim.runUntilHalt();
 
     // Verify
-    VERIFY(simGetReg(1) == 0x0000);
+    VERIFY(sim.getReg(1) == 0x0000);
     VERIFY(sub_count == 1);
 }
 
-void subEnterCallback(core::MachineState & state)
+void subEnterCallback(lc3::core::MachineState & state)
 {
     if(state.pc == 0x5000) {
         sub_count += 1;
     }
 }
 
+void testBringup(lc3::sim & sim)
+{
+    sim.registerSubEnterCallback(subEnterCallback);
+}
+
+void testTeardown(lc3::sim & sim)
+{
+}
+
 void setup(void)
 {
-    simRegisterSubEnterCallback(subEnterCallback);
     REGISTER_RANDOM_TEST(Basic, BasicTest, 100);
 }

@@ -1,32 +1,40 @@
 #include "../framework.h"
 
-void ZeroTest(void)
+void ZeroTest(lc3::sim & sim)
 {
     // Setup
-    simSetMemVal(0x3050, 0x0000);
+    sim.setMem(0x3050, 0x0000);
 
     // Run
-    simSetRunInstLimit(10000);
-    simRun();
+    sim.setRunInstLimit(1000);
+    sim.run();
 
     // Verify
-    VERIFY(simGetMemVal(0x3051) == 0x0000);
+    VERIFY(sim.getMem(0x3051) == 0x0000);
 }
 
-void AllPowerTest(void)
+void AllPowerTest(lc3::sim & sim)
 {
     for(uint32_t i = 0; i < 16; i += 1) {
         // Setup (machine is only cleared between tests)
-        simSetPC(0x3000);
-        simSetMemVal(0x3050, 1 << i);
+        sim.setPC(0x3000);
+        sim.setMem(0x3050, 1 << i);
 
         // Run
-        simSetRunInstLimit(10000);
-        simRun();
+        sim.setRunInstLimit(10000);
+        sim.run();
 
         // Verify
-        VERIFY(simGetMemVal(0x3051) == 0x0001);
+        VERIFY(sim.getMem(0x3051) == 0x0001);
     }
+}
+
+void testBringup(lc3::sim & sim)
+{
+}
+
+void testTeardown(lc3::sim & sim)
+{
 }
 
 void setup(void)

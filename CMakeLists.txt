@@ -11,15 +11,10 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 # give option to build tests (download google test/google mock)
-option(test "Build all tests." OFF)
-
-# simple error check on print level
-if((DEFINED PRINT_LEVEL) AND (NOT PRINT_LEVEL MATCHES "^[0-9]$"))
-    message(FATAL_ERROR "PRINT_LEVEL must be a number from 0 to 9")
-endif()
+# option(test "Build all tests." OFF)
 
 # set build flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_PRINT_LEVEL=${PRINT_LEVEL}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -Wall -Wextra -Wno-format-security -D_ENABLE_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -w")
 

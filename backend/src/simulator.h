@@ -12,12 +12,15 @@
 
 namespace lc3
 {
+    class sim;
+
     namespace core
     {
         class Simulator
         {
         public:
-            Simulator(lc3::utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level);
+            Simulator(sim & simulator, lc3::utils::IPrinter & printer, utils::IInputter & inputter,
+                uint32_t print_level);
             ~Simulator(void) = default;
 
             void loadObjectFile(std::string const & obj_file);
@@ -25,14 +28,15 @@ namespace lc3
             void simulate(void);
             void reset(void);
 
-            void registerPreInstructionCallback(std::function<void(MachineState & state)> func);
-            void registerPostInstructionCallback(std::function<void(MachineState & state)> func);
-            void registerInterruptEnterCallback(std::function<void(MachineState & state)> func);
-            void registerInterruptExitCallback(std::function<void(MachineState & state)> func);
-            void registerSubEnterCallback(std::function<void(MachineState & state)> func);
-            void registerSubExitCallback(std::function<void(MachineState & state)> func);
+            void registerPreInstructionCallback(callback_func_t func);
+            void registerPostInstructionCallback(callback_func_t func);
+            void registerInterruptEnterCallback(callback_func_t func);
+            void registerInterruptExitCallback(callback_func_t func);
+            void registerSubEnterCallback(callback_func_t func);
+            void registerSubExitCallback(callback_func_t func);
 
             MachineState & getMachineState(void) { return state; }
+            MachineState const & getMachineState(void) const { return state; }
         private:
             InstructionDecoder decoder;
 

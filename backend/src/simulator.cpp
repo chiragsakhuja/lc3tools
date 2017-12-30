@@ -9,8 +9,9 @@ namespace lc3::core {
     std::mutex g_io_lock;
 };
 
-lc3::core::Simulator::Simulator(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t log_level) :
-    state(logger), logger(printer, log_level), inputter(inputter), collecting_input(false)
+lc3::core::Simulator::Simulator(lc3::sim & simulator, utils::IPrinter & printer, utils::IInputter & inputter,
+    uint32_t log_level) : state(simulator, logger), logger(printer, log_level), inputter(inputter),
+    collecting_input(false)
 {
     state.mem.resize(1 << 16);
     reset();
@@ -170,37 +171,37 @@ void lc3::core::Simulator::reset(void)
     state.interrupt_exit_callback_v = false;
 }
 
-void lc3::core::Simulator::registerPreInstructionCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerPreInstructionCallback(callback_func_t func)
 {
     state.pre_instruction_callback_v = true;
     state.pre_instruction_callback = func;
 }
 
-void lc3::core::Simulator::registerPostInstructionCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerPostInstructionCallback(callback_func_t func)
 {
     state.post_instruction_callback_v = true;
     state.post_instruction_callback = func;
 }
 
-void lc3::core::Simulator::registerInterruptEnterCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerInterruptEnterCallback(callback_func_t func)
 {
     state.interrupt_enter_callback_v = true;
     state.interrupt_enter_callback = func;
 }
 
-void lc3::core::Simulator::registerInterruptExitCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerInterruptExitCallback(callback_func_t func)
 {
     state.interrupt_exit_callback_v = true;
     state.interrupt_exit_callback = func;
 }
 
-void lc3::core::Simulator::registerSubEnterCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerSubEnterCallback(callback_func_t func)
 {
     state.sub_enter_callback_v = true;
     state.sub_enter_callback = func;
 }
 
-void lc3::core::Simulator::registerSubExitCallback(std::function<void(MachineState & state)> func)
+void lc3::core::Simulator::registerSubExitCallback(callback_func_t func)
 {
     state.sub_exit_callback_v = true;
     state.sub_exit_callback = func;
