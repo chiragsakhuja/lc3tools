@@ -1,10 +1,12 @@
 #include <algorithm>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
 
 #include "assembler.h"
 #include "parser_gen/parser.hpp"
+#include "tokenizer.h"
 
 extern FILE * yyin;
 extern int yyparse(void);
@@ -13,54 +15,62 @@ extern int row_num, col_num;
 
 void lc3::core::Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
 {
-    std::map<std::string, uint32_t> symbols;
-    lc3::utils::AssemblerLogger logger(printer, print_level);
-
-    FILE * orig_file = fopen(asm_filename.c_str(), "r");
-
-    if(orig_file == nullptr) {
-        logger.printf(lc3::utils::PrintType::PRINT_TYPE_WARNING, true, "skipping file %s ...", asm_filename.c_str());
-    } else {
-        row_num = 0;
-        col_num = 0;
-
-        // FIXME
-        // this is a terrible hack that adds a newline to the end of the file because flex
-        // can't properly parse EOF without a newline (aka I'm really bad at writing a lexer)
-        std::ifstream orig_file_stream(asm_filename);
-        std::stringstream buffer;
-        buffer << orig_file_stream.rdbuf() << "\n";
-        std::string mod_filename = "." + asm_filename;
-        std::ofstream mod_file_stream(mod_filename);
-        mod_file_stream << buffer.rdbuf();
-        mod_file_stream.close();
-        
-        yyin = fopen(mod_filename.c_str(), "r");
-        yyparse();
-
-        remove(mod_filename.c_str());
-
-        logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "assembling \'%s\' into \'%s\'", asm_filename.c_str(),
-            obj_filename.c_str());
-
-        logger.filename = asm_filename;
-        logger.asm_blob = readFile(asm_filename);
-        std::vector<Statement> obj_file_blob = assembleChain(root, symbols, logger);
-
-        fclose(yyin);
-
-        std::ofstream obj_file(obj_filename);
-        if(! obj_file) {
-            logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "could not open file \'%s\' for writing", obj_filename.c_str());
-            throw utils::exception("could not open file");
-        }
-
-        for(Statement i : obj_file_blob) {
-            obj_file << i;
-        }
-
-        obj_file.close();
+    AsmTokenizer tokenizer(asm_filename);
+    AsmToken token;
+    while(! (tokenizer >> token)) {
+        std::cout << token;
     }
+
+/*
+ *    std::map<std::string, uint32_t> symbols;
+ *    lc3::utils::AssemblerLogger logger(printer, print_level);
+ *
+ *    FILE * orig_file = fopen(asm_filename.c_str(), "r");
+ *
+ *    if(orig_file == nullptr) {
+ *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_WARNING, true, "skipping file %s ...", asm_filename.c_str());
+ *    } else {
+ *        row_num = 0;
+ *        col_num = 0;
+ *
+ *        // FIXME
+ *        // this is a terrible hack that adds a newline to the end of the file because flex
+ *        // can't properly parse EOF without a newline (aka I'm really bad at writing a lexer)
+ *        std::ifstream orig_file_stream(asm_filename);
+ *        std::stringstream buffer;
+ *        buffer << orig_file_stream.rdbuf() << "\n";
+ *        std::string mod_filename = "." + asm_filename;
+ *        std::ofstream mod_file_stream(mod_filename);
+ *        mod_file_stream << buffer.rdbuf();
+ *        mod_file_stream.close();
+ *        
+ *        yyin = fopen(mod_filename.c_str(), "r");
+ *        yyparse();
+ *
+ *        remove(mod_filename.c_str());
+ *
+ *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "assembling \'%s\' into \'%s\'", asm_filename.c_str(),
+ *            obj_filename.c_str());
+ *
+ *        logger.filename = asm_filename;
+ *        logger.asm_blob = readFile(asm_filename);
+ *        std::vector<Statement> obj_file_blob = assembleChain(root, symbols, logger);
+ *
+ *        fclose(yyin);
+ *
+ *        std::ofstream obj_file(obj_filename);
+ *        if(! obj_file) {
+ *            logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "could not open file \'%s\' for writing", obj_filename.c_str());
+ *            throw utils::exception("could not open file");
+ *        }
+ *
+ *        for(Statement i : obj_file_blob) {
+ *            obj_file << i;
+ *        }
+ *
+ *        obj_file.close();
+ *    }
+ */
 }
 
 std::vector<lc3::core::Statement> lc3::core::Assembler::assembleChain(Token * program,

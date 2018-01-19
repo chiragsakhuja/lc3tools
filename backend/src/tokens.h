@@ -3,12 +3,17 @@
 
 #include <string>
 
-class Token
+struct Token
 {
-private:
+    enum class TokenType {
+          NEWLINE
+        , STRING
+        , NUM
+        , COMMENT
+    } token_type;
+
     Token(void);
 
-public:
     std::string str;
     int num;
 
@@ -18,23 +23,21 @@ public:
     Token * opers;
     Token * next;
 
+    Token(std::string const & str);
+    Token(int val);
+
     // used for errors
     int row_num, col_num;
     int length;
 
-    Token(std::string const & str);
-    Token(int val);
-
     bool checkPseudoType(std::string const & pseudo) const;
-    void print(std::ostream & out, int indent_level) const;
 
 #ifdef _ENABLE_DEBUG
+    void print(std::ostream & out, int indent_level) const;
     friend std::ostream & operator<<(std::ostream &, Token const &);
 #endif
 };
 
-#ifdef _ENABLE_DEBUG
 std::ostream & operator<<(std::ostream & out, Token const & x);
-#endif
 
 #endif
