@@ -11,8 +11,7 @@ namespace lc3
         {
         public:
             Statement(void) = default;
-            Statement(uint16_t value, bool orig, std::string const & line) : value(value), orig(orig),
-                line(line) {}
+            Statement(uint16_t value, bool orig, std::string const & line) : value(value), orig(orig), line(line) {}
 
             uint16_t getValue(void) const { return value; }
             void setValue(uint16_t value) { this->value = value; }
@@ -27,6 +26,7 @@ namespace lc3
             bool orig;
             std::string line;
         };
+
     };
 };
 

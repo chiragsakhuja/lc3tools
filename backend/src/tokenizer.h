@@ -3,10 +3,7 @@
 
 #include <cstdint>
 #include <fstream>
-#include <memory>
 #include <string>
-
-#include "tokens.h"
 
 struct AsmToken
 {
@@ -17,6 +14,11 @@ struct AsmToken
         , NUM
         , STRING
         , EOS
+
+        , INST
+        , REG
+        , PSEUDO
+        , LABEL
     } type;
 
     std::string str;
@@ -25,7 +27,6 @@ struct AsmToken
     uint32_t row, col, len;
 };
 
-
 class AsmTokenizer
 {
 public:
@@ -33,6 +34,7 @@ public:
     ~AsmTokenizer(void);
 
     AsmTokenizer & operator>>(AsmToken & token);
+    bool isDone(void) const;
     bool operator!() const;
     explicit operator bool() const;
 
@@ -41,7 +43,6 @@ private:
     bool file_opened;
     bool get_new_line;
     bool return_newline;
-    bool found_on_line;
     std::ifstream file;
     std::string line;
     uint32_t row, col;
@@ -49,7 +50,5 @@ private:
 
     bool convertStringToNum(std::string const & str, int32_t & val) const;
 };
-
-std::ostream & operator<<(std::ostream & out, AsmToken const & x);
 
 #endif

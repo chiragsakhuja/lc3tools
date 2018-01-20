@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "instruction_encoder.h"
 
 lc3::core::InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
@@ -5,6 +7,46 @@ lc3::core::InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
     for(IInstruction const * inst : instructions) {
         instructions_by_name[inst->name].push_back(inst);
     }
+}
+
+bool lc3::core::InstructionEncoder::checkIfReg(std::string const & search) const
+{
+    return regs.find(search) != regs.end();
+}
+
+uint32_t lc3::core::InstructionEncoder::getDistanceToNearestInstructionName(std::string const & search) const
+{
+    uint32_t min_distance = 0;
+    bool min_set = false;
+    for(auto const & inst : instructions_by_name) {
+        uint32_t distance = levDistance(inst.first, inst.first.size(), search, search.size());
+        if(! min_set) {
+            min_distance = distance;
+            min_set = true;
+        }
+        if(distance < min_distance) {
+            min_distance = distance;
+        }
+    }
+
+    return min_distance;
+}
+
+uint32_t lc3::core::InstructionEncoder::levDistance(std::string const & a, uint32_t a_len, std::string const & b,
+    uint32_t b_len) const
+{
+    // lazy, redundant recursive version of Levenshtein distance...may use dynamic programming eventually
+    if(a_len == 0) { return b_len; }
+    if(b_len == 0) { return a_len; }
+
+    uint32_t cost = (a[a_len - 1] == b[b_len - 1]) ? 0 : 1;
+
+    std::array<uint32_t, 3> costs;
+    costs[0] = levDistance(a, a_len - 1, b, b_len    ) + 1;
+    costs[1] = levDistance(a, a_len    , b, b_len - 1) + 1;
+    costs[2] = levDistance(a, a_len - 1, b, b_len - 1) + cost;
+
+    return *std::min_element(std::begin(costs), std::end(costs));
 }
 
 bool lc3::core::InstructionEncoder::findInstructionByName(std::string const & search) const
@@ -61,11 +103,6 @@ bool lc3::core::InstructionEncoder::findInstruction(Token const * search, std::v
     } else {
         return false;
     }
-}
-
-bool lc3::core::InstructionEncoder::findReg(std::string const & search) const
-{
-    return regs.find(search) != regs.end();
 }
 
 // precondition: the instruction is of type pattern and is valid (no error checking)

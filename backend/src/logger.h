@@ -23,7 +23,6 @@ namespace lc3::utils
     {
     protected:
         lc3::utils::IPrinter & printer;
-        bool log_enable;
         uint32_t print_level;
 
     public:
@@ -54,7 +53,6 @@ namespace lc3::utils
 template<typename ... Args>
 void lc3::utils::Logger::printf(lc3::utils::PrintType type, bool bold, std::string const & format, Args ... args) const
 {
-    if(! log_enable) { return; }
     lc3::utils::PrintColor color = lc3::utils::PrintColor::PRINT_COLOR_RESET;
     std::string label = "";
 
@@ -120,7 +118,6 @@ template<typename ... Args>
 void lc3::utils::AssemblerLogger::xprintfMessage(lc3::utils::PrintType level, int col_num, int length, Token const * tok,
     std::string const & format, Args ... args) const
 {
-    if(! log_enable) { return; }
     printer.setColor(lc3::utils::PrintColor::PRINT_COLOR_BOLD);
     printer.print(lc3::utils::ssprintf("%s:%d:%d: ", filename.c_str(), tok->row_num + 1, col_num + 1));
  

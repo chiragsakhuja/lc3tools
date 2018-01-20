@@ -9,7 +9,6 @@ struct Token
           NEWLINE
         , STRING
         , NUM
-        , COMMENT
     } token_type;
 
     Token(void);

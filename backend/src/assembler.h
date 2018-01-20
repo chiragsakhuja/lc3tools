@@ -4,10 +4,21 @@
 #include <vector>
 
 #include "instruction_encoder.h"
+#include "tokenizer.h"
 #include "printer.h"
 
 namespace lc3::core
 {
+    struct StateToken : AsmToken
+    {
+        using AsmToken::AsmToken;
+
+        StateToken(void);
+        StateToken(AsmToken const & that);
+
+        uint32_t lev_dist;
+    };
+
     class Assembler
     {
     public:
@@ -25,6 +36,12 @@ namespace lc3::core
 
         uint32_t print_level;
         InstructionEncoder encoder;
+
+        std::vector<StateToken> markAsmTokens(std::vector<AsmToken> const & tokens);
+        void markRegAndPseudoStateTokens(std::vector<StateToken> & tokens);
+        void markInstStateTokens(std::vector<StateToken> & tokens);
+        void markLabelStateTokens(std::vector<StateToken> & tokens);
+
 
         std::vector<lc3::core::Statement> assembleChain(Token * program,
             std::map<std::string, uint32_t> & labels, lc3::utils::AssemblerLogger & logger);
@@ -50,9 +67,9 @@ namespace lc3::core
             lc3::utils::AssemblerLogger & logger);
         void processPseudo(std::string const & filename, Token const * inst,
             std::map<std::string, uint32_t> symbols, lc3::utils::AssemblerLogger & logger);
-
-        std::vector<std::string> readFile(std::string const & filename);
     };
 };
+
+std::ostream & operator<<(std::ostream & out, lc3::core::StateToken const & x);
 
 #endif

@@ -5,7 +5,7 @@
 AsmToken::AsmToken(void) : type(AsmToken::TokenType::INVALID) {}
 
 AsmTokenizer::AsmTokenizer(std::string const & filename) : filename(filename), file_opened(false), get_new_line(true),
-    return_newline(false), found_on_line(false), row(-1), col(0), done(false)
+    return_newline(false), row(-1), col(0), done(false)
 {}
 
 AsmTokenizer::~AsmTokenizer(void)
@@ -17,7 +17,7 @@ AsmTokenizer::~AsmTokenizer(void)
 
 AsmTokenizer & AsmTokenizer::operator>>(AsmToken & token)
 {
-    // If this is the first time stream is used, open the file
+    // if this is the first time stream is used, open the file
     if(! file_opened) {
         file.open(filename);
         // If the file cannot be opened, consider stream to be empty
@@ -28,9 +28,9 @@ AsmTokenizer & AsmTokenizer::operator>>(AsmToken & token)
         file_opened = true;
     }
 
-    // Check if previous line is done being tokenized
+    // check if we need to fetch a new line i.e. previous line is done being tokenized
     if(get_new_line) {
-        // An end-of-statement token should be returned between statements
+        // check if an end-of-statement token should be returned
         if(return_newline) {
             return_newline = false;
             token.type = AsmToken::TokenType::EOS;
@@ -40,13 +40,13 @@ AsmTokenizer & AsmTokenizer::operator>>(AsmToken & token)
         col = 0;
         row += 1;
 
-        // Get another line and check if we've reached the end of the file
+        // get another line and check if we've reached the end of the file
         if(! std::getline(file, line)) {
             done = true;
             return *this;
         }
 
-        // Remove everything following a comment and any remaining trailing whitespace
+        // remove everything following a comment and any remaining trailing whitespace
         size_t search_pos = line.find(';');
         if(search_pos != std::string::npos) {
             line = line.substr(0, search_pos);
@@ -55,7 +55,7 @@ AsmTokenizer & AsmTokenizer::operator>>(AsmToken & token)
         if(search_pos != std::string::npos) {
             line = line.substr(0, search_pos + 1);
         } else {
-            // If this line had nothing on it after trimming, get a new line
+            // if this line had nothing on it after trimming, get a new line
             get_new_line = true;
             return_newline = false;
             operator>>(token);
@@ -65,14 +65,14 @@ AsmTokenizer & AsmTokenizer::operator>>(AsmToken & token)
         get_new_line = false;
     }
 
-    // Move until we're past delimiters
+    // move until we're past delimiters
     std::string delims =  ",: \t";
     while(col < line.size() && delims.find(line[col]) != std::string::npos) {
         col += 1;
     }
 
-    // Check if we reached the end of the line (meaning the previous token we returned was the last one on the line)
-    // Note that this ignores trailing delimiters
+    // check if we reached the end of the line (meaning the previous token we returned was the last one on the line)
+    // note that this ignores trailing delimiters
     if(col >= line.size()) {
         get_new_line = true;
         return_newline = true;
@@ -80,7 +80,7 @@ AsmTokenizer & AsmTokenizer::operator>>(AsmToken & token)
         return *this;
     }
 
-    // Get the length of the token
+    // get the length of the token
     uint32_t len = 0;
     while(col + len < line.size() && delims.find(line[col + len]) == std::string::npos) {
         len += 1;
@@ -127,29 +127,17 @@ bool AsmTokenizer::convertStringToNum(std::string const & str, int32_t & val) co
     }
 }
 
+bool AsmTokenizer::isDone(void) const
+{
+    return done;
+}
+
 bool AsmTokenizer::operator!(void) const
 {
-    return ! done;
+    return ! isDone();
 }
 
 AsmTokenizer::operator bool(void) const
 {
     return operator!();
-}
-
-std::ostream & operator<<(std::ostream & out, AsmToken const & x)
-{
-    if(x.type == AsmToken::TokenType::STRING) {
-        out << x.str << " (string)";
-    } else if(x.type == AsmToken::TokenType::NUM) {
-        out << x.num << " (num)";
-    } else if(x.type == AsmToken::TokenType::EOS) {
-        out << "EOS\n";
-        return out;
-    } else {
-        out << "invalid token";
-    }
-
-    out << " " << (x.row + 1) << ":" << (x.col + 1) << "+" << x.len << "\n";
-    return out;
 }
