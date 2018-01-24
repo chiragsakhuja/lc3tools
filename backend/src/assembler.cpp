@@ -9,67 +9,58 @@
 #endif
 
 #include "assembler.h"
-#include "parser_gen/parser.hpp"
+#include "device_regs.h"
+#include "tokens.h"
 #include "tokenizer.h"
-
-extern FILE * yyin;
-extern int yyparse(void);
-extern Token * root;
-extern int row_num, col_num;
-
-lc3::core::StateToken::StateToken(void) : AsmToken(), lev_dist(0) {}
-
-lc3::core::StateToken::StateToken(AsmToken const & that) : AsmToken(that) {}
 
 void lc3::core::Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
 {
+    using namespace asmbl;
+    using namespace lc3::utils;
+
     std::map<std::string, uint32_t> symbols;
-    lc3::utils::AssemblerLogger logger(printer, print_level);
+    lc3::utils::AssemblerLogger logger(printer, print_level, asm_filename);
 
     // check if file exists
     std::ifstream file(asm_filename);
     if(! file.is_open()) {
-        logger.printf(lc3::utils::PrintType::PRINT_TYPE_WARNING, true, "skipping file %s ...", asm_filename.c_str());
+        logger.printf(PrintType::WARNING, true, "skipping file %s ...", asm_filename.c_str());
         return;
     }
+    file.close();
 
 #ifdef _ENABLE_DEBUG
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-    logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "assembling \'%s\' into \'%s\'", asm_filename.c_str(),
+    logger.printf(PrintType::INFO, true, "attemping to assemble \'%s\' into \'%s\'", asm_filename.c_str(),
         obj_filename.c_str());
 
-    logger.filename = asm_filename;
-    std::string line;
-    while(! std::getline(file, line)) {
-        logger.asm_blob.push_back(line);
-    }
-    file.close();
-
-    //std::vector<AsmStatement> obj_file_blob;
-    AsmTokenizer tokenizer(asm_filename);
+    // build statements from tokens
+    Tokenizer tokenizer(asm_filename);
+    std::vector<asmbl::Statement> statements;
     while(! tokenizer.isDone()) {
-        std::vector<AsmToken> tokens;
-        AsmToken token;
-        while(! (tokenizer >> token) && token.type != AsmToken::TokenType::EOS) {
-            if(token.type != AsmToken::TokenType::EOS) {
+        std::vector<Token> tokens;
+        Token token;
+        while(! (tokenizer >> token) && token.type != TokenType::EOS) {
+            if(token.type != asmbl::TokenType::EOS) {
                 tokens.push_back(token);
             }
         }
 
-        std::vector<StateToken> state_tokens = markAsmTokens(tokens);
-        for(StateToken const & token : state_tokens) {
-            std::cout << token << " | ";
-        }
-        std::cout << "\n";
+        statements.push_back(makeStatement(tokens));
+    }
+
+    markPC(statements, logger);
+    for(asmbl::Statement i : statements) {
+        std::cout << i;
     }
 
 #ifdef _ENABLE_DEBUG
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 
-    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, false, "time: %f s", elapsed);
+    logger.printf(lc3::utils::PrintType::EXTRA, false, "elapsed time: %f ms", elapsed * 1000);
 #endif
 
 /*
@@ -79,7 +70,7 @@ void lc3::core::Assembler::assemble(std::string const & asm_filename, std::strin
  *    FILE * orig_file = fopen(asm_filename.c_str(), "r");
  *
  *    if(orig_file == nullptr) {
- *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_WARNING, true, "skipping file %s ...", asm_filename.c_str());
+ *        logger.printf(lc3::utils::PrintType::WARNING, true, "skipping file %s ...", asm_filename.c_str());
  *    } else {
  *        row_num = 0;
  *        col_num = 0;
@@ -100,7 +91,7 @@ void lc3::core::Assembler::assemble(std::string const & asm_filename, std::strin
  *
  *        remove(mod_filename.c_str());
  *
- *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "assembling \'%s\' into \'%s\'", asm_filename.c_str(),
+ *        logger.printf(lc3::utils::PrintType::INFO, true, "assembling \'%s\' into \'%s\'", asm_filename.c_str(),
  *            obj_filename.c_str());
  *
  *        logger.filename = asm_filename;
@@ -111,7 +102,7 @@ void lc3::core::Assembler::assemble(std::string const & asm_filename, std::strin
  *
  *        std::ofstream obj_file(obj_filename);
  *        if(! obj_file) {
- *            logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "could not open file \'%s\' for writing", obj_filename.c_str());
+ *            logger.printf(lc3::utils::PrintType::ERROR, true, "could not open file \'%s\' for writing", obj_filename.c_str());
  *            throw utils::exception("could not open file");
  *        }
  *
@@ -124,43 +115,46 @@ void lc3::core::Assembler::assemble(std::string const & asm_filename, std::strin
  */
 }
 
-std::vector<lc3::core::StateToken> lc3::core::Assembler::markAsmTokens(std::vector<AsmToken> const & tokens)
+lc3::core::asmbl::Statement lc3::core::Assembler::makeStatement(std::vector<asmbl::Token> const & tokens)
 { 
-    std::vector<StateToken> ret_tokens;
-    for(AsmToken const & token : tokens) {
-        ret_tokens.push_back(StateToken(token));
+    std::vector<asmbl::StatementToken> ret_tokens;
+    asmbl::Statement ret;
+
+    for(asmbl::Token const & token : tokens) {
+        ret_tokens.push_back(asmbl::StatementToken(token));
     }
 
     // shouldn't happen, but just in case...
-    if(tokens.size() == 0) { return ret_tokens; }
+    if(tokens.size() == 0) { return ret; }
 
-    markRegAndPseudoStateTokens(ret_tokens);
-    markInstStateTokens(ret_tokens);
-    markLabelStateTokens(ret_tokens);
+    markRegAndPseudoTokens(ret_tokens);
+    markInstTokens(ret_tokens);
+    markLabelTokens(ret_tokens);
+    ret = makeStatementFromTokens(ret_tokens);
 
-    return ret_tokens;
+    return ret;
 }
 
-void lc3::core::Assembler::markRegAndPseudoStateTokens(std::vector<StateToken> & tokens)
+void lc3::core::Assembler::markRegAndPseudoTokens(std::vector<asmbl::StatementToken> & tokens)
 {
-    for(StateToken & token : tokens) {
-        if(token.type == AsmToken::TokenType::STRING) {
+    for(asmbl::StatementToken & token : tokens) {
+        if(token.type == asmbl::TokenType::STRING) {
             if(token.str.size() > 0 && token.str[0] == '.') {
-                token.type = AsmToken::TokenType::PSEUDO;
+                token.type = asmbl::TokenType::PSEUDO;
             } else if(encoder.checkIfReg(token.str)) {
-                token.type = AsmToken::TokenType::REG;
+                token.type = asmbl::TokenType::REG;
             }
         }
     }
 }
 
-void lc3::core::Assembler::markInstStateTokens(std::vector<StateToken> & tokens)
+void lc3::core::Assembler::markInstTokens(std::vector<asmbl::StatementToken> & tokens)
 {
     if(tokens.size() == 1) {
-        if(tokens[0].type == AsmToken::TokenType::STRING) {
+        if(tokens[0].type == asmbl::TokenType::STRING) {
             uint32_t token_0_dist = encoder.getDistanceToNearestInstructionName(tokens[0].str);
             if(token_0_dist == 0) {
-                tokens[0].type = AsmToken::TokenType::INST;
+                tokens[0].type = asmbl::TokenType::INST;
                 tokens[0].lev_dist = token_0_dist;
             } else {
                 // there's only one string on this line and it's not exactly an instruction, so assume it's a label
@@ -169,9 +163,9 @@ void lc3::core::Assembler::markInstStateTokens(std::vector<StateToken> & tokens)
             // the sole token on this line is not a string, so it cannot be an instruction
         }
     } else {
-        if(tokens[0].type == AsmToken::TokenType::STRING) {
+        if(tokens[0].type == asmbl::TokenType::STRING) {
             uint32_t token_0_dist = encoder.getDistanceToNearestInstructionName(tokens[0].str);
-            if(tokens[1].type == AsmToken::TokenType::STRING) {
+            if(tokens[1].type == asmbl::TokenType::STRING) {
                 // first two tokens are both strings, maybe they're instructions?
                 uint32_t token_1_dist = encoder.getDistanceToNearestInstructionName(tokens[1].str);
                 // see which is closer to an instruction
@@ -181,7 +175,7 @@ void lc3::core::Assembler::markInstStateTokens(std::vector<StateToken> & tokens)
                 if(token_1_dist < token_0_dist) {
                     uint32_t lev_thresh = 1;
                     if(tokens.size() >= 3) {
-                        if(tokens[2].type == AsmToken::TokenType::PSEUDO) {
+                        if(tokens[2].type == asmbl::TokenType::PSEUDO) {
                             // if the next token is a pseudo-op, be a little less lenient in assuming this is an
                             // instruction
                             lev_thresh -= 1;
@@ -192,14 +186,14 @@ void lc3::core::Assembler::markInstStateTokens(std::vector<StateToken> & tokens)
                         }
                     }
                     if(token_1_dist <= lev_thresh) {
-                        tokens[1].type = AsmToken::TokenType::INST;
+                        tokens[1].type = asmbl::TokenType::INST;
                         tokens[1].lev_dist = token_1_dist;
                     } else {
                         // too far from an instruction
                     }
                 } else {
                     if(token_0_dist < 3) {
-                        tokens[0].type = AsmToken::TokenType::INST;
+                        tokens[0].type = asmbl::TokenType::INST;
                         tokens[0].lev_dist = token_0_dist;;
                     } else {
                         // too far from an instruction
@@ -207,16 +201,16 @@ void lc3::core::Assembler::markInstStateTokens(std::vector<StateToken> & tokens)
                 }
             } else {
                 uint32_t lev_thresh = 1;
-                if(tokens[1].type == AsmToken::TokenType::PSEUDO) {
+                if(tokens[1].type == asmbl::TokenType::PSEUDO) {
                     // if the second token is a pseudo op, then the first token should be considered a label, even if
                     // it matches an instruction
-                    tokens[0].type = AsmToken::TokenType::LABEL;
+                    tokens[0].type = asmbl::TokenType::LABEL;
                     return;
                 } else {
                     lev_thresh += 1;
                 }
                 if(token_0_dist <= lev_thresh) {
-                    tokens[0].type = AsmToken::TokenType::INST;
+                    tokens[0].type = asmbl::TokenType::INST;
                     tokens[0].lev_dist = token_0_dist;
                 }
             }
@@ -226,11 +220,174 @@ void lc3::core::Assembler::markInstStateTokens(std::vector<StateToken> & tokens)
     }
 }
 
-void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens)
+void lc3::core::Assembler::markLabelTokens(std::vector<asmbl::StatementToken> & tokens)
 {
-    if(tokens.size() > 0 && tokens[0].type == AsmToken::TokenType::STRING) {
-        tokens[0].type = AsmToken::TokenType::LABEL;
+    if(tokens.size() > 0 && tokens[0].type == asmbl::TokenType::STRING) {
+        tokens[0].type = asmbl::TokenType::LABEL;
     }
+
+    // mark any strings after an inst as labels
+    bool found_inst = false;
+    for(asmbl::StatementToken & token : tokens) {
+        if(found_inst && token.type == asmbl::TokenType::STRING) {
+            token.type = asmbl::TokenType::LABEL;
+        }
+
+        if(token.type == asmbl::TokenType::INST) {
+            found_inst = true;
+        }
+    }
+}
+
+lc3::core::asmbl::Statement lc3::core::Assembler::makeStatementFromTokens(std::vector<asmbl::StatementToken> & tokens)
+{
+    asmbl::Statement ret;
+    if(tokens.size() > 0) {
+        ret.line = tokens[0].line;
+        if(tokens[0].type == asmbl::TokenType::LABEL) {
+            asmbl::StatementToken temp = tokens[0];
+            std::transform(temp.str.begin(), temp.str.end(), temp.str.begin(), ::tolower);
+            ret.label = temp;
+        }
+    }
+
+    uint32_t pos = 0;
+    for(pos = 0; pos < tokens.size(); pos += 1) {
+        if(tokens[pos].type == asmbl::TokenType::INST || tokens[pos].type == asmbl::TokenType::PSEUDO) {
+            asmbl::StatementToken temp = tokens[pos];
+            std::transform(temp.str.begin(), temp.str.end(), temp.str.begin(), ::tolower);
+
+            ret.inst_or_pseudo = temp;
+            pos += 1;
+            break;
+        }
+    }
+
+    for( ; pos < tokens.size(); pos += 1) {
+        asmbl::StatementToken temp = tokens[pos];
+        if(temp.type != asmbl::TokenType::STRING) {
+            std::transform(temp.str.begin(), temp.str.end(), temp.str.begin(), ::tolower);
+        }
+
+        ret.operands.push_back(tokens[pos]);
+    }
+
+    return ret;
+}
+
+void lc3::core::Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::AssemblerLogger & logger)
+{
+    using namespace lc3::utils;
+    using namespace asmbl;
+
+    uint32_t cur_pc = 0;
+    uint32_t cur_pos = 0;
+    bool found_orig = false;
+
+    while(! found_orig && cur_pos < statements.size()) {
+        while(cur_pos < statements.size())  {
+            asmbl::Statement const & state = statements[cur_pos];
+
+            if(checkIfValidPseudo(state, ".orig", logger)) {
+                found_orig = true;
+                break;
+            }
+
+            logger.printf(PrintType::EXTRA, true, "ignoring line \'%s\' before .orig", state.line.c_str());
+            cur_pos += 1;
+        }
+
+        if(cur_pos == statements.size()) {
+            break;
+        }
+
+        asmbl::Statement const & state = statements[cur_pos];
+
+        uint32_t val = state.operands[0].num;
+        uint32_t trunc_val = val & 0xffff;
+        if(val != trunc_val) {
+            logger.asmPrintf(PrintType::WARNING, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
+            logger.newline();
+        }
+
+        cur_pc = trunc_val;
+        found_orig = true;
+    }
+
+    if(! found_orig) {
+        logger.printf(PrintType::ERROR, true, "could not find valid .orig", cur_pos);
+        throw utils::exception("could not find valid .orig");
+    }
+
+    if(cur_pos != 0) {
+        logger.printf(PrintType::WARNING, true, "ignoring %d lines before .orig", cur_pos);
+    }
+
+    // start at the statemetn right after the first orig
+    cur_pos += 1;
+
+    // once the first valid orig is found, mark the remaining statements
+    for(uint32_t i = cur_pos; i < statements.size(); i += 1) {
+        asmbl::Statement & state = statements[i];
+
+        if(cur_pc >= MMIO_START) {
+            logger.asmPrintf(PrintType::ERROR, 0, state.line.size(), state.label, "no more room in writeable memory");
+            logger.newline();
+            throw utils::exception("no more room in writeable memory");
+        }
+
+        state.pc = cur_pc;
+
+        if(checkIfValidPseudo(state, ".blkw", logger)) {
+            cur_pc += state.operands[0].num;
+        } else if(checkIfValidPseudo(state, ".stringz", logger)) {
+            cur_pc += state.operands[0].str.size() + 1;
+        } else if(checkIfValidPseudo(state, ".orig", logger)) {
+            uint32_t val = state.operands[0].num;
+            uint32_t trunc_val = val & 0xffff;
+            if(val != trunc_val) {
+                logger.asmPrintf(PrintType::WARNING, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
+                logger.newline();
+            }
+
+            cur_pc = trunc_val;
+        } else {
+            cur_pc += 1;
+        }
+    }
+}
+
+bool lc3::core::Assembler::checkIfValidPseudo(asmbl::Statement const & state, std::string const & check,
+    lc3::utils::AssemblerLogger & logger)
+{
+    using namespace lc3::utils;
+    using namespace asmbl;
+
+    if(! state.isPseudo()) { return false; }
+    if(state.inst_or_pseudo.str != check) { return false; }
+
+    std::vector<asmbl::TokenType> valid_operands = {asmbl::TokenType::NUM};
+    if(check == ".stringz") {
+        valid_operands = {asmbl::TokenType::STRING};
+    } else if(check == ".end") {
+        valid_operands = {};
+    }
+
+    if(state.operands.size() != valid_operands.size()) {
+        logger.asmPrintf(PrintType::ERROR, state.inst_or_pseudo, "incorrect number of operands");
+        logger.newline();
+        return false;
+    }
+
+    for(uint32_t i = 0; i < valid_operands.size(); i += 1) {
+        if(state.operands[i].type != valid_operands[i]) {
+            logger.asmPrintf(PrintType::ERROR, state.operands[i], "invalid operand");
+            logger.newline();
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /*
@@ -238,28 +395,28 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *std::vector<lc3::core::Statement> lc3::core::Assembler::assembleChain(Token * program,
  *    std::map<std::string, uint32_t> & symbols, lc3::utils::AssemblerLogger & logger)
  *{
- *    logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "beginning first pass ...");
+ *    logger.printf(lc3::utils::PrintType::INFO, true, "beginning first pass ...");
  *
  *    Token * program_start = nullptr;
  *
  *    try {
  *        program_start = firstPass(program, symbols, logger);
  *    } catch(utils::exception const & e) {
- *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "first pass failed");
+ *        logger.printf(lc3::utils::PrintType::ERROR, true, "first pass failed");
  *        throw e;
  *    }
  *
- *    logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "first pass completed successfully, beginning second pass ...");
+ *    logger.printf(lc3::utils::PrintType::INFO, true, "first pass completed successfully, beginning second pass ...");
  *
  *    std::vector<Statement> ret;
  *    try {
  *        ret = secondPass(program_start, symbols, logger);
  *    } catch(utils::exception const & e) {
- *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "second pass failed");
+ *        logger.printf(lc3::utils::PrintType::ERROR, true, "second pass failed");
  *        throw e;
  *    }
  *
- *    logger.printf(lc3::utils::PrintType::PRINT_TYPE_INFO, true, "second pass completed successfully");
+ *    logger.printf(lc3::utils::PrintType::INFO, true, "second pass completed successfully");
  *
  *    return ret;
  *}
@@ -369,7 +526,7 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *                    cur_tok->opers = nullptr;
  *                    cur_tok->num_opers = 0;
  *                } else {
- *                    logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, cur_tok,
+ *                    logger.printfMessage(lc3::utils::PrintType::WARNING, cur_tok,
  *                        "\'%s\' is being interpreted as a label, did you mean for it to be an instruction?",
  *                        cur_tok->str.c_str());
  *                    logger.newline();
@@ -396,13 +553,13 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *        } else {
  *            found_valid_orig = true;
  *            if(cur_tok->num_opers != 1) {
- *                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, cur_tok, "incorrect number of operands");
+ *                logger.printfMessage(lc3::utils::PrintType::ERROR, cur_tok, "incorrect number of operands");
  *                logger.newline();
  *                throw utils::exception("incorrect number of operands to .orig");
  *            }
  *
  *            if(cur_tok->opers->type != NUM) {
- *                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, cur_tok->opers, "illegal operand");
+ *                logger.printfMessage(lc3::utils::PrintType::ERROR, cur_tok->opers, "illegal operand");
  *                logger.newline();
  *                throw utils::exception("illegal operand to .orig");
  *            }
@@ -411,7 +568,7 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *            uint32_t oper_val = (uint32_t) cur_tok->opers->num;
  *            uint32_t trunc_oper_val =((uint32_t) oper_val) & 0xffff;
  *            if(oper_val > 0xffff) {
- *                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, cur_tok->opers, "truncating 0x%0.8x to 0x%0.4x",
+ *                logger.printfMessage(lc3::utils::PrintType::WARNING, cur_tok->opers, "truncating 0x%0.8x to 0x%0.4x",
  *                    oper_val, trunc_oper_val);
  *                logger.newline();
  *            }
@@ -423,11 +580,11 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *    }
  *
  *    if(! found_valid_orig) {
- *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "could not find valid .orig in program");
+ *        logger.printf(lc3::utils::PrintType::ERROR, true, "could not find valid .orig in program");
  *        throw utils::exception("could not find valid .orig");
  *    } else {
  *        if(invalid_statement_count > 0) {
- *            logger.printf(lc3::utils::PrintType::PRINT_TYPE_WARNING, true, "ignoring %d statements before .orig", invalid_statement_count);
+ *            logger.printf(lc3::utils::PrintType::WARNING, true, "ignoring %d statements before .orig", invalid_statement_count);
  *        }
  *    }
  *
@@ -487,7 +644,7 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *    }
  *
  *    if(leftover_statement_count > 0) {
- *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_WARNING, true, "ignoring %d statements after .end", leftover_statement_count);
+ *        logger.printf(lc3::utils::PrintType::WARNING, true, "ignoring %d statements after .end", leftover_statement_count);
  *    }
  *}
  */
@@ -553,13 +710,13 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *            std::string const & label = cur_tok->str;
  *
  *            if(symbols.find(label) != symbols.end()) {
- *                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, cur_tok, "redefining label \'%s\'", cur_tok->str.c_str());
+ *                logger.printfMessage(lc3::utils::PrintType::WARNING, cur_tok, "redefining label \'%s\'", cur_tok->str.c_str());
  *                logger.newline();
  *            }
  *
  *            symbols[label] = cur_tok->pc;
  *
- *            logger.printf(lc3::utils::PrintType::PRINT_TYPE_DEBUG, true, "setting label \'%s\' to 0x%X", label.c_str(), cur_tok->pc);
+ *            logger.printf(lc3::utils::PrintType::DEBUG, true, "setting label \'%s\' to 0x%X", label.c_str(), cur_tok->pc);
  *        }
  *        cur_tok = cur_tok->next;
  *    }
@@ -602,21 +759,21 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *    std::vector<IInstruction const *> candidates;
  *    if(encoder.findInstruction(inst, candidates)) {
  *        uint32_t encoding = encoder.encodeInstruction(candidates[0], inst, symbols, logger);
- *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_DEBUG, true, "%s => %s", logger.asm_blob[inst->row_num].c_str(),
+ *        logger.printf(lc3::utils::PrintType::DEBUG, true, "%s => %s", logger.asm_blob[inst->row_num].c_str(),
  *            utils::udecToBin(encoding, 16).c_str());
  *        return encoding;
  *    }
  *
  *    if(candidates.size() == 0) {
  *        // this shouldn't happen, because if there are no candidates it should've been retyped as a LABEL
- *        logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, inst, "\'%s\' is not a valid instruction", inst->str.c_str());
+ *        logger.printfMessage(lc3::utils::PrintType::ERROR, inst, "\'%s\' is not a valid instruction", inst->str.c_str());
  *        logger.newline();
  *        throw utils::exception("could not find a valid candidate for instruction");
  *    }
  *
- *    logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, inst, "not a valid usage of \'%s\' instruction", inst->str.c_str());
+ *    logger.printfMessage(lc3::utils::PrintType::ERROR, inst, "not a valid usage of \'%s\' instruction", inst->str.c_str());
  *    for(IInstruction const * candidate : candidates) {
- *        logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'%s\'?", candidate->toFormatString().c_str());
+ *        logger.printf(lc3::utils::PrintType::NOTE, false, "did you mean \'%s\'?", candidate->toFormatString().c_str());
  *    }
  *    logger.newline();
  *
@@ -632,9 +789,9 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *    if(pseudo->str == "fill") {
  *        Token * oper = pseudo->opers;
  *        if(pseudo->num_opers != 1 || (oper->type != NUM && oper->type != STRING)) {
- *            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, pseudo, "not a valid usage of .fill pseudo-op");
- *            logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'.fill num\'?");
- *            logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'.fill label\'?");
+ *            logger.printfMessage(lc3::utils::PrintType::ERROR, pseudo, "not a valid usage of .fill pseudo-op");
+ *            logger.printf(lc3::utils::PrintType::NOTE, false, "did you mean \'.fill num\'?");
+ *            logger.printf(lc3::utils::PrintType::NOTE, false, "did you mean \'.fill label\'?");
  *            logger.newline();
  *            throw utils::exception("not a valid usage of .fill pseudo-op");
  *        }
@@ -646,7 +803,7 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *            if(search != symbols.end()) {
  *                ret.emplace_back((uint32_t) search->second, false, logger.asm_blob[oper->row_num]);
  *            } else {
- *                logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
+ *                logger.printfMessage(lc3::utils::PrintType::ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
  *                logger.newline();
  *                throw std::runtime_error("unknown label");
  *            }
@@ -654,8 +811,8 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *    } else if(pseudo->str == "stringz") {
  *        Token * oper = pseudo->opers;
  *        if(pseudo->num_opers != 1 || (oper->type != NUM && oper->type != STRING)) {
- *            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, pseudo, "not a valid usage of .stringz pseudo-op");
- *            logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'.stringz string\'?");
+ *            logger.printfMessage(lc3::utils::PrintType::ERROR, pseudo, "not a valid usage of .stringz pseudo-op");
+ *            logger.printf(lc3::utils::PrintType::NOTE, false, "did you mean \'.stringz string\'?");
  *            logger.newline();
  *            throw std::runtime_error("not a valid usage of .stringz pseudo-op");
  *        }
@@ -663,7 +820,7 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *        std::string value;
  *        if(oper->type == NUM) {
  *            value = std::to_string(oper->num);
- *            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, oper, "interpreting numeric value as decimal string \'%s\'",
+ *            logger.printfMessage(lc3::utils::PrintType::WARNING, oper, "interpreting numeric value as decimal string \'%s\'",
  *                value.c_str());
  *            logger.newline();
  *        } else if(oper->type == STRING) {
@@ -679,8 +836,8 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *    } else if(pseudo->str == "blkw") {
  *        Token * oper = pseudo->opers;
  *        if(pseudo->num_opers != 1 || oper->type != NUM) {
- *            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, pseudo, "not a valid usage of .blkw pseudo-op");
- *            logger.printf(lc3::utils::PrintType::PRINT_TYPE_NOTE, false, "did you mean \'.blkw num\'?");
+ *            logger.printfMessage(lc3::utils::PrintType::ERROR, pseudo, "not a valid usage of .blkw pseudo-op");
+ *            logger.printf(lc3::utils::PrintType::NOTE, false, "did you mean \'.blkw num\'?");
  *            logger.newline();
  *            throw std::runtime_error("not a valid usage of .blkw pseudo-op");
  *        }
@@ -694,27 +851,3 @@ void lc3::core::Assembler::markLabelStateTokens(std::vector<StateToken> & tokens
  *}
  */
 
-std::ostream & operator<<(std::ostream & out, lc3::core::StateToken const & x)
-{
-    if(x.type == AsmToken::TokenType::STRING) {
-        out << x.str << " (string)";
-    } else if(x.type == AsmToken::TokenType::NUM) {
-        out << x.num << " (num)";
-    } else if(x.type == AsmToken::TokenType::INST) {
-        out << x.str << " (inst~" << x.lev_dist << ")";
-    } else if(x.type == AsmToken::TokenType::PSEUDO) {
-        out << x.str << " (pseudo)";
-    } else if(x.type == AsmToken::TokenType::REG) {
-        out << x.str << " (reg)";
-    } else if(x.type == AsmToken::TokenType::LABEL) {
-        out << x.str << " (label)";
-    } else if(x.type == AsmToken::TokenType::EOS) {
-        out << "EOS\n";
-        return out;
-    } else {
-        out << "invalid token";
-    }
-
-    out << " " << (x.row + 1) << ":" << (x.col + 1) << "+" << x.len;
-    return out;
-}

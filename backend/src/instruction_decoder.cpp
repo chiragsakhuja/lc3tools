@@ -2,7 +2,7 @@
 
 #include "instruction_decoder.h"
 
-lc3::core::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
+lc3::core::sim::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
 {
     for(IInstruction const * inst : instructions) {
         // assumption: every instruction will have a FixedOperand first, and that is the opcode
@@ -11,7 +11,7 @@ lc3::core::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
     }
 }
 
-bool lc3::core::InstructionDecoder::findInstructionByEncoding(uint32_t encoding,
+bool lc3::core::sim::InstructionDecoder::findInstructionByEncoding(uint32_t encoding,
     lc3::core::IInstruction *& candidate) const
 {
     auto search = instructions_by_opcode.find(utils::getBits(encoding, 15, 12));
@@ -22,7 +22,7 @@ bool lc3::core::InstructionDecoder::findInstructionByEncoding(uint32_t encoding,
             uint32_t cur_pos = 15;
             bool valid = true;
             for(IOperand const * op : inst->operands) {
-                if(op->type == OperType::OPER_TYPE_FIXED) {
+                if(op->type == OperType::FIXED) {
                     if(utils::getBits(encoding, cur_pos, cur_pos - op->width + 1) != ((FixedOperand *) op)->value) {
                         valid = false;
                         break;

@@ -2,20 +2,18 @@
 
 #include "tokenizer.h"
 
-AsmToken::AsmToken(void) : type(AsmToken::TokenType::INVALID) {}
-
-AsmTokenizer::AsmTokenizer(std::string const & filename) : filename(filename), file_opened(false), get_new_line(true),
-    return_newline(false), row(-1), col(0), done(false)
+lc3::core::asmbl::Tokenizer::Tokenizer(std::string const & filename) : filename(filename), file_opened(false),
+    get_new_line(true), return_newline(false), row(-1), col(0), done(false)
 {}
 
-AsmTokenizer::~AsmTokenizer(void)
+lc3::core::asmbl::Tokenizer::~Tokenizer(void)
 {
     if(file_opened) {
         file.close();
     }
 }
 
-AsmTokenizer & AsmTokenizer::operator>>(AsmToken & token)
+lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & token)
 {
     // if this is the first time stream is used, open the file
     if(! file_opened) {
@@ -33,7 +31,7 @@ AsmTokenizer & AsmTokenizer::operator>>(AsmToken & token)
         // check if an end-of-statement token should be returned
         if(return_newline) {
             return_newline = false;
-            token.type = AsmToken::TokenType::EOS;
+            token.type = TokenType::EOS;
             return *this;
         }
 
@@ -88,21 +86,22 @@ AsmTokenizer & AsmTokenizer::operator>>(AsmToken & token)
 
     int32_t token_num_val = 0;
     if(convertStringToNum(line.substr(col, len), token_num_val)) {
-        token.type = AsmToken::TokenType::NUM;
+        token.type = TokenType::NUM;
         token.num = token_num_val;
     } else {
-        token.type = AsmToken::TokenType::STRING;
+        token.type = TokenType::STRING;
         token.str = line.substr(col, len);
     }
     token.col = col;
     token.row = row;
     token.len = len;
+    token.line = line;
     col += len + 1;
 
     return *this;
 }
 
-bool AsmTokenizer::convertStringToNum(std::string const & str, int32_t & val) const
+bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, int32_t & val) const
 {
     char const * c_str = str.c_str();
     if(c_str[0] == '0' && c_str[1] != '\0') { c_str += 1; }
@@ -127,17 +126,17 @@ bool AsmTokenizer::convertStringToNum(std::string const & str, int32_t & val) co
     }
 }
 
-bool AsmTokenizer::isDone(void) const
+bool lc3::core::asmbl::Tokenizer::isDone(void) const
 {
     return done;
 }
 
-bool AsmTokenizer::operator!(void) const
+bool lc3::core::asmbl::Tokenizer::operator!(void) const
 {
     return ! isDone();
 }
 
-AsmTokenizer::operator bool(void) const
+lc3::core::asmbl::Tokenizer::operator bool(void) const
 {
     return operator!();
 }

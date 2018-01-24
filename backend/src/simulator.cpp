@@ -21,7 +21,7 @@ void lc3::core::Simulator::loadObjectFile(std::string const & filename)
 {
     std::ifstream file(filename);
     if(! file) {
-        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "could not open file \'%s\' for reading",
+        logger.printf(lc3::utils::PrintType::ERROR, true, "could not open file \'%s\' for reading",
             filename.c_str());
         throw utils::exception("could not open file");
     }
@@ -39,7 +39,7 @@ void lc3::core::Simulator::loadObjectFile(std::string const & filename)
             state.pc = statement.getValue();
             offset = 0;
         } else {
-            logger.printf(lc3::utils::PrintType::PRINT_TYPE_DEBUG, true, "0x%0.4x: %s (0x%0.4x)", state.pc + offset,
+            logger.printf(lc3::utils::PrintType::DEBUG, true, "0x%0.4x: %s (0x%0.4x)", state.pc + offset,
                 statement.getLine().c_str(), statement.getValue());
             state.mem[state.pc + offset] = statement;
             offset += 1;
@@ -92,12 +92,12 @@ std::vector<lc3::core::IEvent const *> lc3::core::Simulator::executeInstruction(
 
     IInstruction * candidate;
     if(! decoder.findInstructionByEncoding(encoded_inst, candidate)) {
-        logger.printf(lc3::utils::PrintType::PRINT_TYPE_ERROR, true, "invalid instruction 0x%0.4x", encoded_inst);
+        logger.printf(lc3::utils::PrintType::ERROR, true, "invalid instruction 0x%0.4x", encoded_inst);
         throw utils::exception("invalid instruction");
     }
 
     candidate->assignOperands(encoded_inst);
-    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
+    logger.printf(lc3::utils::PrintType::EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
         state.mem[state.pc].getLine().c_str(), encoded_inst);
     state.pc += 1;
     std::vector<IEvent const *> events = candidate->execute(state);
@@ -143,7 +143,7 @@ void lc3::core::Simulator::executeEventChain(std::vector<core::IEvent const *> &
 
 void lc3::core::Simulator::executeEvent(core::IEvent const & event)
 {
-    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, false, "  %s", event.getOutputString(state).c_str());
+    logger.printf(lc3::utils::PrintType::EXTRA, false, "  %s", event.getOutputString(state).c_str());
     event.updateState(state);
 }
 

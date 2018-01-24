@@ -1,85 +1,70 @@
-#include <fstream>
-
-#include "instructions.h"
 #include "tokens.h"
+#include "utils.h"
 
-#include "parser_gen/parser.hpp"
+lc3::core::asmbl::Token::Token(void) : type(TokenType::INVALID) {}
 
-Token::Token(void)
+lc3::core::asmbl::StatementToken::StatementToken(void) : Token(), lev_dist(0) {}
+
+lc3::core::asmbl::StatementToken::StatementToken(Token const & that) : Token(that) {}
+
+bool lc3::core::asmbl::Statement::isPseudo(void) const
 {
-    this->num_opers = 0;
-    this->pc = 0;
-    this->row_num = 0;
-    this->col_num = 0;
-    this->length = 0;
-    this->opers = nullptr;
-    this->next = nullptr;
+    return (inst_or_pseudo.type == TokenType::PSEUDO);
 }
 
-Token::Token(const std::string & str) : Token()
+bool lc3::core::asmbl::Statement::isInst(void) const
 {
-    this->str = str;
-    this->type = STRING;
+    return (inst_or_pseudo.type == TokenType::INST);
 }
 
-Token::Token(int num) : Token()
+bool lc3::core::asmbl::Statement::hasLabel(void) const
 {
-    this->num = num;
-    this->type = NUM;
+    return (label.type == TokenType::LABEL);
 }
 
-bool Token::checkPseudoType(std::string const & pseudo) const
+std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementToken const & x)
 {
-    return type == PSEUDO && str == pseudo;
-}
+    using namespace lc3::core::asmbl;
 
-#ifdef _ENABLE_DEBUG
-void Token::print(std::ostream & out, int indent_level) const
-{
-    if(indent_level != 0) {
-        for(int i = 0; i < indent_level; i += 1) {
-            out << "   ";
-        }
-        out << "|- ";
-    }
-
-    if(type == STRING || type == PSEUDO || type == LABEL || type == INST ||
-        type == static_cast<int>(lc3::core::OperType::OPER_TYPE_LABEL) ||
-        type == static_cast<int>(lc3::core::OperType::OPER_TYPE_REG))
-    {
-        out << str;
-       if(type == PSEUDO) {
-          out << " (characters)";
-       } else if(type == LABEL || type == static_cast<int>(lc3::core::OperType::OPER_TYPE_LABEL)) {
-          out << " (label)";
-       } else if(type == INST) {
-           out << " (inst)";
-       } else if(type == static_cast<int>(lc3::core::OperType::OPER_TYPE_REG)) {
-           out << " (reg)";
-       }
-    } else if(type == NUM || type == static_cast<int>(lc3::core::OperType::OPER_TYPE_NUM)) {
-        out << num << " (number)";
-    } else if(type == NEWLINE) {
-        out << "NEWLINE";
-    } else if(type == COLON) {
-        out << ":";
-    } else if(type == COMMA) {
-        out << ".";
+    if(x.type == TokenType::STRING) {
+        out << x.str << " (string)";
+    } else if(x.type == TokenType::NUM) {
+        out << x.num << " (num)";
+    } else if(x.type == TokenType::INST) {
+        out << x.str << " (inst~" << x.lev_dist << ")";
+    } else if(x.type == TokenType::PSEUDO) {
+        out << x.str << " (pseudo)";
+    } else if(x.type == TokenType::REG) {
+        out << x.str << " (reg)";
+    } else if(x.type == TokenType::LABEL) {
+        out << x.str << " (label)";
+    } else if(x.type == TokenType::EOS) {
+        out << "EOS";
+        return out;
     } else {
-        out << "Unknown token";
+        out << "invalid token";
     }
 
-    out << " " << (row_num + 1) << ":" << (col_num + 1) << "+" << length << "\n";
-    Token * cur_oper = opers;
-    while(cur_oper != nullptr) {
-        cur_oper->print(out, indent_level + 1);
-        cur_oper = cur_oper->next;
-    }
-}
-
-std::ostream & operator<<(std::ostream & out, Token const & x)
-{
-    x.print(out, 0);
+    out << " " << (x.row + 1) << ":" << (x.col + 1) << "+" << x.len;
     return out;
 }
-#endif
+
+std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Statement const & x)
+{
+    out << "==== (" << lc3::utils::ssprintf("0x%0.4x", x.pc) << ") " << x.line << "\n";
+    std::string indent = "";
+    if(x.label.type != lc3::core::asmbl::TokenType::INVALID) {
+        out << x.label << "\n";
+        indent = "  ";
+    }
+
+    if(x.inst_or_pseudo.type != lc3::core::asmbl::TokenType::INVALID) {
+        out << indent << x.inst_or_pseudo << "\n";
+        indent += "  ";
+        for(auto const & operand : x.operands) {
+            out << indent << operand << "\n";
+        }
+    }
+
+    return out;
+}

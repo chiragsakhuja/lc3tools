@@ -15,7 +15,8 @@
 #include "assembler.h"
 #include "simulator.h"
 
-namespace lc3 {
+namespace lc3
+{
     class sim;
 
     struct Breakpoint

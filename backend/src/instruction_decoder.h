@@ -6,7 +6,11 @@
 
 #include "instructions.h"
 
-namespace lc3::core
+namespace lc3
+{
+namespace core
+{
+namespace sim
 {
     class InstructionDecoder : public InstructionHandler
     {
@@ -17,6 +21,8 @@ namespace lc3::core
     private:
         std::map<uint32_t, std::vector<IInstruction const *>> instructions_by_opcode;
     };
+};
+};
 };
 
 #endif

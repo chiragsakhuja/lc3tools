@@ -1,7 +1,9 @@
 #ifndef INPUTTER_H
 #define INPUTTER_H
 
-namespace lc3::utils
+namespace lc3
+{
+namespace utils
 {
     class IInputter
     {
@@ -21,6 +23,7 @@ namespace lc3::utils
         virtual bool getChar(char &) override { return false; }
         virtual void endInput(void) override {}
     };
+};
 };
 
 #endif

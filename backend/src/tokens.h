@@ -2,8 +2,10 @@
 #define TOKENS_H
 
 #include <string>
+#include <vector>
+#include <iostream>
 
-struct Token
+struct OldToken
 {
     enum class TokenType {
           NEWLINE
@@ -11,7 +13,7 @@ struct Token
         , NUM
     } token_type;
 
-    Token(void);
+    OldToken(void);
 
     std::string str;
     int num;
@@ -19,11 +21,11 @@ struct Token
     int type;
     int num_opers;
     int pc;
-    Token * opers;
-    Token * next;
+    OldToken * opers;
+    OldToken * next;
 
-    Token(std::string const & str);
-    Token(int val);
+    OldToken(std::string const & str);
+    OldToken(int val);
 
     // used for errors
     int row_num, col_num;
@@ -33,10 +35,71 @@ struct Token
 
 #ifdef _ENABLE_DEBUG
     void print(std::ostream & out, int indent_level) const;
-    friend std::ostream & operator<<(std::ostream &, Token const &);
+    friend std::ostream & operator<<(std::ostream &, OldToken const &);
 #endif
 };
 
-std::ostream & operator<<(std::ostream & out, Token const & x);
+std::ostream & operator<<(std::ostream & out, OldToken const & x);
+
+namespace lc3
+{
+namespace core
+{
+namespace asmbl
+{
+    enum class TokenType {
+          INVALID = 0
+        , NUM
+        , STRING
+        , EOS
+
+        , INST
+        , REG
+        , PSEUDO
+        , LABEL
+    };
+
+    struct Token
+    {
+        Token(void);
+
+        TokenType type;
+        std::string str;
+        int32_t num;
+
+        uint32_t row, col, len;
+        std::string line;
+    };
+
+    struct StatementToken : public Token
+    {
+        using Token::Token;
+
+        StatementToken(void);
+        StatementToken(Token const & that);
+
+        uint32_t lev_dist;
+    };
+
+    struct Statement
+    {
+        bool isPseudo(void) const;
+        bool isInst(void) const;
+        bool hasLabel(void) const;
+
+        StatementToken label;
+        StatementToken inst_or_pseudo;
+        uint32_t pc;
+
+        std::vector<StatementToken> operands;
+
+        std::string line;
+    };
+};
+};
+};
+
+std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementToken const & x);
+std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Statement const & x);
 
 #endif

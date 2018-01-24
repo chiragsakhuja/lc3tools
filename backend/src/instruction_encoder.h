@@ -4,7 +4,11 @@
 #include "instructions.h"
 #include "logger.h"
 
-namespace lc3::core
+namespace lc3
+{
+namespace core
+{
+namespace asmbl
 {
     class InstructionEncoder : public InstructionHandler
     {
@@ -15,10 +19,10 @@ namespace lc3::core
         bool checkIfReg(std::string const & search) const;
 
         bool findInstructionByName(std::string const & search) const;
-        bool findInstruction(Token const * search, std::vector<IInstruction const *> & candidates) const;
+        bool findInstruction(OldToken const * search, std::vector<IInstruction const *> & candidates) const;
 
         // precondition: the instruction is of type pattern and is valid (no error checking)
-        uint32_t encodeInstruction(IInstruction const * pattern, Token const * inst,
+        uint32_t encodeInstruction(IInstruction const * pattern, OldToken const * inst,
             std::map<std::string, uint32_t> const & symbols, lc3::utils::AssemblerLogger & logger) const;
     private:
         static constexpr uint32_t lev_thresh = 3;
@@ -26,6 +30,8 @@ namespace lc3::core
 
         uint32_t levDistance(std::string const & a, uint32_t a_len, std::string const & b, uint32_t b_len) const;
     };
+};
+};
 };
 
 #endif

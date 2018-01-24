@@ -2,24 +2,26 @@
 
 #include "instruction_encoder.h"
 
-lc3::core::InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
+lc3::core::asmbl::InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
 {
     for(IInstruction const * inst : instructions) {
         instructions_by_name[inst->name].push_back(inst);
     }
 }
 
-bool lc3::core::InstructionEncoder::checkIfReg(std::string const & search) const
+bool lc3::core::asmbl::InstructionEncoder::checkIfReg(std::string const & search) const
 {
     return regs.find(search) != regs.end();
 }
 
-uint32_t lc3::core::InstructionEncoder::getDistanceToNearestInstructionName(std::string const & search) const
+uint32_t lc3::core::asmbl::InstructionEncoder::getDistanceToNearestInstructionName(std::string const & search) const
 {
+    std::string lower_search = search;
+    std::transform(lower_search.begin(), lower_search.end(), lower_search.begin(), ::tolower);
     uint32_t min_distance = 0;
     bool min_set = false;
     for(auto const & inst : instructions_by_name) {
-        uint32_t distance = levDistance(inst.first, inst.first.size(), search, search.size());
+        uint32_t distance = levDistance(inst.first, inst.first.size(), lower_search, lower_search.size());
         if(! min_set) {
             min_distance = distance;
             min_set = true;
@@ -32,7 +34,7 @@ uint32_t lc3::core::InstructionEncoder::getDistanceToNearestInstructionName(std:
     return min_distance;
 }
 
-uint32_t lc3::core::InstructionEncoder::levDistance(std::string const & a, uint32_t a_len, std::string const & b,
+uint32_t lc3::core::asmbl::InstructionEncoder::levDistance(std::string const & a, uint32_t a_len, std::string const & b,
     uint32_t b_len) const
 {
     // lazy, redundant recursive version of Levenshtein distance...may use dynamic programming eventually
@@ -49,12 +51,13 @@ uint32_t lc3::core::InstructionEncoder::levDistance(std::string const & a, uint3
     return *std::min_element(std::begin(costs), std::end(costs));
 }
 
-bool lc3::core::InstructionEncoder::findInstructionByName(std::string const & search) const
+bool lc3::core::asmbl::InstructionEncoder::findInstructionByName(std::string const & search) const
 {
     return instructions_by_name.find(search) != instructions_by_name.end();
 }
  
-bool lc3::core::InstructionEncoder::findInstruction(Token const * search, std::vector<IInstruction const *> & candidates) const
+bool lc3::core::asmbl::InstructionEncoder::findInstruction(OldToken const * search,
+    std::vector<IInstruction const *> & candidates) const
 {
     auto inst_list = instructions_by_name.find(search->str);
 
@@ -68,12 +71,12 @@ bool lc3::core::InstructionEncoder::findInstruction(Token const * search, std::v
             // first make sure the number of operands is the same, otherwise it's a waste
             if(cur_candidate->getNumOperands() == (uint32_t) search->num_opers) {
                 bool actual_match = true;
-                Token const * cur_oper = search->opers;
+                OldToken const * cur_oper = search->opers;
 
                 // iterate through the oeprand types to see if the assembly matches
                 for(IOperand const * oper : cur_candidate->operands) {
                     // if the operand is fixed, it won't show up in the assembly so skip it
-                    if(oper->type == OperType::OPER_TYPE_FIXED) {
+                    if(oper->type == OperType::FIXED) {
                         continue;
                     }
 
@@ -106,18 +109,18 @@ bool lc3::core::InstructionEncoder::findInstruction(Token const * search, std::v
 }
 
 // precondition: the instruction is of type pattern and is valid (no error checking)
-uint32_t lc3::core::InstructionEncoder::encodeInstruction(IInstruction const * pattern, Token const * inst,
+uint32_t lc3::core::asmbl::InstructionEncoder::encodeInstruction(IInstruction const * pattern, OldToken const * inst,
     std::map<std::string, uint32_t> const & symbols, lc3::utils::AssemblerLogger & logger) const
 {
     uint32_t oper_count = 1;
     uint32_t encoding = 0;
 
-    Token const * cur_oper = inst->opers;
+    OldToken const * cur_oper = inst->opers;
     for(IOperand * pattern_op : pattern->operands) {
         encoding <<= pattern_op->width;
         encoding |= pattern_op->encode(cur_oper, oper_count, regs, symbols, logger);
 
-        if(pattern_op->type != OperType::OPER_TYPE_FIXED) {
+        if(pattern_op->type != OperType::FIXED) {
             cur_oper = cur_oper->next;
             oper_count += 1;
         }

@@ -35,7 +35,7 @@ uint32_t lc3::core::IInstruction::getNumOperands(void) const
 {
     uint32_t ret = 0;
     for(IOperand * operand : operands) {
-        if(operand->type != OperType::OPER_TYPE_FIXED) {
+        if(operand->type != OperType::FIXED) {
             ret += 1;
         }
     }
@@ -46,7 +46,7 @@ void lc3::core::IInstruction::assignOperands(uint32_t encoded_inst)
 {
     uint32_t cur_pos = 15;
     for(IOperand * op : operands) {
-        if(op->type != OperType::OPER_TYPE_FIXED) {
+        if(op->type != OperType::FIXED) {
             op->value = utils::getBits(encoded_inst, cur_pos, cur_pos - op->width + 1);
         }
         cur_pos -= op->width;
@@ -59,7 +59,7 @@ std::string lc3::core::IInstruction::toFormatString(void) const
     assembly << name << " ";
     std::string prefix = "";
     for(IOperand * operand : operands) {
-        if(operand->type != OperType::OPER_TYPE_FIXED) {
+        if(operand->type != OperType::FIXED) {
             assembly << prefix << operand->type_str;
             prefix = ", ";
         }
@@ -73,17 +73,17 @@ std::string lc3::core::IInstruction::toValueString(void) const
     assembly << name << " ";
     std::string prefix = "";
     for(IOperand * operand : operands) {
-        if(operand->type != OperType::OPER_TYPE_FIXED) {
+        if(operand->type != OperType::FIXED) {
             std::string oper_str;
-            if(operand->type == OperType::OPER_TYPE_NUM || operand->type == OperType::OPER_TYPE_LABEL) {
-                if((operand->type == OperType::OPER_TYPE_NUM && ((NumOperand *) operand)->sext) ||
-                    operand->type == OperType::OPER_TYPE_LABEL)
+            if(operand->type == OperType::NUM || operand->type == OperType::LABEL) {
+                if((operand->type == OperType::NUM && ((NumOperand *) operand)->sext) ||
+                    operand->type == OperType::LABEL)
                 {
                     oper_str = "#" + std::to_string((int32_t) utils::sextTo32(operand->value, operand->width));
                 } else {
                     oper_str = "#" + std::to_string(operand->value);
                 }
-            } else if(operand->type == OperType::OPER_TYPE_REG) {
+            } else if(operand->type == OperType::REG) {
                 oper_str = "r" + std::to_string(operand->value);
             }
             assembly << prefix << oper_str;
@@ -152,7 +152,7 @@ lc3::core::InstructionHandler::~InstructionHandler(void)
     }
 }
 
-uint32_t lc3::core::FixedOperand::encode(Token const * oper, uint32_t oper_count,
+uint32_t lc3::core::FixedOperand::encode(OldToken const * oper, uint32_t oper_count,
     std::map<std::string, uint32_t> const & regs, std::map<std::string, uint32_t> const & symbols,
     lc3::utils::AssemblerLogger & logger)
 {
@@ -165,7 +165,7 @@ uint32_t lc3::core::FixedOperand::encode(Token const * oper, uint32_t oper_count
     return value & ((1 << width) - 1);
 }
 
-uint32_t lc3::core::RegOperand::encode(Token const * oper, uint32_t oper_count, 
+uint32_t lc3::core::RegOperand::encode(OldToken const * oper, uint32_t oper_count, 
     std::map<std::string, uint32_t> const & regs, std::map<std::string, uint32_t> const & symbols,
     lc3::utils::AssemblerLogger & logger)
 {
@@ -173,13 +173,13 @@ uint32_t lc3::core::RegOperand::encode(Token const * oper, uint32_t oper_count,
 
     uint32_t token_val = regs.at(std::string(oper->str)) & ((1 << width) - 1);
 
-    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, true, "%d.%d: reg %s => %s", oper->row_num, oper_count,
+    logger.printf(lc3::utils::PrintType::EXTRA, true, "%d.%d: reg %s => %s", oper->row_num, oper_count,
         oper->str.c_str(), utils::udecToBin(token_val, width).c_str());
 
     return token_val;
 }
 
-uint32_t lc3::core::NumOperand::encode(Token const * oper, uint32_t oper_count,
+uint32_t lc3::core::NumOperand::encode(OldToken const * oper, uint32_t oper_count,
     std::map<std::string, uint32_t> const & regs, std::map<std::string, uint32_t> const & symbols,
     lc3::utils::AssemblerLogger & logger)
 {
@@ -190,25 +190,25 @@ uint32_t lc3::core::NumOperand::encode(Token const * oper, uint32_t oper_count,
 
     if(sext) {
         if((int32_t) oper->num < -(1 << (width - 1)) || (int32_t) oper->num > ((1 << (width - 1)) - 1)) {
-            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, oper, "immediate %d truncated to %d",
+            logger.printfMessage(lc3::utils::PrintType::WARNING, oper, "immediate %d truncated to %d",
                 oper->num, utils::sextTo32(token_val, width));
             logger.newline();
         }
     } else {
         if(oper->num > ((1 << width) - 1)) {
-            logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_WARNING, oper, "immediate %d truncated to %u",
+            logger.printfMessage(lc3::utils::PrintType::WARNING, oper, "immediate %d truncated to %u",
                 oper->num, token_val);
             logger.newline();
         }
     }
 
-    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, true, "%d.%d: imm %d => %s", oper->row_num, oper_count,
+    logger.printf(lc3::utils::PrintType::EXTRA, true, "%d.%d: imm %d => %s", oper->row_num, oper_count,
         oper->num, utils::udecToBin(token_val, width).c_str());
 
     return token_val;
 }
 
-uint32_t lc3::core::LabelOperand::encode(Token const * oper, uint32_t oper_count,
+uint32_t lc3::core::LabelOperand::encode(OldToken const * oper, uint32_t oper_count,
     std::map<std::string, uint32_t> const & regs, std::map<std::string, uint32_t> const & symbols,
     lc3::utils::AssemblerLogger & logger)
 {
@@ -216,14 +216,14 @@ uint32_t lc3::core::LabelOperand::encode(Token const * oper, uint32_t oper_count
 
     auto search = symbols.find(oper->str);
     if(search == symbols.end()) {
-        logger.printfMessage(lc3::utils::PrintType::PRINT_TYPE_ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
+        logger.printfMessage(lc3::utils::PrintType::ERROR, oper, "unknown label \'%s\'", oper->str.c_str());
         logger.newline();
         throw utils::exception("unknown label");
     }
 
     uint32_t token_val = (((int32_t) search->second) - (oper->pc + 1)) & ((1 << width) - 1);
 
-    logger.printf(lc3::utils::PrintType::PRINT_TYPE_EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper->row_num,
+    logger.printf(lc3::utils::PrintType::EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper->row_num,
         oper_count, oper->str.c_str(), search->second, utils::udecToBin((uint32_t) token_val, width).c_str());
 
     return token_val;

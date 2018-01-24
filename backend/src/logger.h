@@ -7,16 +7,18 @@
 #include "tokens.h"
 #include "utils.h"
 
-namespace lc3::utils
+namespace lc3
+{
+namespace utils
 {
     enum class PrintType {
-          PRINT_TYPE_FATAL_ERROR = 0
-        , PRINT_TYPE_ERROR
-        , PRINT_TYPE_WARNING
-        , PRINT_TYPE_NOTE
-        , PRINT_TYPE_INFO
-        , PRINT_TYPE_DEBUG
-        , PRINT_TYPE_EXTRA
+          FATAL_ERROR = 0
+        , ERROR
+        , WARNING
+        , NOTE
+        , INFO
+        , DEBUG
+        , EXTRA
     };
 
     class Logger
@@ -26,7 +28,7 @@ namespace lc3::utils
         uint32_t print_level;
 
     public:
-        Logger(utils::IPrinter & printer, uint32_t print_level) : printer(printer), print_level(print_level) {}
+        Logger(IPrinter & printer, uint32_t print_level) : printer(printer), print_level(print_level) {}
 
         template<typename ... Args>
         void printf(PrintType level, bool bold, std::string const & format, Args ... args) const;
@@ -39,94 +41,105 @@ namespace lc3::utils
     public:
         using Logger::Logger;
 
+        AssemblerLogger(IPrinter & printer, uint32_t print_level, std::string const & filename) :
+            Logger(printer, print_level), filename(filename) {}
+
         template<typename ... Args>
-        void printfMessage(PrintType level, Token const * tok, std::string const & format, Args ... args) const;
+        void printfMessage(PrintType level, OldToken const * tok, std::string const & format, Args ... args) const;
         template<typename ... Args>
-        void xprintfMessage(PrintType level, int col_num, int length, Token const * tok, std::string const & format,
+        void xprintfMessage(PrintType level, int col_num, int length, OldToken const * tok, std::string const & format,
             Args ... args) const;
+
+        template<typename ... Args>
+        void asmPrintf(PrintType level, lc3::core::asmbl::StatementToken const & token, std::string const & format,
+            Args ... args) const;
+        template<typename ... Args>
+        void asmPrintf(PrintType level, uint32_t col, uint32_t len, lc3::core::asmbl::StatementToken const & token,
+            std::string const & format, Args ... args) const;
 
         std::string filename;
         std::vector<std::string> asm_blob;
     };
 };
+};
 
 template<typename ... Args>
 void lc3::utils::Logger::printf(lc3::utils::PrintType type, bool bold, std::string const & format, Args ... args) const
 {
-    lc3::utils::PrintColor color = lc3::utils::PrintColor::PRINT_COLOR_RESET;
+    lc3::utils::PrintColor color = lc3::utils::PrintColor::RESET;
     std::string label = "";
 
     if(static_cast<uint32_t>(type) <= print_level) {
         switch(type) {
-            case PrintType::PRINT_TYPE_ERROR:
-                color = lc3::utils::PrintColor::PRINT_COLOR_RED;
+            case PrintType::ERROR:
+                color = lc3::utils::PrintColor::RED;
                 label = "error";
                 break;
 
-            case PrintType::PRINT_TYPE_WARNING:
-                color = lc3::utils::PrintColor::PRINT_COLOR_YELLOW;
+            case PrintType::WARNING:
+                color = lc3::utils::PrintColor::YELLOW;
                 label = "warning";
                 break;
 
-            case PrintType::PRINT_TYPE_NOTE:
-                color = lc3::utils::PrintColor::PRINT_COLOR_GRAY;
+            case PrintType::NOTE:
+                color = lc3::utils::PrintColor::GRAY;
                 label = "note";
                 break;
 
-            case PrintType::PRINT_TYPE_INFO:
-                color = lc3::utils::PrintColor::PRINT_COLOR_GREEN;
+            case PrintType::INFO:
+                color = lc3::utils::PrintColor::GREEN;
                 label = "info";
                 break;
 
-            case PrintType::PRINT_TYPE_DEBUG:
-                color = lc3::utils::PrintColor::PRINT_COLOR_MAGENTA;
+            case PrintType::DEBUG:
+                color = lc3::utils::PrintColor::MAGENTA;
                 label = "debug";
                 break;
 
-            case PrintType::PRINT_TYPE_EXTRA:
-                color = lc3::utils::PrintColor::PRINT_COLOR_BLUE;
+            case PrintType::EXTRA:
+                color = lc3::utils::PrintColor::BLUE;
                 label = "extra";
                 break;
 
             default: break;
         }
 
-        printer.setColor(lc3::utils::PrintColor::PRINT_COLOR_BOLD);
+        printer.setColor(lc3::utils::PrintColor::BOLD);
         printer.setColor(color);
         printer.print(lc3::utils::ssprintf("%s: ", label.c_str()));
-        printer.setColor(lc3::utils::PrintColor::PRINT_COLOR_RESET);
+        printer.setColor(lc3::utils::PrintColor::RESET);
 
         if(bold) {
-            printer.setColor(lc3::utils::PrintColor::PRINT_COLOR_BOLD);
+            printer.setColor(lc3::utils::PrintColor::BOLD);
         }
 
         printer.print(lc3::utils::ssprintf(format, args...));
-        printer.setColor(lc3::utils::PrintColor::PRINT_COLOR_RESET);
+        printer.setColor(lc3::utils::PrintColor::RESET);
 
         printer.newline();
     }
 }
 
 template<typename ... Args>
-void lc3::utils::AssemblerLogger::printfMessage(lc3::utils::PrintType level, Token const * tok,
+void lc3::utils::AssemblerLogger::printfMessage(lc3::utils::PrintType level, OldToken const * tok,
     std::string const & format, Args ... args) const
 {
     xprintfMessage(level, tok->col_num, tok->length, tok, format, args...);
 }
 
 template<typename ... Args>
-void lc3::utils::AssemblerLogger::xprintfMessage(lc3::utils::PrintType level, int col_num, int length, Token const * tok,
+void lc3::utils::AssemblerLogger::xprintfMessage(lc3::utils::PrintType level, int col_num, int length, OldToken const * tok,
     std::string const & format, Args ... args) const
 {
-    printer.setColor(lc3::utils::PrintColor::PRINT_COLOR_BOLD);
+    printer.setColor(lc3::utils::PrintColor::BOLD);
     printer.print(lc3::utils::ssprintf("%s:%d:%d: ", filename.c_str(), tok->row_num + 1, col_num + 1));
  
     printf(level, true, format, args...);
     printer.print(lc3::utils::ssprintf("%s", asm_blob[tok->row_num].c_str()));
     printer.newline();
  
-    printer.setColor(lc3::utils::PrintColor::PRINT_COLOR_BOLD);
-    printer.setColor(lc3::utils::PrintColor::PRINT_COLOR_GREEN);
+    printer.setColor(lc3::utils::PrintColor::BOLD);
+    printer.setColor(lc3::utils::PrintColor::GREEN);
  
     for(int i = 0; i < col_num; i++) {
         printer.print(" ");
@@ -137,7 +150,41 @@ void lc3::utils::AssemblerLogger::xprintfMessage(lc3::utils::PrintType level, in
         printer.print("~");
     }
  
-    printer.setColor(lc3::utils::PrintColor::PRINT_COLOR_RESET);
+    printer.setColor(lc3::utils::PrintColor::RESET);
+    printer.newline();
+}
+
+template<typename ... Args>
+void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
+    lc3::core::asmbl::StatementToken const & token, std::string const & format, Args ... args) const
+{
+    asmPrintf(level, token.col, token.len, token, format, args...);
+}
+
+template<typename ... Args>
+void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level, uint32_t col_num, uint32_t len,
+    lc3::core::asmbl::StatementToken const & token, std::string const & format, Args ... args) const
+{
+    printer.setColor(lc3::utils::PrintColor::BOLD);
+    printer.print(lc3::utils::ssprintf("%s:%d:%d: ", filename.c_str(), token.row + 1, col_num + 1));
+ 
+    printf(level, true, format, args...);
+    printer.print(lc3::utils::ssprintf("%s", token.line.c_str()));
+    printer.newline();
+ 
+    printer.setColor(lc3::utils::PrintColor::BOLD);
+    printer.setColor(lc3::utils::PrintColor::GREEN);
+ 
+    for(uint32_t i = 0; i < col_num; i++) {
+        printer.print(" ");
+    }
+    printer.print("^");
+ 
+    for(uint32_t i = 0; i < len - 1; i++) {
+        printer.print("~");
+    }
+ 
+    printer.setColor(lc3::utils::PrintColor::RESET);
     printer.newline();
 }
 

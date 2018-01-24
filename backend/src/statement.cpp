@@ -3,7 +3,9 @@
 
 #include "statement.h"
 
-namespace lc3::core 
+namespace lc3
+{
+namespace core
 {
     std::ostream & operator<<(std::ostream & out, lc3::core::Statement const & in)
     {
@@ -34,4 +36,5 @@ namespace lc3::core
         out.line = std::string(chars);
         return in;
     }
+};
 };
