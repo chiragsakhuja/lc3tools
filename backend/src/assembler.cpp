@@ -13,13 +13,15 @@
 #include "tokens.h"
 #include "tokenizer.h"
 
-void lc3::core::Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
+using namespace lc3::core;
+
+void Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
 {
     using namespace asmbl;
     using namespace lc3::utils;
 
     std::map<std::string, uint32_t> symbols;
-    lc3::utils::AssemblerLogger logger(printer, print_level, asm_filename);
+    AssemblerLogger logger(printer, print_level, asm_filename);
 
     // check if file exists
     std::ifstream file(asm_filename);
@@ -38,12 +40,12 @@ void lc3::core::Assembler::assemble(std::string const & asm_filename, std::strin
 
     // build statements from tokens
     Tokenizer tokenizer(asm_filename);
-    std::vector<asmbl::Statement> statements;
+    std::vector<Statement> statements;
     while(! tokenizer.isDone()) {
         std::vector<Token> tokens;
         Token token;
         while(! (tokenizer >> token) && token.type != TokenType::EOS) {
-            if(token.type != asmbl::TokenType::EOS) {
+            if(token.type != TokenType::EOS) {
                 tokens.push_back(token);
             }
         }
@@ -52,15 +54,22 @@ void lc3::core::Assembler::assemble(std::string const & asm_filename, std::strin
     }
 
     markPC(statements, logger);
-    for(asmbl::Statement i : statements) {
+    for(Statement i : statements) {
         std::cout << i;
     }
+    std::map<std::string, uint32_t> symbol_table = firstPass(statements, logger);
+    std::cout << "Symbol table\n";
+    for(auto i : symbol_table) {
+        std::cout << i.first << ": " << i.second << "\n";
+    }
+    bool success;
+    secondPass(statements, symbol_table, logger, success);
 
 #ifdef _ENABLE_DEBUG
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 
-    logger.printf(lc3::utils::PrintType::EXTRA, false, "elapsed time: %f ms", elapsed * 1000);
+    logger.printf(PrintType::EXTRA, false, "elapsed time: %f ms", elapsed * 1000);
 #endif
 
 /*
@@ -115,13 +124,15 @@ void lc3::core::Assembler::assemble(std::string const & asm_filename, std::strin
  */
 }
 
-lc3::core::asmbl::Statement lc3::core::Assembler::makeStatement(std::vector<asmbl::Token> const & tokens)
+asmbl::Statement Assembler::makeStatement(std::vector<asmbl::Token> const & tokens)
 { 
-    std::vector<asmbl::StatementToken> ret_tokens;
-    asmbl::Statement ret;
+    using namespace asmbl;
 
-    for(asmbl::Token const & token : tokens) {
-        ret_tokens.push_back(asmbl::StatementToken(token));
+    std::vector<StatementToken> ret_tokens;
+    Statement ret;
+
+    for(Token const & token : tokens) {
+        ret_tokens.push_back(StatementToken(token));
     }
 
     // shouldn't happen, but just in case...
@@ -135,26 +146,30 @@ lc3::core::asmbl::Statement lc3::core::Assembler::makeStatement(std::vector<asmb
     return ret;
 }
 
-void lc3::core::Assembler::markRegAndPseudoTokens(std::vector<asmbl::StatementToken> & tokens)
+void Assembler::markRegAndPseudoTokens(std::vector<asmbl::StatementToken> & tokens)
 {
-    for(asmbl::StatementToken & token : tokens) {
-        if(token.type == asmbl::TokenType::STRING) {
+    using namespace asmbl;
+
+    for(StatementToken & token : tokens) {
+        if(token.type == TokenType::STRING) {
             if(token.str.size() > 0 && token.str[0] == '.') {
-                token.type = asmbl::TokenType::PSEUDO;
-            } else if(encoder.checkIfReg(token.str)) {
-                token.type = asmbl::TokenType::REG;
+                token.type = TokenType::PSEUDO;
+            } else if(encoder.isValidReg(token.str)) {
+                token.type = TokenType::REG;
             }
         }
     }
 }
 
-void lc3::core::Assembler::markInstTokens(std::vector<asmbl::StatementToken> & tokens)
+void Assembler::markInstTokens(std::vector<asmbl::StatementToken> & tokens)
 {
+    using namespace asmbl;
+
     if(tokens.size() == 1) {
-        if(tokens[0].type == asmbl::TokenType::STRING) {
+        if(tokens[0].type == TokenType::STRING) {
             uint32_t token_0_dist = encoder.getDistanceToNearestInstructionName(tokens[0].str);
             if(token_0_dist == 0) {
-                tokens[0].type = asmbl::TokenType::INST;
+                tokens[0].type = TokenType::INST;
                 tokens[0].lev_dist = token_0_dist;
             } else {
                 // there's only one string on this line and it's not exactly an instruction, so assume it's a label
@@ -163,9 +178,9 @@ void lc3::core::Assembler::markInstTokens(std::vector<asmbl::StatementToken> & t
             // the sole token on this line is not a string, so it cannot be an instruction
         }
     } else {
-        if(tokens[0].type == asmbl::TokenType::STRING) {
+        if(tokens[0].type == TokenType::STRING) {
             uint32_t token_0_dist = encoder.getDistanceToNearestInstructionName(tokens[0].str);
-            if(tokens[1].type == asmbl::TokenType::STRING) {
+            if(tokens[1].type == TokenType::STRING) {
                 // first two tokens are both strings, maybe they're instructions?
                 uint32_t token_1_dist = encoder.getDistanceToNearestInstructionName(tokens[1].str);
                 // see which is closer to an instruction
@@ -175,7 +190,7 @@ void lc3::core::Assembler::markInstTokens(std::vector<asmbl::StatementToken> & t
                 if(token_1_dist < token_0_dist) {
                     uint32_t lev_thresh = 1;
                     if(tokens.size() >= 3) {
-                        if(tokens[2].type == asmbl::TokenType::PSEUDO) {
+                        if(tokens[2].type == TokenType::PSEUDO) {
                             // if the next token is a pseudo-op, be a little less lenient in assuming this is an
                             // instruction
                             lev_thresh -= 1;
@@ -186,14 +201,14 @@ void lc3::core::Assembler::markInstTokens(std::vector<asmbl::StatementToken> & t
                         }
                     }
                     if(token_1_dist <= lev_thresh) {
-                        tokens[1].type = asmbl::TokenType::INST;
+                        tokens[1].type = TokenType::INST;
                         tokens[1].lev_dist = token_1_dist;
                     } else {
                         // too far from an instruction
                     }
                 } else {
                     if(token_0_dist < 3) {
-                        tokens[0].type = asmbl::TokenType::INST;
+                        tokens[0].type = TokenType::INST;
                         tokens[0].lev_dist = token_0_dist;;
                     } else {
                         // too far from an instruction
@@ -201,16 +216,16 @@ void lc3::core::Assembler::markInstTokens(std::vector<asmbl::StatementToken> & t
                 }
             } else {
                 uint32_t lev_thresh = 1;
-                if(tokens[1].type == asmbl::TokenType::PSEUDO) {
+                if(tokens[1].type == TokenType::PSEUDO) {
                     // if the second token is a pseudo op, then the first token should be considered a label, even if
                     // it matches an instruction
-                    tokens[0].type = asmbl::TokenType::LABEL;
+                    tokens[0].type = TokenType::LABEL;
                     return;
                 } else {
                     lev_thresh += 1;
                 }
                 if(token_0_dist <= lev_thresh) {
-                    tokens[0].type = asmbl::TokenType::INST;
+                    tokens[0].type = TokenType::INST;
                     tokens[0].lev_dist = token_0_dist;
                 }
             }
@@ -220,32 +235,36 @@ void lc3::core::Assembler::markInstTokens(std::vector<asmbl::StatementToken> & t
     }
 }
 
-void lc3::core::Assembler::markLabelTokens(std::vector<asmbl::StatementToken> & tokens)
+void Assembler::markLabelTokens(std::vector<asmbl::StatementToken> & tokens)
 {
-    if(tokens.size() > 0 && tokens[0].type == asmbl::TokenType::STRING) {
-        tokens[0].type = asmbl::TokenType::LABEL;
+    using namespace asmbl;
+
+    if(tokens.size() > 0 && tokens[0].type == TokenType::STRING) {
+        tokens[0].type = TokenType::LABEL;
     }
 
     // mark any strings after an inst as labels
     bool found_inst = false;
-    for(asmbl::StatementToken & token : tokens) {
-        if(found_inst && token.type == asmbl::TokenType::STRING) {
-            token.type = asmbl::TokenType::LABEL;
+    for(StatementToken & token : tokens) {
+        if(found_inst && token.type == TokenType::STRING) {
+            token.type = TokenType::LABEL;
         }
 
-        if(token.type == asmbl::TokenType::INST) {
+        if(token.type == TokenType::INST) {
             found_inst = true;
         }
     }
 }
 
-lc3::core::asmbl::Statement lc3::core::Assembler::makeStatementFromTokens(std::vector<asmbl::StatementToken> & tokens)
+asmbl::Statement Assembler::makeStatementFromTokens(std::vector<asmbl::StatementToken> & tokens)
 {
-    asmbl::Statement ret;
+    using namespace asmbl;
+
+    Statement ret;
     if(tokens.size() > 0) {
         ret.line = tokens[0].line;
-        if(tokens[0].type == asmbl::TokenType::LABEL) {
-            asmbl::StatementToken temp = tokens[0];
+        if(tokens[0].type == TokenType::LABEL) {
+            StatementToken temp = tokens[0];
             std::transform(temp.str.begin(), temp.str.end(), temp.str.begin(), ::tolower);
             ret.label = temp;
         }
@@ -253,8 +272,8 @@ lc3::core::asmbl::Statement lc3::core::Assembler::makeStatementFromTokens(std::v
 
     uint32_t pos = 0;
     for(pos = 0; pos < tokens.size(); pos += 1) {
-        if(tokens[pos].type == asmbl::TokenType::INST || tokens[pos].type == asmbl::TokenType::PSEUDO) {
-            asmbl::StatementToken temp = tokens[pos];
+        if(tokens[pos].type == TokenType::INST || tokens[pos].type == TokenType::PSEUDO) {
+            StatementToken temp = tokens[pos];
             std::transform(temp.str.begin(), temp.str.end(), temp.str.begin(), ::tolower);
 
             ret.inst_or_pseudo = temp;
@@ -263,22 +282,23 @@ lc3::core::asmbl::Statement lc3::core::Assembler::makeStatementFromTokens(std::v
         }
     }
 
-    for( ; pos < tokens.size(); pos += 1) {
-        asmbl::StatementToken temp = tokens[pos];
-        if(temp.type != asmbl::TokenType::STRING) {
+    while(pos < tokens.size()) {
+        StatementToken temp = tokens[pos];
+        if(temp.type != TokenType::STRING) {
             std::transform(temp.str.begin(), temp.str.end(), temp.str.begin(), ::tolower);
         }
 
         ret.operands.push_back(tokens[pos]);
+        pos += 1;
     }
 
     return ret;
 }
 
-void lc3::core::Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::AssemblerLogger & logger)
+void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::AssemblerLogger & logger)
 {
-    using namespace lc3::utils;
     using namespace asmbl;
+    using namespace lc3::utils;
 
     uint32_t cur_pc = 0;
     uint32_t cur_pos = 0;
@@ -286,7 +306,7 @@ void lc3::core::Assembler::markPC(std::vector<asmbl::Statement> & statements, lc
 
     while(! found_orig && cur_pos < statements.size()) {
         while(cur_pos < statements.size())  {
-            asmbl::Statement const & state = statements[cur_pos];
+            Statement const & state = statements[cur_pos];
 
             if(checkIfValidPseudo(state, ".orig", logger)) {
                 found_orig = true;
@@ -301,7 +321,7 @@ void lc3::core::Assembler::markPC(std::vector<asmbl::Statement> & statements, lc
             break;
         }
 
-        asmbl::Statement const & state = statements[cur_pos];
+        Statement const & state = statements[cur_pos];
 
         uint32_t val = state.operands[0].num;
         uint32_t trunc_val = val & 0xffff;
@@ -328,7 +348,7 @@ void lc3::core::Assembler::markPC(std::vector<asmbl::Statement> & statements, lc
 
     // once the first valid orig is found, mark the remaining statements
     for(uint32_t i = cur_pos; i < statements.size(); i += 1) {
-        asmbl::Statement & state = statements[i];
+        Statement & state = statements[i];
 
         if(cur_pc >= MMIO_START) {
             logger.asmPrintf(PrintType::ERROR, 0, state.line.size(), state.label, "no more room in writeable memory");
@@ -357,18 +377,18 @@ void lc3::core::Assembler::markPC(std::vector<asmbl::Statement> & statements, lc
     }
 }
 
-bool lc3::core::Assembler::checkIfValidPseudo(asmbl::Statement const & state, std::string const & check,
+bool Assembler::checkIfValidPseudo(asmbl::Statement const & state, std::string const & check,
     lc3::utils::AssemblerLogger & logger)
 {
-    using namespace lc3::utils;
     using namespace asmbl;
+    using namespace lc3::utils;
 
     if(! state.isPseudo()) { return false; }
     if(state.inst_or_pseudo.str != check) { return false; }
 
-    std::vector<asmbl::TokenType> valid_operands = {asmbl::TokenType::NUM};
+    std::vector<TokenType> valid_operands = {TokenType::NUM};
     if(check == ".stringz") {
-        valid_operands = {asmbl::TokenType::STRING};
+        valid_operands = {TokenType::STRING};
     } else if(check == ".end") {
         valid_operands = {};
     }
@@ -388,6 +408,84 @@ bool lc3::core::Assembler::checkIfValidPseudo(asmbl::Statement const & state, st
     }
 
     return true;
+}
+
+std::map<std::string, uint32_t> Assembler::firstPass(std::vector<asmbl::Statement> const & statements,
+    lc3::utils::AssemblerLogger & logger)
+{
+    using namespace asmbl;
+    using namespace lc3::utils;
+
+    std::map<std::string, uint32_t> symbol_table;
+
+    for(Statement const & state : statements) {
+        if(! state.hasLabel()) { continue; }
+
+        auto search = symbol_table.find(state.label.str);
+        if(search != symbol_table.end()) {
+            uint32_t old_val = search->second;
+            logger.asmPrintf(PrintType::WARNING, state.label, "redifining label from 0x%0.4x to 0x%0.4x", old_val,
+                state.pc);
+            logger.newline();
+        }
+
+        symbol_table[state.label.str] = state.pc;
+    }
+
+    return symbol_table;
+}
+
+std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statement> const & statements,
+    std::map<std::string, uint32_t> const & symbol_table, lc3::utils::AssemblerLogger & logger, bool & success)
+{
+    using namespace asmbl;
+    using namespace lc3::utils;
+
+    success = true;
+
+    std::vector<MemEntry> ret;
+    for(Statement const & state : statements) {
+        StatementToken const & inst = state.inst_or_pseudo;
+        if(inst.type == TokenType::INST) {
+            // get candidates
+            // first element in pair is the candidate
+            // second element is the distance from the candidate
+            std::vector<std::pair<PIInstruction, uint32_t>> candidates = encoder.getInstructionCandidates(state);
+
+            // if there are more than 3 candidates, just say instruction is ambiguous
+            if(candidates.size() > 3) {
+                logger.asmPrintf(PrintType::ERROR, inst, "ambiguous instruction");
+                logger.newline();
+                success = false;
+                continue;
+            }
+
+            // there is an exact match iff only one candidate was found and its distance is 0
+            // otherwise, list possibilities
+            if(! (candidates.size() == 1 && std::get<1>(candidates[0]) == 0)) {
+                if(inst.lev_dist == 0) {
+                    // instruction matched perfectly, but operands did not
+                    logger.asmPrintf(PrintType::ERROR, inst, "invalid usage of \'%s\' instruction",
+                        inst.str.c_str());
+                } else {
+                    // instruction didn't match perfectly
+                    logger.asmPrintf(PrintType::ERROR, inst, "invalid instruction");
+                }
+                // list out possibilities
+                for(auto candidate : candidates) {
+                    logger.printf(PrintType::NOTE, false, "did you mean \'%s\'?",
+                        std::get<0>(candidate)->toFormatString().c_str());
+                }
+                logger.newline();
+                success = false;
+                continue;
+            }
+
+            // if we've made it here, we've found a valid instruction
+
+        }
+    }
+    return ret;
 }
 
 /*

@@ -4,12 +4,15 @@
 #include "device_regs.h"
 #include "state.h"
 
-namespace lc3::core
+namespace lc3
+{
+namespace core
 {
     extern std::mutex g_io_lock;
 };
+};
 
-uint32_t lc3::core::MachineState::readMem(uint32_t addr, bool & change_mem, lc3::core::IEvent *& change) const
+uint32_t lc3::core::MachineState::readMem(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const
 {
     assert(addr < 0xffff);
 
@@ -22,7 +25,7 @@ uint32_t lc3::core::MachineState::readMem(uint32_t addr, bool & change_mem, lc3:
         value = mem[addr].getValue();
         if(addr == KBDR) {
             change_mem = true;
-            change = new MemWriteEvent(KBSR, mem[KBSR].getValue() & 0x7FFF);
+            change = std::make_shared<MemWriteEvent>(KBSR, mem[KBSR].getValue() & 0x7FFF);
         }
     } else {
         value = mem[addr].getValue();
@@ -30,7 +33,7 @@ uint32_t lc3::core::MachineState::readMem(uint32_t addr, bool & change_mem, lc3:
     return value;
 }
 
-void lc3::core::MemWriteEvent::updateState(lc3::core::MachineState & state) const
+void lc3::core::MemWriteEvent::updateState(MachineState & state) const
 {
     assert(addr < 0xffff);
 

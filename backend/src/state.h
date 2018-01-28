@@ -3,6 +3,7 @@
 
 #include <array>
 #include <functional>
+#include <memory>
 #include <vector>
 
 #include "logger.h"
@@ -23,7 +24,7 @@ namespace core
     {
         MachineState(sim & simulator, lc3::utils::Logger & logger) : logger(logger), simulator(simulator) {}
 
-        std::vector<Statement> mem;
+        std::vector<OldStatement> mem;
         std::array<uint32_t, 8> regs;
         uint32_t pc;
         uint32_t psr;
@@ -36,7 +37,7 @@ namespace core
         bool running;
         bool hit_breakpoint;
 
-        uint32_t readMem(uint32_t addr, bool & change_mem, IEvent *& change) const;
+        uint32_t readMem(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const;
 
         bool pre_instruction_callback_v;
         bool post_instruction_callback_v;

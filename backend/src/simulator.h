@@ -47,10 +47,10 @@ namespace core
 
         std::atomic<bool> collecting_input;
 
-        std::vector<core::IEvent const *> executeInstruction(void);
-        std::vector<core::IEvent const *> checkAndSetupInterrupts();
-        void executeEventChain(std::vector<core::IEvent const *> & events);
-        void executeEvent(core::IEvent const & event);
+        std::vector<PIEvent> executeInstruction(void);
+        std::vector<PIEvent> checkAndSetupInterrupts();
+        void executeEventChain(std::vector<PIEvent> & events);
+        void executeEvent(PIEvent event);
         void updateDevices(void);
         void handleInput(void);
     };

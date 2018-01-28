@@ -5,19 +5,24 @@
 #include "device_regs.h"
 #include "simulator.h"
 
-namespace lc3::core {
+using namespace lc3::core;
+
+namespace lc3
+{
+namespace core
+{
     std::mutex g_io_lock;
 };
+};
 
-lc3::core::Simulator::Simulator(lc3::sim & simulator, utils::IPrinter & printer, utils::IInputter & inputter,
-    uint32_t log_level) : state(simulator, logger), logger(printer, log_level), inputter(inputter),
-    collecting_input(false)
+Simulator::Simulator(lc3::sim & simulator, utils::IPrinter & printer, utils::IInputter & inputter, uint32_t log_level) :
+    state(simulator, logger), logger(printer, log_level), inputter(inputter), collecting_input(false)
 {
     state.mem.resize(1 << 16);
     reset();
 }
 
-void lc3::core::Simulator::loadObjectFile(std::string const & filename)
+void Simulator::loadObjectFile(std::string const & filename)
 {
     std::ifstream file(filename);
     if(! file) {
@@ -28,7 +33,7 @@ void lc3::core::Simulator::loadObjectFile(std::string const & filename)
 
     uint32_t offset = 0;
     while(! file.eof()) {
-        Statement statement;
+        OldStatement statement;
         file >> statement;
 
         if(file.eof()) {
@@ -50,13 +55,13 @@ void lc3::core::Simulator::loadObjectFile(std::string const & filename)
     state.mem[MCR].setValue(value | 0x8000);
 }
 
-void lc3::core::Simulator::loadOS(void)
+void Simulator::loadOS(void)
 {
     loadObjectFile("lc3os.obj");
     state.pc = RESET_PC;
 }
 
-void lc3::core::Simulator::simulate(void)
+void Simulator::simulate(void)
 {
     state.running = true;
     collecting_input = true;
@@ -65,15 +70,17 @@ void lc3::core::Simulator::simulate(void)
 
     while(state.running && (state.mem[MCR].getValue() & 0x8000) != 0) {
         if(!state.hit_breakpoint) {
-            executeEvent(CallbackEvent(state.pre_instruction_callback_v, state.pre_instruction_callback));
+            executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
+                state.pre_instruction_callback));
             if(state.hit_breakpoint) {
                 break;
             }
         }
         state.hit_breakpoint = false;
 
-        std::vector<IEvent const *> events = executeInstruction();
-        events.push_back(new CallbackEvent(state.post_instruction_callback_v, state.post_instruction_callback));
+        std::vector<PIEvent> events = executeInstruction();
+        events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
+            state.post_instruction_callback));
         executeEventChain(events);
         updateDevices();
         events = checkAndSetupInterrupts();
@@ -86,12 +93,13 @@ void lc3::core::Simulator::simulate(void)
     inputter.endInput();
 }
 
-std::vector<lc3::core::IEvent const *> lc3::core::Simulator::executeInstruction(void)
+std::vector<PIEvent> Simulator::executeInstruction(void)
 {
     uint32_t encoded_inst = state.mem[state.pc].getValue();
 
-    IInstruction * candidate;
-    if(! decoder.findInstructionByEncoding(encoded_inst, candidate)) {
+    bool valid;
+    PIInstruction candidate = decoder.findInstructionByEncoding(encoded_inst, valid);
+    if(! valid) {
         logger.printf(lc3::utils::PrintType::ERROR, true, "invalid instruction 0x%0.4x", encoded_inst);
         throw utils::exception("invalid instruction");
     }
@@ -100,54 +108,53 @@ std::vector<lc3::core::IEvent const *> lc3::core::Simulator::executeInstruction(
     logger.printf(lc3::utils::PrintType::EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
         state.mem[state.pc].getLine().c_str(), encoded_inst);
     state.pc += 1;
-    std::vector<IEvent const *> events = candidate->execute(state);
-    delete candidate;
+    std::vector<PIEvent> events = candidate->execute(state);
 
     return events;
 }
 
-void lc3::core::Simulator::updateDevices(void)
+void Simulator::updateDevices(void)
 {
     uint16_t value = state.mem[DSR].getValue();
     state.mem[DSR].setValue(value | 0x8000);
 }
 
-std::vector<lc3::core::IEvent const *> lc3::core::Simulator::checkAndSetupInterrupts(void)
+std::vector<PIEvent> Simulator::checkAndSetupInterrupts(void)
 {
-    std::vector<IEvent const *> ret;
+    std::vector<PIEvent> ret;
 
     uint32_t value = state.mem[KBSR].getValue();
     if((value & 0xC000) == 0xC000) {
-        ret.push_back(new RegEvent(6, state.regs[6] - 1));
-        ret.push_back(new MemWriteEvent(state.regs[6] - 1, state.psr));
-        ret.push_back(new RegEvent(6, state.regs[6] - 2));
-        ret.push_back(new MemWriteEvent(state.regs[6] - 2, state.pc));
-        ret.push_back(new PSREvent((state.psr & 0x78FF) | 0x0400));
-        ret.push_back(new PCEvent(state.mem[0x0180].getValue()));
-        ret.push_back(new MemWriteEvent(KBSR, state.mem[KBSR].getValue() & 0x7fff));
-        ret.push_back(new CallbackEvent(state.interrupt_enter_callback_v, state.interrupt_enter_callback));
+        ret.push_back(std::make_shared<RegEvent>(6, state.regs[6] - 1));
+        ret.push_back(std::make_shared<MemWriteEvent>(state.regs[6] - 1, state.psr));
+        ret.push_back(std::make_shared<RegEvent>(6, state.regs[6] - 2));
+        ret.push_back(std::make_shared<MemWriteEvent>(state.regs[6] - 2, state.pc));
+        ret.push_back(std::make_shared<PSREvent>((state.psr & 0x78FF) | 0x0400));
+        ret.push_back(std::make_shared<PCEvent>(state.mem[0x0180].getValue()));
+        ret.push_back(std::make_shared<MemWriteEvent>(KBSR, state.mem[KBSR].getValue() & 0x7fff));
+        ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_enter_callback_v,
+            state.interrupt_enter_callback));
     }
 
     return ret;
 }
 
-void lc3::core::Simulator::executeEventChain(std::vector<core::IEvent const *> & events)
+void Simulator::executeEventChain(std::vector<PIEvent> & events)
 {
-    for(uint32_t i = 0; i < events.size(); i += 1) {
-        executeEvent(*events[i]);
-        delete events[i];
+    for(PIEvent event : events) {
+        executeEvent(event);
     }
 
     events.clear();
 }
 
-void lc3::core::Simulator::executeEvent(core::IEvent const & event)
+void Simulator::executeEvent(PIEvent event)
 {
-    logger.printf(lc3::utils::PrintType::EXTRA, false, "  %s", event.getOutputString(state).c_str());
-    event.updateState(state);
+    logger.printf(lc3::utils::PrintType::EXTRA, false, "  %s", event->getOutputString(state).c_str());
+    event->updateState(state);
 }
 
-void lc3::core::Simulator::reset(void)
+void Simulator::reset(void)
 {
     for(uint32_t i = 0; i < 8; i += 1) {
         state.regs[i] = 0;
@@ -171,43 +178,43 @@ void lc3::core::Simulator::reset(void)
     state.interrupt_exit_callback_v = false;
 }
 
-void lc3::core::Simulator::registerPreInstructionCallback(callback_func_t func)
+void Simulator::registerPreInstructionCallback(callback_func_t func)
 {
     state.pre_instruction_callback_v = true;
     state.pre_instruction_callback = func;
 }
 
-void lc3::core::Simulator::registerPostInstructionCallback(callback_func_t func)
+void Simulator::registerPostInstructionCallback(callback_func_t func)
 {
     state.post_instruction_callback_v = true;
     state.post_instruction_callback = func;
 }
 
-void lc3::core::Simulator::registerInterruptEnterCallback(callback_func_t func)
+void Simulator::registerInterruptEnterCallback(callback_func_t func)
 {
     state.interrupt_enter_callback_v = true;
     state.interrupt_enter_callback = func;
 }
 
-void lc3::core::Simulator::registerInterruptExitCallback(callback_func_t func)
+void Simulator::registerInterruptExitCallback(callback_func_t func)
 {
     state.interrupt_exit_callback_v = true;
     state.interrupt_exit_callback = func;
 }
 
-void lc3::core::Simulator::registerSubEnterCallback(callback_func_t func)
+void Simulator::registerSubEnterCallback(callback_func_t func)
 {
     state.sub_enter_callback_v = true;
     state.sub_enter_callback = func;
 }
 
-void lc3::core::Simulator::registerSubExitCallback(callback_func_t func)
+void Simulator::registerSubExitCallback(callback_func_t func)
 {
     state.sub_exit_callback_v = true;
     state.sub_exit_callback = func;
 }
 
-void lc3::core::Simulator::handleInput(void)
+void Simulator::handleInput(void)
 {
     while(collecting_input) {
         char c;

@@ -17,9 +17,10 @@ namespace sim
     public:
         InstructionDecoder(void);
 
-        bool findInstructionByEncoding(uint32_t encoding, IInstruction *& candidate) const;
+        PIInstruction findInstructionByEncoding(uint32_t encoding, bool & valid) const;
+
     private:
-        std::map<uint32_t, std::vector<IInstruction const *>> instructions_by_opcode;
+        std::map<uint32_t, std::vector<PIInstruction>> instructions_by_opcode;
     };
 };
 };

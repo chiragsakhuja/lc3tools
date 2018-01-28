@@ -1,6 +1,8 @@
 #ifndef INSTRUCTION_ENCODER_H
 #define INSTRUCTION_ENCODER_H
 
+#include <memory>
+
 #include "instructions.h"
 #include "logger.h"
 
@@ -16,19 +18,16 @@ namespace asmbl
         InstructionEncoder(void);
 
         uint32_t getDistanceToNearestInstructionName(std::string const & search) const;
-        bool checkIfReg(std::string const & search) const;
+        bool isValidReg(std::string const & search) const;
+        std::vector<std::pair<PIInstruction, uint32_t>> getInstructionCandidates(Statement const & state) const;
+        MemEntry encodeInstruction(Statement const & state) const;
 
-        bool findInstructionByName(std::string const & search) const;
-        bool findInstruction(OldToken const * search, std::vector<IInstruction const *> & candidates) const;
-
-        // precondition: the instruction is of type pattern and is valid (no error checking)
-        uint32_t encodeInstruction(IInstruction const * pattern, OldToken const * inst,
-            std::map<std::string, uint32_t> const & symbols, lc3::utils::AssemblerLogger & logger) const;
     private:
-        static constexpr uint32_t lev_thresh = 3;
-        std::map<std::string, std::vector<IInstruction const *>> instructions_by_name;
+        std::map<std::string, std::vector<PIInstruction>> instructions_by_name;
 
-        uint32_t levDistance(std::string const & a, uint32_t a_len, std::string const & b, uint32_t b_len) const;
+        uint32_t levDistance(std::string const & a, std::string const & b) const;
+        uint32_t levDistanceHelper(std::string const & a, uint32_t a_len, std::string const & b, uint32_t b_len) const;
+        OperType tokenTypeToOperType(TokenType type) const;
     };
 };
 };

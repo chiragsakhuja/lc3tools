@@ -17,7 +17,6 @@ namespace core
         Assembler(lc3::utils::IPrinter & printer, uint32_t print_level) : printer(printer), print_level(print_level) {}
         Assembler(Assembler const &) = default;
         Assembler & operator=(Assembler const &) = default;
-        // TODO: make sure program is not leaked
         ~Assembler(void) = default;
 
         void assemble(std::string const & asm_filename, std::string const & obj_filename);
@@ -36,6 +35,10 @@ namespace core
         asmbl::Statement makeStatementFromTokens(std::vector<asmbl::StatementToken> & tokens);
 
         void markPC(std::vector<asmbl::Statement> & statements, lc3::utils::AssemblerLogger & logger);
+        std::map<std::string, uint32_t> firstPass(std::vector<asmbl::Statement> const & statements,
+            lc3::utils::AssemblerLogger & logger);
+        std::vector<MemEntry> secondPass(std::vector<asmbl::Statement> const & statements,
+            std::map<std::string, uint32_t> const & symbol_table, lc3::utils::AssemblerLogger & logger, bool & success);
 
         bool checkIfValidPseudo(asmbl::Statement const & state, std::string const & check,
             lc3::utils::AssemblerLogger & logger);

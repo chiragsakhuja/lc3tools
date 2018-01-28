@@ -7,7 +7,7 @@ namespace lc3
 {
 namespace core
 {
-    std::ostream & operator<<(std::ostream & out, lc3::core::Statement const & in)
+    std::ostream & operator<<(std::ostream & out, lc3::core::OldStatement const & in)
     {
         // TODO: this is extrememly unportable, namely because it relies on the endianness not changing
         // size of num_bytes + value + orig + line + nullptr
@@ -24,7 +24,7 @@ namespace core
         return out;
     }
 
-    std::istream & operator>>(std::istream & in, lc3::core::Statement & out)
+    std::istream & operator>>(std::istream & in, lc3::core::OldStatement & out)
     {
         in.read((char *) (&out.value), 2);
         in.read((char *) (&out.orig), 1);
