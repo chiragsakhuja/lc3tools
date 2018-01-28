@@ -1,9 +1,9 @@
-#include "tokens.h"
+#include "asm_types.h"
 #include "utils.h"
 
 lc3::core::asmbl::Token::Token(void) : type(TokenType::INVALID) {}
 
-lc3::core::asmbl::StatementToken::StatementToken(void) : Token(), lev_dist(0) {}
+lc3::core::asmbl::StatementToken::StatementToken(void) : Token(), lev_dist(0), pc(0) {}
 
 lc3::core::asmbl::StatementToken::StatementToken(Token const & that) : Token(that) {}
 

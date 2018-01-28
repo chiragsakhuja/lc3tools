@@ -33,7 +33,7 @@ void Simulator::loadObjectFile(std::string const & filename)
 
     uint32_t offset = 0;
     while(! file.eof()) {
-        OldStatement statement;
+        MemEntry statement;
         file >> statement;
 
         if(file.eof()) {

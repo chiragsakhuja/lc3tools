@@ -110,9 +110,37 @@ uint32_t InstructionEncoder::levDistanceHelper(std::string const & a, uint32_t a
     return *std::min_element(std::begin(costs), std::end(costs));
 }
 
-lc3::core::MemEntry InstructionEncoder::encodeInstruction(Statement const & state) const
+uint32_t InstructionEncoder::encodeInstruction(Statement const & state, PIInstruction pattern,
+    SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger, bool & success) const
 {
-    
+    uint32_t encoding = 0;
+    success = true;
+
+    uint32_t oper_count = 0;
+    bool first = true;
+
+    for(PIOperand op : pattern->operands) {
+        StatementToken tok;
+        if(op->type == OperType::FIXED) {
+            if(first) {
+                first = false;
+                tok = state.inst_or_pseudo;
+            }
+        } else {
+            tok = state.operands[oper_count];
+        }
+
+        bool encode_success = true;
+        encoding <<= op->width;
+        encoding |= op->encode(tok, oper_count, regs, symbols, logger, encode_success);
+        success &= encode_success;
+
+        if(op->type != OperType::FIXED) {
+            oper_count += 1;
+        }
+    }
+
+    return encoding;
 }
 
 /*

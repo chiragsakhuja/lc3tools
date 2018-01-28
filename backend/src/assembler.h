@@ -35,13 +35,13 @@ namespace core
         asmbl::Statement makeStatementFromTokens(std::vector<asmbl::StatementToken> & tokens);
 
         void markPC(std::vector<asmbl::Statement> & statements, lc3::utils::AssemblerLogger & logger);
-        std::map<std::string, uint32_t> firstPass(std::vector<asmbl::Statement> const & statements,
+        SymbolTable firstPass(std::vector<asmbl::Statement> const & statements,
             lc3::utils::AssemblerLogger & logger);
         std::vector<MemEntry> secondPass(std::vector<asmbl::Statement> const & statements,
-            std::map<std::string, uint32_t> const & symbol_table, lc3::utils::AssemblerLogger & logger, bool & success);
+            SymbolTable const & symbol_table, lc3::utils::AssemblerLogger & logger, bool & success);
 
         bool checkIfValidPseudo(asmbl::Statement const & state, std::string const & check,
-            lc3::utils::AssemblerLogger & logger);
+            lc3::utils::AssemblerLogger & logger, bool log_enable);
 /*
  *        std::vector<lc3::core::Statement> assembleChain(Token * program,
  *            std::map<std::string, uint32_t> & labels, lc3::utils::AssemblerLogger & logger);

@@ -6,21 +6,15 @@
 #include <string>
 #include <vector>
 
+#include "aliases.h"
+#include "asm_types.h"
 #include "logger.h"
 #include "state.h"
-#include "tokens.h"
 
 namespace lc3
 {
 namespace core
 {
-    class IOperand;
-    class IInstruction;
-    class IEvent;
-
-    using PIOperand = std::shared_ptr<IOperand>;
-    using PIInstruction = std::shared_ptr<IInstruction>;
-    using PIEvent = std::shared_ptr<IEvent>;
 
     enum class OperType {
           FIXED = 0
@@ -45,9 +39,9 @@ namespace core
         IOperand(OperType type, std::string const & type_str, uint32_t width);
         virtual ~IOperand(void) = default;
 
-        virtual uint32_t encode(OldToken const * oper, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            lc3::utils::AssemblerLogger & logger) = 0;
+        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
+            lc3::utils::AssemblerLogger & logger, bool & success) = 0;
         bool isEqualType(OperType other) const;
     };
 
@@ -86,18 +80,18 @@ namespace core
     public:
         FixedOperand(uint32_t width, uint32_t value) : IOperand(OperType::FIXED, "fixed", width)
             { this->value = value; }
-        virtual uint32_t encode(OldToken const * oper, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            lc3::utils::AssemblerLogger & logger) override;
+        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
+            lc3::utils::AssemblerLogger & logger, bool & success) override;
     };
 
     class RegOperand : public IOperand
     {
     public:
         RegOperand(uint32_t width) : IOperand(OperType::REG, "reg", width) {}
-        virtual uint32_t encode(OldToken const * oper, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            lc3::utils::AssemblerLogger & logger) override;
+        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
+            lc3::utils::AssemblerLogger & logger, bool & success) override;
     };
 
     class NumOperand : public IOperand
@@ -106,18 +100,18 @@ namespace core
         bool sext;
 
         NumOperand(uint32_t width, bool sext) : IOperand(OperType::NUM, "imm", width) { this->sext = sext; }
-        virtual uint32_t encode(OldToken const * oper, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            lc3::utils::AssemblerLogger & logger) override;
+        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
+            lc3::utils::AssemblerLogger & logger, bool & success) override;
     };
 
     class LabelOperand : public IOperand
     {
     public:
         LabelOperand(uint32_t width) : IOperand(OperType::LABEL, "label", width) {}
-        virtual uint32_t encode(OldToken const * oper, uint32_t oper_count,
-            std::map<std::string, uint32_t> const & registers, std::map<std::string, uint32_t> const & labels,
-            lc3::utils::AssemblerLogger & logger) override;
+        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+            std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
+            lc3::utils::AssemblerLogger & logger, bool & success) override;
     };
 
     class ADDRInstruction : public IInstruction

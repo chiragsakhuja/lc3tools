@@ -5,7 +5,7 @@
 #include <fstream>
 #include <string>
 
-#include "tokens.h"
+#include "asm_types.h"
 
 namespace lc3
 {

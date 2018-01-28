@@ -3,8 +3,8 @@
 
 #include <vector>
 
+#include "asm_types.h"
 #include "printer.h"
-#include "tokens.h"
 #include "utils.h"
 
 namespace lc3
@@ -43,12 +43,6 @@ namespace utils
 
         AssemblerLogger(IPrinter & printer, uint32_t print_level, std::string const & filename) :
             Logger(printer, print_level), filename(filename) {}
-
-        template<typename ... Args>
-        void printfMessage(PrintType level, OldToken const * tok, std::string const & format, Args ... args) const;
-        template<typename ... Args>
-        void xprintfMessage(PrintType level, int col_num, int length, OldToken const * tok, std::string const & format,
-            Args ... args) const;
 
         template<typename ... Args>
         void asmPrintf(PrintType level, lc3::core::asmbl::StatementToken const & token, std::string const & format,
@@ -118,40 +112,6 @@ void lc3::utils::Logger::printf(lc3::utils::PrintType type, bool bold, std::stri
 
         printer.newline();
     }
-}
-
-template<typename ... Args>
-void lc3::utils::AssemblerLogger::printfMessage(lc3::utils::PrintType level, OldToken const * tok,
-    std::string const & format, Args ... args) const
-{
-    xprintfMessage(level, tok->col_num, tok->length, tok, format, args...);
-}
-
-template<typename ... Args>
-void lc3::utils::AssemblerLogger::xprintfMessage(lc3::utils::PrintType level, int col_num, int length, OldToken const * tok,
-    std::string const & format, Args ... args) const
-{
-    printer.setColor(lc3::utils::PrintColor::BOLD);
-    printer.print(lc3::utils::ssprintf("%s:%d:%d: ", filename.c_str(), tok->row_num + 1, col_num + 1));
- 
-    printf(level, true, format, args...);
-    printer.print(lc3::utils::ssprintf("%s", asm_blob[tok->row_num].c_str()));
-    printer.newline();
- 
-    printer.setColor(lc3::utils::PrintColor::BOLD);
-    printer.setColor(lc3::utils::PrintColor::GREEN);
- 
-    for(int i = 0; i < col_num; i++) {
-        printer.print(" ");
-    }
-    printer.print("^");
- 
-    for(int i = 0; i < length - 1; i++) {
-        printer.print("~");
-    }
- 
-    printer.setColor(lc3::utils::PrintColor::RESET);
-    printer.newline();
 }
 
 template<typename ... Args>

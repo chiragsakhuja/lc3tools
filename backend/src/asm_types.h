@@ -1,45 +1,9 @@
-#ifndef TOKENS_H
-#define TOKENS_H
+#ifndef ASM_TYPES_H
+#define ASM_TYPES_H
 
 #include <string>
 #include <vector>
 #include <iostream>
-
-struct OldToken
-{
-    enum class TokenType {
-          NEWLINE
-        , STRING
-        , NUM
-    } token_type;
-
-    OldToken(void);
-
-    std::string str;
-    int num;
-
-    int type;
-    int num_opers;
-    int pc;
-    OldToken * opers;
-    OldToken * next;
-
-    OldToken(std::string const & str);
-    OldToken(int val);
-
-    // used for errors
-    int row_num, col_num;
-    int length;
-
-    bool checkPseudoType(std::string const & pseudo) const;
-
-#ifdef _ENABLE_DEBUG
-    void print(std::ostream & out, int indent_level) const;
-    friend std::ostream & operator<<(std::ostream &, OldToken const &);
-#endif
-};
-
-std::ostream & operator<<(std::ostream & out, OldToken const & x);
 
 namespace lc3
 {
@@ -79,6 +43,7 @@ namespace asmbl
         StatementToken(Token const & that);
 
         uint32_t lev_dist;
+        uint32_t pc;
     };
 
     struct Statement

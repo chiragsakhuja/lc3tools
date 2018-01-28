@@ -8,9 +8,10 @@
     #include <chrono>
 #endif
 
+#include "aliases.h"
+#include "asm_types.h"
 #include "assembler.h"
 #include "device_regs.h"
-#include "tokens.h"
 #include "tokenizer.h"
 
 using namespace lc3::core;
@@ -20,14 +21,14 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     using namespace asmbl;
     using namespace lc3::utils;
 
-    std::map<std::string, uint32_t> symbols;
+    SymbolTable symbols;
     AssemblerLogger logger(printer, print_level, asm_filename);
 
     // check if file exists
     std::ifstream file(asm_filename);
     if(! file.is_open()) {
-        logger.printf(PrintType::WARNING, true, "skipping file %s ...", asm_filename.c_str());
-        return;
+        logger.printf(PrintType::ERROR, true, "could not open %s for reading", asm_filename.c_str());
+        throw lc3::utils::exception("could not open file for reading");
     }
     file.close();
 
@@ -54,16 +55,9 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     }
 
     markPC(statements, logger);
-    for(Statement i : statements) {
-        std::cout << i;
-    }
-    std::map<std::string, uint32_t> symbol_table = firstPass(statements, logger);
-    std::cout << "Symbol table\n";
-    for(auto i : symbol_table) {
-        std::cout << i.first << ": " << i.second << "\n";
-    }
+    SymbolTable symbol_table = firstPass(statements, logger);
     bool success;
-    secondPass(statements, symbol_table, logger, success);
+    std::vector<MemEntry> obj_blob = secondPass(statements, symbol_table, logger, success);
 
 #ifdef _ENABLE_DEBUG
     auto end = std::chrono::high_resolution_clock::now();
@@ -71,6 +65,23 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
 
     logger.printf(PrintType::EXTRA, false, "elapsed time: %f ms", elapsed * 1000);
 #endif
+
+    if(success) {
+        std::ofstream file(obj_filename);
+        if(! file.is_open()) {
+            logger.printf(PrintType::ERROR, true, "could not open file %s for writing", obj_filename.c_str());
+            throw lc3::utils::exception("could not open file for writing");
+        }
+
+        for(MemEntry entry : obj_blob) {
+            file << entry;
+        }
+
+        file.close();
+    } else {
+        logger.printf(PrintType::ERROR, true, "assembly failed");
+        throw lc3::utils::exception("assembly failed");
+    }
 
 /*
  *    std::map<std::string, uint32_t> symbols;
@@ -308,7 +319,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
         while(cur_pos < statements.size())  {
             Statement const & state = statements[cur_pos];
 
-            if(checkIfValidPseudo(state, ".orig", logger)) {
+            if(checkIfValidPseudo(state, ".orig", logger, true)) {
                 found_orig = true;
                 break;
             }
@@ -357,12 +368,15 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
         }
 
         state.pc = cur_pc;
+        for(StatementToken & operand : state.operands) {
+            operand.pc = cur_pc;
+        }
 
-        if(checkIfValidPseudo(state, ".blkw", logger)) {
+        if(checkIfValidPseudo(state, ".blkw", logger, true)) {
             cur_pc += state.operands[0].num;
-        } else if(checkIfValidPseudo(state, ".stringz", logger)) {
+        } else if(checkIfValidPseudo(state, ".stringz", logger, true)) {
             cur_pc += state.operands[0].str.size() + 1;
-        } else if(checkIfValidPseudo(state, ".orig", logger)) {
+        } else if(checkIfValidPseudo(state, ".orig", logger, true)) {
             uint32_t val = state.operands[0].num;
             uint32_t trunc_val = val & 0xffff;
             if(val != trunc_val) {
@@ -378,7 +392,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
 }
 
 bool Assembler::checkIfValidPseudo(asmbl::Statement const & state, std::string const & check,
-    lc3::utils::AssemblerLogger & logger)
+    lc3::utils::AssemblerLogger & logger, bool log_enable)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -394,15 +408,19 @@ bool Assembler::checkIfValidPseudo(asmbl::Statement const & state, std::string c
     }
 
     if(state.operands.size() != valid_operands.size()) {
-        logger.asmPrintf(PrintType::ERROR, state.inst_or_pseudo, "incorrect number of operands");
-        logger.newline();
+        if(log_enable) {
+            logger.asmPrintf(PrintType::ERROR, state.inst_or_pseudo, "incorrect number of operands");
+            logger.newline();
+        }
         return false;
     }
 
     for(uint32_t i = 0; i < valid_operands.size(); i += 1) {
         if(state.operands[i].type != valid_operands[i]) {
-            logger.asmPrintf(PrintType::ERROR, state.operands[i], "invalid operand");
-            logger.newline();
+            if(log_enable) {
+                logger.asmPrintf(PrintType::ERROR, state.operands[i], "invalid operand");
+                logger.newline();
+            }
             return false;
         }
     }
@@ -410,13 +428,13 @@ bool Assembler::checkIfValidPseudo(asmbl::Statement const & state, std::string c
     return true;
 }
 
-std::map<std::string, uint32_t> Assembler::firstPass(std::vector<asmbl::Statement> const & statements,
+SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statements,
     lc3::utils::AssemblerLogger & logger)
 {
     using namespace asmbl;
     using namespace lc3::utils;
 
-    std::map<std::string, uint32_t> symbol_table;
+    SymbolTable symbol_table;
 
     for(Statement const & state : statements) {
         if(! state.hasLabel()) { continue; }
@@ -430,13 +448,14 @@ std::map<std::string, uint32_t> Assembler::firstPass(std::vector<asmbl::Statemen
         }
 
         symbol_table[state.label.str] = state.pc;
+        logger.printf(PrintType::EXTRA, true, "adding label \'%s\' => 0x%0.4x", state.label.str.c_str(), state.pc);
     }
 
     return symbol_table;
 }
 
 std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statement> const & statements,
-    std::map<std::string, uint32_t> const & symbol_table, lc3::utils::AssemblerLogger & logger, bool & success)
+    SymbolTable const & symbol_table, lc3::utils::AssemblerLogger & logger, bool & success)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -450,18 +469,15 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
             // get candidates
             // first element in pair is the candidate
             // second element is the distance from the candidate
-            std::vector<std::pair<PIInstruction, uint32_t>> candidates = encoder.getInstructionCandidates(state);
+            using Candidate = std::pair<PIInstruction, uint32_t>;
 
-            // if there are more than 3 candidates, just say instruction is ambiguous
-            if(candidates.size() > 3) {
-                logger.asmPrintf(PrintType::ERROR, inst, "ambiguous instruction");
-                logger.newline();
-                success = false;
-                continue;
-            }
+            std::vector<Candidate> candidates = encoder.getInstructionCandidates(state);
+            std::sort(std::begin(candidates), std::end(candidates), [](Candidate a, Candidate b) {
+                return std::get<1>(a) < std::get<1>(b);
+            });
 
             // there is an exact match iff only one candidate was found and its distance is 0
-            // otherwise, list possibilities
+            // otherwise, list top 3 possibilities
             if(! (candidates.size() == 1 && std::get<1>(candidates[0]) == 0)) {
                 if(inst.lev_dist == 0) {
                     // instruction matched perfectly, but operands did not
@@ -472,9 +488,17 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
                     logger.asmPrintf(PrintType::ERROR, inst, "invalid instruction");
                 }
                 // list out possibilities
+                uint32_t count = 0;
                 for(auto candidate : candidates) {
                     logger.printf(PrintType::NOTE, false, "did you mean \'%s\'?",
                         std::get<0>(candidate)->toFormatString().c_str());
+                    count += 1;
+                    if(count >= 3) {
+                        break;
+                    }
+                }
+                if(candidates.size() > 3) {
+                    logger.printf(PrintType::NOTE, false, "...other possible options hidden");
                 }
                 logger.newline();
                 success = false;
@@ -482,7 +506,16 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
             }
 
             // if we've made it here, we've found a valid instruction
-
+            bool encode_success = true;
+            uint32_t encoding = encoder.encodeInstruction(state, std::get<0>(candidates[0]), symbol_table, logger,
+                encode_success);
+            if(encode_success) {
+                logger.printf(PrintType::EXTRA, true, "%s => 0x%0.4x", state.line.c_str(), encoding);
+                ret.emplace_back(encoding, false, state.line);
+            }
+            success &= encode_success;
+        } else if(checkIfValidPseudo(state, ".orig", logger, false)) {
+            ret.emplace_back(state.operands[0].num & 0xffff, true, state.line);
         }
     }
     return ret;

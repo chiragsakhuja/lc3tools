@@ -1,13 +1,13 @@
 #include <cstring>
 #include <fstream>
 
-#include "statement.h"
+#include "mem.h"
 
 namespace lc3
 {
 namespace core
 {
-    std::ostream & operator<<(std::ostream & out, lc3::core::OldStatement const & in)
+    std::ostream & operator<<(std::ostream & out, lc3::core::MemEntry const & in)
     {
         // TODO: this is extrememly unportable, namely because it relies on the endianness not changing
         // size of num_bytes + value + orig + line + nullptr
@@ -24,7 +24,7 @@ namespace core
         return out;
     }
 
-    std::istream & operator>>(std::istream & in, lc3::core::OldStatement & out)
+    std::istream & operator>>(std::istream & in, lc3::core::MemEntry & out)
     {
         in.read((char *) (&out.value), 2);
         in.read((char *) (&out.orig), 1);

@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "logger.h"
-#include "statement.h"
+#include "mem.h"
 
 namespace lc3
 {
@@ -24,7 +24,7 @@ namespace core
     {
         MachineState(sim & simulator, lc3::utils::Logger & logger) : logger(logger), simulator(simulator) {}
 
-        std::vector<OldStatement> mem;
+        std::vector<MemEntry> mem;
         std::array<uint32_t, 8> regs;
         uint32_t pc;
         uint32_t psr;
