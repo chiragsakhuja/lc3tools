@@ -2,6 +2,9 @@
 #include <fstream>
 
 #include "mem.h"
+#ifdef _ENABLE_DEBUG_ASM
+    #include "utils.h"
+#endif
 
 namespace lc3
 {
@@ -9,6 +12,10 @@ namespace core
 {
     std::ostream & operator<<(std::ostream & out, lc3::core::MemEntry const & in)
     {
+#ifdef _ENABLE_DEBUG_ASM
+        out << lc3::utils::ssprintf("0x%0.4x", in.value) << " " << in.orig << " " << in.line << "\n";
+        return out;
+#else
         // TODO: this is extrememly unportable, namely because it relies on the endianness not changing
         // size of num_bytes + value + orig + line + nullptr
         uint32_t num_bytes = 2 + 1 + 4 + in.line.size();
@@ -22,6 +29,7 @@ namespace core
         out.write(bytes, num_bytes);
         delete[] bytes;
         return out;
+#endif
     }
 
     std::istream & operator>>(std::istream & in, lc3::core::MemEntry & out)

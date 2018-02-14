@@ -31,7 +31,9 @@ void Simulator::loadObjectFile(std::string const & filename)
         throw utils::exception("could not open file");
     }
 
+    uint32_t fill_pc = 0;
     uint32_t offset = 0;
+    bool first_orig_set = false;
     while(! file.eof()) {
         MemEntry statement;
         file >> statement;
@@ -41,12 +43,16 @@ void Simulator::loadObjectFile(std::string const & filename)
         }
 
         if(statement.isOrig()) {
-            state.pc = statement.getValue();
+            if(! first_orig_set) {
+                state.pc = statement.getValue();
+                first_orig_set = true;
+            }
+            fill_pc = statement.getValue();
             offset = 0;
         } else {
-            logger.printf(lc3::utils::PrintType::DEBUG, true, "0x%0.4x: %s (0x%0.4x)", state.pc + offset,
+            logger.printf(lc3::utils::PrintType::DEBUG, true, "0x%0.4x: %s (0x%0.4x)", fill_pc + offset,
                 statement.getLine().c_str(), statement.getValue());
-            state.mem[state.pc + offset] = statement;
+            state.mem[fill_pc + offset] = statement;
             offset += 1;
         }
 

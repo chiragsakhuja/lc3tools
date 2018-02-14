@@ -19,6 +19,7 @@ namespace utils
         , INFO
         , DEBUG
         , EXTRA
+        , SPAM
     };
 
     class Logger
@@ -94,6 +95,9 @@ void lc3::utils::Logger::printf(lc3::utils::PrintType type, bool bold, std::stri
                 color = lc3::utils::PrintColor::BLUE;
                 label = "extra";
                 break;
+
+            case PrintType::SPAM:
+                label = "spam";
 
             default: break;
         }

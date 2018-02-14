@@ -80,8 +80,23 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
 
     // get the length of the token
     uint32_t len = 0;
-    while(col + len < line.size() && delims.find(line[col + len]) == std::string::npos) {
+    bool quoted = false;
+    bool quoted_start = false;
+    // if we see a token starting with a ", then continue until the closing " or the end of the line
+    if(line[col] == '"') {
+        delims = '"';
+        quoted = true;
+        quoted_start = true;    // set to prevent the while loop from exiting on the opening "
+        col += 1;
+    }
+
+    while(col + len < line.size() && (delims.find(line[col + len]) == std::string::npos || quoted_start)) {
         len += 1;
+        quoted_start = false;
+    }
+
+    if(quoted && col + len < line.size()) {
+        //len += 1;    // on a quoted string, capture the closing " as well if there is one
     }
 
     int32_t token_num_val = 0;

@@ -1,9 +1,12 @@
 #include <algorithm>
-#include <chrono>
+#ifdef _ENABLE_DEBUG
+    #include <chrono>
+#endif
 #include <iostream>
 #include <sstream>
 #include <string>
 
+#include "common.h"
 #include "console_printer.h"
 #include "console_inputter.h"
 #include "interface.h"
@@ -18,18 +21,34 @@ std::string formatMem(lc3::sim const & simulator, uint32_t addr);
 std::ostream & operator<<(std::ostream & out, lc3::Breakpoint const & x);
 void breakpointCallback(lc3::core::MachineState & state, lc3::Breakpoint const & bp);
 
+struct CLIArgs
+{
+    uint32_t print_level = DEFAULT_PRINT_LEVEL;
+};
+
 int main(int argc, char * argv[])
 {
+    CLIArgs args;
+    std::vector<std::pair<std::string, std::string>> parsed_args = parseCLIArgs(argc, argv);
+    for(auto const & arg : parsed_args) {
+        if(std::get<0>(arg) == "print-level") {
+            args.print_level = std::stoi(std::get<1>(arg));
+        }
+    }
+
     help();
 
     lc3::ConsolePrinter printer;
     lc3::ConsoleInputter inputter;
-    lc3::sim simulator(printer, inputter);
+    lc3::sim simulator(printer, inputter, args.print_level);
 
     simulator.registerBreakpointCallback(breakpointCallback);
 
     for(int i = 1; i < argc; i += 1) {
-        simulator.loadObjectFile(std::string(argv[i]));
+        std::string arg(argv[i]);
+        if(arg[0] != '-') {
+            simulator.loadObjectFile(std::string(argv[i]));
+        }
     }
 
     while(prompt(simulator)) {}

@@ -1,11 +1,11 @@
 #ifndef CORE_H
 #define CORE_H
 
-#ifndef _PRINT_LEVEL
+#ifndef DEFAULT_PRINT_LEVEL
     #ifdef _ENABLE_DEBUG
-        #define _PRINT_LEVEL 9
+        #define DEFAULT_PRINT_LEVEL 9
     #else
-        #define _PRINT_LEVEL 4
+        #define DEFAULT_PRINT_LEVEL 4
     #endif
 #endif
 
@@ -34,7 +34,7 @@ namespace lc3
     class sim
     {
     public:
-        sim(utils::IPrinter & printer, utils::IInputter & inputter) : sim(printer, inputter, _PRINT_LEVEL) {}
+        sim(utils::IPrinter & printer, utils::IInputter & inputter) : sim(printer, inputter, DEFAULT_PRINT_LEVEL) {}
         sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level);
         ~sim(void) = default;
 
@@ -119,7 +119,7 @@ namespace lc3
     class as
     {
     public:
-        as(utils::IPrinter & printer) : as(printer, _PRINT_LEVEL) {}
+        as(utils::IPrinter & printer) : as(printer, DEFAULT_PRINT_LEVEL) {}
         as(utils::IPrinter & printer, uint32_t print_level) : printer(printer), assembler(printer, print_level) {}
         ~as(void) = default;
 
