@@ -75,7 +75,7 @@ void Simulator::simulate(void)
     std::thread input_thread(&core::Simulator::handleInput, this);
 
     while(state.running && (state.mem[MCR].getValue() & 0x8000) != 0) {
-        if(!state.hit_breakpoint) {
+        if(! state.hit_breakpoint) {
             executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
                 state.pre_instruction_callback));
             if(state.hit_breakpoint) {

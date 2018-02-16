@@ -124,6 +124,7 @@ namespace lc3
         ~as(void) = default;
 
         std::pair<bool, std::string> assemble(std::string const & asm_filename);
+        std::pair<bool, std::string> convertBin(std::string const & asm_filename);
 
     private:
         utils::IPrinter & printer;

@@ -13,7 +13,9 @@ InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
 
 bool InstructionEncoder::isValidReg(std::string const & search) const
 {
-    return regs.find(search) != regs.end();
+    std::string lower_search = search;
+    std::transform(lower_search.begin(), lower_search.end(), lower_search.begin(), ::tolower);
+    return regs.find(lower_search) != regs.end();
 }
 
 uint32_t InstructionEncoder::getDistanceToNearestInstructionName(std::string const & search) const

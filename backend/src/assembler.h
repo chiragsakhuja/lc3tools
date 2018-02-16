@@ -20,6 +20,7 @@ namespace core
         ~Assembler(void) = default;
 
         void assemble(std::string const & asm_filename, std::string const & obj_filename);
+        void convertBin(std::string const & bin_filename, std::string const & obj_filename);
 
     private:
         std::vector<std::string> file_buffer;
@@ -32,6 +33,8 @@ namespace core
             lc3::utils::AssemblerLogger & logger);
         std::vector<MemEntry> secondPass(std::vector<asmbl::Statement> const & statements,
             SymbolTable const & symbol_table, lc3::utils::AssemblerLogger & logger, bool & success);
+        void writeFile(std::vector<MemEntry> const & obj_blob, std::string const & obj_filename,
+            lc3::utils::Logger & logger);
 
         asmbl::Statement makeStatement(std::vector<asmbl::Token> const & tokens);
         void markRegAndPseudoTokens(std::vector<asmbl::StatementToken> & tokens);

@@ -387,3 +387,17 @@ std::pair<bool, std::string> lc3::as::assemble(std::string const & asm_filename)
     }
     return std::make_pair(true, obj_filename);
 }
+
+std::pair<bool, std::string> lc3::as::convertBin(std::string const & bin_filename)
+{
+    std::string obj_filename(bin_filename.substr(0, bin_filename.find_last_of('.')) + ".obj");
+    try {
+        assembler.convertBin(bin_filename, obj_filename);
+    } catch(utils::exception const & e) {
+#ifdef _ENABLE_DEBUG
+        printer.print("caught exception: " + std::string(e.what()) + "\n");
+#endif
+        return std::make_pair(false, obj_filename);
+    }
+    return std::make_pair(true, obj_filename);
+}

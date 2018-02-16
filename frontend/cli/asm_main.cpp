@@ -9,6 +9,12 @@ struct CLIArgs
     uint32_t print_level = DEFAULT_PRINT_LEVEL;
 };
 
+bool endsWith(std::string const & search, std::string const & suffix)
+{
+    if(suffix.size() > search.size()) { return false; }
+    return std::equal(suffix.rbegin(), suffix.rend(), search.rbegin());
+}
+
 int main(int argc, char *argv[])
 {
     CLIArgs args;
@@ -23,9 +29,13 @@ int main(int argc, char *argv[])
     lc3::as assembler(printer, args.print_level);
 
     for(int i = 1; i < argc; i += 1) {
-        std::string asm_filename(argv[i]);
-        if(asm_filename[0] != '-') {
-            assembler.assemble(asm_filename);
+        std::string filename(argv[i]);
+        if(filename[0] != '-') {
+            if(endsWith(filename, ".bin")) {
+                assembler.convertBin(filename);
+            } else {
+                assembler.assemble(filename);
+            }
         }
     }
 

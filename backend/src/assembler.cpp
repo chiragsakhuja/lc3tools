@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <bitset>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -68,20 +69,74 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
 #endif
 
     if(success) {
-        std::ofstream file(obj_filename);
-        if(! file.is_open()) {
-            logger.printf(PrintType::ERROR, true, "could not open file %s for writing", obj_filename.c_str());
-            throw lc3::utils::exception("could not open file for writing");
-        }
-
-        for(MemEntry entry : obj_blob) {
-            file << entry;
-        }
-
-        file.close();
+        writeFile(obj_blob, obj_filename, logger);
     } else {
         logger.printf(PrintType::ERROR, true, "assembly failed");
         throw lc3::utils::exception("assembly failed");
+    }
+}
+
+void Assembler::convertBin(std::string const & bin_filename, std::string const & obj_filename)
+{
+    using namespace lc3::utils;
+
+    Logger logger(printer, print_level);
+
+    // check if file exists
+    std::ifstream file(bin_filename);
+    if(! file.is_open()) {
+        logger.printf(PrintType::ERROR, true, "could not open %s for reading", bin_filename.c_str());
+        throw lc3::utils::exception("could not open file for reading");
+    }
+    file.close();
+
+#ifdef _ENABLE_DEBUG
+    auto start = std::chrono::high_resolution_clock::now();
+#endif
+
+    logger.printf(PrintType::INFO, true, "attemping to convert \'%s\' into \'%s\'", bin_filename.c_str(),
+        obj_filename.c_str());
+
+    std::string line;
+    std::vector<MemEntry> obj_blob;
+    uint32_t line_no = 1;
+    bool wrote_orig = false;
+    bool success = true;
+
+    while(std::getline(file, line)) {
+        line.erase(std::remove_if(line.begin(), line.end(), ::isspace), line.end());
+        line_no += 1;
+
+        if(line.size() != 0 || line.size() != 16) {
+            logger.printf(PrintType::ERROR, true, "line %d is %s", line_no, line_no < 16 ? "too short" : "too long");
+            success = false;
+            continue;
+        }
+
+        for(char c : line) {
+            if(c != '0' && c != '1') {
+                success = false;
+                continue;
+            }
+        }
+
+        uint32_t val = std::bitset<16>(line).to_ulong();
+        obj_blob.emplace_back((uint16_t) val, ! wrote_orig, line);
+        wrote_orig = true;
+    }
+
+#ifdef _ENABLE_DEBUG
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+
+    logger.printf(PrintType::EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
+#endif
+
+    if(success) {
+        writeFile(obj_blob, obj_filename, logger);
+    } else {
+        logger.printf(PrintType::ERROR, true, "conversion failed");
+        throw lc3::utils::exception("conversion failed");
     }
 }
 
@@ -145,6 +200,24 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
         }
     }
     return ret;
+}
+
+void Assembler::writeFile(std::vector<MemEntry> const & obj_blob, std::string const & obj_filename,
+    lc3::utils::Logger & logger)
+{
+    using namespace lc3::utils;
+
+    std::ofstream file(obj_filename);
+    if(! file.is_open()) {
+        logger.printf(PrintType::ERROR, true, "could not open file %s for writing", obj_filename.c_str());
+        throw lc3::utils::exception("could not open file for writing");
+    }
+
+    for(MemEntry entry : obj_blob) {
+        file << entry;
+    }
+
+    file.close();
 }
 
 asmbl::Statement Assembler::makeStatement(std::vector<asmbl::Token> const & tokens)

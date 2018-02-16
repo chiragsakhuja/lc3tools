@@ -53,7 +53,6 @@ namespace utils
             std::string const & format, Args ... args) const;
 
         std::string filename;
-        std::vector<std::string> asm_blob;
     };
 };
 };

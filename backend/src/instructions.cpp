@@ -408,7 +408,7 @@ std::vector<PIEvent> LEAInstruction::execute(MachineState const & state)
 std::vector<PIEvent> NOTInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
-    uint32_t sr_val = lc3::utils::sextTo32(state.regs[operands[2]->value], operands[2]->width);
+    uint32_t sr_val = lc3::utils::sextTo32(state.regs[operands[2]->value], 16);
     uint32_t result = (~sr_val) & 0xffff;
 
     return std::vector<PIEvent> {
