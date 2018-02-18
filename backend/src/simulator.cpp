@@ -4,6 +4,7 @@
 
 #include "device_regs.h"
 #include "simulator.h"
+#include "utils.h"
 
 using namespace lc3::core;
 
@@ -15,8 +16,9 @@ namespace core
 };
 };
 
-Simulator::Simulator(lc3::sim & simulator, utils::IPrinter & printer, utils::IInputter & inputter, uint32_t log_level) :
-    state(simulator, logger), logger(printer, log_level), inputter(inputter), collecting_input(false)
+Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter,
+    uint32_t log_level) : state(simulator, logger), logger(printer, log_level), inputter(inputter),
+    collecting_input(false)
 {
     state.mem.resize(1 << 16);
     reset();

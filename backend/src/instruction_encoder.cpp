@@ -112,8 +112,8 @@ uint32_t InstructionEncoder::levDistanceHelper(std::string const & a, uint32_t a
     return *std::min_element(std::begin(costs), std::end(costs));
 }
 
-uint32_t InstructionEncoder::encodeInstruction(Statement const & state, PIInstruction pattern,
-    SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger, bool & success) const
+uint32_t InstructionEncoder::encodeInstruction(Statement const & state, lc3::core::PIInstruction pattern,
+    lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger, bool & success) const
 {
     uint32_t encoding = 0;
     success = true;
