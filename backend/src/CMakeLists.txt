@@ -10,17 +10,13 @@ include(GenerateExportHeader)
 file(GLOB CXX_SOURCES ${PROJECT_SOURCE_DIR}/backend/src/*.cpp)
 file(GLOB CXX_HEADERS ${PROJECT_SOURCE_DIR}/backend/src/*.h)
 
-# generate library out of assembler
-#add_library(lc3core_obj OBJECT ${CXX_SOURCES} ${CXX_HEADERS})
+# generate library
+add_library(lc3core SHARED ${CXX_SOURCES} ${CXX_HEADERS})
+target_link_libraries(lc3core ${CMAKE_THREAD_LIBS_INIT})
 
-add_library(lc3core_shared SHARED ${CXX_SOURCES} ${CXX_HEADERS})
-#add_library(lc3core_static STATIC $<TARGET_OBJECTS:lc3core_obj>)
-target_link_libraries(lc3core_shared ${CMAKE_THREAD_LIBS_INIT})
-#target_link_libraries(lc3core_static ${CMAKE_THREAD_LIBS_INIT})
-
-generate_export_header(lc3core_shared
-    BASE_NAME lc3core_shared
-    EXPORT_MACRO_NAME CORE_EXPORT
-    EXPORT_FILE_NAME lc3interface.h
-    STATIC_DEFINE CORE_BUILT_AS_STATIC
-)
+#generate_export_header(lc3core
+    #BASE_NAME lc3core
+    #EXPORT_MACRO_NAME CORE_EXPORT
+    #EXPORT_FILE_NAME lc3interface.h
+    #STATIC_DEFINE CORE_BUILT_AS_STATIC
+#)
