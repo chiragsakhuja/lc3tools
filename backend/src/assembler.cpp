@@ -181,22 +181,35 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
             uint32_t encoding = encodeInstruction(state, symbol_table, logger, encode_success);
             success &= encode_success;
             ret.emplace_back(encoding, false, state.line);
-        } else if(checkIfValidPseudo(state, ".orig", logger, false)) {
+        } else if(checkIfValidPseudoStatement(state, ".orig", logger, false)) {
             ret.emplace_back(state.operands[0].num & 0xffff, true, state.line);
-        } else if(checkIfValidPseudo(state, ".stringz", logger, false)) {
+        } else if(checkIfValidPseudoStatement(state, ".stringz", logger, false)) {
             std::string const & value = state.operands[0].str;
-            if(value.size() > 0) {
-                for(char c : value) {
-                    ret.emplace_back(c, false, std::string(1, c));
-                }
-                ret.emplace_back((uint16_t) 0, false, state.line);
+            for(char c : value) {
+                ret.emplace_back(c, false, std::string(1, c));
             }
-        } else if(checkIfValidPseudo(state, ".blkw", logger, false)) {
+            ret.emplace_back((uint16_t) 0, false, state.line);
+        } else if(checkIfValidPseudoStatement(state, ".blkw", logger, false)) {
             for(uint32_t i = 0; i < (uint32_t) state.operands[0].num; i += 1) {
                 ret.emplace_back(0, false, state.line);
             }
-        } else if(checkIfValidPseudo(state, ".fill", logger, false)) {
-            ret.emplace_back(state.operands[0].num, false, state.line);
+        } else if(checkIfValidPseudoStatement(state, ".fill", logger, false)) {
+            if(state.operands[0].type == TokenType::NUM) {
+                ret.emplace_back(state.operands[0].num, false, state.line);
+            } else if(state.operands[0].type == TokenType::LABEL) {
+                // TODO: this is a duplicate of the code in LabelOperand::encode
+                // eventually create a class for pseudo-ops that's similar to the instructions
+                StatementToken const & oper = state.operands[0];
+                auto search = symbol_table.find(oper.str);
+                if(search == symbol_table.end()) {
+                    logger.asmPrintf(lc3::utils::PrintType::ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
+                    logger.newline();
+                    success = false;
+                    continue;
+                }
+
+                ret.emplace_back(search->second, false, state.line);
+            }
         }
     }
     return ret;
@@ -346,7 +359,7 @@ void Assembler::markLabelTokens(std::vector<asmbl::StatementToken> & tokens)
             token.type = TokenType::LABEL;
         }
 
-        if(token.type == TokenType::INST) {
+        if(token.type == TokenType::INST || checkIfValidPseudoToken(token, ".fill")) {
             found_inst = true;
         }
     }
@@ -428,7 +441,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
         while(cur_pos < statements.size())  {
             Statement const & state = statements[cur_pos];
 
-            if(checkIfValidPseudo(state, ".orig", logger, true)) {
+            if(checkIfValidPseudoStatement(state, ".orig", logger, true)) {
                 found_orig = true;
                 break;
             }
@@ -469,6 +482,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
     // once the first valid orig is found, mark the remaining statements
     for(uint32_t i = cur_pos; i < statements.size(); i += 1) {
         Statement & state = statements[i];
+        std::cout << state;
 
         if(cur_pc >= MMIO_START) {
             logger.asmPrintf(PrintType::ERROR, 0, state.line.size(), state.label, "no more room in writeable memory");
@@ -481,11 +495,11 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
             operand.pc = cur_pc;
         }
 
-        if(checkIfValidPseudo(state, ".blkw", logger, true)) {
+        if(checkIfValidPseudoStatement(state, ".blkw", logger, true)) {
             cur_pc += state.operands[0].num;
-        } else if(checkIfValidPseudo(state, ".stringz", logger, true)) {
+        } else if(checkIfValidPseudoStatement(state, ".stringz", logger, true)) {
             cur_pc += state.operands[0].str.size() + 1;
-        } else if(checkIfValidPseudo(state, ".orig", logger, true)) {
+        } else if(checkIfValidPseudoStatement(state, ".orig", logger, true)) {
             uint32_t val = state.operands[0].num;
             uint32_t trunc_val = val & 0xffff;
             if(val != trunc_val) {
@@ -495,7 +509,9 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
 
             cur_pc = trunc_val;
         } else {
-            cur_pc += 1;
+            if(! state.isLabel()) {
+                cur_pc += 1;
+            }
         }
     }
 }
@@ -561,7 +577,20 @@ uint32_t Assembler::encodeInstruction(asmbl::Statement const & state, SymbolTabl
     return 0;
 }
 
-bool Assembler::checkIfValidPseudo(asmbl::Statement const & state, std::string const & check,
+bool Assembler::checkIfValidPseudoToken(asmbl::StatementToken const & tok, std::string const & check)
+{
+    using namespace asmbl;
+
+    if(tok.type == TokenType::PSEUDO) {
+        std::string temp = tok.str;
+        std::transform(temp.begin(), temp.end(), temp.begin(), ::tolower);
+        return temp == check;
+    }
+
+    return false;
+}
+
+bool Assembler::checkIfValidPseudoStatement(asmbl::Statement const & state, std::string const & check,
     lc3::utils::AssemblerLogger & logger, bool log_enable)
 {
     using namespace asmbl;
@@ -570,11 +599,13 @@ bool Assembler::checkIfValidPseudo(asmbl::Statement const & state, std::string c
     if(! state.isPseudo()) { return false; }
     if(state.inst_or_pseudo.str != check) { return false; }
 
-    std::vector<TokenType> valid_operands = {TokenType::NUM};
+    std::vector<std::vector<TokenType>> valid_operands = {{TokenType::NUM}};
     if(check == ".stringz") {
-        valid_operands = {TokenType::STRING};
+        valid_operands = {{TokenType::STRING}};
     } else if(check == ".end") {
         valid_operands = {};
+    } else if(check == ".fill") {
+        valid_operands[0].emplace_back(TokenType::LABEL);
     }
 
     if(state.operands.size() != valid_operands.size()) {
@@ -586,7 +617,15 @@ bool Assembler::checkIfValidPseudo(asmbl::Statement const & state, std::string c
     }
 
     for(uint32_t i = 0; i < valid_operands.size(); i += 1) {
-        if(state.operands[i].type != valid_operands[i]) {
+        bool valid = false;
+        for(TokenType it : valid_operands[i]) {
+            if(state.operands[i].type == it) {
+                valid = true;
+                break;
+            }
+        }
+
+        if(! valid) {
             if(log_enable) {
                 logger.asmPrintf(PrintType::ERROR, state.operands[i], "invalid operand");
                 logger.newline();

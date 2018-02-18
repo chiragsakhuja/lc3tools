@@ -51,6 +51,7 @@ namespace asmbl
         bool isPseudo(void) const;
         bool isInst(void) const;
         bool hasLabel(void) const;
+        bool isLabel(void) const;
 
         StatementToken label;
         StatementToken inst_or_pseudo;

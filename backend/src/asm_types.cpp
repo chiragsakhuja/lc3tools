@@ -22,6 +22,11 @@ bool lc3::core::asmbl::Statement::hasLabel(void) const
     return (label.type == TokenType::LABEL);
 }
 
+bool lc3::core::asmbl::Statement::isLabel(void) const
+{
+    return hasLabel() && inst_or_pseudo.type == TokenType::INVALID;
+}
+
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementToken const & x)
 {
     using namespace lc3::core::asmbl;
