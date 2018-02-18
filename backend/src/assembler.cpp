@@ -483,7 +483,6 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
     // once the first valid orig is found, mark the remaining statements
     for(uint32_t i = cur_pos; i < statements.size(); i += 1) {
         Statement & state = statements[i];
-        std::cout << state;
 
         if(cur_pc >= MMIO_START) {
             logger.asmPrintf(PrintType::ERROR, 0, state.line.size(), state.label, "no more room in writeable memory");
