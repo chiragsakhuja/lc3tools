@@ -3,7 +3,7 @@
 
 namespace utils
 {
-    class UIPrinter : public IPrinter
+    class UIPrinter : public lc3::utils::IPrinter
     {
     private:
         std::vector<std::string> output_buffer;
@@ -11,7 +11,7 @@ namespace utils
     public:
         UIPrinter(void);
 
-        virtual void setColor(int color) override;
+        virtual void setColor(lc3::utils::PrintColor color) override;
         virtual void print(std::string const & string) override;
         virtual void newline(void) override;
 
@@ -25,9 +25,11 @@ utils::UIPrinter::UIPrinter(void)
     pending_colors = 0;
 }
 
-void utils::UIPrinter::setColor(int color)
+void utils::UIPrinter::setColor(lc3::utils::PrintColor color)
 {
-    if(color == PRINT_COLOR_RESET) {
+    using namespace lc3::utils;
+
+    if(color == PrintColor::RESET) {
         while(pending_colors != 0) {
             output_buffer.push_back("</span>");
             pending_colors -= 1;
@@ -36,13 +38,13 @@ void utils::UIPrinter::setColor(int color)
         std::string format = "<span class=\"text-";
         switch(color)
         {
-            case PRINT_COLOR_RED      : format += "red"    ; break;
-            case PRINT_COLOR_YELLOW   : format += "yellow" ; break;
-            case PRINT_COLOR_GREEN    : format += "green"  ; break;
-            case PRINT_COLOR_MAGENTA  : format += "magenta"; break;
-            case PRINT_COLOR_BLUE     : format += "blue"   ; break;
-            case PRINT_COLOR_GRAY     : format += "gray"   ; break;
-            case PRINT_COLOR_BOLD     : format += "bold"   ; break;
+            case PrintColor::RED      : format += "red"    ; break;
+            case PrintColor::YELLOW   : format += "yellow" ; break;
+            case PrintColor::GREEN    : format += "green"  ; break;
+            case PrintColor::MAGENTA  : format += "magenta"; break;
+            case PrintColor::BLUE     : format += "blue"   ; break;
+            case PrintColor::GRAY     : format += "gray"   ; break;
+            case PrintColor::BOLD     : format += "bold"   ; break;
             default                   : break;
         }
         format += "\">";

@@ -3,7 +3,7 @@
         {
             'include_dirs': [
                 "<!(node -e \"require('nan')\")",
-                '../../core/src'
+                '../../../backend/src'
             ],
             'target_name': 'lc3interface',
             'sources': ['wrapper.cpp'],
@@ -15,7 +15,8 @@
                 }
             }]],
             'link_settings': {
-                'libraries': ['-L<(module_root_dir)', '-llc3core']
+                'libraries': ['-L<(module_root_dir)', '-llc3core'],
+                'ld_flags': "-Wl,-rpath,'$$ORIGIN'"
             }
         }
     ]

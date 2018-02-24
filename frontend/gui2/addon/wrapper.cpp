@@ -4,12 +4,12 @@
     #define _PRINT_LEVEL 4
 #endif
 
-#include "core.h"
+#include "interface.h"
 #include "ui_printer.h"
 
 namespace utils
 {
-    class UIInputter : public IInputter
+    class UIInputter : public lc3::utils::IInputter
     {
     public:
         void beginInput(void) {}
@@ -20,7 +20,8 @@ namespace utils
 
 utils::UIPrinter printer;
 utils::UIInputter inputter;
-core::lc3 lc3interface(printer, inputter);
+lc3::as as(printer);
+lc3::sim sim(printer, inputter);
 
 NAN_METHOD(GetRegValue)
 {
@@ -34,7 +35,7 @@ NAN_METHOD(GetRegValue)
     v8::String::Utf8Value str(info[0]->ToString());
     std::string reg_name((char const *) *str);
 
-    core::MachineState const & state = lc3interface.getMachineState();
+    lc3::core::MachineState const & state = sim.getMachineState();
     if(reg_name[0] == 'r') {
         uint32_t reg_num = reg_name[1] - '0';
         if(reg_num > 7) {
@@ -62,7 +63,7 @@ NAN_METHOD(GetMemValue)
     }
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
-    core::MachineState const & state = lc3interface.getMachineState();
+    lc3::core::MachineState const & state = sim.getMachineState();
     auto ret = Nan::New<v8::Number>(state.mem[addr].getValue());
     info.GetReturnValue().Set(ret);
 }
@@ -75,12 +76,12 @@ NAN_METHOD(GetMemLine)
     }
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
-    core::MachineState const & state = lc3interface.getMachineState();
+    lc3::core::MachineState const & state = sim.getMachineState();
     auto ret = Nan::New<v8::String>(state.mem[addr].getLine()).ToLocalChecked();
     info.GetReturnValue().Set(ret);
 }
 
-NAN_METHOD(InitializeSimulator) { lc3interface.initializeSimulator(); }
+NAN_METHOD(InitializeSimulator) { }
 NAN_METHOD(ClearOutputBuffer) { printer.clearOutputBuffer(); }
 
 NAN_METHOD(Assemble)
@@ -93,11 +94,10 @@ NAN_METHOD(Assemble)
     v8::String::Utf8Value str(info[0]->ToString());
 
     std::string asm_filename((char const *) (*str));
-    std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
 
     try {
-        lc3interface.assemble(asm_filename, obj_filename);
-    } catch(utils::exception const & e) {
+        as.assemble(asm_filename);
+    } catch(lc3::utils::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
