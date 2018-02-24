@@ -7,13 +7,13 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'welcome-view',
-      component: require('@/components/WelcomeView').default
+      name: 'editor',
+      component: require('@/components/Editor').default
     },
     {
-      path: '/inspire',
-      name: 'inspire',
-      component: require('@/components/InspireView').default
+      path: '/simulator',
+      name: 'simulator',
+      component: require('@/components/Simulator').default
     },
     {
       path: '*',
