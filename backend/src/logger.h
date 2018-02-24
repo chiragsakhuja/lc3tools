@@ -12,14 +12,14 @@ namespace lc3
 namespace utils
 {
     enum class PrintType {
-          FATAL_ERROR = 0
-        , ERROR
-        , WARNING
-        , NOTE
-        , INFO
-        , DEBUG
-        , EXTRA
-        , SPAM
+          P_FATAL_ERROR = 0
+        , P_ERROR
+        , P_WARNING
+        , P_NOTE
+        , P_INFO
+        , P_DEBUG
+        , P_EXTRA
+        , P_SPAM
     };
 
     class Logger
@@ -65,37 +65,37 @@ void lc3::utils::Logger::printf(lc3::utils::PrintType type, bool bold, std::stri
 
     if(static_cast<uint32_t>(type) <= print_level) {
         switch(type) {
-            case PrintType::ERROR:
+            case PrintType::P_ERROR:
                 color = lc3::utils::PrintColor::RED;
                 label = "error";
                 break;
 
-            case PrintType::WARNING:
+            case PrintType::P_WARNING:
                 color = lc3::utils::PrintColor::YELLOW;
                 label = "warning";
                 break;
 
-            case PrintType::NOTE:
+            case PrintType::P_NOTE:
                 color = lc3::utils::PrintColor::GRAY;
                 label = "note";
                 break;
 
-            case PrintType::INFO:
+            case PrintType::P_INFO:
                 color = lc3::utils::PrintColor::GREEN;
                 label = "info";
                 break;
 
-            case PrintType::DEBUG:
+            case PrintType::P_DEBUG:
                 color = lc3::utils::PrintColor::MAGENTA;
                 label = "debug";
                 break;
 
-            case PrintType::EXTRA:
+            case PrintType::P_EXTRA:
                 color = lc3::utils::PrintColor::BLUE;
                 label = "extra";
                 break;
 
-            case PrintType::SPAM:
+            case PrintType::P_SPAM:
                 label = "spam";
 
             default: break;

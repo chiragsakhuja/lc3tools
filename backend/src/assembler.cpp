@@ -28,7 +28,7 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     // check if file exists
     std::ifstream file(asm_filename);
     if(! file.is_open()) {
-        logger.printf(PrintType::ERROR, true, "could not open %s for reading", asm_filename.c_str());
+        logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", asm_filename.c_str());
         throw lc3::utils::exception("could not open file for reading");
     }
     file.close();
@@ -37,7 +37,7 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-    logger.printf(PrintType::INFO, true, "attemping to assemble \'%s\' into \'%s\'", asm_filename.c_str(),
+    logger.printf(PrintType::P_INFO, true, "attemping to assemble \'%s\' into \'%s\'", asm_filename.c_str(),
         obj_filename.c_str());
 
     // build statements from tokens
@@ -66,13 +66,13 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 
-    logger.printf(PrintType::EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
+    logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
 #endif
 
     if(success) {
         writeFile(obj_blob, obj_filename, logger);
     } else {
-        logger.printf(PrintType::ERROR, true, "assembly failed");
+        logger.printf(PrintType::P_ERROR, true, "assembly failed");
         throw lc3::utils::exception("assembly failed");
     }
 }
@@ -86,7 +86,7 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
     // check if file exists
     std::ifstream file(bin_filename);
     if(! file.is_open()) {
-        logger.printf(PrintType::ERROR, true, "could not open %s for reading", bin_filename.c_str());
+        logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", bin_filename.c_str());
         throw lc3::utils::exception("could not open file for reading");
     }
     file.close();
@@ -95,7 +95,7 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-    logger.printf(PrintType::INFO, true, "attemping to convert \'%s\' into \'%s\'", bin_filename.c_str(),
+    logger.printf(PrintType::P_INFO, true, "attemping to convert \'%s\' into \'%s\'", bin_filename.c_str(),
         obj_filename.c_str());
 
     std::string line;
@@ -109,7 +109,7 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
         line_no += 1;
 
         if(line.size() != 0 || line.size() != 16) {
-            logger.printf(PrintType::ERROR, true, "line %d is %s", line_no, line_no < 16 ? "too short" : "too long");
+            logger.printf(PrintType::P_ERROR, true, "line %d is %s", line_no, line_no < 16 ? "too short" : "too long");
             success = false;
             continue;
         }
@@ -130,13 +130,13 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 
-    logger.printf(PrintType::EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
+    logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
 #endif
 
     if(success) {
         writeFile(obj_blob, obj_filename, logger);
     } else {
-        logger.printf(PrintType::ERROR, true, "conversion failed");
+        logger.printf(PrintType::P_ERROR, true, "conversion failed");
         throw lc3::utils::exception("conversion failed");
     }
 }
@@ -155,13 +155,13 @@ SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statement
         auto search = symbol_table.find(state.label.str);
         if(search != symbol_table.end()) {
             uint32_t old_val = search->second;
-            logger.asmPrintf(PrintType::WARNING, state.label, "redifining label from 0x%0.4x to 0x%0.4x", old_val,
+            logger.asmPrintf(PrintType::P_WARNING, state.label, "redifining label from 0x%0.4x to 0x%0.4x", old_val,
                 state.pc);
             logger.newline();
         }
 
         symbol_table[state.label.str] = state.pc;
-        logger.printf(PrintType::EXTRA, true, "adding label \'%s\' => 0x%0.4x", state.label.str.c_str(), state.pc);
+        logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' => 0x%0.4x", state.label.str.c_str(), state.pc);
     }
 
     return symbol_table;
@@ -203,7 +203,7 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
                 StatementToken const & oper = state.operands[0];
                 auto search = symbol_table.find(oper.str);
                 if(search == symbol_table.end()) {
-                    logger.asmPrintf(lc3::utils::PrintType::ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
+                    logger.asmPrintf(lc3::utils::PrintType::P_ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
                     logger.newline();
                     success = false;
                     continue;
@@ -223,7 +223,7 @@ void Assembler::writeFile(std::vector<MemEntry> const & obj_blob, std::string co
 
     std::ofstream file(obj_filename);
     if(! file.is_open()) {
-        logger.printf(PrintType::ERROR, true, "could not open file %s for writing", obj_filename.c_str());
+        logger.printf(PrintType::P_ERROR, true, "could not open file %s for writing", obj_filename.c_str());
         throw lc3::utils::exception("could not open file for writing");
     }
 
@@ -447,7 +447,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
                 break;
             }
 
-            logger.printf(PrintType::EXTRA, true, "ignoring line \'%s\' before .orig", state.line.c_str());
+            logger.printf(PrintType::P_EXTRA, true, "ignoring line \'%s\' before .orig", state.line.c_str());
             cur_pos += 1;
         }
 
@@ -460,7 +460,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
         uint32_t val = state.operands[0].num;
         uint32_t trunc_val = val & 0xffff;
         if(val != trunc_val) {
-            logger.asmPrintf(PrintType::WARNING, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
+            logger.asmPrintf(PrintType::P_WARNING, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
             logger.newline();
         }
 
@@ -469,12 +469,12 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
     }
 
     if(! found_orig) {
-        logger.printf(PrintType::ERROR, true, "could not find valid .orig", cur_pos);
+        logger.printf(PrintType::P_ERROR, true, "could not find valid .orig", cur_pos);
         throw utils::exception("could not find valid .orig");
     }
 
     if(cur_pos != 0) {
-        logger.printf(PrintType::WARNING, true, "ignoring %d lines before .orig", cur_pos);
+        logger.printf(PrintType::P_WARNING, true, "ignoring %d lines before .orig", cur_pos);
     }
 
     // start at the statement right after the first orig
@@ -485,7 +485,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
         Statement & state = statements[i];
 
         if(cur_pc >= MMIO_START) {
-            logger.asmPrintf(PrintType::ERROR, 0, state.line.size(), state.label, "no more room in writeable memory");
+            logger.asmPrintf(PrintType::P_ERROR, 0, state.line.size(), state.label, "no more room in writeable memory");
             logger.newline();
             throw utils::exception("no more room in writeable memory");
         }
@@ -503,7 +503,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
             uint32_t val = state.operands[0].num;
             uint32_t trunc_val = val & 0xffff;
             if(val != trunc_val) {
-                logger.asmPrintf(PrintType::WARNING, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
+                logger.asmPrintf(PrintType::P_WARNING, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
                 logger.newline();
             }
 
@@ -543,15 +543,15 @@ uint32_t Assembler::encodeInstruction(asmbl::Statement const & state, SymbolTabl
     if(! (candidates.size() == 1 && std::get<1>(candidates[0]) == 0)) {
         if(inst.lev_dist == 0) {
             // instruction matched perfectly, but operands did not
-            logger.asmPrintf(PrintType::ERROR, inst, "invalid usage of \'%s\' instruction", inst.str.c_str());
+            logger.asmPrintf(PrintType::P_ERROR, inst, "invalid usage of \'%s\' instruction", inst.str.c_str());
         } else {
             // instruction didn't match perfectly
-            logger.asmPrintf(PrintType::ERROR, inst, "invalid instruction");
+            logger.asmPrintf(PrintType::P_ERROR, inst, "invalid instruction");
         }
         // list out possibilities
         uint32_t count = 0;
         for(auto candidate : candidates) {
-            logger.printf(PrintType::NOTE, false, "did you mean \'%s\'?",
+            logger.printf(PrintType::P_NOTE, false, "did you mean \'%s\'?",
                 std::get<0>(candidate)->toFormatString().c_str());
             count += 1;
             if(count >= 3) {
@@ -559,7 +559,7 @@ uint32_t Assembler::encodeInstruction(asmbl::Statement const & state, SymbolTabl
             }
         }
         if(candidates.size() > 3) {
-            logger.printf(PrintType::NOTE, false, "...other possible options hidden");
+            logger.printf(PrintType::P_NOTE, false, "...other possible options hidden");
         }
         logger.newline();
         success = false;
@@ -567,10 +567,10 @@ uint32_t Assembler::encodeInstruction(asmbl::Statement const & state, SymbolTabl
     }
 
     // if we've made it here, we've found a valid instruction
-    logger.printf(PrintType::EXTRA, true, "%s", stripped_line.c_str());
+    logger.printf(PrintType::P_EXTRA, true, "%s", stripped_line.c_str());
     uint32_t encoding = encoder.encodeInstruction(state, std::get<0>(candidates[0]), symbol_table, logger, success);
     if(success) {
-        logger.printf(PrintType::EXTRA, true, " => 0x%0.4x", encoding);
+        logger.printf(PrintType::P_EXTRA, true, " => 0x%0.4x", encoding);
         return encoding;
     }
 
@@ -610,7 +610,7 @@ bool Assembler::checkIfValidPseudoStatement(asmbl::Statement const & state, std:
 
     if(state.operands.size() != valid_operands.size()) {
         if(log_enable) {
-            logger.asmPrintf(PrintType::ERROR, state.inst_or_pseudo, "incorrect number of operands");
+            logger.asmPrintf(PrintType::P_ERROR, state.inst_or_pseudo, "incorrect number of operands");
             logger.newline();
         }
         return false;
@@ -627,7 +627,7 @@ bool Assembler::checkIfValidPseudoStatement(asmbl::Statement const & state, std:
 
         if(! valid) {
             if(log_enable) {
-                logger.asmPrintf(PrintType::ERROR, state.operands[i], "invalid operand");
+                logger.asmPrintf(PrintType::P_ERROR, state.operands[i], "invalid operand");
                 logger.newline();
             }
             return false;

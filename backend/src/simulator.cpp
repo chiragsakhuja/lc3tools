@@ -28,7 +28,7 @@ void Simulator::loadObjectFile(std::string const & filename)
 {
     std::ifstream file(filename);
     if(! file) {
-        logger.printf(lc3::utils::PrintType::ERROR, true, "could not open file \'%s\' for reading",
+        logger.printf(lc3::utils::PrintType::P_ERROR, true, "could not open file \'%s\' for reading",
             filename.c_str());
         throw utils::exception("could not open file");
     }
@@ -52,7 +52,7 @@ void Simulator::loadObjectFile(std::string const & filename)
             fill_pc = statement.getValue();
             offset = 0;
         } else {
-            logger.printf(lc3::utils::PrintType::DEBUG, true, "0x%0.4x: %s (0x%0.4x)", fill_pc + offset,
+            logger.printf(lc3::utils::PrintType::P_DEBUG, true, "0x%0.4x: %s (0x%0.4x)", fill_pc + offset,
                 statement.getLine().c_str(), statement.getValue());
             state.mem[fill_pc + offset] = statement;
             offset += 1;
@@ -108,12 +108,12 @@ std::vector<PIEvent> Simulator::executeInstruction(void)
     bool valid;
     PIInstruction candidate = decoder.findInstructionByEncoding(encoded_inst, valid);
     if(! valid) {
-        logger.printf(lc3::utils::PrintType::ERROR, true, "invalid instruction 0x%0.4x", encoded_inst);
+        logger.printf(lc3::utils::PrintType::P_ERROR, true, "invalid instruction 0x%0.4x", encoded_inst);
         throw utils::exception("invalid instruction");
     }
 
     candidate->assignOperands(encoded_inst);
-    logger.printf(lc3::utils::PrintType::EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
         state.mem[state.pc].getLine().c_str(), encoded_inst);
     state.pc += 1;
     std::vector<PIEvent> events = candidate->execute(state);
@@ -158,7 +158,7 @@ void Simulator::executeEventChain(std::vector<PIEvent> & events)
 
 void Simulator::executeEvent(PIEvent event)
 {
-    logger.printf(lc3::utils::PrintType::EXTRA, false, "  %s", event->getOutputString(state).c_str());
+    logger.printf(lc3::utils::PrintType::P_EXTRA, false, "  %s", event->getOutputString(state).c_str());
     event->updateState(state);
 }
 

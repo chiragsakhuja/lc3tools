@@ -169,7 +169,7 @@ uint32_t RegOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_co
 
     uint32_t token_val = regs.at(oper.str) & ((1 << width) - 1);
 
-    logger.printf(lc3::utils::PrintType::EXTRA, true, "%d.%d: reg %s => %s", oper.row + 1, oper_count, oper.str.c_str(),
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d.%d: reg %s => %s", oper.row + 1, oper_count, oper.str.c_str(),
         lc3::utils::udecToBin(token_val, width).c_str());
 
     return token_val;
@@ -187,18 +187,18 @@ uint32_t NumOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_co
 
     if(sext) {
         if((int32_t) oper.num < -(1 << (width - 1)) || (int32_t) oper.num > ((1 << (width - 1)) - 1)) {
-            logger.asmPrintf(lc3::utils::PrintType::WARNING, oper, "immediate %d truncated to %d", oper.num,
+            logger.asmPrintf(lc3::utils::PrintType::P_WARNING, oper, "immediate %d truncated to %d", oper.num,
                 lc3::utils::sextTo32(token_val, width));
             logger.newline();
         }
     } else {
         if(oper.num > ((1 << width) - 1)) {
-            logger.asmPrintf(lc3::utils::PrintType::WARNING, oper, "immediate %d truncated to %u", oper.num, token_val);
+            logger.asmPrintf(lc3::utils::PrintType::P_WARNING, oper, "immediate %d truncated to %u", oper.num, token_val);
             logger.newline();
         }
     }
 
-    logger.printf(lc3::utils::PrintType::EXTRA, true, "%d.%d: imm %d => %s", oper.row + 1, oper_count, oper.num,
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d.%d: imm %d => %s", oper.row + 1, oper_count, oper.num,
         lc3::utils::udecToBin(token_val, width).c_str());
 
     return token_val;
@@ -213,7 +213,7 @@ uint32_t LabelOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_
 
     auto search = symbols.find(oper.str);
     if(search == symbols.end()) {
-        logger.asmPrintf(lc3::utils::PrintType::ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
+        logger.asmPrintf(lc3::utils::PrintType::P_ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
         logger.newline();
         success = false;
         return 0;
@@ -221,7 +221,7 @@ uint32_t LabelOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_
 
     uint32_t token_val = (((int32_t) search->second) - (oper.pc + 1)) & ((1 << width) - 1);
 
-    logger.printf(lc3::utils::PrintType::EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper.row + 1, oper_count,
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper.row + 1, oper_count,
         oper.str.c_str(), search->second, lc3::utils::udecToBin((uint32_t) token_val, width).c_str());
 
     return token_val;
