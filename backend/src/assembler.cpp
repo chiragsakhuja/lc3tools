@@ -89,7 +89,6 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
         logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", bin_filename.c_str());
         throw lc3::utils::exception("could not open file for reading");
     }
-    file.close();
 
 #ifdef _ENABLE_DEBUG
     auto start = std::chrono::high_resolution_clock::now();
@@ -108,7 +107,7 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
         line.erase(std::remove_if(line.begin(), line.end(), ::isspace), line.end());
         line_no += 1;
 
-        if(line.size() != 0 || line.size() != 16) {
+        if(line.size() != 0 && line.size() != 16) {
             logger.printf(PrintType::P_ERROR, true, "line %d is %s", line_no, line_no < 16 ? "too short" : "too long");
             success = false;
             continue;
@@ -122,6 +121,7 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
         }
 
         uint32_t val = std::bitset<16>(line).to_ulong();
+        logger.printf(PrintType::P_DEBUG, false, "%s => 0x%04x", line.c_str(), val);
         obj_blob.emplace_back((uint16_t) val, ! wrote_orig, line);
         wrote_orig = true;
     }
@@ -132,6 +132,8 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
 
     logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
 #endif
+
+    file.close();
 
     if(success) {
         writeFile(obj_blob, obj_filename, logger);
