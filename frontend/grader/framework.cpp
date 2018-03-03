@@ -10,6 +10,13 @@ std::vector<TestCase> tests;
 uint32_t verify_count;
 uint32_t verify_valid;
 
+
+bool endsWith(std::string const & search, std::string const & suffix)
+{
+    if(suffix.size() > search.size()) { return false; }
+    return std::equal(suffix.rbegin(), suffix.rend(), search.rbegin());
+}
+
 void BufferedPrinter::print(std::string const & string)
 {
     std::copy(string.begin(), string.end(), std::back_inserter(display_buffer));
@@ -47,11 +54,17 @@ int main(int argc, char ** argv)
     std::vector<std::string> obj_filenames;
     bool valid_assembly = true;
     for(int i = 1; i < argc; i += 1) {
-        std::string asm_filename(argv[i]);
+        std::string filename(argv[i]);
 
-        auto result = assembler.assemble(asm_filename);
-        if(! result.first) { valid_assembly = false; }
-        obj_filenames.push_back(result.second);
+        
+	if(endsWith(filename, ".bin")) {
+	    assembler.convertBin(filename);
+	} else {
+            auto result = assembler.assemble(filename);
+            if(! result.first) { valid_assembly = false; }
+            obj_filenames.push_back(result.second);
+	}
+
     }
 
     setup();
