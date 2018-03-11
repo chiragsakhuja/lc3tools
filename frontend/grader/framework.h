@@ -20,7 +20,7 @@ class BufferedPrinter : public lc3::utils::IPrinter
 public:
     std::vector<char> display_buffer;
 
-    void setColor(int color) {}
+    void setColor(int color) { (void) color; }
     void print(std::string const & string);
     void newline(void);
 };

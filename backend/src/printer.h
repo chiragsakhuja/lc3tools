@@ -18,6 +18,19 @@ namespace utils
         , RESET
     };
 
+    enum class PrintType {
+          P_NONE = 0
+        , P_SIM_OUTPUT
+        , P_FATAL_ERROR
+        , P_ERROR
+        , P_WARNING
+        , P_NOTE
+        , P_INFO
+        , P_DEBUG
+        , P_EXTRA
+        , P_SPAM
+    };
+
     class IPrinter
     {
     public:
@@ -27,14 +40,6 @@ namespace utils
         virtual void setColor(PrintColor color) = 0;
         virtual void print(std::string const & string) = 0;
         virtual void newline(void) = 0;
-    };
-
-    class NullPrinter : public IPrinter
-    {
-    public:
-        virtual void setColor(PrintColor) override {}
-        virtual void print(std::string const &) override {}
-        virtual void newline(void) override {}
     };
 };
 };

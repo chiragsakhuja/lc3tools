@@ -3,6 +3,7 @@
 void ZeroTest(lc3::sim & sim)
 {
     // Setup
+    sim.setPC(0x3000);
     sim.setMem(0x3050, 0x0000);
 
     // Run

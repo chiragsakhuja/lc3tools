@@ -22,6 +22,11 @@ Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::
 {
     state.mem.resize(1 << 16);
     reset();
+
+    state.pre_instruction_callback_v = false;
+    state.post_instruction_callback_v = false;
+    state.interrupt_enter_callback_v = false;
+    state.interrupt_exit_callback_v = false;
 }
 
 void Simulator::loadObjectFile(std::string const & filename)
@@ -179,11 +184,6 @@ void Simulator::reset(void)
     state.mem[MCR].setValue(0x8000);  // indicate the machine is running
     state.running = true;
     state.hit_breakpoint = false;
-
-    state.pre_instruction_callback_v = false;
-    state.post_instruction_callback_v = false;
-    state.interrupt_enter_callback_v = false;
-    state.interrupt_exit_callback_v = false;
 }
 
 void Simulator::registerPreInstructionCallback(callback_func_t func)

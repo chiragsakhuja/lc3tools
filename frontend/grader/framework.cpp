@@ -49,21 +49,22 @@ bool StringInputter::getChar(char & c)
 int main(int argc, char ** argv)
 {
     lc3::ConsolePrinter asm_printer;
-    lc3::as assembler(asm_printer);
+    lc3::as assembler(asm_printer, 0);
 
     std::vector<std::string> obj_filenames;
-    bool valid_assembly = true;
+    bool valid_program = true;
     for(int i = 1; i < argc; i += 1) {
         std::string filename(argv[i]);
 
-        
-	if(endsWith(filename, ".bin")) {
-	    assembler.convertBin(filename);
-	} else {
-            auto result = assembler.assemble(filename);
-            if(! result.first) { valid_assembly = false; }
-            obj_filenames.push_back(result.second);
-	}
+        std::pair<bool, std::string> result;
+        if(endsWith(filename, ".bin")) {
+            result = assembler.convertBin(filename);
+        } else {
+            result = assembler.assemble(filename);
+        }
+
+        if(! result.first) { valid_program = false; }
+        obj_filenames.push_back(result.second);
 
     }
 
@@ -72,9 +73,9 @@ int main(int argc, char ** argv)
     uint32_t total_points_earned = 0;
     uint32_t total_possible_points = 0;
 
-    if(valid_assembly) {
+    if(valid_program) {
         for(TestCase const & test : tests) {
-            lc3::utils::NullPrinter sim_printer;
+            lc3::ConsolePrinter sim_printer;
             FileInputter sim_inputter;
             lc3::sim simulator(sim_printer, sim_inputter, 0);
 
@@ -101,6 +102,7 @@ int main(int argc, char ** argv)
             try {
                 test.test_func(simulator);
             } catch(lc3::utils::exception const & e) {
+                std::cout << "Test case ran into exception: " << e.what() << "\n";
                 continue;
             }
 

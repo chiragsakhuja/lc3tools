@@ -70,6 +70,7 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
 #endif
 
     if(success) {
+        logger.printf(PrintType::P_INFO, true, "assembly successful");
         writeFile(obj_blob, obj_filename, logger);
     } else {
         logger.printf(PrintType::P_ERROR, true, "assembly failed");
@@ -104,6 +105,7 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
     bool success = true;
 
     while(std::getline(file, line)) {
+        line = line.substr(0, line.find_first_of(';'));
         line.erase(std::remove_if(line.begin(), line.end(), ::isspace), line.end());
         line_no += 1;
 
@@ -112,6 +114,8 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
             success = false;
             continue;
         }
+
+        if(line.size() == 0) { continue; }
 
         for(char c : line) {
             if(c != '0' && c != '1') {
@@ -136,6 +140,7 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
     file.close();
 
     if(success) {
+        logger.printf(PrintType::P_INFO, true, "conversion successful");
         writeFile(obj_blob, obj_filename, logger);
     } else {
         logger.printf(PrintType::P_ERROR, true, "conversion failed");

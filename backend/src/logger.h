@@ -11,17 +11,6 @@ namespace lc3
 {
 namespace utils
 {
-    enum class PrintType {
-          P_FATAL_ERROR = 0
-        , P_ERROR
-        , P_WARNING
-        , P_NOTE
-        , P_INFO
-        , P_DEBUG
-        , P_EXTRA
-        , P_SPAM
-    };
-
     class Logger
     {
     protected:
@@ -33,8 +22,10 @@ namespace utils
 
         template<typename ... Args>
         void printf(PrintType level, bool bold, std::string const & format, Args ... args) const;
-        void newline(void) const { printer.newline(); }
-        void print(std::string const & str) { printer.print(str); }
+        void newline(void) const { if(print_level > static_cast<uint32_t>(PrintType::P_NONE)) { printer.newline(); } }
+        void print(std::string const & str) {
+            if(print_level > static_cast<uint32_t>(PrintType::P_NONE)) { printer.print(str); }
+        }
     };
 
     class AssemblerLogger : public Logger
