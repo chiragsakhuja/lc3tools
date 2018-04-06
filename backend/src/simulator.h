@@ -37,6 +37,7 @@ namespace core
 
         MachineState & getMachineState(void) { return state; }
         MachineState const & getMachineState(void) const { return state; }
+
     private:
         sim::InstructionDecoder decoder;
 

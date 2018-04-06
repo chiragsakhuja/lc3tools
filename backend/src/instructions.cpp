@@ -125,12 +125,14 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(std::make_shared<NOP0Instruction>());
     instructions.push_back(std::make_shared<NOP1Instruction>());
     instructions.push_back(std::make_shared<JMPInstruction>());
-    instructions.push_back(std::make_shared<JSRInstruction>());
+    instructions.push_back(std::make_shared<JSRIInstruction>());
+    instructions.push_back(std::make_shared<JSRLInstruction>());
     instructions.push_back(std::make_shared<JSRRInstruction>());
     instructions.push_back(std::make_shared<LDInstruction>());
     instructions.push_back(std::make_shared<LDIInstruction>());
     instructions.push_back(std::make_shared<LDRInstruction>());
-    instructions.push_back(std::make_shared<LEAInstruction>());
+    instructions.push_back(std::make_shared<LEALInstruction>());
+    instructions.push_back(std::make_shared<LEAIInstruction>());
     instructions.push_back(std::make_shared<NOTInstruction>());
     instructions.push_back(std::make_shared<RETInstruction>());
     instructions.push_back(std::make_shared<RTIInstruction>());
@@ -302,7 +304,16 @@ std::vector<PIEvent> JMPInstruction::execute(MachineState const & state)
     return ret;
 }
 
-std::vector<PIEvent> JSRInstruction::execute(MachineState const & state)
+std::vector<PIEvent> JSRIInstruction::execute(MachineState const & state)
+{
+    return std::vector<PIEvent> {
+        std::make_shared<RegEvent>(7, state.pc & 0xffff),
+        std::make_shared<PCEvent>(lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width)),
+        std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback)
+    };
+}
+
+std::vector<PIEvent> JSRLInstruction::execute(MachineState const & state)
 {
     return std::vector<PIEvent> {
         std::make_shared<RegEvent>(7, state.pc & 0xffff),
@@ -394,7 +405,18 @@ std::vector<PIEvent> LDRInstruction::execute(MachineState const & state)
     return ret;
 }
 
-std::vector<PIEvent> LEAInstruction::execute(MachineState const & state)
+std::vector<PIEvent> LEAIInstruction::execute(MachineState const & state)
+{
+    uint32_t dr = operands[1]->value;
+    uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
+
+    return std::vector<PIEvent> {
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, state.psr)),
+        std::make_shared<RegEvent>(dr, addr)
+    };
+}
+
+std::vector<PIEvent> LEALInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);

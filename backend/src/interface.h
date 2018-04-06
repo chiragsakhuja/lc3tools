@@ -63,6 +63,7 @@ namespace lc3
         char getCC(void) const;
         void setReg(uint32_t id, uint32_t value);
         void setMem(uint32_t addr, uint32_t value);
+        void setMemString(uint32_t addr, std::string const & value);
         void setPC(uint32_t value);
         void setPSR(uint32_t value);
         void setCC(char value);
@@ -77,6 +78,8 @@ namespace lc3
         void registerSubEnterCallback(callback_func_t func);
         void registerSubExitCallback(callback_func_t func);
         void registerBreakpointCallback(breakpoint_callback_func_t func);
+
+        utils::IPrinter const & getPrinter(void) const;
 
     private:
         utils::IPrinter & printer;

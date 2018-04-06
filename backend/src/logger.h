@@ -20,6 +20,8 @@ namespace utils
     public:
         Logger(IPrinter & printer, uint32_t print_level) : printer(printer), print_level(print_level) {}
 
+        lc3::utils::IPrinter const & getPrinter(void) { return printer; }
+
         template<typename ... Args>
         void printf(PrintType level, bool bold, std::string const & format, Args ... args) const;
         void newline(void) const { if(print_level > static_cast<uint32_t>(PrintType::P_NONE)) { printer.newline(); } }

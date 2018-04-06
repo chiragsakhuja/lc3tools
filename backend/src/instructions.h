@@ -281,11 +281,23 @@ namespace core
         virtual std::vector<PIEvent> execute(MachineState const & state) override;
     };
 
-    class JSRInstruction : public IInstruction
+    class JSRIInstruction : public IInstruction
     {
     public:
         using IInstruction::IInstruction;
-        JSRInstruction(void) : IInstruction("jsr", {
+        JSRIInstruction(void) : IInstruction("jsr", {
+            std::make_shared<FixedOperand>(4, 0x4),
+            std::make_shared<FixedOperand>(1, 0x1),
+            std::make_shared<NumOperand>(11, true)
+        }) {}
+        virtual std::vector<PIEvent> execute(MachineState const & state) override;
+    };
+
+    class JSRLInstruction : public IInstruction
+    {
+    public:
+        using IInstruction::IInstruction;
+        JSRLInstruction(void) : IInstruction("jsr", {
             std::make_shared<FixedOperand>(4, 0x4),
             std::make_shared<FixedOperand>(1, 0x1),
             std::make_shared<LabelOperand>(11)
@@ -340,10 +352,21 @@ namespace core
         virtual std::vector<PIEvent> execute(MachineState const & state) override;
     };
 
-    class LEAInstruction : public IInstruction
+    class LEAIInstruction : public IInstruction
     {
     public:
-        LEAInstruction(void) : IInstruction("lea", {
+        LEAIInstruction(void) : IInstruction("lea", {
+            std::make_shared<FixedOperand>(4, 0xe),
+            std::make_shared<RegOperand>(3),
+            std::make_shared<NumOperand>(9, true)
+        }) {}
+        virtual std::vector<PIEvent> execute(MachineState const & state) override;
+    };
+
+    class LEALInstruction : public IInstruction
+    {
+    public:
+        LEALInstruction(void) : IInstruction("lea", {
             std::make_shared<FixedOperand>(4, 0xe),
             std::make_shared<RegOperand>(3),
             std::make_shared<LabelOperand>(9)

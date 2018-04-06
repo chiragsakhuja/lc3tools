@@ -30,6 +30,7 @@ void testBringup(lc3::sim & sim)
 
 void testTeardown(lc3::sim & sim)
 {
+    (void) sim;
 }
 
 void setup(void)

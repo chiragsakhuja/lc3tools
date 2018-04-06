@@ -26,6 +26,7 @@ void BufferedPrinter::newline(void) { display_buffer.push_back('\n'); }
 
 bool FileInputter::getChar(char & c)
 {
+    (void) c;
     return false;
 }
 
@@ -65,7 +66,6 @@ int main(int argc, char ** argv)
 
         if(! result.first) { valid_program = false; }
         obj_filenames.push_back(result.second);
-
     }
 
     setup();
@@ -75,9 +75,9 @@ int main(int argc, char ** argv)
 
     if(valid_program) {
         for(TestCase const & test : tests) {
-            lc3::ConsolePrinter sim_printer;
+            BufferedPrinter sim_printer;
             FileInputter sim_inputter;
-            lc3::sim simulator(sim_printer, sim_inputter, 0);
+            lc3::sim simulator(sim_printer, sim_inputter, 1);
 
             testBringup(simulator);
 
@@ -125,3 +125,25 @@ int main(int argc, char ** argv)
 
     return 0;
 }
+
+bool outputCompare(lc3::utils::IPrinter const & printer, std::string check)
+{
+    BufferedPrinter const & buffered_printer = static_cast<BufferedPrinter const &>(printer);
+    check += "\n\n--- Halting the LC-3 ---\n\n";
+
+    //std::cout << check;
+    //for(char c : buffered_printer.display_buffer) {
+        //std::cout << c;
+    //}
+    //std::cout << check.size() << " " << buffered_printer.display_buffer.size() << "\n";
+
+    if(buffered_printer.display_buffer.size() != check.size()) { return false; }
+
+    for(uint32_t i = 0; i < check.size(); i += 1) {
+        //std::cout << buffered_printer.display_buffer[i] << " != " << check[i] << "\n";
+        if(buffered_printer.display_buffer[i] != check[i]) { return false; }
+    }
+
+    return true;
+}
+

@@ -111,9 +111,9 @@ void Sub_One_Test(lc3::sim & sim)
     VERIFY(sim.getMem(0x3200) == 0x0000);
 }
 
-void testBringup(lc3::sim & sim) { }
+void testBringup(lc3::sim & sim) { (void) sim; }
 
-void testTeardown(lc3::sim & sim) { }
+void testTeardown(lc3::sim & sim) { (void) sim; }
 
 void setup(void)
 {

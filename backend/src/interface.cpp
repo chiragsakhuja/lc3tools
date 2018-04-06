@@ -191,6 +191,19 @@ void lc3::sim::setMem(uint32_t addr, uint32_t value)
     getMachineState().mem[addr].setValue(value);
 }
 
+void lc3::sim::setMemString(uint32_t addr, std::string const & value)
+{
+#ifdef _ENABLE_DEBUG
+    assert(addr <= 0xffff);
+#else
+    addr &= 0xffff;
+#endif
+    for(uint32_t i = 0; i < value.size(); i += 1) {
+        getMachineState().mem[addr + i].setValue(static_cast<uint32_t>(value[i]));
+    }
+    getMachineState().mem[addr + value.size()].setValue(0);
+}
+
 void lc3::sim::setPC(uint32_t value)
 {
 #ifdef _ENABLE_DEBUG
@@ -302,6 +315,11 @@ void lc3::sim::registerBreakpointCallback(breakpoint_callback_func_t func)
 {
     breakpoint_callback_v = true;
     breakpoint_callback = func;
+}
+
+lc3::utils::IPrinter const & lc3::sim::getPrinter(void) const
+{
+    return printer;
 }
 
 void lc3::sim::preInstructionCallback(lc3::sim & sim_int, lc3::core::MachineState & state)

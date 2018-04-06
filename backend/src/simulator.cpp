@@ -79,29 +79,36 @@ void Simulator::simulate(void)
     state.running = true;
     collecting_input = true;
     inputter.beginInput();
-    std::thread input_thread(&core::Simulator::handleInput, this);
+    std::thread input_thread;
 
-    while(state.running && (state.mem[MCR].getValue() & 0x8000) != 0) {
-        if(! state.hit_breakpoint) {
-            executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
-                state.pre_instruction_callback));
-            if(state.hit_breakpoint) {
-                break;
+    try {
+        input_thread = std::thread(&core::Simulator::handleInput, this);
+        while(state.running && (state.mem[MCR].getValue() & 0x8000) != 0) {
+            if(! state.hit_breakpoint) {
+                executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
+                    state.pre_instruction_callback));
+                if(state.hit_breakpoint) {
+                    break;
+                }
             }
-        }
-        state.hit_breakpoint = false;
+            state.hit_breakpoint = false;
 
-        std::vector<PIEvent> events = executeInstruction();
-        events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
-            state.post_instruction_callback));
-        executeEventChain(events);
-        updateDevices();
-        events = checkAndSetupInterrupts();
-        executeEventChain(events);
+            std::vector<PIEvent> events = executeInstruction();
+            events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
+                state.post_instruction_callback));
+            executeEventChain(events);
+            updateDevices();
+            events = checkAndSetupInterrupts();
+            executeEventChain(events);
+        }
+    } catch(std::exception & e) {
+        std::cout << e.what() << "\n";
+        throw e;
     }
 
     state.running = false;
     collecting_input = false;
+        if(input_thread.joinable()) 
     input_thread.join();
     inputter.endInput();
 }

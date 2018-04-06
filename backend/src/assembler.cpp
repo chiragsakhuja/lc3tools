@@ -115,7 +115,7 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
             continue;
         }
 
-        if(line.size() == 0) { continue; }
+        //if(line.size() == 0) { continue; }
 
         for(char c : line) {
             if(c != '0' && c != '1') {

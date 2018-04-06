@@ -3,6 +3,7 @@
 #include <functional>
 #include <map>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #include "inputter.h"
@@ -20,9 +21,9 @@ class BufferedPrinter : public lc3::utils::IPrinter
 public:
     std::vector<char> display_buffer;
 
-    void setColor(int color) { (void) color; }
-    void print(std::string const & string);
-    void newline(void);
+    virtual void setColor(lc3::utils::PrintColor color) { (void) color; }
+    virtual void print(std::string const & string);
+    virtual void newline(void);
 };
 
 class FileInputter : public lc3::utils::IInputter
@@ -63,20 +64,31 @@ struct TestCase
     }
 };
 
-#define REGISTER_TEST(name, function, points)                     \
-    tests.emplace_back( #name , ( function ), ( points ), false); \
+bool outputCompare(lc3::utils::IPrinter const & printer, std::string check);
+
+#define REGISTER_TEST(name, function, points)                        \
+    tests.emplace_back( #name , ( function ), ( points ), false);    \
     do {} while(false)
-#define REGISTER_RANDOM_TEST(name, function, points)              \
-    tests.emplace_back( #name , ( function ), ( points ), true);  \
+#define REGISTER_RANDOM_TEST(name, function, points)                 \
+    tests.emplace_back( #name , ( function ), ( points ), true);     \
     do {} while(false)
-#define VERIFY(check)                                             \
-    verify_count += 1;                                            \
-    std::cout << "  " << ( #check ) << " => ";                    \
-    if(( check ) == true) {                                       \
-        verify_valid += 1;                                        \
-        std::cout << "yes\n";                                     \
-    } else {                                                      \
-        std::cout << "no\n";                                      \
-    }                                                             \
+#define VERIFY(check)                                                \
+    verify_count += 1;                                               \
+    std::cout << "  " << ( #check ) << " => ";                       \
+    if(( check ) == true) {                                          \
+        verify_valid += 1;                                           \
+        std::cout << "yes\n";                                        \
+    } else {                                                         \
+        std::cout << "no\n";                                         \
+    }                                                                \
     do {} while(false)
-    
+#define VERIFY_OUTPUT(check)                                         \
+    verify_count += 1;                                               \
+    std::cout << " " << ( #check ) << " => ";                        \
+    if(outputCompare(sim.getPrinter(), check)) {                     \
+        verify_valid += 1;                                           \
+        std::cout << "yes\n";                                        \
+    } else {                                                         \
+        std::cout << "no\n";                                         \
+    }                                                                \
+    do {} while(false)
