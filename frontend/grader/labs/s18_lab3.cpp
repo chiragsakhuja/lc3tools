@@ -1,5 +1,34 @@
 #include "../framework.h"
 
+void LongTest(lc3::sim & sim)
+{
+    // Setup
+    sim.setPC(0x3000);
+
+    sim.setMem(0x3300, 0x3400);
+
+    int address = 0x3400;
+    int nxt_address = 0x3402;
+    for (int i = 0; i < 511; i++){
+        sim.setMem(address, nxt_address);
+        sim.setMem((address + 1), 0x4500);
+        address = nxt_address;
+        nxt_address = address + 2;
+    }
+    sim.setMem(address, 0x0000);
+    sim.setMem((address + 1), 0x4500);
+
+    sim.setMemString(0x4500, "Bevo");
+
+
+    // Run
+    sim.setRunInstLimit(100000);
+    sim.run();
+
+    // Verify
+    VERIFY_OUTPUT_NAMED("Bevo x1024", "Bevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo\nBevo");
+}
+
 void GivenTest(lc3::sim & sim)
 {
     // Setup
@@ -191,4 +220,6 @@ void setup(void)
     REGISTER_RANDOM_TEST(One_Node_Test, OneNodeTest, 5);
     REGISTER_TEST(No_Overwrite_Memory_Test, NoOverwriteMemoryTest, 5);
     REGISTER_RANDOM_TEST(No_Overwrite_Memory_Test, NoOverwriteMemoryTest, 5);
+    REGISTER_TEST(Long_Test, LongTest, 5);
+    REGISTER_RANDOM_TEST(Long_Test, LongTest, 5);
 }

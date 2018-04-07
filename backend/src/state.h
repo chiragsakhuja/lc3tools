@@ -81,7 +81,7 @@ namespace core
     public:
         RegEvent(uint32_t reg, uint32_t value) : IEvent(EventType::EVENT_REG), reg(reg), value(value) {}
 
-        virtual void updateState(MachineState & state) const override { state.regs[reg] = value; }
+        virtual void updateState(MachineState & state) const override { state.regs[reg] = value & 0xFFFF; }
         virtual std::string getOutputString(MachineState const & state) const override {
             return utils::ssprintf("R%d: 0x%0.4x => 0x%0.4x", reg, state.regs[reg], value); }
     private:
@@ -94,7 +94,7 @@ namespace core
     public:
         PSREvent(uint32_t value) : IEvent(EventType::EVENT_PSR), value(value) {}
 
-        virtual void updateState(MachineState & state) const override { state.psr = value; }
+        virtual void updateState(MachineState & state) const override { state.psr = value & 0xFFFF; }
         virtual std::string getOutputString(MachineState const & state) const override {
             return utils::ssprintf("PSR: 0x%0.4x => 0x%0.4x", state.psr, value); }
     private:
@@ -106,7 +106,7 @@ namespace core
     public:
         PCEvent(uint32_t value) : IEvent(EventType::EVENT_PC), value(value) {}
 
-        virtual void updateState(MachineState & state) const override { state.pc = value; }
+        virtual void updateState(MachineState & state) const override { state.pc = value & 0xFFFF; }
         virtual std::string getOutputString(MachineState const & state) const override {
             return utils::ssprintf("PC: 0x%0.4x => 0x%0.4x", state.pc, value); }
     private:

@@ -14,7 +14,7 @@ namespace core
 
 uint32_t lc3::core::MachineState::readMem(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const
 {
-    assert(addr < 0xffff);
+    assert(addr < 0xFFFF);
 
     change_mem = false;
     change = nullptr;
@@ -35,10 +35,10 @@ uint32_t lc3::core::MachineState::readMem(uint32_t addr, bool & change_mem, std:
 
 void lc3::core::MemWriteEvent::updateState(MachineState & state) const
 {
-    assert(addr < 0xffff);
+    assert(addr < 0xFFFF);
 
     if(addr == DDR) {
-        char char_value = (char) (value & 0xff);
+        char char_value = (char) (value & 0xFF);
         state.logger.print(std::string(1, char_value));
         state.console_buffer.push_back(char_value);
     } else if(addr == KBSR) {

@@ -19,13 +19,17 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t p
 
 bool lc3::sim::loadObjectFile(std::string const & obj_filename)
 {
-    try {
+    if(propagate_exceptions) {
         simulator.loadObjectFile(obj_filename);
-    } catch(utils::exception const & e) {
+    } else {
+        try {
+            simulator.loadObjectFile(obj_filename);
+        } catch(utils::exception const & e) {
 #ifdef _ENABLE_DEBUG
-        printer.print("caught exception: " + std::string(e.what()) + "\n");
+            printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
-        return false;
+            return false;
+        }
     }
     return true;
 }
@@ -67,13 +71,17 @@ void lc3::sim::setRunInstLimit(uint32_t inst_limit)
 
 bool lc3::sim::run(void)
 {
-    try {
+    if(propagate_exceptions) {
         simulator.simulate();
-    } catch(utils::exception const & e) {
+    } else {
+        try {
+            simulator.simulate();
+        } catch(utils::exception const & e) {
 #ifdef _ENABLE_DEBUG
-        printer.print("caught exception: " + std::string(e.what()) + "\n");
+            printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
-        return false;
+            return false;
+        }
     }
     return true;
 }
@@ -317,10 +325,10 @@ void lc3::sim::registerBreakpointCallback(breakpoint_callback_func_t func)
     breakpoint_callback = func;
 }
 
-lc3::utils::IPrinter const & lc3::sim::getPrinter(void) const
-{
-    return printer;
-}
+lc3::utils::IPrinter const & lc3::sim::getPrinter(void) const { return printer; }
+
+void lc3::sim::setPropagateExceptions(void) { propagate_exceptions = true; }
+void lc3::sim::clearPropagateExceptions(void) { propagate_exceptions = false; }
 
 void lc3::sim::preInstructionCallback(lc3::sim & sim_int, lc3::core::MachineState & state)
 {
@@ -395,13 +403,17 @@ void lc3::sim::subExitCallback(lc3::sim & sim_int, core::MachineState & state)
 std::pair<bool, std::string> lc3::as::assemble(std::string const & asm_filename)
 {
     std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
-    try {
+    if(propagate_exceptions) {
         assembler.assemble(asm_filename, obj_filename);
-    } catch(utils::exception const & e) {
+    } else {
+        try {
+            assembler.assemble(asm_filename, obj_filename);
+        } catch(utils::exception const & e) {
 #ifdef _ENABLE_DEBUG
-        printer.print("caught exception: " + std::string(e.what()) + "\n");
+            printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
-        return std::make_pair(false, obj_filename);
+            return std::make_pair(false, obj_filename);
+        }
     }
     return std::make_pair(true, obj_filename);
 }
@@ -409,13 +421,20 @@ std::pair<bool, std::string> lc3::as::assemble(std::string const & asm_filename)
 std::pair<bool, std::string> lc3::as::convertBin(std::string const & bin_filename)
 {
     std::string obj_filename(bin_filename.substr(0, bin_filename.find_last_of('.')) + ".obj");
-    try {
+    if(propagate_exceptions) {
         assembler.convertBin(bin_filename, obj_filename);
-    } catch(utils::exception const & e) {
+    } else {
+        try {
+            assembler.convertBin(bin_filename, obj_filename);
+        } catch(utils::exception const & e) {
 #ifdef _ENABLE_DEBUG
-        printer.print("caught exception: " + std::string(e.what()) + "\n");
+            printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
-        return std::make_pair(false, obj_filename);
+            return std::make_pair(false, obj_filename);
+        }
     }
     return std::make_pair(true, obj_filename);
 }
+
+void lc3::as::setPropagateExceptions(void) { propagate_exceptions = true; }
+void lc3::as::clearPropagateExceptions(void) { propagate_exceptions = false; }

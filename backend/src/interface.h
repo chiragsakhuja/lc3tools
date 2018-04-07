@@ -80,6 +80,8 @@ namespace lc3
         void registerBreakpointCallback(breakpoint_callback_func_t func);
 
         utils::IPrinter const & getPrinter(void) const;
+        void setPropagateExceptions(void);
+        void clearPropagateExceptions(void);
 
     private:
         utils::IPrinter & printer;
@@ -117,6 +119,8 @@ namespace lc3
 
         uint32_t breakpoint_id = 0;
         std::vector<Breakpoint> breakpoints;
+
+        bool propagate_exceptions = false;
     };
 
     class as
@@ -129,9 +133,14 @@ namespace lc3
         std::pair<bool, std::string> assemble(std::string const & asm_filename);
         std::pair<bool, std::string> convertBin(std::string const & asm_filename);
 
+        void setPropagateExceptions(void);
+        void clearPropagateExceptions(void);
+
     private:
         utils::IPrinter & printer;
         core::Assembler assembler;
+
+        bool propagate_exceptions;
     };
 };
 

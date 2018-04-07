@@ -33,6 +33,7 @@ namespace utils
     class exception : public std::runtime_error
     {
     public:
+        exception(void) : exception("") {}
         exception(std::string const & msg) : std::runtime_error(msg) {}
         virtual const char * what(void) const noexcept override { return std::runtime_error::what(); }
     };

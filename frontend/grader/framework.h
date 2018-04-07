@@ -82,9 +82,9 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check);
         std::cout << "no\n";                                         \
     }                                                                \
     do {} while(false)
-#define VERIFY_OUTPUT(check)                                         \
+#define VERIFY_OUTPUT_NAMED(message, check)                          \
     verify_count += 1;                                               \
-    std::cout << " " << ( #check ) << " => ";                        \
+    std::cout << " " << ( message ) << " => ";                       \
     if(outputCompare(sim.getPrinter(), check)) {                     \
         verify_valid += 1;                                           \
         std::cout << "yes\n";                                        \
@@ -92,3 +92,5 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check);
         std::cout << "no\n";                                         \
     }                                                                \
     do {} while(false)
+#define VERIFY_OUTPUT(check)                                         \
+    VERIFY_OUTPUT_NAMED(#check, check)

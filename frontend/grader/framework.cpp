@@ -78,6 +78,7 @@ int main(int argc, char ** argv)
             BufferedPrinter sim_printer;
             FileInputter sim_inputter;
             lc3::sim simulator(sim_printer, sim_inputter, 1);
+            simulator.setPropagateExceptions();
 
             testBringup(simulator);
 

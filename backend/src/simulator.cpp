@@ -76,12 +76,15 @@ void Simulator::loadOS(void)
 
 void Simulator::simulate(void)
 {
-    state.running = true;
-    collecting_input = true;
-    inputter.beginInput();
     std::thread input_thread;
+    utils::exception exception;
+    bool exception_valid = false;
 
     try {
+        state.running = true;
+        collecting_input = true;
+        inputter.beginInput();
+
         input_thread = std::thread(&core::Simulator::handleInput, this);
         while(state.running && (state.mem[MCR].getValue() & 0x8000) != 0) {
             if(! state.hit_breakpoint) {
@@ -101,16 +104,21 @@ void Simulator::simulate(void)
             events = checkAndSetupInterrupts();
             executeEventChain(events);
         }
-    } catch(std::exception & e) {
-        std::cout << e.what() << "\n";
-        throw e;
-    }
+    } catch(utils::exception & e) {
+        exception = e;
+        exception_valid = true;
+    } catch(std::exception & e) { }
 
     state.running = false;
     collecting_input = false;
-        if(input_thread.joinable()) 
-    input_thread.join();
+    if(input_thread.joinable()) {
+        input_thread.join();
+    }
     inputter.endInput();
+
+    if(exception_valid) {
+        throw exception;
+    }
 }
 
 std::vector<PIEvent> Simulator::executeInstruction(void)
@@ -127,7 +135,7 @@ std::vector<PIEvent> Simulator::executeInstruction(void)
     candidate->assignOperands(encoded_inst);
     logger.printf(lc3::utils::PrintType::P_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
         state.mem[state.pc].getLine().c_str(), encoded_inst);
-    state.pc += 1;
+    state.pc = (state.pc + 1) & 0xFFFF;
     std::vector<PIEvent> events = candidate->execute(state);
 
     return events;

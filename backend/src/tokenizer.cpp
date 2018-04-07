@@ -113,10 +113,12 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
     if(c_str[0] == '0' && c_str[1] != '\0') { c_str += 1; }
 
     try {
-        if(c_str[0] == 'b' || c_str[0] == 'x' || c_str[0] == '#') {
+        if(c_str[0] == 'B' || c_str[0] == 'b' || c_str[0] == 'X' || c_str[0] == 'x' || c_str[0] == '#') {
             std::string conv = std::string(c_str + 1);
             switch(c_str[0]) {
+                case 'B':
                 case 'b': val = std::stoi(conv, nullptr, 2) ; break;
+                case 'X':
                 case 'x': val = std::stoi(conv, nullptr, 16); break;
                 case '#': val = std::stoi(conv)             ; break;
                 default : val = std::stoi(c_str)            ; break;
