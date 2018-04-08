@@ -140,7 +140,7 @@ namespace lc3
         utils::IPrinter & printer;
         core::Assembler assembler;
 
-        bool propagate_exceptions;
+        bool propagate_exceptions = false;
     };
 };
 
