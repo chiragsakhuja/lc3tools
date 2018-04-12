@@ -142,6 +142,7 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(std::make_shared<TRAPInstruction>());
     instructions.push_back(std::make_shared<GETCInstruction>());
     instructions.push_back(std::make_shared<OUTInstruction>());
+    instructions.push_back(std::make_shared<PUTCInstruction>());
     instructions.push_back(std::make_shared<PUTSInstruction>());
     instructions.push_back(std::make_shared<INInstruction>());
     instructions.push_back(std::make_shared<PUTSPInstruction>());

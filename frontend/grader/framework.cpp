@@ -1,6 +1,14 @@
+#include <memory>
+
+#include "common.h"
 #include "console_printer.h"
 #include "console_inputter.h"
 #include "framework.h"
+
+struct CLIArgs
+{
+    uint32_t print_output = false;
+};
 
 void setup(void);
 void testBringup(lc3::sim & sim);
@@ -20,9 +28,18 @@ bool endsWith(std::string const & search, std::string const & suffix)
 void BufferedPrinter::print(std::string const & string)
 {
     std::copy(string.begin(), string.end(), std::back_inserter(display_buffer));
+    if(print_output) {
+        std::cout << string;
+    }
 }
 
-void BufferedPrinter::newline(void) { display_buffer.push_back('\n'); }
+void BufferedPrinter::newline(void)
+{
+    display_buffer.push_back('\n');
+    if(print_output) {
+        std::cout << "\n";
+    }
+}
 
 bool FileInputter::getChar(char & c)
 {
@@ -47,8 +64,16 @@ bool StringInputter::getChar(char & c)
     return true;
 }
 
-int main(int argc, char ** argv)
+int main(int argc, char * argv[])
 {
+    CLIArgs args;
+    std::vector<std::pair<std::string, std::string>> parsed_args = parseCLIArgs(argc, argv);
+    for(auto const & arg : parsed_args) {
+        if(std::get<0>(arg) == "print-output") {
+            args.print_output = true;
+        }
+    }
+
     lc3::ConsolePrinter asm_printer;
     lc3::as assembler(asm_printer, 0);
 
@@ -56,16 +81,17 @@ int main(int argc, char ** argv)
     bool valid_program = true;
     for(int i = 1; i < argc; i += 1) {
         std::string filename(argv[i]);
+        if(filename[0] != '-') {
+            std::pair<bool, std::string> result;
+            if(endsWith(filename, ".bin")) {
+                result = assembler.convertBin(filename);
+            } else {
+                result = assembler.assemble(filename);
+            }
 
-        std::pair<bool, std::string> result;
-        if(endsWith(filename, ".bin")) {
-            result = assembler.convertBin(filename);
-        } else {
-            result = assembler.assemble(filename);
+            if(! result.first) { valid_program = false; }
+            obj_filenames.push_back(result.second);
         }
-
-        if(! result.first) { valid_program = false; }
-        obj_filenames.push_back(result.second);
     }
 
     setup();
@@ -75,7 +101,7 @@ int main(int argc, char ** argv)
 
     if(valid_program) {
         for(TestCase const & test : tests) {
-            BufferedPrinter sim_printer;
+            BufferedPrinter sim_printer(args.print_output);
             FileInputter sim_inputter;
             lc3::sim simulator(sim_printer, sim_inputter, 1);
             simulator.setPropagateExceptions();
@@ -120,7 +146,12 @@ int main(int argc, char ** argv)
     }
 
     std::cout << "==========\n";
-    float percent_points_earned = ((float) total_points_earned) / total_possible_points;
+    float percent_points_earned;
+    if(total_possible_points == 0) {
+        percent_points_earned = 0;
+    } else {
+        percent_points_earned = ((float) total_points_earned) / total_possible_points;
+    }
     std::cout << "total points earned: " << total_points_earned << "/" << total_possible_points << " ("
               << (percent_points_earned * 100) << "%)\n";
 
@@ -131,12 +162,6 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check)
 {
     BufferedPrinter const & buffered_printer = static_cast<BufferedPrinter const &>(printer);
     check += "\n\n--- Halting the LC-3 ---\n\n";
-
-    //std::cout << check;
-    //for(char c : buffered_printer.display_buffer) {
-        //std::cout << c;
-    //}
-    //std::cout << check.size() << " " << buffered_printer.display_buffer.size() << "\n";
 
     if(buffered_printer.display_buffer.size() != check.size()) { return false; }
 

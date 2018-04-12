@@ -19,10 +19,11 @@ std::vector<std::pair<std::string, std::string>> parseCLIArgs(int argc, char * a
                 std::string val_str(equals + 1);
                 parsed_args.push_back(std::make_pair(arg_str, val_str));
             } else {
-                std::string arg_str(argv[i], start_index);
+                std::string arg_str(argv[i], start_index, strlen(argv[i]));
                 parsed_args.push_back(std::make_pair(arg_str, ""));
             }
         }
     }
     return parsed_args;
 }
+

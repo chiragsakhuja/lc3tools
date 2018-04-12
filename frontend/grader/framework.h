@@ -19,11 +19,16 @@ extern uint32_t verify_valid;
 class BufferedPrinter : public lc3::utils::IPrinter
 {
 public:
+    BufferedPrinter(bool print_output) : print_output(print_output) {}
+
     std::vector<char> display_buffer;
 
-    virtual void setColor(lc3::utils::PrintColor color) { (void) color; }
-    virtual void print(std::string const & string);
-    virtual void newline(void);
+    virtual void setColor(lc3::utils::PrintColor color) override { (void) color; }
+    virtual void print(std::string const & string) override;
+    virtual void newline(void) override;
+
+private:
+    bool print_output;
 };
 
 class FileInputter : public lc3::utils::IInputter

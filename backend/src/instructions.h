@@ -473,6 +473,16 @@ namespace core
         }) {}
     };
 
+    class PUTCInstruction : public TRAPInstruction
+    {
+    public:
+        PUTCInstruction(void) : TRAPInstruction("putc", {
+            std::make_shared<FixedOperand>(4, 0xf),
+            std::make_shared<FixedOperand>(4, 0x0),
+            std::make_shared<FixedOperand>(8, 0x21)
+        }) {}
+    };
+
     class PUTSInstruction : public TRAPInstruction
     {
     public:
