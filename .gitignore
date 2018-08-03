@@ -74,3 +74,15 @@ frontend/gui/npm-debug.log
 frontend/gui/npm-debug.log.*
 frontend/gui/thumbs.db
 !.gitkeep
+
+# Ignore more GUI stuff
+frontend/new_gui/.DS_Store
+frontend/new_gui/dist/electron/*
+frontend/new_gui/dist/web/*
+frontend/new_gui/build/*
+frontend/new_gui/!build/icons
+frontend/new_gui/node_modules/
+frontend/new_gui/npm-debug.log
+frontend/new_gui/npm-debug.log.*
+frontend/new_gui/thumbs.db
+frontend/new_gui/!.gitkeep

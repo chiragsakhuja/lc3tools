@@ -1,51 +1,39 @@
 <template>
-  <v-layout row wrap>
-    <v-flex xs12>
-      <v-card>
-        <v-card-title primary-title>
-          Editor
-        </v-card-title>
-      </v-card>
-    </v-flex>
-    <v-flex xs12>
-      <v-card>
-        <v-card-title primary-title>
-          Editor
-        </v-card-title>
-      </v-card>
-    </v-flex>
+  <v-layout>
+    <div class="grid-container">
+      <div>
+        <v-card height="100%">
+          <v-container fluid fill-height>
+            Hello
+          </v-container>
+        </v-card>
+      </div>
+      <div>
+        <v-card height="100%">
+          <v-container fluid fill-height>
+            World
+          </v-container>
+        </v-card>
+      </div>
+    </div>
   </v-layout>
 </template>
 
 <script>
-  import SystemInformation from './WelcomeView/SystemInformation'
-
   export default {
-    name: 'welcome',
-    components: { SystemInformation },
-    methods: {
-      open (link) {
-        this.$electron.shell.openExternal(link)
-      }
-    }
+    name: 'editor',
+    components: {
+    },
+    methods: { },
   }
 </script>
 
 <style scoped>
-  .centered
-  {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .logo
-  {
-    max-width: 100%;
-  }
-
-  .link-btn
-  {
-    width: 150px;
-  }
+.grid-container {
+  display: grid;
+  width: 100%;
+  grid-template-columns: auto;
+  grid-template-rows: 70% auto;
+  grid-gap: 10px;
+}
 </style>
