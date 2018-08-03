@@ -15,7 +15,7 @@
                 }
             }]],
             'link_settings': {
-                'libraries': ['-L<(module_root_dir)/../../../../build/lib', '-llc3core', "-Wl,-rpath,'<(module_root_dir)/../../../../build/lib'"]
+                'libraries': ['<(module_root_dir)/../../../../build/lib/Release/lc3core']
             }
         }
     ]

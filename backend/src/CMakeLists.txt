@@ -11,7 +11,7 @@ file(GLOB CXX_SOURCES ${PROJECT_SOURCE_DIR}/backend/src/*.cpp)
 file(GLOB CXX_HEADERS ${PROJECT_SOURCE_DIR}/backend/src/*.h)
 
 # generate library
-add_library(lc3core SHARED ${CXX_SOURCES} ${CXX_HEADERS})
+add_library(lc3core STATIC ${CXX_SOURCES} ${CXX_HEADERS})
 target_link_libraries(lc3core ${CMAKE_THREAD_LIBS_INIT})
 
 #generate_export_header(lc3core
