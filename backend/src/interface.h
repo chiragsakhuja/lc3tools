@@ -47,6 +47,7 @@ namespace lc3
         void setRunInstLimit(uint32_t inst_limit);
         bool run(void);
         bool runUntilHalt(void);
+        void pause(void);
         bool stepIn(void);
         bool stepOver(void);
         bool stepOut(void);

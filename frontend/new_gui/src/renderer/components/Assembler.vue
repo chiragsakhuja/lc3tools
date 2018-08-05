@@ -55,7 +55,7 @@
           <v-flex xs12 shrink class="editor-console-wrapper">
             <h4 style="text-align: center">{{ getFilename }}</h4>
             <editor class="editor" v-model="editor.currentContent" @init="editorInit" lang="javascript" theme="monokai" height="100%"> </editor>
-            <div class="console" id="console" v-html="console"></div>
+            <div class="console" v-html="console"></div>
           </v-flex>
         </v-layout>
       </v-container>
@@ -69,8 +69,9 @@ import { remote } from "electron";
 import path from "path";
 import Vue from "vue";
 import Vuetify from "vuetify";
-import * as lc3 from "lc3interface";
 import fs from "fs";
+
+import * as lc3 from "lc3interface";
 
 Vue.use(Vuetify);
 
@@ -84,7 +85,7 @@ export default {
         currentFile: "",
         contentChanged: false
       },
-      console: "",
+      console: ""
     };
   },
   components: {
@@ -137,7 +138,7 @@ export default {
       if (this.editor.contentChanged) {
         this.saveFile();
       }
-      //lc3.ClearOutput();
+      lc3.ClearOutput();
       lc3.Assemble(this.editor.currentFile);
       this.console = lc3.GetOutput();
     },
@@ -149,7 +150,7 @@ export default {
     }
   },
   computed: {
-    getFilename: function() {
+    getFilename() {
       return this.editor.currentFile === ""
         ? "Untitled"
         : path.basename(this.editor.currentFile);
@@ -203,5 +204,4 @@ export default {
 .text {
   font-weight: 400;
 }
-
 </style>

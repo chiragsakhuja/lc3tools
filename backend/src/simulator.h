@@ -26,6 +26,7 @@ namespace core
         void loadObjectFile(std::string const & obj_file);
         void loadOS(std::string const & os_path);
         void simulate(void);
+        void pause(void);
         void reset(void);
 
         void registerPreInstructionCallback(callback_func_t func);

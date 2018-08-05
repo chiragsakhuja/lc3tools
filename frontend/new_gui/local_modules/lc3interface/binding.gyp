@@ -7,18 +7,25 @@
             ],
             'target_name': 'lc3interface',
             'sources': ['wrapper.cpp'],
-            'cflags!': ['-fno-exceptions'],
-            'cflags_cc!': ['-fno-exceptions'],
             'conditions': [
                 ['OS=="mac"', {
                     'xcode_settings': {
                         'GCC_ENABLE_CPP_EXCEPTIONS': 'YES'
-                    },
-                    'link_settings': {
-                        'libraries': ['<(module_root_dir)/../../../../build/lib/lc3core']
                     }
                 }],
+                ['OS=="mac" or OS=="linux"', {
+                    'link_settings': {
+                        'libraries': ['<(module_root_dir)/../../../../build/lib/lc3core']
+                    },
+                    'cflags!': ['-fno-exceptions'],
+                    'cflags_cc!': ['-fno-exceptions'],
+                }],
                 ['OS=="win"', {
+                    'msvs_settings': {
+                        'VCCLCompilerTool': {
+                            'ExceptionHandling': '2'
+                        }
+                    },
                     'link_settings': {
                         'libraries': ['<(module_root_dir)/../../../../build/lib/Release/lc3core']
                     }

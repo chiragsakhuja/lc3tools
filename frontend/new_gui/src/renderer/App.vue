@@ -26,7 +26,7 @@ export default {
   name: "lc3tools",
 
   mounted() {
-    lc3.Init();
+    lc3.Init("static/lc3os.obj");
   }
 };
 </script>

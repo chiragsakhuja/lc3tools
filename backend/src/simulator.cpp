@@ -121,6 +121,11 @@ void Simulator::simulate(void)
     }
 }
 
+void Simulator::pause(void)
+{
+    state.running = false;
+}
+
 std::vector<PIEvent> Simulator::executeInstruction(void)
 {
     uint32_t encoded_inst = state.mem[state.pc].getValue();

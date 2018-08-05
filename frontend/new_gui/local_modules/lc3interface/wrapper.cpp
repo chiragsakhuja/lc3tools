@@ -4,6 +4,8 @@
     #define _PRINT_LEVEL 4
 #endif
 
+#include <algorithm>
+
 #include "interface.h"
 #include "ui_printer.h"
 
@@ -22,6 +24,37 @@ utils::UIPrinter *printer;
 utils::UIInputter *inputter;
 lc3::as *as;
 lc3::sim *sim;
+
+class SimulatorAsyncWorker : public Nan::AsyncWorker
+{
+public:
+    SimulatorAsyncWorker(Nan::Callback * callback) : Nan::AsyncWorker(callback) {}
+
+    void Execute(void)
+    {
+        try {
+            sim->run();
+        } catch(lc3::utils::exception const & e) {
+            this->SetErrorMessage(e.what());
+        }
+    }
+
+    void HandleOKCallback(void) {
+        Nan::HandleScope scope;
+        v8::Local<v8::Value> argv[] = {
+            Nan::Null()
+        };
+        Nan::Call(callback->GetFunction(), Nan::GetCurrentContext()->Global(), 1, argv);
+    }
+
+    void HandleErrorCallback(void) {
+        Nan::HandleScope scope;
+        v8::Local<v8::Value> argv[] = {
+            Nan::New(this->ErrorMessage()).ToLocalChecked()
+        };
+        Nan::Call(callback->GetFunction(), Nan::GetCurrentContext()->Global(), 1, argv);
+    }
+};
 
 NAN_METHOD(Init)
 {
@@ -51,6 +84,57 @@ NAN_METHOD(Shutdown)
     delete printer;
 }
 
+NAN_METHOD(Assemble)
+{
+    if(!info[0]->IsString()) {
+        Nan::ThrowError("Must provide filename as a string argument");
+        return;
+    }
+
+    v8::String::Utf8Value str(info[0]->ToString());
+
+    std::string asm_filename((char const *) (*str));
+
+    try {
+        as->assemble(asm_filename);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
+NAN_METHOD(LoadObjectFile)
+{
+    if(!info[0]->IsString()) {
+        Nan::ThrowError("Must provide filename as a string argument");
+        return;
+    }
+
+    v8::String::Utf8Value str(info[0]->ToString());
+    std::string filename((char const *) *str);
+
+    try {
+        sim->loadObjectFile(filename);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
+NAN_METHOD(Run)
+{
+    if(!info[0]->IsFunction()) {
+        Nan::ThrowError("Must provide callback as an argument");
+    }
+
+    Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
+        new Nan::Callback(info[0].As<v8::Function>())
+    ));
+}
+
+NAN_METHOD(Pause)
+{
+    sim->pause();
+}
+
 NAN_METHOD(GetRegValue)
 {
     uint32_t ret_val = 0;
@@ -62,6 +146,7 @@ NAN_METHOD(GetRegValue)
 
     v8::String::Utf8Value str(info[0]->ToString());
     std::string reg_name((char const *) *str);
+    std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
 
     lc3::core::MachineState const & state = sim->getMachineState();
     if(reg_name[0] == 'r') {
@@ -109,24 +194,6 @@ NAN_METHOD(GetMemLine)
     info.GetReturnValue().Set(ret);
 }
 
-NAN_METHOD(Assemble)
-{
-    if(!info[0]->IsString()) {
-        Nan::ThrowError("Must provide filename as a string argument");
-        return;
-    }
-
-    v8::String::Utf8Value str(info[0]->ToString());
-
-    std::string asm_filename((char const *) (*str));
-
-    try {
-        as->assemble(asm_filename);
-    } catch(lc3::utils::exception const & e) {
-        Nan::ThrowError(e.what());
-    }
-}
-
 NAN_METHOD(GetOutput)
 {
     std::vector<std::string> const & output = printer->getOutputBuffer();
@@ -146,6 +213,9 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, Init);
     NAN_EXPORT(target, Shutdown);
     NAN_EXPORT(target, Assemble);
+    NAN_EXPORT(target, LoadObjectFile);
+    NAN_EXPORT(target, Run);
+    NAN_EXPORT(target, Pause);
     NAN_EXPORT(target, GetOutput);
     NAN_EXPORT(target, GetRegValue);
     NAN_EXPORT(target, GetMemValue);

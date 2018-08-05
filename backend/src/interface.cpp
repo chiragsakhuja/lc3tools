@@ -93,6 +93,11 @@ bool lc3::sim::runUntilHalt(void)
     return run();
 }
 
+void lc3::sim::pause(void)
+{
+    simulator.pause();
+}
+
 bool lc3::sim::stepIn(void)
 {
     setRunInstLimit(1);
