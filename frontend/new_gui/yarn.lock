@@ -4323,7 +4323,7 @@ lazy-val@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/lazy-val/-/lazy-val-1.0.3.tgz#bb97b200ef00801d94c317e29dc6ed39e31c5edc"
 
-"lc3interface@file:local_modules/lc3interface":
+"lc3interface@file:./local_modules/lc3interface":
   version "0.10.0"
   dependencies:
     nan "^2.7.0"

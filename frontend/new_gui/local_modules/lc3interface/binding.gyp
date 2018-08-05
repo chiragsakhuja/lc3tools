@@ -15,7 +15,7 @@
                 }],
                 ['OS=="mac" or OS=="linux"', {
                     'link_settings': {
-                        'libraries': ['<(module_root_dir)/../../../../build/lib/lc3core']
+                        'libraries': ['<(module_root_dir)/../../../../build/lib/liblc3core.a']
                     },
                     'cflags!': ['-fno-exceptions'],
                     'cflags_cc!': ['-fno-exceptions'],
