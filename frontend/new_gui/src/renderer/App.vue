@@ -1,15 +1,36 @@
 <template>
   <div id="app">
-    <router-view></router-view>
+    <v-app id="lc3tools" dark>
+      <!-- Toolbar -->
+      <v-toolbar app fixed >
+        <v-toolbar-title><strong>LC3</strong>Tools</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-toolbar-items>
+          <v-btn large flat exact to="/assemble">
+            <v-icon large>code</v-icon>
+          </v-btn>
+          <v-btn large flat exact to="/simulate">
+            <v-icon large>play_arrow</v-icon>
+          </v-btn>
+        </v-toolbar-items>
+      </v-toolbar>
+      <router-view></router-view>
+    </v-app>
   </div>
 </template>
 
 <script>
-  export default {
-    name: 'lc3tools'
+import * as lc3 from "lc3interface";
+
+export default {
+  name: "lc3tools",
+
+  mounted() {
+    lc3.Init();
   }
+};
 </script>
 
 <style>
-  /* CSS */
+/* CSS */
 </style>
