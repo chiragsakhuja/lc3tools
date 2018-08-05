@@ -1,9 +1,8 @@
 <template>
-  <v-app id="assemble" dark>
+  <v-app id="assembler" dark>
 
     <!-- Sidebar -->
     <v-navigation-drawer
-      v-model="drawer"
       fixed
       mini-variant
       permanent
@@ -76,7 +75,7 @@ import fs from "fs";
 Vue.use(Vuetify);
 
 export default {
-  name: "assemble",
+  name: "assembler",
   data: () => {
     return {
       editor: {
@@ -86,7 +85,6 @@ export default {
         contentChanged: false
       },
       console: "",
-      drawer: null
     };
   },
   components: {
@@ -139,7 +137,7 @@ export default {
       if (this.editor.contentChanged) {
         this.saveFile();
       }
-      lc3.ClearOutput();
+      //lc3.ClearOutput();
       lc3.Assemble(this.editor.currentFile);
       this.console = lc3.GetOutput();
     },
@@ -186,12 +184,8 @@ export default {
 .editor-console-wrapper {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: auto 3fr 1fr;
+  grid-template-rows: auto 3fr 170px;
   grid-row-gap: 10px;
-  overflow: hidden;
-}
-
-.no-overflow {
   overflow: hidden;
 }
 
@@ -201,19 +195,13 @@ export default {
 
 .console {
   background-color: #404040;
+  overflow: auto;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 8px;
 }
 
 .text {
   font-weight: 400;
 }
 
-.text-red {
-  color: red;
-}
-.text-green {
-  color: green;
-}
-.text-bold {
-  font-weight: bold;
-}
 </style>

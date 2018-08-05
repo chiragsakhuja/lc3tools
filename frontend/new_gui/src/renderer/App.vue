@@ -2,14 +2,14 @@
   <div id="app">
     <v-app id="lc3tools" dark>
       <!-- Toolbar -->
-      <v-toolbar app fixed >
+      <v-toolbar app fixed dense>
         <v-toolbar-title><strong>LC3</strong>Tools</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-toolbar-items>
-          <v-btn large flat exact to="/assemble">
+          <v-btn large flat exact to="/assembler">
             <v-icon large>code</v-icon>
           </v-btn>
-          <v-btn large flat exact to="/simulate">
+          <v-btn large flat exact to="/simulator">
             <v-icon large>play_arrow</v-icon>
           </v-btn>
         </v-toolbar-items>
@@ -32,5 +32,13 @@ export default {
 </script>
 
 <style>
-/* CSS */
+.text-red {
+  color: red;
+}
+.text-green {
+  color: green;
+}
+.text-bold {
+  font-weight: bold;
+}
 </style>

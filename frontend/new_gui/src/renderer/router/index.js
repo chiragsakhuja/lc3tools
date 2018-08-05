@@ -6,18 +6,18 @@ Vue.use(Router)
 export default new Router({
   routes: [
     {
-      path: '/assemble',
-      name: 'assemble',
-      component: require('@/components/Assemble').default
+      path: '/assembler',
+      name: 'assembler',
+      component: require('@/components/Assembler').default
     },
     {
-      path: '/simulate',
-      name: 'simulate',
-      component: require('@/components/Simulate').default
+      path: '/simulator',
+      name: 'simulator',
+      component: require('@/components/Simulator').default
     },
     {
       path: '*',
-      redirect: '/assemble'
+      redirect: '/assembler'
     }
   ]
 })

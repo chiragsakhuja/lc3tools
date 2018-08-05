@@ -1,5 +1,5 @@
 <template>
-  <v-app id="simulate" dark>
+  <v-app id="simulator" dark>
 
     <!-- Sidebar -->
     <v-navigation-drawer
@@ -73,7 +73,7 @@
               CONSOLE HERE FGT
             </div>
             <div class="memory-wrapper">
-              MEMORY HERE FGT
+              <MemRow v-for="item in items" v-bind:value="item" v-bind:key="item"></MemRow>
             </div>
           </v-flex>
         </v-layout>
@@ -87,20 +87,23 @@
 import Vue from "vue";
 import Vuetify from "vuetify";
 import * as lc3 from "lc3interface";
+import MemRow from "./Simulator/MemRow.vue";
 
 Vue.use(Vuetify);
 
 export default {
-  name: "simulate",
+  name: "simulator",
   data: () => {
     return {
       drawer: null,
       sim: {
         registers: []
-      }
+      },
+      items: [1, 2, 3, 4, 5]
     };
   },
   components: {
+    MemRow
   },
   mounted() {
   },
@@ -141,6 +144,7 @@ export default {
   grid-column: 5 / 9;
   grid-row: 1 / 9;
   border: 1px solid #555;
+  overflow: auto;
 }
 
 .text {
