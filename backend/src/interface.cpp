@@ -4,7 +4,8 @@
 #include "device_regs.h"
 #include "interface.h"
 
-lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level) :
+lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level,
+    std::string const & os_path) :
     printer(printer), simulator(*this, printer, inputter, print_level)
 {
     simulator.registerPreInstructionCallback(lc3::sim::preInstructionCallback);
@@ -13,7 +14,7 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t p
     simulator.registerInterruptExitCallback(lc3::sim::interruptExitCallback);
     simulator.registerSubEnterCallback(lc3::sim::subEnterCallback);
     simulator.registerSubExitCallback(lc3::sim::subExitCallback);
-    simulator.loadOS();
+    simulator.loadOS(os_path);
     restart();
 }
 

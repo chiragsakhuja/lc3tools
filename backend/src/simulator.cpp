@@ -68,9 +68,9 @@ void Simulator::loadObjectFile(std::string const & filename)
     state.mem[MCR].setValue(value | 0x8000);
 }
 
-void Simulator::loadOS(void)
+void Simulator::loadOS(std::string const & os_path)
 {
-    loadObjectFile("lc3os.obj");
+    loadObjectFile(os_path);
     state.pc = RESET_PC;
 }
 

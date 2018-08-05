@@ -24,7 +24,7 @@ namespace core
         ~Simulator(void) = default;
 
         void loadObjectFile(std::string const & obj_file);
-        void loadOS(void);
+        void loadOS(std::string const & os_path);
         void simulate(void);
         void reset(void);
 

@@ -34,8 +34,9 @@ namespace lc3
     class sim
     {
     public:
-        sim(utils::IPrinter & printer, utils::IInputter & inputter) : sim(printer, inputter, DEFAULT_PRINT_LEVEL) {}
-        sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level);
+        sim(utils::IPrinter & printer, utils::IInputter & inputter, std::string os_path) :
+            sim(printer, inputter, DEFAULT_PRINT_LEVEL, os_path) {}
+        sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level, std::string const & os_path);
         ~sim(void) = default;
 
         bool loadObjectFile(std::string const & obj_filename);

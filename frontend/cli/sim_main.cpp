@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
 
     lc3::ConsolePrinter printer;
     lc3::ConsoleInputter inputter;
-    lc3::sim simulator(printer, inputter, args.print_level);
+    lc3::sim simulator(printer, inputter, args.print_level, "lc3os.obj");
 
     simulator.registerBreakpointCallback(breakpointCallback);
 

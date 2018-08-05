@@ -25,11 +25,19 @@ lc3::sim *sim;
 
 NAN_METHOD(Init)
 {
+    if(!info[0]->IsString()) {
+        Nan::ThrowError("Must provide OS path as a string argument");
+        return;
+    }
+
+    v8::String::Utf8Value str(info[0]->ToString());
+    std::string os_path((char const *) *str);
+
     try {
         printer = new utils::UIPrinter();
         inputter = new utils::UIInputter();
         as = new lc3::as(*printer);
-        sim = new lc3::sim(*printer, *inputter);
+        sim = new lc3::sim(*printer, *inputter, _PRINT_LEVEL, os_path);
     } catch(lc3::utils::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -48,7 +56,7 @@ NAN_METHOD(GetRegValue)
     uint32_t ret_val = 0;
 
     if(!info[0]->IsString()) {
-        Nan::ThrowError("Argument must be a string");
+        Nan::ThrowError("Must provide register name as a string argument");
         return;
     }
 
@@ -78,7 +86,7 @@ NAN_METHOD(GetRegValue)
 NAN_METHOD(GetMemValue)
 {
     if(!info[0]->IsNumber()) {
-        Nan::ThrowError("Argument must be a string");
+        Nan::ThrowError("Must provide memory address as an numerical argument");
         return;
     }
 
@@ -91,7 +99,7 @@ NAN_METHOD(GetMemValue)
 NAN_METHOD(GetMemLine)
 {
     if(!info[0]->IsNumber()) {
-        Nan::ThrowError("Argument must be a string");
+        Nan::ThrowError("Must provide memory address as a numerical argument");
         return;
     }
 
@@ -104,7 +112,7 @@ NAN_METHOD(GetMemLine)
 NAN_METHOD(Assemble)
 {
     if(!info[0]->IsString()) {
-        Nan::ThrowError("Argument must be a string");
+        Nan::ThrowError("Must provide filename as a string argument");
         return;
     }
 

@@ -103,7 +103,7 @@ int main(int argc, char * argv[])
         for(TestCase const & test : tests) {
             BufferedPrinter sim_printer(args.print_output);
             FileInputter sim_inputter;
-            lc3::sim simulator(sim_printer, sim_inputter, 1);
+            lc3::sim simulator(sim_printer, sim_inputter, 1, "lc3os.obj");
             simulator.setPropagateExceptions();
 
             testBringup(simulator);
