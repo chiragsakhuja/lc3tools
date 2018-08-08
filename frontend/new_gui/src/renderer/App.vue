@@ -14,7 +14,9 @@
           </v-btn>
         </v-toolbar-items>
       </v-toolbar>
-      <router-view></router-view>
+      <keep-alive>
+        <router-view></router-view>
+      </keep-alive>
     </v-app>
   </div>
 </template>

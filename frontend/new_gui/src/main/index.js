@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain, screen } from 'electron'
 
 /**
  * Set `__static` path to static files in production
@@ -17,10 +17,15 @@ function createWindow () {
   /**
    * Initial window options
    */
+  let screenSize = screen.getPrimaryDisplay().size;
   mainWindow = new BrowserWindow({
-    height: 563,
-    useContentSize: true,
-    width: 1000
+    height: screenSize.height,
+    width: screenSize.width,
+    useContentSize: true
+  })
+
+  mainWindow.webContents.on('dom-ready', () => {
+    mainWindow.maximize();
   })
 
   mainWindow.loadURL(winURL)
