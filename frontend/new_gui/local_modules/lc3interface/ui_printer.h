@@ -8,8 +8,9 @@ namespace utils
     private:
         std::vector<std::string> output_buffer;
         uint32_t pending_colors;
+
     public:
-        UIPrinter(void);
+        UIPrinter(void) : pending_colors(0) {}
 
         virtual void setColor(lc3::utils::PrintColor color) override;
         virtual void print(std::string const & string) override;
@@ -19,11 +20,6 @@ namespace utils
         void clearOutputBuffer(void) { output_buffer.clear(); }
     };
 };
-
-utils::UIPrinter::UIPrinter(void)
-{
-    pending_colors = 0;
-}
 
 void utils::UIPrinter::setColor(lc3::utils::PrintColor color)
 {

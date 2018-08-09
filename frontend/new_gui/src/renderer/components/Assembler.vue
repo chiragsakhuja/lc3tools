@@ -91,7 +91,7 @@ export default {
   components: {
     editor: require("vue2-ace-editor-electron")
   },
-  mounted() {
+  created() {
   },
   methods: {
     newFile(content) {

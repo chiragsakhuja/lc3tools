@@ -27,7 +27,8 @@ import * as lc3 from "lc3interface";
 export default {
   name: "lc3tools",
 
-  mounted() {
+  created() {
+    console.log("App created");
     lc3.Init("static/lc3os.obj");
   }
 };

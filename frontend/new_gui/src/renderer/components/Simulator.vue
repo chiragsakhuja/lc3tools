@@ -19,7 +19,7 @@
           <span>Open File</span>
           <v-list-tile slot="activator" @click="toggleSimulator()">
             <v-list-tile-action>
-              <v-icon v-if="!simStatus.running" large color="green accent-2">play_arrow</v-icon>
+              <v-icon v-if="!sim.running" large color="green accent-2">play_arrow</v-icon>
               <v-icon v-else large color="red accent-2">pause</v-icon>
             </v-list-tile-action>
           </v-list-tile>
@@ -66,17 +66,17 @@
         <v-layout row wrap>
           <v-flex xs12 shrink class="simulator-wrapper">
             <div class="registers-wrapper">
-              {{ regValue }}
+              <div v-for="reg in sim.registers" v-bind:key="reg.id">
+                {{ reg.name }}: {{ reg.value }}
+              </div>
             </div>
             <div class="console-wrapper">
-              <h4 style="text-align: center">Console</h4>
-              <div class="console" v-html="console"></div>
+              <div class="console" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
             </div>
             <div class="memory-wrapper">
-              <MemRow v-for="item in items" v-bind:value="item" v-bind:key="item"></MemRow>
             </div>
             <div class="status-wrapper">
-              {{ getRunStatus }}
+              Instructions executed: {{ inst_executed }}
             </div>
           </v-flex>
         </v-layout>
@@ -103,20 +103,23 @@ export default {
     return {
       drawer: null,
       sim: {
-        registers: []
-      },
-      console: "",
-      regValue: 0,
-      simStatus: {
+        registers: [{name: "r0", value: 0}, {name: "r1", value: 0}, {name: "r2", value: 0}, {name: "r3", value: 0},
+                    {name: "r4", value: 0}, {name: "r5", value: 0}, {name: "r6", value: 0}, {name: "r7", value: 0},
+                    {name: "psr", value: 0}, {name: "pc", value: 0}, {name: "ir", value: 0}],
         running: false,
       },
+      console_str: "",
+      inst_executed: 0,
+      poll_output_handle: null,
       items: [1, 2, 3, 4, 5]
     };
   },
   components: {
-    MemRow
   },
-  mounted() {
+  created() {
+    console.log("Simulator created");
+    lc3.LoadObjectFile("echo.obj");
+    this.updateRegisters();
   },
   methods: {
     openFile(path) {
@@ -136,28 +139,48 @@ export default {
         }
       }
     },
+    updateRegisters() {
+      for(let i = 0; i < this.sim.registers.length; i++) {
+        this.sim.registers[i].value = lc3.GetRegValue(this.sim.registers[i].name);
+      }
+    },
+    endSimulation() {
+      lc3.ClearInput();
+      this.sim.running = false;
+      this.updateRegisters();
+
+      clearInterval(this.poll_output_handle);
+      this.poll_output_handle = null;
+    },
     toggleSimulator() {
-      if(!this.simStatus.running) {
-        lc3.ClearOutput();
-        this.simStatus.running = true;
+      if(!this.poll_output_handle) {
+        this.poll_output_handle = setInterval(() => {
+          this.console_str = lc3.GetOutput();
+          this.inst_executed = lc3.GetInstExecCount();
+        }, 50)
+      }
+      if(!this.sim.running) {
+        lc3.ClearInput();
+        this.sim.running = true;
         return new Promise((resolve, reject) => {
           lc3.Run((error) => {
             if(error) { reject(error); return; }
-            this.console = lc3.GetOutput();
-            this.simStatus.running = false;
+            this.endSimulation();
             resolve();
           })
         });
       } else {
         lc3.Pause();
-        this.regValue = lc3.GetRegValue('r0');
-        this.simStatus.running = false;
+        this.endSimulation();
       }
+    },
+    handleConsoleInput(event) {
+      lc3.AddInput(event.key);
     }
   },
   computed: {
     getRunStatus() {
-      return this.simStatus.running
+      return this.sim.running
         ? "Running"
         : "Not running";
     }
@@ -191,7 +214,15 @@ export default {
 .console-wrapper {
   grid-column: 1;
   grid-row: 2;
-  border: 1px solid #555;
+  background-color: #404040;
+  overflow: hidden;
+}
+
+.console {
+  height: 100%;
+  width: 100%;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 8px;
   overflow: auto;
 }
 

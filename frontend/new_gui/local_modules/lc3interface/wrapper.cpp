@@ -8,22 +8,12 @@
 
 #include "interface.h"
 #include "ui_printer.h"
+#include "ui_inputter.h"
 
-namespace utils
-{
-    class UIInputter : public lc3::utils::IInputter
-    {
-    public:
-        void beginInput(void) {}
-        bool getChar(char & c) { return false; }
-        void endInput(void) {}
-    };
-};
-
-utils::UIPrinter *printer;
-utils::UIInputter *inputter;
-lc3::as *as;
-lc3::sim *sim;
+utils::UIPrinter *printer = nullptr;
+utils::UIInputter *inputter = nullptr;
+lc3::as *as = nullptr;
+lc3::sim *sim = nullptr;
 
 class SimulatorAsyncWorker : public Nan::AsyncWorker
 {
@@ -123,6 +113,7 @@ NAN_METHOD(Run)
 {
     if(!info[0]->IsFunction()) {
         Nan::ThrowError("Must provide callback as an argument");
+        return;
     }
 
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
@@ -133,6 +124,28 @@ NAN_METHOD(Run)
 NAN_METHOD(Pause)
 {
     sim->pause();
+}
+
+NAN_METHOD(ClearInput)
+{
+    inputter->clearInput();
+}
+
+NAN_METHOD(AddInput)
+{
+    if(!info[0]->IsString()) {
+        Nan::ThrowError("Must provide character as as a string argument");
+        return;
+    }
+
+    v8::String::Utf8Value str(info[0]->ToString());
+    std::string c((char const *) *str);
+    if(c.size() != 1) {
+        Nan::ThrowError("String must be a single character");
+        return;
+    }
+
+    inputter->addInput(c[0]);
 }
 
 NAN_METHOD(GetRegValue)
@@ -208,19 +221,32 @@ NAN_METHOD(ClearOutput)
     printer->clearOutputBuffer();
 }
 
+NAN_METHOD(GetInstExecCount)
+{
+    auto ret = Nan::New<v8::Number>(sim->getInstExecCount());
+    info.GetReturnValue().Set(ret);
+}
+
 NAN_MODULE_INIT(Initialize)
 {
     NAN_EXPORT(target, Init);
     NAN_EXPORT(target, Shutdown);
+
     NAN_EXPORT(target, Assemble);
     NAN_EXPORT(target, LoadObjectFile);
+
     NAN_EXPORT(target, Run);
     NAN_EXPORT(target, Pause);
-    NAN_EXPORT(target, GetOutput);
+    NAN_EXPORT(target, ClearInput);
+    NAN_EXPORT(target, AddInput);
+
     NAN_EXPORT(target, GetRegValue);
     NAN_EXPORT(target, GetMemValue);
     NAN_EXPORT(target, GetMemLine);
+    NAN_EXPORT(target, GetOutput);
     NAN_EXPORT(target, ClearOutput);
+
+    NAN_EXPORT(target, GetInstExecCount);
 }
 
 NODE_MODULE(wrapper, Initialize);
