@@ -1,0 +1,44 @@
+#ifndef UI_INPUTTER
+#define UI_INPUTTER
+
+#include <vector>
+
+namespace utils
+{
+    class UIInputter : public lc3::utils::IInputter
+    {
+    private:
+        std::vector<char> buffer;
+
+    public:
+        UIInputter(void) = default;
+
+        virtual void beginInput(void) override {}
+        virtual bool getChar(char & c) override;
+        virtual void endInput(void) override {}
+
+        void clearInput(void);
+        void addInput(char c);
+    };
+};
+
+bool utils::UIInputter::getChar(char & c)
+{
+    if(buffer.empty()) { return false; }
+
+    c = buffer.front();
+    buffer.erase(buffer.begin());
+    return true;
+}
+
+void utils::UIInputter::clearInput(void)
+{
+    buffer.clear();
+}
+
+void utils::UIInputter::addInput(char c)
+{
+    buffer.push_back(c);
+}
+
+#endif
