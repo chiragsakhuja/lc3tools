@@ -28,7 +28,6 @@ export default {
   name: "lc3tools",
 
   created() {
-    console.log("App created");
     lc3.Init("static/lc3os.obj");
   }
 };

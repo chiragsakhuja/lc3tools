@@ -6,6 +6,7 @@
 
 #include <algorithm>
 
+#include "device_regs.h"
 #include "interface.h"
 #include "ui_printer.h"
 #include "ui_inputter.h"
@@ -175,6 +176,8 @@ NAN_METHOD(GetRegValue)
         ret_val = state.psr;
     } else if(reg_name == "pc") {
         ret_val =  state.pc;
+    } else if(reg_name == "mcr") {
+        ret_val = state.mem[MCR].getValue();
     }
 
     auto ret = Nan::New<v8::Number>(ret_val);
