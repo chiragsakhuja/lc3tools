@@ -37,6 +37,7 @@ lex.yy.c
 
 # Ignore build directory
 build/*
+x64/*
 
 # Ignore test cases
 *.asm
@@ -45,26 +46,8 @@ build/*
 backend/src/parser_gen/*
 backend/src/configured_paths.h
 
-# Ignore node files
-frontend/gui/.electron-gyp
-frontend/gui/node_modules
-frontend/gui/build
-frontend/gui/package-lock.json
-frontend/gui2/.electron-gyp
-frontend/gui2/bin/.date-modified
-frontend/gui2/node_modules
-frontend/gui2/addon/node_modules
-frontend/gui2/addon/package-lock.json
-frontend/gui2/addon/bin
-frontend/gui2/addon/build
-frontend/gui2/package-lock.json
-
-# Ignore css (since we're using scss)
-frontend/gui/app/css/*.css
-
-frontend/gui/.babelrc
-frontend/gui/.electron-vue
-frontend/gui/.travis.yml
+# Ignore GUI files
+frontend/gui/.DS_Store
 frontend/gui/dist/electron/*
 frontend/gui/dist/web/*
 frontend/gui/build/*
@@ -73,17 +56,6 @@ frontend/gui/node_modules/
 frontend/gui/npm-debug.log
 frontend/gui/npm-debug.log.*
 frontend/gui/thumbs.db
-!.gitkeep
-
-# Ignore more GUI stuff
-frontend/new_gui/.DS_Store
-frontend/new_gui/dist/electron/*
-frontend/new_gui/dist/web/*
-frontend/new_gui/build/*
-frontend/new_gui/!build/icons
-frontend/new_gui/node_modules/
-frontend/new_gui/npm-debug.log
-frontend/new_gui/npm-debug.log.*
-frontend/new_gui/thumbs.db
-frontend/new_gui/!.gitkeep
-frontend/new_gui/local_modules/lc3interface/build/
+frontend/gui/!.gitkeep
+frontend/gui/local_modules/lc3interface/build/
+frontend/gui/local_modules/lc3interface/build/
