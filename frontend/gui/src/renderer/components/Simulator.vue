@@ -70,25 +70,27 @@
                 <span class="title">Registers</span>
                 <v-data-table hide-headers hide-actions :items="sim.regs">
                   <template slot="items" slot-scope="props">
-                    <td class="reg-cell">{{ props.item.name.toUpperCase() }}</td>
-                    <td class="reg-cell">
-                      <v-edit-dialog :return-value.sync="props.item.value" lazy>
-                        {{ "0x" + props.item.value.toString(16) }}
-                        <v-text-field slot="input" label="Hex Value" v-model="props.item.value">
-                        </v-text-field>
-                      </v-edit-dialog>
-                    </td>
-                    <td class="reg-cell">
-                      <v-edit-dialog :return-value.sync="props.item.value" lazy>
-                        {{ props.item.value }}
-                        <v-text-field slot="input" label="Decimal Value" v-model="props.item.value">
-                        </v-text-field>
-                      </v-edit-dialog>
-                    </td>
-                    <td class="reg-cell">
-                      <span v-if="props.item.name == 'psr'">CC: {{ PSRToCC(props.item.value) }}</span>
-                      <span v-else></span>
-                    </td>
+                    <tr class="reg-wrapper">
+                      <div class="reg-cell">{{ props.item.name.toUpperCase() }}</div>
+                      <div class="reg-cell">
+                        <v-edit-dialog lazy>
+                          {{ "0x" + props.item.value.toString(16) }}
+                          <v-text-field slot="input" label="Hex Value" v-bind:value="'0x'+props.item.value.toString(16)" @change="setRegHex($event, props.item)">
+                          </v-text-field>
+                        </v-edit-dialog>
+                      </div>
+                      <div class="reg-cell">
+                        <v-edit-dialog lazy>
+                          {{ props.item.value }}
+                          <v-text-field slot="input" label="Decimal Value" v-bind:value="props.item.value" @change="setRegDec($event, props.item)">
+                          </v-text-field>
+                        </v-edit-dialog>
+                      </div>
+                      <div class="reg-cell">
+                        <span v-if="props.item.name == 'psr'">CC: {{ PSRToCC(props.item.value) }}</span>
+                        <span v-else></span>
+                      </div>
+                    </tr>
                   </template>
                 </v-data-table>
               </div>
@@ -97,36 +99,42 @@
                 <div class="console" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
               </div>
             </div>
-            <div class="memory-wrapper">
+            <div class="right-wrapper">
               <span class="title">Memory</span>
-              <v-layout row wrap>
-                  <v-text-field solo label="Jump To Location" @change="jumpToMemView"></v-text-field>
-                  <v-spacer></v-spacer>
-                  <v-btn icon @click="jumpToPrevMemView"><v-icon>arrow_back</v-icon></v-btn>
-                  <v-btn icon @click="jumpToNextMemView"><v-icon>arrow_forward</v-icon></v-btn>
-              </v-layout>
-              <v-data-table hide-headers hide-actions :items="mem_view.data">
-                <template slot="items" slot-scope="props">
-                  <td class="reg-cell">{{ "0x" +  props.item.addr.toString(16) }}</td>
-                  <td class="reg-cell">
-                    <v-edit-dialog :return-value.sync="props.item.value" lazy>
-                      {{ "0x" + props.item.value.toString(16) }}
-                      <v-text-field slot="input" label="Hex Value" v-model="props.item.value">
-                      </v-text-field>
-                    </v-edit-dialog>
-                  </td>
-                  <td class="reg-cell">
-                    <v-edit-dialog :return-value.sync="props.item.value" lazy>
-                      {{ props.item.value }}
-                      <v-text-field slot="input" label="Decimal Value" v-model="props.item.value">
-                      </v-text-field>
-                    </v-edit-dialog>
-                  </td>
-                  <td class="reg-cell">
-                    {{ props.item.line }}
-                  </td>
-                </template>
-              </v-data-table>
+              <div class="memview-controls">
+                <v-layout row wrap>
+                    <v-text-field solo label="Jump To Location" @change="jumpToMemView"></v-text-field>
+                    <v-spacer></v-spacer>
+                    <v-btn icon @click="jumpToPrevMemView"><v-icon>arrow_back</v-icon></v-btn>
+                    <v-btn icon @click="jumpToNextMemView"><v-icon>arrow_forward</v-icon></v-btn>
+                </v-layout>
+              </div>
+              <div class="memview" ref="memView">
+                <v-data-table hide-headers hide-actions :items="mem_view.data">
+                  <template slot="items" slot-scope="props">
+                    <tr class="reg-wrapper">
+                      <div class="reg-cell">{{ "0x" +  props.item.addr.toString(16) }}</div>
+                      <div class="reg-cell">
+                        <v-edit-dialog :return-value.sync="props.item.value" lazy>
+                          {{ "0x" + props.item.value.toString(16) }}
+                          <v-text-field slot="input" label="Hex Value" v-model="props.item.value">
+                          </v-text-field>
+                        </v-edit-dialog>
+                      </div>
+                      <div class="reg-cell">
+                        <v-edit-dialog :return-value.sync="props.item.value" lazy>
+                          {{ props.item.value }}
+                          <v-text-field slot="input" label="Decimal Value" v-model="props.item.value">
+                          </v-text-field>
+                        </v-edit-dialog>
+                      </div>
+                      <div class="reg-cell">
+                        {{ props.item.line }}
+                      </div>
+                    </tr>
+                  </template>
+                </v-data-table>
+              </div>
             </div>
             <div class="status-wrapper">
               Instructions executed: {{ inst_executed }}
@@ -173,9 +181,11 @@ export default {
     lc3.LoadObjectFile("echo.obj");
     this.updateRegisters();
   },
-  beforeMount() {
+  beforeMounted() {
     this.mem_view.start = lc3.GetRegValue('pc');
-    for(let i = 0; i < 26; i++) {
+  },
+  mounted() {
+    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 30); i++) {
       this.mem_view.data.push({addr: 0, value: 0, line: ""});
     }
     this.updateMemView();
@@ -222,7 +232,8 @@ export default {
     toggleSimulator() {
       if(!this.poll_output_handle) {
         this.poll_output_handle = setInterval(() => {
-          this.console_str = lc3.GetOutput();
+          this.console_str += lc3.GetOutput();
+          lc3.ClearOutput();
           this.inst_executed = lc3.GetInstExecCount();
         }, 50)
       }
@@ -253,7 +264,7 @@ export default {
       } else if(cc == 0x4) {
         return "P";
       } else {
-        return "Undefined";
+        return "Undefined abcdefghijklmnopqrstuv";
       }
     },
     jumpToMemView(value) {
@@ -265,9 +276,19 @@ export default {
       this.updateMemView();
     },
     jumpToNextMemView() {
-      this.mem_view.start = Math.min(0xffff, this.mem_view.start + this.mem_view.data.length);
+      this.mem_view.start = Math.min(0xffff - this.mem_view.data.length,
+                                     this.mem_view.start + this.mem_view.data.length);
       this.updateMemView();
-    }
+    },
+    setRegHex(event, reg) {
+      reg.value = parseInt(event);
+    },
+    setRegDec(event, reg) {
+      reg.value = parseInt(event);
+    },
+    resizeMemView(size) {
+      console.log(size);
+    },
   },
   computed: {
     getRunStatus() {
@@ -307,9 +328,18 @@ export default {
   overflow: hidden;
 }
 
+.reg-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 4fr;
+}
+
 .reg-cell {
+  text-align: left;
+  padding: 5px;
   height: 30px;
   font-family: 'Courier New', Courier, monospace;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .console-wrapper {
@@ -328,10 +358,22 @@ export default {
   overflow: auto;
 }
 
-.memory-wrapper {
+.right-wrapper {
   grid-column: 2;
   grid-row: 1 / 2;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.memview-controls {
+  flex-basis: content;
+  order: 1;
+}
+
+.memview {
+  flex: 1;
+  order: 2;
 }
 
 .status-wrapper {

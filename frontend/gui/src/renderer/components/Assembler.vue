@@ -22,7 +22,7 @@
             <v-list-tile-action>
               <v-badge color="orange darken-2" overlap>
                 <v-icon large>save</v-icon>
-                <span v-if="editor.contentChanged" slot="badge"><strong>!</strong></span>
+                <span v-if="editor.content_changed" slot="badge"><strong>!</strong></span>
               </v-badge>
             </v-list-tile-action>
           </v-list-tile>
@@ -54,8 +54,8 @@
         <v-layout row wrap>
           <v-flex xs12 shrink class="editor-console-wrapper">
             <h4 style="text-align: center">{{ getFilename }}</h4>
-            <editor class="editor" v-model="editor.currentContent" @init="editorInit" lang="javascript" theme="monokai" height="100%"> </editor>
-            <div class="console" v-html="console"></div>
+            <editor class="editor" v-model="editor.current_content" @init="editorInit" lang="javascript" theme="monokai" height="100%"> </editor>
+            <div class="console" v-html="console_str"></div>
           </v-flex>
         </v-layout>
       </v-container>
@@ -80,12 +80,12 @@ export default {
   data: () => {
     return {
       editor: {
-        originalContent: "",
-        currentContent: "",
-        currentFile: "",
-        contentChanged: false
+        original_content: "",
+        current_content: "",
+        current_file: "",
+        content_changed: false
       },
-      console: ""
+      console_str: ""
     };
   },
   components: {
@@ -96,51 +96,51 @@ export default {
   methods: {
     newFile(content) {
       // Todo: try catch around this
-      let newFile = remote.dialog.showSaveDialog();
+      let new_file = remote.dialog.showSaveDialog();
 
       // Guard against user cancelling
-      if (newFile) {
-        fs.writeFileSync(newFile, content);
-        this.openFile(newFile);
+      if (new_file) {
+        fs.writeFileSync(new_file, content);
+        this.openFile(new_file);
       }
     },
     saveFile() {
       // Todo: try catch around this
       // If we don't have a file, create one
-      if (this.editor.currentFile === "") {
-        this.newFile(this.editor.currentContent);
+      if (this.editor.current_file === "") {
+        this.newFile(this.editor.current_content);
       } else {
-        fs.writeFileSync(this.editor.currentFile, this.editor.currentContent);
-        this.editor.originalContent = this.editor.currentContent;
+        fs.writeFileSync(this.editor.current_file, this.editor.current_content);
+        this.editor.original_content = this.editor.current_content;
       }
     },
     openFile(path) {
       // Todo: try catch around this
       // if not given a path, open a dialog to ask user for file
-      let selectedFiles = [path];
+      let selected_files = [path];
       if (!path) {
-        selectedFiles = remote.dialog.showOpenDialog({
+        selected_files = remote.dialog.showOpenDialog({
           properties: ["openFile"]
         });
       }
 
       // Dialog returns an array of files, we only care about the first one
-      if (selectedFiles) {
-        this.editor.currentFile = selectedFiles[0];
-        this.editor.originalContent = this.editor.currentContent = fs.readFileSync(
-          this.editor.currentFile,
+      if (selected_files) {
+        this.editor.current_file = selected_files[0];
+        this.editor.original_content = this.editor.current_content = fs.readFileSync(
+          this.editor.current_file,
           "utf-8"
         );
       }
     },
     assemble() {
       // save the file if it hasn't been saved
-      if (this.editor.contentChanged) {
+      if (this.editor.content_changed) {
         this.saveFile();
       }
+      lc3.Assemble(this.editor.current_file);
+      this.console_str = lc3.GetOutput();
       lc3.ClearOutput();
-      lc3.Assemble(this.editor.currentFile);
-      this.console = lc3.GetOutput();
     },
     editorInit() {
       require("brace/mode/html");
@@ -151,26 +151,26 @@ export default {
   },
   computed: {
     getFilename() {
-      return this.editor.currentFile === ""
+      return this.editor.current_file === ""
         ? "Untitled"
-        : path.basename(this.editor.currentFile);
+        : path.basename(this.editor.current_file);
     }
   },
   watch: {
-    "editor.currentContent": function(newContent) {
+    "editor.current_content": function(newContent) {
       // Compare against original content to see if it's changed
-      if (newContent !== this.editor.originalContent) {
-        this.editor.contentChanged = true;
+      if (newContent !== this.editor.original_content) {
+        this.editor.content_changed = true;
       } else {
-        this.editor.contentChanged = false;
+        this.editor.content_changed = false;
       }
     },
-    "editor.originalContent": function(newContent) {
+    "editor.original_content": function(newContent) {
       // Compare against original content to see if it's changed
-      if (newContent !== this.editor.originalContent) {
-        this.editor.contentChanged = true;
+      if (newContent !== this.editor.original_content) {
+        this.editor.content_changed = true;
       } else {
-        this.editor.contentChanged = false;
+        this.editor.content_changed = false;
       }
     }
   }
