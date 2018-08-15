@@ -16,6 +16,8 @@
             </v-list-tile-action>
           </v-list-tile>
           <span>Open File</span>
+        </v-tooltip>
+        <v-tooltip right>
           <v-list-tile slot="activator" @click="toggleSimulator()">
             <v-list-tile-action>
               <v-icon v-if="!sim.running" large color="green accent-2">play_arrow</v-icon>
@@ -30,7 +32,7 @@
               <v-icon large>refresh</v-icon>
             </v-list-tile-action>
           </v-list-tile>
-          <span>Restart</span>
+          <span>Reload</span>
         </v-tooltip>
         <v-tooltip right>
           <v-list-tile slot="activator" @click="">
@@ -79,7 +81,7 @@
                             slot="input" label="Hex Value"
                             v-bind:value="toHex(props.item.value)" 
                             @change="setDataValue($event, props.item)"
-                            :rules="[rules.hex]"
+                            :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
@@ -91,7 +93,7 @@
                             slot="input" label="Decimal Value"
                             v-bind:value="props.item.value"
                             @change="setDataValue($event, props.item)"
-                            :rules="[rules.dec]"
+                            :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
@@ -113,20 +115,13 @@
             </div>
             <div class="right-wrapper">
 
-              <span class="title">Memory</span>
-              <div class="memview-controls">
-                <v-layout row wrap>
-                    <v-text-field label="Jump To Location" @change="jumpToMemView"></v-text-field>
-                    <v-spacer></v-spacer>
-                    <v-btn icon @click="jumpToPrevMemView"><v-icon>arrow_back</v-icon></v-btn>
-                    <v-btn icon @click="jumpToNextMemView"><v-icon>arrow_forward</v-icon></v-btn>
-                </v-layout>
-              </div>
-
               <div class="memview" ref="memView">
+                <span class="title">Memory</span>
                 <v-data-table hide-headers hide-actions :items="mem_view.data">
                   <template slot="items" slot-scope="props">
                     <tr class="mem-row">
+                      <div class="pc">X</div>
+                      <div class="pc">X</div>
                       <div class="data-cell">{{ toHex(props.item.addr) }}</div>
                       <div class="data-cell editable">
                         <v-edit-dialog lazy>
@@ -135,7 +130,7 @@
                             slot="input"
                             v-bind:value="toHex(props.item.value)" 
                             @change="setDataValue($event, props.item)"
-                            :rules="[rules.hex]"
+                            :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
@@ -147,7 +142,7 @@
                             slot="input" label="Decimal Value"
                             v-bind:value="props.item.value"
                             @change="setDataValue($event, props.item)"
-                            :rules="[rules.dec]"
+                            :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
@@ -160,10 +155,26 @@
                 </v-data-table>
               </div>
 
-            </div>
+              <div id="controls">
+                  <div id="jump-to-location">
+                    <v-text-field single-line label="Jump To Location" @change="jumpToMemViewStr"></v-text-field>
+                  </div>
+                  <div id="jump-buttons">
+                    <v-tooltip top>
+                      <v-btn flat @click="jumpToPC" slot="activator"><span class="title">PC</span></v-btn>
+                      <span>Jump to PC</span>
+                    </v-tooltip>
+                    <v-tooltip top>
+                      <v-btn icon @click="jumpToPrevMemView" slot="activator"><v-icon>arrow_back</v-icon></v-btn>
+                      <span>{{ toHex((mem_view.start - mem_view.data.length) & 0xffff) }}</span>
+                    </v-tooltip>
+                    <v-tooltip top>
+                      <v-btn icon @click="jumpToNextMemView" slot="activator"><v-icon>arrow_forward</v-icon></v-btn>
+                      <span>{{ toHex((mem_view.start + mem_view.data.length) & 0xffff) }}</span>
+                    </v-tooltip>
+                  </div>
+              </div>
 
-            <div class="status-wrapper">
-              Instructions executed: {{ inst_executed }}
             </div>
 
           </v-flex>
@@ -204,6 +215,10 @@ export default {
         },
         dec: function(value) {
           return (parseInt(value, 10) == value) || "Invalid decimal number"
+        },
+        size16bit: function(value) {
+          let int_value = parseInt(value);
+          return (int_value >= 0 && int_value <= 0xffff) || "Value must be between 0 and 0xFFFF"
         }
       }
     };
@@ -211,7 +226,6 @@ export default {
   components: {
   },
   created() {
-    lc3.LoadObjectFile("echo.obj");
     this.updateRegisters();
   },
   beforeMount() {
@@ -219,7 +233,7 @@ export default {
   },
   mounted() {
     this.mem_view.start = lc3.GetRegValue('pc');
-    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 30) - 1; i++) {
+    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 30) - 2; i++) {
       this.mem_view.data.push({addr: 0, value: 0, line: ""});
     }
     this.updateMemView();
@@ -241,27 +255,6 @@ export default {
           lc3.LoadObjectFile(selectedFiles[i]);
         }
       }
-    },
-    updateRegisters() {
-      for(let i = 0; i < this.sim.regs.length; i++) {
-        this.sim.regs[i].value = lc3.GetRegValue(this.sim.regs[i].name);
-      }
-    },
-    updateMemView() {
-      for(let i = 0; i < this.mem_view.data.length; i++) {
-        let addr = this.mem_view.start + i;
-        this.mem_view.data[i].addr = addr;
-        this.mem_view.data[i].value = lc3.GetMemValue(addr);
-        this.mem_view.data[i].line = lc3.GetMemLine(addr);
-      }
-    },
-    endSimulation() {
-      lc3.ClearInput();
-      this.sim.running = false;
-      this.updateRegisters();
-
-      clearInterval(this.poll_output_handle);
-      this.poll_output_handle = null;
     },
     toggleSimulator() {
       if(!this.poll_output_handle) {
@@ -286,24 +279,56 @@ export default {
         this.endSimulation();
       }
     },
+    endSimulation() {
+      lc3.ClearInput();
+      this.sim.running = false;
+
+      this.updateRegisters();
+      this.updateMemView();
+
+      clearInterval(this.poll_output_handle);
+      this.poll_output_handle = null;
+    },
+
+    // UI update functions
     handleConsoleInput(event) {
       lc3.AddInput(event.key);
     },
-    jumpToMemView(value) {
-      this.mem_view.start = parseInt(value);
-      this.updateMemView();
-    },
-    jumpToPrevMemView() {
-      this.mem_view.start = Math.max(0, this.mem_view.start - this.mem_view.data.length);
-      this.updateMemView();
-    },
-    jumpToNextMemView() {
-      this.mem_view.start = Math.min(0xffff - this.mem_view.data.length,
-                                     this.mem_view.start + this.mem_view.data.length);
-      this.updateMemView();
-    },
     setDataValue(event, data_cell) {
       data_cell.value = parseInt(event);
+    },
+    updateRegisters() {
+      for(let i = 0; i < this.sim.regs.length; i++) {
+        this.sim.regs[i].value = lc3.GetRegValue(this.sim.regs[i].name);
+      }
+    },
+    updateMemView() {
+      for(let i = 0; i < this.mem_view.data.length; i++) {
+        let addr = (this.mem_view.start + i) & 0xffff;
+        this.mem_view.data[i].addr = addr;
+        this.mem_view.data[i].value = lc3.GetMemValue(addr);
+        this.mem_view.data[i].line = lc3.GetMemLine(addr);
+      }
+    },
+
+    // Memory view jump functions
+    jumpToMemView(new_start) {
+      this.mem_view.start = new_start & 0xffff;
+      this.updateMemView();
+    },
+    jumpToMemViewStr(value) {
+      this.jumpToMemView(parseInt(value));
+    },
+    jumpToPrevMemView() {
+      let new_start = this.mem_view.start - this.mem_view.data.length;
+      this.jumpToMemView(new_start);
+    },
+    jumpToNextMemView() {
+      let new_start = this.mem_view.start + this.mem_view.data.length;
+      this.jumpToMemView(new_start);
+    },
+    jumpToPC() {
+      this.jumpToMemView(lc3.GetRegValue("PC"));
     },
 
     // Helper functions
@@ -316,11 +341,12 @@ export default {
       } else if(cc == 0x4) {
         return "P";
       } else {
-        return "Undefined abcdefghijklmnopqrstuv";
+        return "Undefined";
       }
     },
     toHex(value) {
-      return "0x" + value.toString(16);
+      let hex = value.toString(16);
+      return "0x" + "0".repeat(4 - hex.length) + hex;
     }
   },
   computed: {
@@ -343,8 +369,8 @@ export default {
 
 .simulator-wrapper {
   display: grid;
-  grid-template-columns: 50% auto;
-  grid-template-rows: 95% auto;
+  grid-template-columns: 30% auto;
+  grid-template-rows: 100%;
   grid-gap: 10px;
   overflow: hidden;
 }
@@ -377,7 +403,7 @@ export default {
 
 .reg-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr 1fr 1fr 2fr;
 }
 
 /* Console styles */
@@ -419,26 +445,33 @@ export default {
 }
 
 /* Memory view controls styles */
-.memview-controls {
+#controls {
   flex-basis: content;
-  order: 1;
+  order: 2;
+
+  display: grid;
+  grid-template-columns: 30% auto;
+  grid-template-rows: auto;
+}
+
+#jump-to-location {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+#jump-buttons {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 /* Memory view styles */
 .memview {
   flex: 1;
-  order: 2;
+  order: 1;
 }
 
 .mem-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 4fr;
-}
-
-/* Status bar styles */
-.status-wrapper {
-  grid-column: 1 / 3;
-  grid-row: 2;
-  overflow: auto;
+  grid-template-columns: 1.5em 1.5em 1fr 1fr 1fr 4fr;
 }
 </style>
