@@ -18,13 +18,17 @@ lc3::sim *sim = nullptr;
 
 class SimulatorAsyncWorker : public Nan::AsyncWorker
 {
+private:
+    std::function<void(void)> run_function;
+
 public:
-    SimulatorAsyncWorker(Nan::Callback * callback) : Nan::AsyncWorker(callback) {}
+    SimulatorAsyncWorker(std::function<void(void)> run_function, Nan::Callback * callback) :
+        Nan::AsyncWorker(callback), run_function(run_function) {}
 
     void Execute(void)
     {
         try {
-            sim->run();
+            run_function();
         } catch(lc3::utils::exception const & e) {
             this->SetErrorMessage(e.what());
         }
@@ -118,6 +122,46 @@ NAN_METHOD(Run)
     }
 
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
+        []() { sim->run(); },
+        new Nan::Callback(info[0].As<v8::Function>())
+    ));
+}
+
+NAN_METHOD(StepIn)
+{
+    if(!info[0]->IsFunction()) {
+        Nan::ThrowError("Must provide callback as an argument");
+        return;
+    }
+
+    Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
+        []() { sim->stepIn(); },
+        new Nan::Callback(info[0].As<v8::Function>())
+    ));
+}
+
+NAN_METHOD(StepOut)
+{
+    if(!info[0]->IsFunction()) {
+        Nan::ThrowError("Must provide callback as an argument");
+        return;
+    }
+
+    Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
+        []() { sim->stepOut(); },
+        new Nan::Callback(info[0].As<v8::Function>())
+    ));
+}
+
+NAN_METHOD(StepOver)
+{
+    if(!info[0]->IsFunction()) {
+        Nan::ThrowError("Must provide callback as an argument");
+        return;
+    }
+
+    Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
+        []() { sim->stepOver(); },
         new Nan::Callback(info[0].As<v8::Function>())
     ));
 }
@@ -184,6 +228,43 @@ NAN_METHOD(GetRegValue)
     info.GetReturnValue().Set(ret);
 }
 
+NAN_METHOD(SetRegValue)
+{
+    uint32_t ret_val = 0;
+
+    if(!info[0]->IsString()) {
+        Nan::ThrowError("First argument must be register name as a string");
+        return;
+    }
+
+    if(!info[1]->IsNumber()) {
+        Nan::ThrowError("Second argument must be value as a number");
+        return;
+    }
+
+    v8::String::Utf8Value str(info[0]->ToString());
+    std::string reg_name((char const *) *str);
+    std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
+    uint32_t value = (uint32_t) info[1]->NumberValue();
+
+    lc3::core::MachineState & state = sim->getMachineState();
+    if(reg_name[0] == 'r') {
+        uint32_t reg_num = reg_name[1] - '0';
+        if(reg_num > 7) {
+            Nan::ThrowError("GPR must be R0 through R7");
+            return;
+        }
+        state.regs[reg_num] = value;
+    } else if(reg_name == "psr") {
+        state.psr = value;
+    } else if(reg_name == "pc") {
+        state.pc = value;
+    } else if(reg_name == "mcr") {
+        state.mem[MCR].setValue(value);
+    }
+}
+
+
 NAN_METHOD(GetMemValue)
 {
     if(!info[0]->IsNumber()) {
@@ -195,6 +276,24 @@ NAN_METHOD(GetMemValue)
     lc3::core::MachineState const & state = sim->getMachineState();
     auto ret = Nan::New<v8::Number>(state.mem[addr].getValue());
     info.GetReturnValue().Set(ret);
+}
+
+NAN_METHOD(SetMemValue)
+{
+    if(!info[0]->IsNumber()) {
+        Nan::ThrowError("First argument must be a memory address as a number");
+        return;
+    }
+
+    if(!info[1]->IsNumber()) {
+        Nan::ThrowError("Second argument must be value as a number");
+        return;
+    }
+
+    uint32_t addr = (uint32_t) info[0]->NumberValue();
+    uint32_t value = (uint32_t) info[1]->NumberValue();
+    lc3::core::MachineState & state = sim->getMachineState();
+    state.mem[addr].setValue(value);
 }
 
 NAN_METHOD(GetMemLine)
@@ -239,12 +338,17 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, LoadObjectFile);
 
     NAN_EXPORT(target, Run);
+    NAN_EXPORT(target, StepIn);
+    NAN_EXPORT(target, StepOver);
+    NAN_EXPORT(target, StepOut);
     NAN_EXPORT(target, Pause);
     NAN_EXPORT(target, ClearInput);
     NAN_EXPORT(target, AddInput);
 
     NAN_EXPORT(target, GetRegValue);
+    NAN_EXPORT(target, SetRegValue);
     NAN_EXPORT(target, GetMemValue);
+    NAN_EXPORT(target, SetMemValue);
     NAN_EXPORT(target, GetMemLine);
     NAN_EXPORT(target, GetOutput);
     NAN_EXPORT(target, ClearOutput);

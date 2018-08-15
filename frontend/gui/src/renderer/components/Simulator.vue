@@ -18,7 +18,7 @@
           <span>Open File</span>
         </v-tooltip>
         <v-tooltip right>
-          <v-list-tile slot="activator" @click="toggleSimulator()">
+          <v-list-tile slot="activator" @click="toggleSimulator('run')">
             <v-list-tile-action>
               <v-icon v-if="!sim.running" large color="green accent-2">play_arrow</v-icon>
               <v-icon v-else large color="red accent-2">pause</v-icon>
@@ -35,7 +35,7 @@
           <span>Reload</span>
         </v-tooltip>
         <v-tooltip right>
-          <v-list-tile slot="activator" @click="">
+          <v-list-tile slot="activator" @click="toggleSimulator('over')">
             <v-list-tile-action>
               <v-icon large>redo</v-icon>
             </v-list-tile-action>
@@ -43,17 +43,17 @@
           <span>Step Over</span>
         </v-tooltip>
         <v-tooltip right>
-          <v-list-tile slot="activator" @click="">
+          <v-list-tile slot="activator" @click="toggleSimulator('in')">
             <v-list-tile-action>
-              <v-icon large>arrow_downward</v-icon>
+              <v-icon large>subdirectory_arrow_right</v-icon>
             </v-list-tile-action>
           </v-list-tile>
           <span>Step In</span>
         </v-tooltip>
         <v-tooltip right>
-          <v-list-tile slot="activator" @click="">
+          <v-list-tile slot="activator" @click="toggleSimulator('out')">
             <v-list-tile-action>
-              <v-icon large>arrow_upward</v-icon>
+              <v-icon large>subdirectory_arrow_left</v-icon>
             </v-list-tile-action>
           </v-list-tile>
           <span>Step Out</span>
@@ -80,7 +80,7 @@
                           <v-text-field
                             slot="input" label="Hex Value"
                             v-bind:value="toHex(props.item.value)" 
-                            @change="setDataValue($event, props.item)"
+                            @change="setDataValue($event, props.item, 'reg')"
                             :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
@@ -92,7 +92,7 @@
                           <v-text-field
                             slot="input" label="Decimal Value"
                             v-bind:value="props.item.value"
-                            @change="setDataValue($event, props.item)"
+                            @change="setDataValue($event, props.item, 'reg')"
                             :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
@@ -120,8 +120,12 @@
                 <v-data-table hide-headers hide-actions :items="mem_view.data">
                   <template slot="items" slot-scope="props">
                     <tr class="mem-row">
-                      <div class="pc">X</div>
-                      <div class="pc">X</div>
+                      <div class="pc">
+                        <v-icon v-if="PCAt(props.item.addr)" color=red>arrow_forward</v-icon>
+                      </div>
+                      <div class="data-cell breakpoint" @click="toggleBreakpoint($event, props.item.addr)">
+                        <v-icon v-if="breakpointAt(props.item.addr)" color=red>report</v-icon>
+                      </div>
                       <div class="data-cell">{{ toHex(props.item.addr) }}</div>
                       <div class="data-cell editable">
                         <v-edit-dialog lazy>
@@ -129,7 +133,7 @@
                           <v-text-field
                             slot="input"
                             v-bind:value="toHex(props.item.value)" 
-                            @change="setDataValue($event, props.item)"
+                            @change="setDataValue($event, props.item, 'mem')"
                             :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
@@ -141,7 +145,7 @@
                           <v-text-field
                             slot="input" label="Decimal Value"
                             v-bind:value="props.item.value"
-                            @change="setDataValue($event, props.item)"
+                            @change="setDataValue($event, props.item, 'mem')"
                             :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
@@ -200,9 +204,11 @@ export default {
   data: () => {
     return {
       sim: {
+        // !! Do not change the order of these registers because regs[9] is referenced everywhere for PC !!
         regs: [{name: "r0", value: 0},  {name: "r1", value: 0}, {name: "r2", value: 0}, {name: "r3", value: 0},
                {name: "r4", value: 0},  {name: "r5", value: 0}, {name: "r6", value: 0}, {name: "r7", value: 0},
                {name: "psr", value: 0}, {name: "pc", value: 0}, {name: "ir", value: 0}, {name: "mcr", value: 0}],
+        breakpoints: [],
         running: false,
       },
       mem_view: {start: 0x3000, data: []},
@@ -226,17 +232,15 @@ export default {
   components: {
   },
   created() {
-    this.updateRegisters();
   },
   beforeMount() {
     this.mem_view.data.push({addr: 0, value: 0, line: ""});
   },
   mounted() {
-    this.mem_view.start = lc3.GetRegValue('pc');
     for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 30) - 2; i++) {
       this.mem_view.data.push({addr: 0, value: 0, line: ""});
     }
-    this.updateMemView();
+    this.updateUI();
   },
   methods: {
     openFile(path) {
@@ -255,24 +259,25 @@ export default {
           lc3.LoadObjectFile(selectedFiles[i]);
         }
       }
+      this.mem_view.start = lc3.GetRegValue('pc');
+      this.updateUI();
     },
-    toggleSimulator() {
+    toggleSimulator(run_function_str) {
       if(!this.poll_output_handle) {
-        this.poll_output_handle = setInterval(() => {
-          this.console_str += lc3.GetOutput();
-          lc3.ClearOutput();
-          this.inst_executed = lc3.GetInstExecCount();
-        }, 50)
+        this.poll_output_handle = setInterval(this.updateConsole, 50)
       }
       if(!this.sim.running) {
-        lc3.ClearInput();
         this.sim.running = true;
         return new Promise((resolve, reject) => {
-          lc3.Run((error) => {
+          let callback = (error) => {
             if(error) { reject(error); return; }
             this.endSimulation();
             resolve();
-          })
+          };
+          if(run_function_str == "in") { lc3.StepIn(callback); }
+          else if(run_function_str == "out") { lc3.StepOut(callback); }
+          else if(run_function_str == "over") { lc3.StepOver(callback); }
+          else { lc3.Run(callback); }
         });
       } else {
         lc3.Pause();
@@ -282,9 +287,9 @@ export default {
     endSimulation() {
       lc3.ClearInput();
       this.sim.running = false;
+      this.sim.regs[9].value;
 
-      this.updateRegisters();
-      this.updateMemView();
+      this.updateUI();
 
       clearInterval(this.poll_output_handle);
       this.poll_output_handle = null;
@@ -294,27 +299,49 @@ export default {
     handleConsoleInput(event) {
       lc3.AddInput(event.key);
     },
-    setDataValue(event, data_cell) {
+    setDataValue(event, data_cell, type) {
       data_cell.value = parseInt(event);
+      if(type == "reg") {
+        lc3.SetRegValue(data_cell.name, data_cell.value);
+      } else if(type == "mem") {
+        lc3.SetMemValue(data_cell.addr, data_cell.value);
+      }
+      this.updateUI();
     },
-    updateRegisters() {
+    updateUI() {
+      // Registers
       for(let i = 0; i < this.sim.regs.length; i++) {
         this.sim.regs[i].value = lc3.GetRegValue(this.sim.regs[i].name);
       }
-    },
-    updateMemView() {
+
+      // Memory
       for(let i = 0; i < this.mem_view.data.length; i++) {
         let addr = (this.mem_view.start + i) & 0xffff;
         this.mem_view.data[i].addr = addr;
         this.mem_view.data[i].value = lc3.GetMemValue(addr);
         this.mem_view.data[i].line = lc3.GetMemLine(addr);
       }
+
+      // Console
+      this.console_str += lc3.GetOutput();
+      lc3.ClearOutput();
+      this.inst_executed = lc3.GetInstExecCount();
+    },
+
+    toggleBreakpoint(event, addr) {
+      this.sim.breakpoints.push(addr);
+    },
+    breakpointAt(addr) {
+      return this.sim.breakpoints.includes(addr);
+    },
+    PCAt(addr) {
+      return addr == this.sim.regs[9].value;
     },
 
     // Memory view jump functions
     jumpToMemView(new_start) {
       this.mem_view.start = new_start & 0xffff;
-      this.updateMemView();
+      this.updateUI();
     },
     jumpToMemViewStr(value) {
       this.jumpToMemView(parseInt(value));
@@ -350,11 +377,6 @@ export default {
     }
   },
   computed: {
-    getRunStatus() {
-      return this.sim.running
-        ? "Running"
-        : "Not running";
-    }
   },
   watch: {
   }
@@ -384,15 +406,15 @@ export default {
 
 .data-cell {
   text-align: left;
-  padding: 5px;
   height: 30px;
+  padding-left: 5px;
+  line-height: 30px !important;
   font-family: 'Courier New', Courier, monospace;
   overflow: hidden;
   white-space: nowrap;
 }
 
 .editable {
-  text-decoration: underline;
 }
 
 /* Register view styles */
@@ -462,6 +484,7 @@ export default {
 #jump-buttons {
   grid-column: 2;
   grid-row: 1;
+  text-align: right;
 }
 
 /* Memory view styles */
@@ -472,6 +495,6 @@ export default {
 
 .mem-row {
   display: grid;
-  grid-template-columns: 1.5em 1.5em 1fr 1fr 1fr 4fr;
+  grid-template-columns: 2em 2em 1fr 1fr 1fr 4fr;
 }
 </style>
