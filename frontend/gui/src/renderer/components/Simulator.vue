@@ -68,7 +68,7 @@
           <v-flex xs12 shrink class="simulator-wrapper">
             <div class="left-wrapper">
 
-              <div class="regs-wrapper">
+              <div class="regs-wrapper" ref="regView">
                 <span class="title">Registers</span>
                 <v-data-table hide-headers hide-actions :items="sim.regs">
                   <template slot="items" slot-scope="props">
@@ -120,11 +120,12 @@
                 <v-data-table hide-headers hide-actions :items="mem_view.data">
                   <template slot="items" slot-scope="props">
                     <tr class="mem-row">
+                      <a class="data-cell breakpoint" @click="toggleBreakpoint(props.item.addr)">
+                        <v-icon v-if="breakpointAt(props.item.addr)" color="red">report</v-icon>
+                        <v-icon v-else small color="grey">report</v-icon>
+                      </a>
                       <div class="pc">
-                        <v-icon v-if="PCAt(props.item.addr)" color=red>arrow_forward</v-icon>
-                      </div>
-                      <div class="data-cell breakpoint" @click="toggleBreakpoint($event, props.item.addr)">
-                        <v-icon v-if="breakpointAt(props.item.addr)" color=red>report</v-icon>
+                        <v-icon v-if="PCAt(props.item.addr)" color=red>play</v-icon>
                       </div>
                       <div class="data-cell">{{ toHex(props.item.addr) }}</div>
                       <div class="data-cell editable">
@@ -237,7 +238,7 @@ export default {
     this.mem_view.data.push({addr: 0, value: 0, line: ""});
   },
   mounted() {
-    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 30) - 2; i++) {
+    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 45) - 1; i++) {
       this.mem_view.data.push({addr: 0, value: 0, line: ""});
     }
     this.updateUI();
@@ -328,8 +329,13 @@ export default {
       this.inst_executed = lc3.GetInstExecCount();
     },
 
-    toggleBreakpoint(event, addr) {
-      this.sim.breakpoints.push(addr);
+    toggleBreakpoint(addr) {
+      let idx = this.sim.breakpoints.indexOf(addr);
+      if(idx == -1) {
+        this.sim.breakpoints.push(addr);
+      } else {
+        this.sim.breakpoints.splice(idx, 1);
+      }
     },
     breakpointAt(addr) {
       return this.sim.breakpoints.includes(addr);
@@ -405,13 +411,22 @@ export default {
 }
 
 .data-cell {
+  height: 40px;
+  line-height: 40px;
   text-align: left;
-  height: 30px;
   padding-left: 5px;
-  line-height: 30px !important;
   font-family: 'Courier New', Courier, monospace;
+  font-size: 1.25em;
   overflow: hidden;
   white-space: nowrap;
+  align-self: center;
+}
+
+.breakpoint {
+  text-align: center !important;
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-rows: auto;
 }
 
 .editable {
@@ -495,6 +510,7 @@ export default {
 
 .mem-row {
   display: grid;
-  grid-template-columns: 2em 2em 1fr 1fr 1fr 4fr;
+  grid-template-columns: 2em 3em 1fr 1fr 1fr 4fr;
+  align-items: center;
 }
 </style>
