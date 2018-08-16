@@ -427,6 +427,7 @@ export default {
 
 .breakpoint {
   text-align: center !important;
+  cursor: pointer;
 }
 
 .editable {
@@ -436,6 +437,7 @@ export default {
 .regs-wrapper {
   order: 1;
   overflow: hidden;
+  user-select: none;
 }
 
 .reg-row {
@@ -509,6 +511,7 @@ export default {
 .memview {
   flex: 1;
   order: 1;
+  user-select: none;
 }
 
 .mem-row {
