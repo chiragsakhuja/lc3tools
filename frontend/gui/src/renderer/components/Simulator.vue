@@ -265,7 +265,7 @@ export default {
     },
     toggleSimulator(run_function_str) {
       if(!this.poll_output_handle) {
-        this.poll_output_handle = setInterval(this.updateConsole, 50)
+        this.poll_output_handle = setInterval(this.updateUI, 50)
       }
       if(!this.sim.running) {
         this.sim.running = true;
