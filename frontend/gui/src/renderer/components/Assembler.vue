@@ -53,9 +53,9 @@
       <v-container fluid fill-height>
         <v-layout row wrap>
           <v-flex xs12 shrink class="editor-console-wrapper">
-            <h4 style="text-align: center">{{ getFilename }}</h4>
-            <editor class="editor" v-model="editor.current_content" @init="editorInit" lang="javascript" theme="textmate" height="100%"> </editor>
-            <div class="console" v-html="console_str"></div>
+            <h3 style="text-align: center"><strong>{{ getFilename }}</strong></h3>
+            <editor class="editor elevation-2" v-model="editor.current_content" @init="editorInit" lang="javascript" theme="textmate" height="100%" width="98%"> </editor>
+            <div class="console elevation-4" v-html="console_str"></div>
           </v-flex>
         </v-layout>
       </v-container>
@@ -192,13 +192,13 @@ export default {
 
 .editor {
   overflow: hidden;
+  justify-self: center;
 }
 
 .console {
-  background-color: white;
   overflow: auto;
   font-family: 'Courier New', Courier, monospace;
-  padding: 8px;
+  margin: 15px 10px 5px 10px;
 }
 
 .text {

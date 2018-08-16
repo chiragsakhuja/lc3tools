@@ -20,7 +20,7 @@
         <v-tooltip right>
           <v-list-tile slot="activator" @click="toggleSimulator('run')">
             <v-list-tile-action>
-              <v-icon v-if="!sim.running" large color="green accent-2">play_arrow</v-icon>
+              <v-icon v-if="!sim.running" large>play_arrow</v-icon>
               <v-icon v-else large color="red accent-2">pause</v-icon>
             </v-list-tile-action>
           </v-list-tile>
@@ -69,11 +69,11 @@
             <div class="left-wrapper">
 
               <div class="regs-wrapper" ref="regView">
-                <span class="title">Registers</span>
-                <v-data-table hide-headers hide-actions :items="sim.regs">
+                <h3 class="view-header">Registers</h3>
+                <v-data-table class="elevation-4" hide-headers hide-actions :items="sim.regs">
                   <template slot="items" slot-scope="props">
                     <tr class="reg-row">
-                      <div class="data-cell">{{ props.item.name.toUpperCase() }}</div>
+                      <div class="data-cell"><strong>{{ props.item.name.toUpperCase() }}</strong></div>
                       <div class="data-cell editable">
                         <v-edit-dialog lazy>
                           {{ toHex(props.item.value) }}
@@ -108,7 +108,7 @@
               </div>
 
               <div class="console-wrapper">
-                <div class="console-header"><span class="title">Console</span></div>
+                <h3 class="view-header">Console</h3>
                 <div class="console" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
               </div>
 
@@ -116,8 +116,8 @@
             <div class="right-wrapper">
 
               <div class="memview" ref="memView">
-                <span class="title">Memory</span>
-                <v-data-table hide-headers hide-actions :items="mem_view.data">
+                <h3 class="view-header">Memory</h3>
+                <v-data-table class="elevation-4" hide-headers hide-actions :items="mem_view.data">
                   <template slot="items" slot-scope="props">
                     <tr class="mem-row">
                       <a class="data-cell breakpoint" @click="toggleBreakpoint(props.item.addr)">
@@ -127,7 +127,7 @@
                       <div class="pc">
                         <v-icon v-if="PCAt(props.item.addr)" color="blue">play_arrow</v-icon>
                       </div>
-                      <div class="data-cell">{{ toHex(props.item.addr) }}</div>
+                      <div class="data-cell"><strong>{{ toHex(props.item.addr) }}</strong></div>
                       <div class="data-cell editable">
                         <v-edit-dialog lazy>
                           {{ toHex(props.item.value) }}
@@ -153,7 +153,7 @@
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell">
-                        {{ props.item.line }}
+                        <i>{{ props.item.line }}</i>
                       </div>
                     </tr>
                   </template>
@@ -390,6 +390,16 @@ export default {
 </script>
 
 <style scoped>
+/* Utility classes */
+.text-center {
+  text-align: center;
+}
+
+.view-header {
+  text-align: center;
+  padding-bottom: 5px;
+}
+
 .container {
   padding: 12px;
   overflow: hidden;
@@ -435,6 +445,7 @@ export default {
 
 /* Register view styles */
 .regs-wrapper {
+  padding: 0px 5px 5px 5px;
   order: 1;
   overflow: hidden;
   user-select: none;
@@ -444,6 +455,7 @@ export default {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 2fr;
   align-items: center;
+  padding-left: 10px;
 }
 
 /* Console styles */
@@ -454,6 +466,7 @@ export default {
   flex: 1;
   order: 2;
   overflow: hidden;
+  padding: 0px 5px 5px 5px;
 }
 
 .console-header {
@@ -470,12 +483,14 @@ export default {
   font-size: 1.25em;
   padding: 8px;
   overflow: auto;
+  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
 }
 
 .console:focus {
   font-size: 1.25em;
   outline: none;
-  border: 1px solid orange;
+  /* border: 1px solid orange; */
+  box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
 }
 
 .right-wrapper {
@@ -494,6 +509,7 @@ export default {
   display: grid;
   grid-template-columns: 30% auto;
   grid-template-rows: auto;
+  align-items: center;
 }
 
 #jump-to-location {
@@ -512,6 +528,7 @@ export default {
   flex: 1;
   order: 1;
   user-select: none;
+  padding: 0px 5px 5px 5px;
 }
 
 .mem-row {
