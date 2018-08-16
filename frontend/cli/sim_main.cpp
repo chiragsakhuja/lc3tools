@@ -275,7 +275,7 @@ void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens)
             return;
         }
 
-        bool removed = simulator.removeBreakpoint(id);
+        bool removed = simulator.removeBreakpointByID(id);
         if(! removed) {
             std::cout << "invalid id\n";
             return;

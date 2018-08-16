@@ -333,15 +333,17 @@ export default {
       let idx = this.sim.breakpoints.indexOf(addr);
       if(idx == -1) {
         this.sim.breakpoints.push(addr);
+        lc3.SetBreakpoint(addr);
       } else {
         this.sim.breakpoints.splice(idx, 1);
+        lc3.RemoveBreakpoint(addr);
       }
     },
     breakpointAt(addr) {
       return this.sim.breakpoints.includes(addr);
     },
     PCAt(addr) {
-      return addr == this.sim.regs[9].value;
+      return addr == this.sim.regs[9].value && !this.sim.running;
     },
 
     // Memory view jump functions
@@ -378,7 +380,7 @@ export default {
       }
     },
     toHex(value) {
-      let hex = value.toString(16);
+      let hex = value.toString(16).toUpperCase();
       return "0x" + "0".repeat(4 - hex.length) + hex;
     }
   },
