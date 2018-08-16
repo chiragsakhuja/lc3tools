@@ -270,12 +270,35 @@ lc3::Breakpoint lc3::sim::setBreakpoint(uint32_t addr)
     return bp;
 }
 
-bool lc3::sim::removeBreakpoint(uint32_t id)
+bool lc3::sim::removeBreakpointByID(uint32_t id)
 {
     auto it = breakpoints.begin();
     bool found = false;
     for(; it != breakpoints.end(); ++it) {
         if(it->id == id) {
+            found = true;
+            break;
+        }
+    }
+
+    if(found) {
+        breakpoints.erase(it);
+    }
+
+    return found;
+}
+
+bool lc3::sim::removeBreakpointByAddr(uint32_t addr)
+{
+#ifdef _ENABLE_DEBUG
+    assert(addr <= 0xffff);
+#else
+    addr &= 0xffff;
+#endif
+    auto it = breakpoints.begin();
+    bool found = false;
+    for(; it != breakpoints.end(); ++it) {
+        if(it->loc == addr) {
             found = true;
             break;
         }

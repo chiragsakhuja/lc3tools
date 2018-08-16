@@ -166,7 +166,7 @@
                   </div>
                   <div id="jump-buttons">
                     <v-tooltip top>
-                      <v-btn flat @click="jumpToPC" slot="activator"><span class="title">PC</span></v-btn>
+                      <v-btn flat @click="jumpToPC(true)" slot="activator"><span class="title">PC</span></v-btn>
                       <span>Jump to PC</span>
                     </v-tooltip>
                     <v-tooltip top>
@@ -265,7 +265,7 @@ export default {
     },
     toggleSimulator(run_function_str) {
       if(!this.poll_output_handle) {
-        this.poll_output_handle = setInterval(this.updateConsole, 50)
+        this.poll_output_handle = setInterval(this.updateUI, 50)
       }
       if(!this.sim.running) {
         this.sim.running = true;
@@ -333,15 +333,17 @@ export default {
       let idx = this.sim.breakpoints.indexOf(addr);
       if(idx == -1) {
         this.sim.breakpoints.push(addr);
+        lc3.SetBreakpoint(addr);
       } else {
         this.sim.breakpoints.splice(idx, 1);
+        lc3.RemoveBreakpoint(addr);
       }
     },
     breakpointAt(addr) {
       return this.sim.breakpoints.includes(addr);
     },
     PCAt(addr) {
-      return addr == this.sim.regs[9].value;
+      return addr == this.sim.regs[9].value && !this.sim.running;
     },
 
     // Memory view jump functions
@@ -360,8 +362,17 @@ export default {
       let new_start = this.mem_view.start + this.mem_view.data.length;
       this.jumpToMemView(new_start);
     },
-    jumpToPC() {
-      this.jumpToMemView(lc3.GetRegValue("PC"));
+    jumpToPC(jump_if_in_view) {
+      let mem_view_end = (this.mem_view.start + this.mem_view.data.length) & 0xffff;
+      console.log(mem_view_end);
+      let pc = this.sim.regs[9].value & 0xffff;
+      let in_view = pc >= this.mem_view.start && pc < mem_view_end;
+      if(this.mem_view.start > mem_view_end) {
+        in_view = pc >= this.mem_view.start || pc < mem_view_end;
+      }
+      if(jump_if_in_view || !in_view) {
+        this.jumpToMemView(lc3.GetRegValue("PC"));
+      }
     },
 
     // Helper functions
@@ -378,7 +389,7 @@ export default {
       }
     },
     toHex(value) {
-      let hex = value.toString(16);
+      let hex = value.toString(16).toUpperCase();
       return "0x" + "0".repeat(4 - hex.length) + hex;
     }
   },

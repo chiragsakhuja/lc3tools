@@ -171,28 +171,6 @@ NAN_METHOD(Pause)
     sim->pause();
 }
 
-NAN_METHOD(ClearInput)
-{
-    inputter->clearInput();
-}
-
-NAN_METHOD(AddInput)
-{
-    if(!info[0]->IsString()) {
-        Nan::ThrowError("Must provide character as as a string argument");
-        return;
-    }
-
-    v8::String::Utf8Value str(info[0]->ToString());
-    std::string c((char const *) *str);
-    if(c.size() != 1) {
-        Nan::ThrowError("String must be a single character");
-        return;
-    }
-
-    inputter->addInput(c[0]);
-}
-
 NAN_METHOD(GetRegValue)
 {
     uint32_t ret_val = 0;
@@ -264,7 +242,6 @@ NAN_METHOD(SetRegValue)
     }
 }
 
-
 NAN_METHOD(GetMemValue)
 {
     if(!info[0]->IsNumber()) {
@@ -309,6 +286,28 @@ NAN_METHOD(GetMemLine)
     info.GetReturnValue().Set(ret);
 }
 
+NAN_METHOD(ClearInput)
+{
+    inputter->clearInput();
+}
+
+NAN_METHOD(AddInput)
+{
+    if(!info[0]->IsString()) {
+        Nan::ThrowError("Must provide character as as a string argument");
+        return;
+    }
+
+    v8::String::Utf8Value str(info[0]->ToString());
+    std::string c((char const *) *str);
+    if(c.size() != 1) {
+        Nan::ThrowError("String must be a single character");
+        return;
+    }
+
+    inputter->addInput(c[0]);
+}
+
 NAN_METHOD(GetOutput)
 {
     std::vector<std::string> const & output = printer->getOutputBuffer();
@@ -321,6 +320,28 @@ NAN_METHOD(GetOutput)
 NAN_METHOD(ClearOutput)
 {
     printer->clearOutputBuffer();
+}
+
+NAN_METHOD(SetBreakpoint)
+{
+    if(!info[0]->IsNumber()) {
+        Nan::ThrowError("Must provide memory address as a numerical argument");
+        return;
+    }
+
+    uint32_t addr = (uint32_t) info[0]->NumberValue();
+    sim->setBreakpoint(addr);
+}
+
+NAN_METHOD(RemoveBreakpoint)
+{
+    if(!info[0]->IsNumber()) {
+        Nan::ThrowError("Must provide memory address as a numerical argument");
+        return;
+    }
+
+    uint32_t addr = (uint32_t) info[0]->NumberValue();
+    sim->removeBreakpointByAddr(addr);
 }
 
 NAN_METHOD(GetInstExecCount)
@@ -342,16 +363,20 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, StepOver);
     NAN_EXPORT(target, StepOut);
     NAN_EXPORT(target, Pause);
-    NAN_EXPORT(target, ClearInput);
-    NAN_EXPORT(target, AddInput);
 
     NAN_EXPORT(target, GetRegValue);
     NAN_EXPORT(target, SetRegValue);
     NAN_EXPORT(target, GetMemValue);
     NAN_EXPORT(target, SetMemValue);
     NAN_EXPORT(target, GetMemLine);
+
+    NAN_EXPORT(target, ClearInput);
+    NAN_EXPORT(target, AddInput);
     NAN_EXPORT(target, GetOutput);
     NAN_EXPORT(target, ClearOutput);
+
+    NAN_EXPORT(target, SetBreakpoint);
+    NAN_EXPORT(target, RemoveBreakpoint);
 
     NAN_EXPORT(target, GetInstExecCount);
 }

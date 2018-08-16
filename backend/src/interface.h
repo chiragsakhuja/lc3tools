@@ -71,7 +71,8 @@ namespace lc3
         void setCC(char value);
 
         Breakpoint setBreakpoint(uint32_t addr);
-        bool removeBreakpoint(uint32_t id);
+        bool removeBreakpointByID(uint32_t id);
+        bool removeBreakpointByAddr(uint32_t addr);
 
         void registerPreInstructionCallback(callback_func_t func);
         void registerPostInstructionCallback(callback_func_t func);
