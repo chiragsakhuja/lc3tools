@@ -125,14 +125,14 @@
                         <v-icon v-else small color="grey">report</v-icon>
                       </a>
                       <div class="pc">
-                        <v-icon v-if="PCAt(props.item.addr)" color=red>play</v-icon>
+                        <v-icon v-if="PCAt(props.item.addr)" color="blue">play_arrow</v-icon>
                       </div>
                       <div class="data-cell">{{ toHex(props.item.addr) }}</div>
                       <div class="data-cell editable">
                         <v-edit-dialog lazy>
                           {{ toHex(props.item.value) }}
                           <v-text-field
-                            slot="input"
+                            slot="input" label="Hex Value"
                             v-bind:value="toHex(props.item.value)" 
                             @change="setDataValue($event, props.item, 'mem')"
                             :rules="[rules.hex, rules.size16bit]"
@@ -420,13 +420,13 @@ export default {
   overflow: hidden;
   white-space: nowrap;
   align-self: center;
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-rows: auto;
 }
 
 .breakpoint {
   text-align: center !important;
-  display: grid;
-  grid-template-columns: auto;
-  grid-template-rows: auto;
 }
 
 .editable {
@@ -441,6 +441,7 @@ export default {
 .reg-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 2fr;
+  align-items: center;
 }
 
 /* Console styles */
@@ -464,11 +465,13 @@ export default {
   width: 100%;
   background-color: #424242;
   font-family: 'Courier New', Courier, monospace;
+  font-size: 1.25em;
   padding: 8px;
   overflow: auto;
 }
 
 .console:focus {
+  font-size: 1.25em;
   outline: none;
   border: 1px solid orange;
 }
@@ -510,7 +513,7 @@ export default {
 
 .mem-row {
   display: grid;
-  grid-template-columns: 2em 3em 1fr 1fr 1fr 4fr;
+  grid-template-columns: 3em 2em 1fr 1fr 1fr 4fr;
   align-items: center;
 }
 </style>
