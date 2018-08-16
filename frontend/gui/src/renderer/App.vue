@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <v-app id="lc3tools" dark>
+    <v-app id="lc3tools" light>
       <!-- Toolbar -->
       <v-toolbar app fixed dense>
         <v-toolbar-title><strong>LC3</strong>Tools</v-toolbar-title>

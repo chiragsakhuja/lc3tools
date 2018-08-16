@@ -1,5 +1,5 @@
 <template>
-  <v-app id="simulator" dark>
+  <v-app id="simulator" light>
 
     <!-- Sidebar -->
     <v-navigation-drawer
@@ -465,7 +465,7 @@ export default {
   order: 2;
   height: 100%;
   width: 100%;
-  background-color: #424242;
+  background-color: white;
   font-family: 'Courier New', Courier, monospace;
   font-size: 1.25em;
   padding: 8px;

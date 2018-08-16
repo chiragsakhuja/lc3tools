@@ -1,5 +1,5 @@
 <template>
-  <v-app id="assembler" dark>
+  <v-app id="assembler" light>
 
     <!-- Sidebar -->
     <v-navigation-drawer
@@ -54,7 +54,7 @@
         <v-layout row wrap>
           <v-flex xs12 shrink class="editor-console-wrapper">
             <h4 style="text-align: center">{{ getFilename }}</h4>
-            <editor class="editor" v-model="editor.current_content" @init="editorInit" lang="javascript" theme="monokai" height="100%"> </editor>
+            <editor class="editor" v-model="editor.current_content" @init="editorInit" lang="javascript" theme="textmate" height="100%"> </editor>
             <div class="console" v-html="console_str"></div>
           </v-flex>
         </v-layout>
@@ -146,7 +146,7 @@ export default {
       require("brace/mode/html");
       require("brace/mode/javascript");
       require("brace/mode/less");
-      require("brace/theme/monokai");
+      require("brace/theme/textmate");
     }
   },
   computed: {
@@ -195,7 +195,7 @@ export default {
 }
 
 .console {
-  background-color: #404040;
+  background-color: white;
   overflow: auto;
   font-family: 'Courier New', Courier, monospace;
   padding: 8px;
