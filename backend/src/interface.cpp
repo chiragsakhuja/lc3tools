@@ -4,9 +4,9 @@
 #include "device_regs.h"
 #include "interface.h"
 
-lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level,
-    std::string const & os_path) :
-    printer(printer), simulator(*this, printer, inputter, print_level)
+lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, std::string const & os_path,
+    uint32_t print_level, bool propagate_exceptions) :
+    printer(printer), simulator(*this, printer, inputter, print_level), propagate_exceptions(propagate_exceptions)
 {
     simulator.registerPreInstructionCallback(lc3::sim::preInstructionCallback);
     simulator.registerPostInstructionCallback(lc3::sim::postInstructionCallback);
@@ -14,7 +14,17 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t p
     simulator.registerInterruptExitCallback(lc3::sim::interruptExitCallback);
     simulator.registerSubEnterCallback(lc3::sim::subEnterCallback);
     simulator.registerSubExitCallback(lc3::sim::subExitCallback);
-    simulator.loadOS(os_path);
+    if(propagate_exceptions) {
+        simulator.loadOS(os_path);
+    } else {
+        try {
+            simulator.loadOS(os_path);
+        } catch(utils::exception const & e) {
+#ifdef _ENABLE_DEBUG
+            printer.print("caught exception: " + std::string(e.what()) + "\n");
+#endif
+        }
+    }
     restart();
 }
 
@@ -72,6 +82,7 @@ void lc3::sim::setRunInstLimit(uint32_t inst_limit)
 
 bool lc3::sim::run(void)
 {
+    restart();
     if(propagate_exceptions) {
         simulator.simulate();
     } else {
@@ -226,6 +237,10 @@ void lc3::sim::setPC(uint32_t value)
     value = std::min(value & 0xffff, 0xfe00u);
 #endif
     getMachineState().pc = value;
+    while(! getMachineState().sys_call_types.empty()) {
+        getMachineState().sys_call_types.pop();
+    }
+    sub_depth = 0;
 
     // re-enable system
     restart();
@@ -401,6 +416,7 @@ void lc3::sim::postInstructionCallback(lc3::sim & sim_int, core::MachineState & 
 
 void lc3::sim::interruptEnterCallback(lc3::sim & sim_int, core::MachineState & state)
 {
+    sim_int.sub_depth += 1;
     if(sim_int.interrupt_enter_callback_v) {
         sim_int.interrupt_enter_callback(state);
     }
@@ -408,6 +424,7 @@ void lc3::sim::interruptEnterCallback(lc3::sim & sim_int, core::MachineState & s
 
 void lc3::sim::interruptExitCallback(lc3::sim & sim_int, core::MachineState & state)
 {
+    sim_int.sub_depth -= 1;
     if(sim_int.interrupt_exit_callback_v) {
         sim_int.interrupt_exit_callback(state);
     }

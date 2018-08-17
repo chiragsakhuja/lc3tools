@@ -543,17 +543,24 @@ std::vector<PIEvent> NOTInstruction::execute(MachineState const & state)
 
 std::vector<PIEvent> RTIInstruction::execute(MachineState const & state)
 {
+    if(state.sp_type_in_use == MachineState::SPType::USP) {
+        // TODO: RTI is NOP if in user space but should eventually cause a privilege exception
+        return {};
+    }
+
     bool pc_change_mem;
     PIEvent pc_change;
     uint32_t pc_value = state.readMem(state.regs[6], pc_change_mem, pc_change);
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
 
     std::vector<PIEvent> ret {
         std::make_shared<PCEvent>(pc_value),
+        std::make_shared<RegEvent>(6, state.regs[6] + 1),
         std::make_shared<PSREvent>(psr_value),
+        std::make_shared<RegEvent>(6, state.regs[6] + 2),
     };
 
     if(pc_change_mem) {
@@ -632,12 +639,17 @@ std::vector<PIEvent> TRAPInstruction::execute(MachineState const & state)
     PIEvent psr_change;
     uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
 
+    uint32_t sp = state.backup_sp;
+    if(state.sp_type_in_use == MachineState::SPType::SSP) {
+        sp = state.regs[6];
+    }
+
     std::vector<PIEvent> ret {
         std::make_shared<SwapSPEvent>(MachineState::SPType::SSP),
-        std::make_shared<RegEvent>(6, state.regs[6] - 1),
-        std::make_shared<MemWriteEvent>(state.regs[6] - 1, psr_value),
-        std::make_shared<RegEvent>(6, state.regs[6] - 2),
-        std::make_shared<MemWriteEvent>(state.regs[6] - 2, state.pc),
+        std::make_shared<RegEvent>(6, sp - 1),
+        std::make_shared<MemWriteEvent>(sp - 1, psr_value),
+        std::make_shared<RegEvent>(6, sp - 2),
+        std::make_shared<MemWriteEvent>(sp - 2, state.pc),
         std::make_shared<PSREvent>(psr_value & 0x7fff),
         std::make_shared<PCEvent>(vector & 0xffff),
     };

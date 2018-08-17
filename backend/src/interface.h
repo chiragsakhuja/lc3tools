@@ -34,9 +34,8 @@ namespace lc3
     class sim
     {
     public:
-        sim(utils::IPrinter & printer, utils::IInputter & inputter, std::string os_path) :
-            sim(printer, inputter, DEFAULT_PRINT_LEVEL, os_path) {}
-        sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level, std::string const & os_path);
+        sim(utils::IPrinter & printer, utils::IInputter & inputter, std::string const & os_path,
+            uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false);
         ~sim(void) = default;
 
         bool loadObjectFile(std::string const & obj_filename);
@@ -123,14 +122,14 @@ namespace lc3
         uint32_t breakpoint_id = 0;
         std::vector<Breakpoint> breakpoints;
 
-        bool propagate_exceptions = false;
+        bool propagate_exceptions;
     };
 
     class as
     {
     public:
-        as(utils::IPrinter & printer) : as(printer, DEFAULT_PRINT_LEVEL) {}
-        as(utils::IPrinter & printer, uint32_t print_level) : printer(printer), assembler(printer, print_level) {}
+        as(utils::IPrinter & printer, uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false) :
+            printer(printer), assembler(printer, print_level), propagate_exceptions(propagate_exceptions) {}
         ~as(void) = default;
 
         std::pair<bool, std::string> assemble(std::string const & asm_filename);
@@ -143,7 +142,7 @@ namespace lc3
         utils::IPrinter & printer;
         core::Assembler assembler;
 
-        bool propagate_exceptions = false;
+        bool propagate_exceptions;
     };
 };
 

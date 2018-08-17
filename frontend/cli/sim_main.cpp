@@ -40,7 +40,7 @@ int main(int argc, char * argv[])
 
     lc3::ConsolePrinter printer;
     lc3::ConsoleInputter inputter;
-    lc3::sim simulator(printer, inputter, args.print_level, "lc3os.obj");
+    lc3::sim simulator(printer, inputter, "lc3os.obj", args.print_level);
 
     simulator.registerBreakpointCallback(breakpointCallback);
 
@@ -60,7 +60,7 @@ void help(void)
 {
     std::cout << "break <action> [args...] - performs action (see break help for details)\n"
               << "help                     - display this message\n"
-              << "list                     - display the next instruction to be executed\n"
+              << "list [N]                 - display the next instruction to be executed with N rows of context\n"
               << "load <filename>          - loads an object file\n"
               << "mem <start> [<end>]      - display values in memory addresses start to end\n"
               << "quit                     - exit the simulator\n"
@@ -111,9 +111,15 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
     } else if(command == "help") {
         help();
     } else if(command == "list") {
+        int32_t context;
+        command_tokens >> context;
+        if(command_tokens.fail()) {
+            context = 2;
+        }
+
         uint32_t pc = simulator.getPC();
-        for(int32_t pos = -2; pos <= 2; pos += 1) {
-            if(((int32_t) pc) + pos > 0) {
+        for(int32_t pos = -context; pos <= context; pos += 1) {
+            if(((int32_t) pc) + pos >= 0 && ((int32_t) pc) + pos <= 0xffff) {
                 if(pos == 0) {
                     std::cout << "--> ";
                 } else {
@@ -183,12 +189,10 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
         uint32_t start_count = simulator.getInstExecCount();
         auto start_time = std::chrono::steady_clock::now();
 #endif
-        if(command_tokens.fail()) {
-            simulator.run();
-        } else {
+        if(! command_tokens.fail()) {
             simulator.setRunInstLimit(inst_limit);
-            simulator.run();
         }
+        simulator.run();
 #ifdef _ENABLE_DEBUG
         auto end_time = std::chrono::steady_clock::now();
         uint32_t end_count = simulator.getInstExecCount();

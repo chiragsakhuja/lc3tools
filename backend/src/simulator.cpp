@@ -158,11 +158,18 @@ std::vector<PIEvent> Simulator::checkAndSetupInterrupts(void)
 
     uint32_t value = state.mem[KBSR].getValue();
     if((value & 0xc000) == 0xc000) {
+        logger.printf(lc3::utils::PrintType::P_EXTRA, true, "jumping to keyboard ISR");
+
+        uint32_t sp = state.backup_sp;
+        if(state.sp_type_in_use == MachineState::SPType::SSP) {
+            sp = state.regs[6];
+        }
+
         ret.push_back(std::make_shared<SwapSPEvent>(MachineState::SPType::SSP));
-        ret.push_back(std::make_shared<RegEvent>(6, state.regs[6] - 1));
-        ret.push_back(std::make_shared<MemWriteEvent>(state.regs[6] - 1, state.mem[PSR].getValue()));
-        ret.push_back(std::make_shared<RegEvent>(6, state.regs[6] - 2));
-        ret.push_back(std::make_shared<MemWriteEvent>(state.regs[6] - 2, state.pc));
+        ret.push_back(std::make_shared<RegEvent>(6, sp - 1));
+        ret.push_back(std::make_shared<MemWriteEvent>(sp - 1, state.mem[PSR].getValue()));
+        ret.push_back(std::make_shared<RegEvent>(6, sp - 2));
+        ret.push_back(std::make_shared<MemWriteEvent>(sp - 2, state.pc));
         ret.push_back(std::make_shared<PSREvent>((state.mem[PSR].getValue() & 0x78ff) | 0x0400));
         ret.push_back(std::make_shared<PCEvent>(state.mem[0x0180].getValue()));
         ret.push_back(std::make_shared<MemWriteEvent>(KBSR, state.mem[KBSR].getValue() & 0x7fff));
