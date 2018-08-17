@@ -4,6 +4,7 @@
 #include <array>
 #include <functional>
 #include <memory>
+#include <stack>
 #include <vector>
 
 #include "device_regs.h"
@@ -23,6 +24,16 @@ namespace core
 
     struct MachineState
     {
+        enum class SysCallType {
+              TRAP
+            , INT
+        };
+
+        enum class SPType {
+              SSP
+            , USP
+        };
+
         MachineState(sim & simulator, lc3::utils::Logger & logger) : logger(logger), simulator(simulator) {}
 
         std::vector<MemEntry> mem;
@@ -30,6 +41,9 @@ namespace core
         uint32_t pc;
 
         uint32_t backup_sp;
+        SPType sp_type_in_use;
+
+        std::stack<SysCallType> sys_call_types;
 
         lc3::utils::Logger & logger;
         std::vector<char> console_buffer;
@@ -62,6 +76,8 @@ namespace core
         , EVENT_MEM
         , EVENT_SWAP_SP
         , EVENT_CALLBACK
+        , PUSH_SYS_CALL_TYPE
+        , POP_SYS_CALL_TYPE
     };
 
     class IEvent
@@ -129,12 +145,14 @@ namespace core
     class SwapSPEvent : public IEvent
     {
     public:
-        SwapSPEvent() : IEvent(EventType::EVENT_SWAP_SP) {}
+        SwapSPEvent(MachineState::SPType target) : IEvent(EventType::EVENT_SWAP_SP), target(target) {}
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {
             return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.backup_sp);
         }
+    private:
+        MachineState::SPType target;
     };
 
     class CallbackEvent : public IEvent
@@ -149,6 +167,29 @@ namespace core
     private:
         bool callback_v;
         callback_func_t callback;
+    };
+
+    class PushSysCallTypeEvent : public IEvent
+    {
+    public:
+        PushSysCallTypeEvent(MachineState::SysCallType call_type) : IEvent(EventType::PUSH_SYS_CALL_TYPE),
+            call_type(call_type) {}
+        virtual void updateState(MachineState & state) const override {
+            state.sys_call_types.push(call_type);
+        }
+        virtual std::string getOutputString(MachineState const & state) const override { (void)state; return ""; }
+    private:
+        MachineState::SysCallType call_type;
+    };
+
+    class PopSysCallTypeEvent : public IEvent
+    {
+    public:
+        PopSysCallTypeEvent() : IEvent(EventType::POP_SYS_CALL_TYPE) {}
+        virtual void updateState(MachineState & state) const override {
+            state.sys_call_types.pop();
+        }
+        virtual std::string getOutputString(MachineState const & state) const override { (void)state; return ""; }
     };
 };
 };

@@ -294,8 +294,8 @@
     .FILL BAD_TRAP    ; xFF
 
 ; the interrupt vector table
-    .FILL INT_PRIV   ; x00
-    .FILL INT_ILL    ; x01
+    .FILL EX_PRIV   ; x00
+    .FILL EX_ILL    ; x01
     .FILL BAD_INT    ; x02
     .FILL BAD_INT    ; x03
     .FILL BAD_INT    ; x04
@@ -579,7 +579,7 @@ TRAP_GETC
     LDI R0,OS_KBSR        ; wait for a keystroke
     BRzp TRAP_GETC
     LDI R0,OS_KBDR        ; read it and return
-    RET
+    RTI
 
 TRAP_OUT
     ST R1,TOUT_R1        ; save R1
@@ -588,7 +588,7 @@ TRAP_OUT_WAIT
     BRzp TRAP_OUT_WAIT
     STI R0,OS_DDR        ; write the character and return
     LD R1,TOUT_R1        ; restore R1
-    RET
+    RTI
 
 TRAP_PUTS
     ST R0,OS_R0        ; save R0, R1, and R7
@@ -607,7 +607,7 @@ TRAP_PUTS_DONE
     LD R0,OS_R0        ; restore R0, R1, and R7
     LD R1,OS_R1
     LD R7,OS_R7
-    RET
+    RTI
 
 TRAP_IN
     ST R7,TIN_R7        ; save R7 (no need to save R0, since we
@@ -622,7 +622,7 @@ TRAP_IN
     OUT
     LD R0,OS_R0        ; restore the character
     LD R7,TIN_R7        ; restore R7
-    RET
+    RTI
 
 TRAP_PUTSP
     ; NOTE: This trap will end when it sees any NUL, even in
@@ -668,7 +668,7 @@ TRAP_PUTSP_DONE
     LD R2,OS_R2
     LD R3,OS_R3
     LD R7,OS_R7
-    RET
+    RTI
 
 TRAP_HALT
     ; an infinite loop of lowering OS_MCR's MSB
@@ -686,15 +686,19 @@ BAD_TRAP
     PUTS
     BRnzp TRAP_HALT        ; execute HALT
 
-    ; interrupts aren't really defined, since privilege doesn't
-    ; quite work
-INT_PRIV    RTI
-INT_ILL        RTI
+EX_PRIV
+    ; print an error message, then HALT
+    LEA R0,EX_PRIV_MSG     ; give an error message
+    PUTS
+    BRnzp TRAP_HALT        ; execute HALT
+
+EX_ILL         RTI
 BAD_INT        RTI
 
 TRAP_IN_MSG    .STRINGZ "\nInput a character> "
-TRAP_HALT_MSG    .STRINGZ "\n\n--- Halting the LC-3 ---\n\n"
-BAD_TRAP_MSG    .STRINGZ "\n\n--- Undefined trap executed ---\n\n"
+TRAP_HALT_MSG  .STRINGZ "\n\n--- Halting the LC-3 ---\n\n"
+EX_PRIV_MSG    .STRINGZ "\n\n--- Access violation ---\n\n"
+BAD_TRAP_MSG   .STRINGZ "\n\n--- Undefined trap executed ---\n\n"
 
     .END
 

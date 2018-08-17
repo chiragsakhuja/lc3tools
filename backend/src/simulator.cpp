@@ -140,7 +140,7 @@ std::vector<PIEvent> Simulator::executeInstruction(void)
     candidate->assignOperands(encoded_inst);
     logger.printf(lc3::utils::PrintType::P_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
         state.mem[state.pc].getLine().c_str(), encoded_inst);
-    state.pc = (state.pc + 1) & 0xFFFF;
+    state.pc = (state.pc + 1) & 0xffff;
     std::vector<PIEvent> events = candidate->execute(state);
 
     return events;
@@ -157,16 +157,18 @@ std::vector<PIEvent> Simulator::checkAndSetupInterrupts(void)
     std::vector<PIEvent> ret;
 
     uint32_t value = state.mem[KBSR].getValue();
-    if((value & 0xC000) == 0xC000) {
+    if((value & 0xc000) == 0xc000) {
+        ret.push_back(std::make_shared<SwapSPEvent>(MachineState::SPType::SSP));
         ret.push_back(std::make_shared<RegEvent>(6, state.regs[6] - 1));
         ret.push_back(std::make_shared<MemWriteEvent>(state.regs[6] - 1, state.mem[PSR].getValue()));
         ret.push_back(std::make_shared<RegEvent>(6, state.regs[6] - 2));
         ret.push_back(std::make_shared<MemWriteEvent>(state.regs[6] - 2, state.pc));
-        ret.push_back(std::make_shared<PSREvent>((state.mem[PSR].getValue() & 0x78FF) | 0x0400));
+        ret.push_back(std::make_shared<PSREvent>((state.mem[PSR].getValue() & 0x78ff) | 0x0400));
         ret.push_back(std::make_shared<PCEvent>(state.mem[0x0180].getValue()));
         ret.push_back(std::make_shared<MemWriteEvent>(KBSR, state.mem[KBSR].getValue() & 0x7fff));
         ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_enter_callback_v,
             state.interrupt_enter_callback));
+        ret.push_back(std::make_shared<PushSysCallTypeEvent>(MachineState::SysCallType::INT));
     }
 
     return ret;
@@ -183,7 +185,9 @@ void Simulator::executeEventChain(std::vector<PIEvent> & events)
 
 void Simulator::executeEvent(PIEvent event)
 {
-    logger.printf(lc3::utils::PrintType::P_EXTRA, false, "  %s", event->getOutputString(state).c_str());
+    if(event->getOutputString(state) != "") {
+        logger.printf(lc3::utils::PrintType::P_EXTRA, false, "  %s", event->getOutputString(state).c_str());
+    }
     event->updateState(state);
 }
 
@@ -194,6 +198,7 @@ void Simulator::reset(void)
     }
 
     state.pc = RESET_PC;
+    state.sp_type_in_use = MachineState::SPType::USP;
     state.backup_sp = 0x3000;
 
     for(uint32_t i = 0; i < (1 << 16); i += 1) {

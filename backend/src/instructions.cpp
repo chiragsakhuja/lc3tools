@@ -237,10 +237,20 @@ std::vector<PIEvent> ADDRInstruction::execute(MachineState const & state)
     uint32_t sr2_val = lc3::utils::sextTo32(state.regs[operands[4]->value], 16);
     uint32_t result = (sr1_val + sr2_val) & 0xffff;
 
-    return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    std::vector<PIEvent> ret {
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
         std::make_shared<RegEvent>(dr, result)
     };
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    return ret;
 }
 
 std::vector<PIEvent> ADDIInstruction::execute(MachineState const & state)
@@ -250,10 +260,20 @@ std::vector<PIEvent> ADDIInstruction::execute(MachineState const & state)
     uint32_t imm_val = lc3::utils::sextTo32(operands[4]->value, operands[4]->width);
     uint32_t result = (sr1_val + imm_val) & 0xffff;
 
-    return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    std::vector<PIEvent> ret {
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
         std::make_shared<RegEvent>(dr, result)
     };
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    return ret;
 }
 
 std::vector<PIEvent> ANDRInstruction::execute(MachineState const & state)
@@ -263,10 +283,20 @@ std::vector<PIEvent> ANDRInstruction::execute(MachineState const & state)
     uint32_t sr2_val = lc3::utils::sextTo32(state.regs[operands[4]->value], 16);
     uint32_t result = (sr1_val & sr2_val) & 0xffff;
 
-    return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    std::vector<PIEvent> ret {
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
         std::make_shared<RegEvent>(dr, result)
     };
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    return ret;
 }
 
 std::vector<PIEvent> ANDIInstruction::execute(MachineState const & state)
@@ -276,10 +306,20 @@ std::vector<PIEvent> ANDIInstruction::execute(MachineState const & state)
     uint32_t imm_val = lc3::utils::sextTo32(operands[4]->value, operands[4]->width);
     uint32_t result = (sr1_val & imm_val) & 0xffff;
 
-    return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    std::vector<PIEvent> ret {
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
         std::make_shared<RegEvent>(dr, result)
     };
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    return ret;
 }
 
 std::vector<PIEvent> BRInstruction::execute(MachineState const & state)
@@ -287,8 +327,16 @@ std::vector<PIEvent> BRInstruction::execute(MachineState const & state)
     std::vector<PIEvent> ret;
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
-    if((operands[1]->value & (state.mem[PSR].getValue() & 0x0007)) != 0) {
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    if((operands[1]->value & (psr_value & 0x0007)) != 0) {
         ret.push_back(std::make_shared<PCEvent>(addr));
+    }
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
     }
 
     return ret;
@@ -341,13 +389,21 @@ std::vector<PIEvent> LDInstruction::execute(MachineState const & state)
     PIEvent change;
     uint32_t value = state.readMem(addr, change_mem, change);
 
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
     std::vector<PIEvent> ret {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, state.mem[PSR].getValue())),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, psr_value)),
         std::make_shared<RegEvent>(dr, value)
     };
 
     if(change_mem) {
         ret.push_back(change);
+    }
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
     }
 
     return ret;
@@ -366,8 +422,12 @@ std::vector<PIEvent> LDIInstruction::execute(MachineState const & state)
     PIEvent change2;
     uint32_t value = state.readMem(addr2, change_mem2, change2);
 
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
     std::vector<PIEvent> ret {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, state.mem[PSR].getValue())),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, psr_value)),
         std::make_shared<RegEvent>(dr, value)
     };
 
@@ -380,6 +440,9 @@ std::vector<PIEvent> LDIInstruction::execute(MachineState const & state)
         ret.push_back(change2);
     }
 
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
 
     return ret;
 }
@@ -394,13 +457,21 @@ std::vector<PIEvent> LDRInstruction::execute(MachineState const & state)
     PIEvent change;
     uint32_t value = state.readMem(addr, change_mem, change);
 
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
+
     std::vector<PIEvent> ret {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, state.mem[PSR].getValue())),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, psr_value)),
         std::make_shared<RegEvent>(dr, value)
     };
 
     if(change_mem) {
         ret.push_back(change);
+    }
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
     }
 
     return ret;
@@ -411,10 +482,20 @@ std::vector<PIEvent> LEAIInstruction::execute(MachineState const & state)
     uint32_t dr = operands[1]->value;
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
-    return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, state.mem[PSR].getValue())),
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    std::vector<PIEvent> ret {
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, psr_value)),
         std::make_shared<RegEvent>(dr, addr)
     };
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    return ret;
 }
 
 std::vector<PIEvent> LEALInstruction::execute(MachineState const & state)
@@ -422,10 +503,20 @@ std::vector<PIEvent> LEALInstruction::execute(MachineState const & state)
     uint32_t dr = operands[1]->value;
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
-    return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, state.mem[PSR].getValue())),
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    std::vector<PIEvent> ret {
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, psr_value)),
         std::make_shared<RegEvent>(dr, addr)
     };
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    return ret;
 }
 
 std::vector<PIEvent> NOTInstruction::execute(MachineState const & state)
@@ -434,42 +525,59 @@ std::vector<PIEvent> NOTInstruction::execute(MachineState const & state)
     uint32_t sr_val = lc3::utils::sextTo32(state.regs[operands[2]->value], 16);
     uint32_t result = (~sr_val) & 0xffff;
 
-    return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    std::vector<PIEvent> ret {
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
         std::make_shared<RegEvent>(dr, result)
     };
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    return ret;
 }
 
 std::vector<PIEvent> RTIInstruction::execute(MachineState const & state)
 {
-    if((state.pc & 0x8000) == 0x0000) {
-        bool pc_change_mem;
-        PIEvent pc_change;
-        uint32_t pc_value = state.readMem(state.regs[6], pc_change_mem, pc_change);
+    bool pc_change_mem;
+    PIEvent pc_change;
+    uint32_t pc_value = state.readMem(state.regs[6], pc_change_mem, pc_change);
 
-        bool psr_change_mem;
-        PIEvent psr_change;
-        uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
 
-        std::vector<PIEvent> ret {
-            std::make_shared<PCEvent>(pc_value),
-            std::make_shared<PSREvent>(psr_value),
-            std::make_shared<CallbackEvent>(state.interrupt_exit_callback_v, state.interrupt_exit_callback)
-        };
+    std::vector<PIEvent> ret {
+        std::make_shared<PCEvent>(pc_value),
+        std::make_shared<PSREvent>(psr_value),
+    };
 
-        if(pc_change_mem) {
-            ret.push_back(pc_change);
-        }
-
-        if(psr_change_mem) {
-            ret.push_back(psr_change);
-        }
-
-        return ret;
+    if(pc_change_mem) {
+        ret.push_back(pc_change);
     }
 
-    // TODO: trigger exception
-    return std::vector<PIEvent> {};
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    if(state.sys_call_types.size() == 1) {
+        ret.push_back(std::make_shared<SwapSPEvent>(MachineState::SPType::USP));
+    }
+
+    if(state.sys_call_types.top() == MachineState::SysCallType::INT) {
+        // interrupt
+        ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_exit_callback_v, state.interrupt_exit_callback));
+    } else {
+        // TRAP
+        ret.push_back(std::make_shared<CallbackEvent>(state.sub_exit_callback_v, state.sub_exit_callback));
+    }
+    ret.push_back(std::make_shared<PopSysCallTypeEvent>());
+
+    return ret;
 }
 
 std::vector<PIEvent> STInstruction::execute(MachineState const & state)
@@ -485,12 +593,22 @@ std::vector<PIEvent> STInstruction::execute(MachineState const & state)
 std::vector<PIEvent> STIInstruction::execute(MachineState const & state)
 {
     uint32_t addr1 = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
-    uint32_t addr2 = state.mem[addr1].getValue();
+
+    bool change_mem;
+    PIEvent change;
+    uint32_t addr2 = state.readMem(addr1, change_mem, change);
+
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
-    return std::vector<PIEvent> {
+    std::vector<PIEvent> ret {
         std::make_shared<MemWriteEvent>(addr2, value)
     };
+
+    if(change_mem) {
+        ret.push_back(change);
+    }
+
+    return ret;
 }
 
 std::vector<PIEvent> STRInstruction::execute(MachineState const & state)
@@ -506,10 +624,34 @@ std::vector<PIEvent> STRInstruction::execute(MachineState const & state)
 
 std::vector<PIEvent> TRAPInstruction::execute(MachineState const & state)
 {
-    return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(state.mem[PSR].getValue() & 0x7fff),
-        std::make_shared<RegEvent>(7, state.pc & 0xffff),
-        std::make_shared<PCEvent>(state.mem[operands[2]->value].getValue() & 0xffff),
-        std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback)
+    bool change_mem;
+    PIEvent change;
+    uint32_t vector = state.readMem(operands[2]->value, change_mem, change);
+
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    std::vector<PIEvent> ret {
+        std::make_shared<SwapSPEvent>(MachineState::SPType::SSP),
+        std::make_shared<RegEvent>(6, state.regs[6] - 1),
+        std::make_shared<MemWriteEvent>(state.regs[6] - 1, psr_value),
+        std::make_shared<RegEvent>(6, state.regs[6] - 2),
+        std::make_shared<MemWriteEvent>(state.regs[6] - 2, state.pc),
+        std::make_shared<PSREvent>(psr_value & 0x7fff),
+        std::make_shared<PCEvent>(vector & 0xffff),
     };
+
+    if(change_mem) {
+        ret.push_back(change);
+    }
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    ret.push_back(std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback));
+    ret.push_back(std::make_shared<PushSysCallTypeEvent>(MachineState::SysCallType::TRAP));
+
+    return ret;
 }
