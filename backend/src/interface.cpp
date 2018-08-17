@@ -164,7 +164,7 @@ std::string lc3::sim::getMemLine(uint32_t addr) const
 
 uint32_t lc3::sim::getPC(void) const { return getMachineState().pc; }
 
-uint32_t lc3::sim::getPSR(void) const { return getMachineState().psr; }
+uint32_t lc3::sim::getPSR(void) const { return getMem(PSR); }
 
 char lc3::sim::getCC(void) const
 {
@@ -238,7 +238,7 @@ void lc3::sim::setPSR(uint32_t value)
 #else
     value &= ((~0x8707) & 0xffff);
 #endif
-    getMachineState().psr = value;
+    setMem(PSR, value);
 }
 
 void lc3::sim::setCC(char value)
@@ -253,8 +253,8 @@ void lc3::sim::setCC(char value)
     if(value == 'n') { new_value = 0x4; }
     else if(value == 'z') { new_value = 0x2; }
     else { new_value = 0x1; }
-    uint32_t & psr = getMachineState().psr;
-    psr = (psr & 0xfff8) | new_value;
+    uint32_t psr = getPSR();
+    setPSR((psr & 0xfff8) | new_value);
 }
 
 lc3::Breakpoint lc3::sim::setBreakpoint(uint32_t addr)

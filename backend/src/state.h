@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 
+#include "device_regs.h"
 #include "logger.h"
 #include "mem.h"
 
@@ -27,7 +28,6 @@ namespace core
         std::vector<MemEntry> mem;
         std::array<uint32_t, 8> regs;
         uint32_t pc;
-        uint32_t psr;
 
         uint32_t backup_sp;
 
@@ -94,9 +94,9 @@ namespace core
     public:
         PSREvent(uint32_t value) : IEvent(EventType::EVENT_PSR), value(value) {}
 
-        virtual void updateState(MachineState & state) const override { state.psr = value & 0xFFFF; }
+        virtual void updateState(MachineState & state) const override { state.mem[PSR].setValue(value & 0xFFFF); }
         virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("PSR: 0x%0.4x => 0x%0.4x", state.psr, value); }
+            return utils::ssprintf("PSR: 0x%0.4x => 0x%0.4x", state.mem[PSR].getValue(), value); }
     private:
         uint32_t value;
     };

@@ -159,10 +159,10 @@ std::vector<PIEvent> Simulator::checkAndSetupInterrupts(void)
     uint32_t value = state.mem[KBSR].getValue();
     if((value & 0xC000) == 0xC000) {
         ret.push_back(std::make_shared<RegEvent>(6, state.regs[6] - 1));
-        ret.push_back(std::make_shared<MemWriteEvent>(state.regs[6] - 1, state.psr));
+        ret.push_back(std::make_shared<MemWriteEvent>(state.regs[6] - 1, state.mem[PSR].getValue()));
         ret.push_back(std::make_shared<RegEvent>(6, state.regs[6] - 2));
         ret.push_back(std::make_shared<MemWriteEvent>(state.regs[6] - 2, state.pc));
-        ret.push_back(std::make_shared<PSREvent>((state.psr & 0x78FF) | 0x0400));
+        ret.push_back(std::make_shared<PSREvent>((state.mem[PSR].getValue() & 0x78FF) | 0x0400));
         ret.push_back(std::make_shared<PCEvent>(state.mem[0x0180].getValue()));
         ret.push_back(std::make_shared<MemWriteEvent>(KBSR, state.mem[KBSR].getValue() & 0x7fff));
         ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_enter_callback_v,
@@ -194,7 +194,7 @@ void Simulator::reset(void)
     }
 
     state.pc = RESET_PC;
-    state.psr = 0x8002;
+    state.mem[PSR].setValue(0x8002);
     state.backup_sp = 0x3000;
 
     for(uint32_t i = 0; i < (1 << 16); i += 1) {

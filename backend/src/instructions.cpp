@@ -238,7 +238,7 @@ std::vector<PIEvent> ADDRInstruction::execute(MachineState const & state)
     uint32_t result = (sr1_val + sr2_val) & 0xffff;
 
     return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, result)
     };
 }
@@ -251,7 +251,7 @@ std::vector<PIEvent> ADDIInstruction::execute(MachineState const & state)
     uint32_t result = (sr1_val + imm_val) & 0xffff;
 
     return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, result)
     };
 }
@@ -264,7 +264,7 @@ std::vector<PIEvent> ANDRInstruction::execute(MachineState const & state)
     uint32_t result = (sr1_val & sr2_val) & 0xffff;
 
     return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, result)
     };
 }
@@ -277,7 +277,7 @@ std::vector<PIEvent> ANDIInstruction::execute(MachineState const & state)
     uint32_t result = (sr1_val & imm_val) & 0xffff;
 
     return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, result)
     };
 }
@@ -287,7 +287,7 @@ std::vector<PIEvent> BRInstruction::execute(MachineState const & state)
     std::vector<PIEvent> ret;
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
-    if((operands[1]->value & (state.psr & 0x0007)) != 0) {
+    if((operands[1]->value & (state.mem[PSR].getValue() & 0x0007)) != 0) {
         ret.push_back(std::make_shared<PCEvent>(addr));
     }
 
@@ -342,7 +342,7 @@ std::vector<PIEvent> LDInstruction::execute(MachineState const & state)
     uint32_t value = state.readMem(addr, change_mem, change);
 
     std::vector<PIEvent> ret {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, value)
     };
 
@@ -367,7 +367,7 @@ std::vector<PIEvent> LDIInstruction::execute(MachineState const & state)
     uint32_t value = state.readMem(addr2, change_mem2, change2);
 
     std::vector<PIEvent> ret {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, value)
     };
 
@@ -395,7 +395,7 @@ std::vector<PIEvent> LDRInstruction::execute(MachineState const & state)
     uint32_t value = state.readMem(addr, change_mem, change);
 
     std::vector<PIEvent> ret {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, value)
     };
 
@@ -412,7 +412,7 @@ std::vector<PIEvent> LEAIInstruction::execute(MachineState const & state)
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
     return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, addr)
     };
 }
@@ -423,7 +423,7 @@ std::vector<PIEvent> LEALInstruction::execute(MachineState const & state)
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
     return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, addr)
     };
 }
@@ -435,7 +435,7 @@ std::vector<PIEvent> NOTInstruction::execute(MachineState const & state)
     uint32_t result = (~sr_val) & 0xffff;
 
     return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.psr)),
+        std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, state.mem[PSR].getValue())),
         std::make_shared<RegEvent>(dr, result)
     };
 }
@@ -507,7 +507,7 @@ std::vector<PIEvent> STRInstruction::execute(MachineState const & state)
 std::vector<PIEvent> TRAPInstruction::execute(MachineState const & state)
 {
     return std::vector<PIEvent> {
-        std::make_shared<PSREvent>(state.psr & 0x7fff),
+        std::make_shared<PSREvent>(state.mem[PSR].getValue() & 0x7fff),
         std::make_shared<RegEvent>(7, state.pc & 0xffff),
         std::make_shared<PCEvent>(state.mem[operands[2]->value].getValue() & 0xffff),
         std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback)
