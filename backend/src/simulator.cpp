@@ -194,13 +194,13 @@ void Simulator::reset(void)
     }
 
     state.pc = RESET_PC;
-    state.mem[PSR].setValue(0x8002);
     state.backup_sp = 0x3000;
 
     for(uint32_t i = 0; i < (1 << 16); i += 1) {
         state.mem[i].setValue(0);
     }
 
+    state.mem[PSR].setValue(0x8002);
     state.mem[MCR].setValue(0x8000);  // indicate the machine is running
     state.running = true;
     state.hit_breakpoint = false;
