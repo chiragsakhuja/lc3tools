@@ -128,13 +128,17 @@ void Simulator::pause(void)
 
 std::vector<PIEvent> Simulator::executeInstruction(void)
 {
+    if((state.pc <= SYSTEM_END || state.pc >= MMIO_START) && (state.mem[PSR].getValue() & 0x8000) == 0x8000) {
+        logger.printf(lc3::utils::PrintType::P_EXTRA, true, "illegal PC 0x%0.4x accessed", state.pc);
+        return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x0, MachineState::SysCallType::INT);
+    }
     uint32_t encoded_inst = state.mem[state.pc].getValue();
 
     bool valid;
     PIInstruction candidate = decoder.findInstructionByEncoding(encoded_inst, valid);
     if(! valid) {
-        logger.printf(lc3::utils::PrintType::P_ERROR, true, "invalid instruction 0x%0.4x", encoded_inst);
-        throw utils::exception("invalid instruction");
+        logger.printf(lc3::utils::PrintType::P_EXTRA, true, "illegal opcode");
+        return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x1, MachineState::SysCallType::INT);
     }
 
     candidate->assignOperands(encoded_inst);
@@ -154,31 +158,17 @@ void Simulator::updateDevices(void)
 
 std::vector<PIEvent> Simulator::checkAndSetupInterrupts(void)
 {
-    std::vector<PIEvent> ret;
-
     uint32_t value = state.mem[KBSR].getValue();
+
     if((value & 0xc000) == 0xc000) {
         logger.printf(lc3::utils::PrintType::P_EXTRA, true, "jumping to keyboard ISR");
 
-        uint32_t sp = state.backup_sp;
-        if(state.sp_type_in_use == MachineState::SPType::SSP) {
-            sp = state.regs[6];
-        }
-
-        ret.push_back(std::make_shared<SwapSPEvent>(MachineState::SPType::SSP));
-        ret.push_back(std::make_shared<RegEvent>(6, sp - 1));
-        ret.push_back(std::make_shared<MemWriteEvent>(sp - 1, state.mem[PSR].getValue()));
-        ret.push_back(std::make_shared<RegEvent>(6, sp - 2));
-        ret.push_back(std::make_shared<MemWriteEvent>(sp - 2, state.pc));
-        ret.push_back(std::make_shared<PSREvent>((state.mem[PSR].getValue() & 0x78ff) | 0x0400));
-        ret.push_back(std::make_shared<PCEvent>(state.mem[0x0180].getValue()));
+        std::vector<PIEvent> ret = IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x80,
+            MachineState::SysCallType::INT, [](uint32_t psr_value) { return (psr_value & 0x78ff) | 0x0400; });
         ret.push_back(std::make_shared<MemWriteEvent>(KBSR, state.mem[KBSR].getValue() & 0x7fff));
-        ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_enter_callback_v,
-            state.interrupt_enter_callback));
-        ret.push_back(std::make_shared<PushSysCallTypeEvent>(MachineState::SysCallType::INT));
     }
 
-    return ret;
+    return {};
 }
 
 void Simulator::executeEventChain(std::vector<PIEvent> & events)
@@ -205,7 +195,6 @@ void Simulator::reset(void)
     }
 
     state.pc = RESET_PC;
-    state.sp_type_in_use = MachineState::SPType::USP;
     state.backup_sp = 0x3000;
 
     for(uint32_t i = 0; i < (1 << 16); i += 1) {

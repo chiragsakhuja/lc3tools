@@ -61,12 +61,14 @@ namespace lc3
         std::string getMemLine(uint32_t addr) const;
         uint32_t getPC(void) const;
         uint32_t getPSR(void) const;
+        uint32_t getMCR(void) const;
         char getCC(void) const;
         void setReg(uint32_t id, uint32_t value);
         void setMem(uint32_t addr, uint32_t value);
         void setMemString(uint32_t addr, std::string const & value);
         void setPC(uint32_t value);
         void setPSR(uint32_t value);
+        void setMCR(uint32_t value);
         void setCC(char value);
 
         Breakpoint setBreakpoint(uint32_t addr);

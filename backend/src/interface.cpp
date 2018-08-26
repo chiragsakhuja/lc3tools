@@ -177,6 +177,8 @@ uint32_t lc3::sim::getPC(void) const { return getMachineState().pc; }
 
 uint32_t lc3::sim::getPSR(void) const { return getMem(PSR); }
 
+uint32_t lc3::sim::getMCR(void) const { return getMem(MCR); }
+
 char lc3::sim::getCC(void) const
 {
     uint32_t value = getPSR() & 0x7;
@@ -254,6 +256,16 @@ void lc3::sim::setPSR(uint32_t value)
     value &= ((~0x8707) & 0xffff);
 #endif
     setMem(PSR, value);
+}
+
+void lc3::sim::setMCR(uint32_t value)
+{
+#ifdef _ENABLE_DEBUG
+    assert((value & ((~0x8000) & 0xffff)) == 0x0000);
+#else
+    value &= ((~0x8000) & 0xffff);
+#endif
+    setMem(MCR, value);
 }
 
 void lc3::sim::setCC(char value)

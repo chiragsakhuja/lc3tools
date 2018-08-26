@@ -1,38 +1,3 @@
-;##############################################################################
-;#
-;# lc3os.asm -- the LC-3 operating system
-;#
-;#  "Copyright (c) 2003 by Steven S. Lumetta."
-;#
-;#  Permission to use, copy, modify, and distribute this software and its
-;#  documentation for any purpose, without fee, and without written
-;#  agreement is hereby granted, provided that the above copyright notice
-;#  and the following two paragraphs appear in all copies of this software,
-;#  that the files COPYING and NO_WARRANTY are included verbatim with
-;#  any distribution, and that the contents of the file README are included
-;#  verbatim as part of a file named README with any distribution.
-;#
-;#  IN NO EVENT SHALL THE AUTHOR BE LIABLE TO ANY PARTY FOR DIRECT,
-;#  INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT
-;#  OF THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF THE AUTHOR
-;#  HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-;#
-;#  THE AUTHOR SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT
-;#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-;#  A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS ON AN "AS IS"
-;#  BASIS, AND THE AUTHOR NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
-;#  UPDATES, ENHANCEMENTS, OR MODIFICATIONS."
-;#
-;#  Author:        Steve Lumetta
-;#  Version:        1
-;#  Creation Date:    18 October 2003
-;#  Filename:        lc3os.asm
-;#  History:
-;#     SSL    1    18 October 2003
-;#         Copyright notices and Gnu Public License marker added.
-;#
-;##############################################################################
-
     .ORIG x0000
 
 ; the TRAP vector table
@@ -692,12 +657,18 @@ EX_PRIV
     PUTS
     BRnzp TRAP_HALT        ; execute HALT
 
-EX_ILL         RTI
+EX_ILL
+    ; print an error message, then HALT
+    LEA R0,EX_ILL_MSG      ; give an error message
+    PUTS
+    BRnzp TRAP_HALT        ; execute HALT
+
 BAD_INT        RTI
 
 TRAP_IN_MSG    .STRINGZ "\nInput a character> "
 TRAP_HALT_MSG  .STRINGZ "\n\n--- Halting the LC-3 ---\n\n"
 EX_PRIV_MSG    .STRINGZ "\n\n--- Access violation ---\n\n"
+EX_ILL_MSG     .STRINGZ "\n\n--- Illegal opcode ---\n\n"
 BAD_TRAP_MSG   .STRINGZ "\n\n--- Undefined trap executed ---\n\n"
 
     .END

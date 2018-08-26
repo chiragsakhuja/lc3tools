@@ -94,6 +94,101 @@ std::string IInstruction::toValueString(void) const
     return assembly.str();
 }
 
+std::vector<PIEvent> IInstruction::buildSysCallEnterHelper(MachineState const & state, uint32_t vector_id,
+    MachineState::SysCallType sys_call_type, std::function<uint32_t(uint32_t)> computeNewPSRValue)
+{
+    bool change_mem;
+    PIEvent change;
+    uint32_t vector = state.readMem(vector_id, change_mem, change);
+
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    uint32_t sp = state.backup_sp;
+    if((psr_value & 0x8000) == 0x0000) {
+        sp = state.regs[6];
+    }
+
+    uint32_t top_of_stack = (sp - 2) & 0xffff;
+    if(top_of_stack > MMIO_START) {
+        state.logger.printf(lc3::utils::PrintType::P_ERROR, true, "triple fault: invalid top of stack address 0x%0.4x",
+            top_of_stack);
+        throw utils::exception("triple fault: invalid top of stack address");
+    }
+
+    std::vector<PIEvent> ret {
+        std::make_shared<SwapSPEvent>(MachineState::SPType::SSP),
+        std::make_shared<RegEvent>(6, sp - 1),
+        std::make_shared<MemWriteEvent>(sp - 1, psr_value),
+        std::make_shared<RegEvent>(6, sp - 2),
+        std::make_shared<MemWriteEvent>(sp - 2, state.pc),
+        std::make_shared<PSREvent>(computeNewPSRValue(psr_value) & 0xffff),
+        std::make_shared<PCEvent>(vector & 0xffff),
+    };
+
+    if(change_mem) {
+        ret.push_back(change);
+    }
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    if(sys_call_type == MachineState::SysCallType::TRAP) {
+        ret.push_back(std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback));
+    } else {
+        ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_enter_callback_v, state.interrupt_enter_callback));
+    }
+    ret.push_back(std::make_shared<PushSysCallTypeEvent>(sys_call_type));
+
+    return ret;
+}
+
+std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & state,
+    MachineState::SysCallType sys_call_type)
+{
+    bool pc_change_mem;
+    PIEvent pc_change;
+    uint32_t pc_value = state.readMem(state.regs[6], pc_change_mem, pc_change);
+
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
+
+    if((psr_value & 0x8000) == 0x8000) {
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x0, MachineState::SysCallType::INT);
+    }
+
+    std::vector<PIEvent> ret {
+        std::make_shared<PCEvent>(pc_value),
+        std::make_shared<RegEvent>(6, state.regs[6] + 1),
+        std::make_shared<PSREvent>(psr_value),
+        std::make_shared<RegEvent>(6, state.regs[6] + 2),
+    };
+
+    if(pc_change_mem) {
+        ret.push_back(pc_change);
+    }
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    if(state.sys_call_types.size() == 1) {
+        ret.push_back(std::make_shared<SwapSPEvent>(MachineState::SPType::USP));
+    }
+
+    if(sys_call_type == MachineState::SysCallType::TRAP) {
+        ret.push_back(std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback));
+    } else {
+        ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_enter_callback_v, state.interrupt_enter_callback));
+    }
+    ret.push_back(std::make_shared<PopSysCallTypeEvent>());
+
+    return ret;
+}
+
 bool IOperand::isEqualType(OperType other) const
 {
     return type == other;
@@ -385,13 +480,18 @@ std::vector<PIEvent> LDInstruction::execute(MachineState const & state)
     uint32_t dr = operands[1]->value;
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+    }
+
     bool change_mem;
     PIEvent change;
     uint32_t value = state.readMem(addr, change_mem, change);
 
-    bool psr_change_mem;
-    PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
 
     std::vector<PIEvent> ret {
         std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, psr_value)),
@@ -426,6 +526,12 @@ std::vector<PIEvent> LDIInstruction::execute(MachineState const & state)
     PIEvent psr_change;
     uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
 
+    if(((addr1 <= SYSTEM_END || addr1 >= MMIO_START) || (addr2 <= SYSTEM_END || addr2 >= MMIO_START))
+        && (psr_value & 0x8000) != 0x0000)
+    {
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+    }
+
     std::vector<PIEvent> ret {
         std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, psr_value)),
         std::make_shared<RegEvent>(dr, value)
@@ -453,13 +559,17 @@ std::vector<PIEvent> LDRInstruction::execute(MachineState const & state)
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.regs[operands[2]->value], operands[3]->value,
             operands[3]->width);
 
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+    }
+
     bool change_mem;
     PIEvent change;
     uint32_t value = state.readMem(addr, change_mem, change);
-
-    bool psr_change_mem;
-    PIEvent psr_change;
-    uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
 
     std::vector<PIEvent> ret {
         std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, psr_value)),
@@ -543,48 +653,7 @@ std::vector<PIEvent> NOTInstruction::execute(MachineState const & state)
 
 std::vector<PIEvent> RTIInstruction::execute(MachineState const & state)
 {
-    if(state.sp_type_in_use == MachineState::SPType::USP) {
-        // TODO: RTI is NOP if in user space but should eventually cause a privilege exception
-        return {};
-    }
-
-    bool pc_change_mem;
-    PIEvent pc_change;
-    uint32_t pc_value = state.readMem(state.regs[6], pc_change_mem, pc_change);
-
-    bool psr_change_mem;
-    PIEvent psr_change;
-    uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
-
-    std::vector<PIEvent> ret {
-        std::make_shared<PCEvent>(pc_value),
-        std::make_shared<RegEvent>(6, state.regs[6] + 1),
-        std::make_shared<PSREvent>(psr_value),
-        std::make_shared<RegEvent>(6, state.regs[6] + 2),
-    };
-
-    if(pc_change_mem) {
-        ret.push_back(pc_change);
-    }
-
-    if(psr_change_mem) {
-        ret.push_back(psr_change);
-    }
-
-    if(state.sys_call_types.size() == 1) {
-        ret.push_back(std::make_shared<SwapSPEvent>(MachineState::SPType::USP));
-    }
-
-    if(state.sys_call_types.top() == MachineState::SysCallType::INT) {
-        // interrupt
-        ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_exit_callback_v, state.interrupt_exit_callback));
-    } else {
-        // TRAP
-        ret.push_back(std::make_shared<CallbackEvent>(state.sub_exit_callback_v, state.sub_exit_callback));
-    }
-    ret.push_back(std::make_shared<PopSysCallTypeEvent>());
-
-    return ret;
+    return buildSysCallExitHelper(state, state.sys_call_types.top());
 }
 
 std::vector<PIEvent> STInstruction::execute(MachineState const & state)
@@ -592,9 +661,23 @@ std::vector<PIEvent> STInstruction::execute(MachineState const & state)
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
-    return std::vector<PIEvent> {
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
+
+    if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+    }
+
+    std::vector<PIEvent> ret {
         std::make_shared<MemWriteEvent>(addr, value)
     };
+
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
+    return ret;
 }
 
 std::vector<PIEvent> STIInstruction::execute(MachineState const & state)
@@ -604,6 +687,16 @@ std::vector<PIEvent> STIInstruction::execute(MachineState const & state)
     bool change_mem;
     PIEvent change;
     uint32_t addr2 = state.readMem(addr1, change_mem, change);
+
+    bool psr_change_mem;
+    PIEvent psr_change;
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+
+    if(((addr1 <= SYSTEM_END || addr1 >= MMIO_START) || (addr2 <= SYSTEM_END || addr2 >= MMIO_START))
+        && (psr_value & 0x8000) != 0x0000)
+    {
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+    }
 
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
@@ -615,6 +708,10 @@ std::vector<PIEvent> STIInstruction::execute(MachineState const & state)
         ret.push_back(change);
     }
 
+    if(psr_change_mem) {
+        ret.push_back(psr_change);
+    }
+
     return ret;
 }
 
@@ -624,46 +721,26 @@ std::vector<PIEvent> STRInstruction::execute(MachineState const & state)
         operands[3]->width);
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
 
-    return std::vector<PIEvent> {
-        std::make_shared<MemWriteEvent>(addr, value)
-    };
-}
-
-std::vector<PIEvent> TRAPInstruction::execute(MachineState const & state)
-{
-    bool change_mem;
-    PIEvent change;
-    uint32_t vector = state.readMem(operands[2]->value, change_mem, change);
-
     bool psr_change_mem;
     PIEvent psr_change;
     uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
 
-    uint32_t sp = state.backup_sp;
-    if(state.sp_type_in_use == MachineState::SPType::SSP) {
-        sp = state.regs[6];
+    if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
 
     std::vector<PIEvent> ret {
-        std::make_shared<SwapSPEvent>(MachineState::SPType::SSP),
-        std::make_shared<RegEvent>(6, sp - 1),
-        std::make_shared<MemWriteEvent>(sp - 1, psr_value),
-        std::make_shared<RegEvent>(6, sp - 2),
-        std::make_shared<MemWriteEvent>(sp - 2, state.pc),
-        std::make_shared<PSREvent>(psr_value & 0x7fff),
-        std::make_shared<PCEvent>(vector & 0xffff),
+        std::make_shared<MemWriteEvent>(addr, value)
     };
-
-    if(change_mem) {
-        ret.push_back(change);
-    }
 
     if(psr_change_mem) {
         ret.push_back(psr_change);
     }
 
-    ret.push_back(std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback));
-    ret.push_back(std::make_shared<PushSysCallTypeEvent>(MachineState::SysCallType::TRAP));
-
     return ret;
+}
+
+std::vector<PIEvent> TRAPInstruction::execute(MachineState const & state)
+{
+    return buildSysCallEnterHelper(state, operands[2]->value, MachineState::SysCallType::TRAP);
 }

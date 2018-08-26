@@ -61,6 +61,14 @@ namespace core
         virtual std::vector<PIEvent> execute(MachineState const & state) = 0;
         std::string toFormatString(void) const;
         std::string toValueString(void) const;
+
+        static std::vector<PIEvent> buildSysCallEnterHelper(MachineState const & state, uint32_t vector_id,
+            MachineState::SysCallType call_type,
+            std::function<uint32_t(uint32_t)> computeNewPSRValue = [](uint32_t psr_value) {
+                return psr_value & 0x7fff;
+            });
+        static std::vector<PIEvent> buildSysCallExitHelper(MachineState const & state,
+            MachineState::SysCallType call_type);
     };
 
     class InstructionHandler

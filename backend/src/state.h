@@ -41,12 +41,10 @@ namespace core
         uint32_t pc;
 
         uint32_t backup_sp;
-        SPType sp_type_in_use;
 
         std::stack<SysCallType> sys_call_types;
 
         lc3::utils::Logger & logger;
-        std::vector<char> console_buffer;
 
         bool running;
         bool hit_breakpoint;
@@ -149,9 +147,15 @@ namespace core
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.backup_sp);
+            if(shouldSwap(state)) {
+                return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.backup_sp);
+            } else {
+                return "";
+            }
         }
     private:
+        bool shouldSwap(MachineState const & state) const;
+
         MachineState::SPType target;
     };
 

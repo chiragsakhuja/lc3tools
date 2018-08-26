@@ -39,8 +39,11 @@ void lc3::core::MemWriteEvent::updateState(MachineState & state) const
 
     if(addr == DDR) {
         char char_value = (char) (value & 0xFF);
-        state.logger.print(std::string(1, char_value));
-        state.console_buffer.push_back(char_value);
+        if(char_value == 0xa) {
+            state.logger.newline();
+        } else {
+            state.logger.print(std::string(1, char_value));
+        }
     } else if(addr == KBSR) {
         std::lock_guard<std::mutex> guard(g_io_lock);
         state.mem[addr].setValue(value & 0x4000);
@@ -52,10 +55,16 @@ void lc3::core::MemWriteEvent::updateState(MachineState & state) const
 
 void lc3::core::SwapSPEvent::updateState(MachineState & state) const
 {
-    if(target != state.sp_type_in_use) {
+    if(shouldSwap(state)) {
         uint32_t old_sp = state.regs[6];
         state.regs[6] = state.backup_sp;
         state.backup_sp = old_sp;
-        state.sp_type_in_use = target;
     }
+}
+
+bool lc3::core::SwapSPEvent::shouldSwap(MachineState const & state) const
+{
+    bool target_ssp = target == MachineState::SPType::SSP;
+    bool system_mode = (state.mem[PSR].getValue() & 0x8000) == 0x0000;
+    return target_ssp ^ system_mode;
 }

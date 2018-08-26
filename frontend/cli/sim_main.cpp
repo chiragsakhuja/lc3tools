@@ -182,6 +182,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
         std::cout << lc3::utils::ssprintf("PC: 0x%0.4X\n", simulator.getPC());
         std::cout << lc3::utils::ssprintf("PSR: 0x%0.4X\n", simulator.getPSR());
         std::cout << lc3::utils::ssprintf("CC: %c\n", simulator.getCC());
+        std::cout << lc3::utils::ssprintf("MCR: 0x%0.4X\n", simulator.getMCR());
     } else if(command == "run") {
         uint32_t inst_limit;
         command_tokens >> inst_limit;
@@ -227,6 +228,8 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
             simulator.setPC(val);
         } else if(loc_s == "psr") {
             simulator.setPSR(val);
+        } else if(loc_s == "mcr") {
+            simulator.setMCR(val);
         } else {
             uint32_t addr;
             try {

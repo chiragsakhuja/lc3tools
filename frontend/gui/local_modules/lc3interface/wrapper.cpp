@@ -6,7 +6,6 @@
 
 #include <algorithm>
 
-#include "device_regs.h"
 #include "interface.h"
 #include "ui_printer.h"
 #include "ui_inputter.h"
@@ -195,11 +194,11 @@ NAN_METHOD(GetRegValue)
     } else if(reg_name == "ir") {
         ret_val = state.mem[state.pc].getValue();
     } else if(reg_name == "psr") {
-        ret_val = state.psr;
+        ret_val = state.getPSR();
     } else if(reg_name == "pc") {
         ret_val =  state.pc;
     } else if(reg_name == "mcr") {
-        ret_val = state.mem[MCR].getValue();
+        ret_val = state.getMCR();
     }
 
     auto ret = Nan::New<v8::Number>(ret_val);
@@ -234,11 +233,11 @@ NAN_METHOD(SetRegValue)
         }
         state.regs[reg_num] = value;
     } else if(reg_name == "psr") {
-        state.psr = value;
+        state.setPSR(value);
     } else if(reg_name == "pc") {
         state.pc = value;
     } else if(reg_name == "mcr") {
-        state.mem[MCR].setValue(value);
+        state.setMCR(value);
     }
 }
 

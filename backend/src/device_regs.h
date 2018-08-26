@@ -3,6 +3,8 @@
 
 #define RESET_PC 0x0200
 #define MMIO_START 0xFE00
+#define SYSTEM_END 0x2FFF
+#define INTEX_TABLE_START 0x100
 #define KBSR 0xFE00
 #define KBDR 0xFE02
 #define DSR 0xFE04
