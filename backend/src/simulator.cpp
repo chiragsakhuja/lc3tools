@@ -166,6 +166,7 @@ std::vector<PIEvent> Simulator::checkAndSetupInterrupts(void)
         std::vector<PIEvent> ret = IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x80,
             MachineState::SysCallType::INT, [](uint32_t psr_value) { return (psr_value & 0x78ff) | 0x0400; });
         ret.push_back(std::make_shared<MemWriteEvent>(KBSR, state.mem[KBSR].getValue() & 0x7fff));
+        return ret;
     }
 
     return {};
