@@ -111,7 +111,7 @@
               <div id="regs-wrapper-cover"></div>
 
               <div id="console-wrapper">
-                <h3 class="view-header">Console (click to focus)</h3> 
+                <h3 class="view-header">Console (click to focus)</h3>
                 <div id="console" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
               </div>
 
@@ -328,7 +328,16 @@ export default {
 
     // UI update functions
     handleConsoleInput(event) {
+      // TODO: since the console string is rendered as I/O, the console actually allows for "HTML injection"
       if(event.keyCode == 13) {
+        lc3.AddInput("\n");
+      } else if(event.keyCode == 8) {
+        let remove_amount = 1;
+        if(this.console_str.endsWith("</br>")) {
+          remove_amount = 5;
+        }
+        this.console_str = this.console_str.slice(0, -remove_amount);
+      } else if(event.key.length == 1) {
         lc3.AddInput(event.key);
       }
     },

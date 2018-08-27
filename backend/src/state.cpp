@@ -38,13 +38,8 @@ void lc3::core::MemWriteEvent::updateState(MachineState & state) const
     assert(addr < 0xFFFF);
 
     if(addr == DDR) {
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
-        char newline = 13;
-#else
-        char newline = 10;
-#endif
         char char_value = (char) (value & 0xFF);
-        if(char_value == newline) {
+        if(char_value == 10 || char_value == 13) {
             state.logger.newline();
         } else {
             state.logger.print(std::string(1, char_value));

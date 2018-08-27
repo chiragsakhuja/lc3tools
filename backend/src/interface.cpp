@@ -253,7 +253,7 @@ void lc3::sim::setPSR(uint32_t value)
 #ifdef _ENABLE_DEBUG
     assert((value & ((~0x8707) & 0xffff)) == 0x0000);
 #else
-    //value &= ((~0x8707) & 0xffff);
+    value &= 0xffff;
 #endif
     setMem(PSR, value);
 }
@@ -263,7 +263,7 @@ void lc3::sim::setMCR(uint32_t value)
 #ifdef _ENABLE_DEBUG
     assert((value & ((~0x8000) & 0xffff)) == 0x0000);
 #else
-    //value &= ((~0x8000) & 0xffff);
+    value &= 0xffff;
 #endif
     setMem(MCR, value);
 }
