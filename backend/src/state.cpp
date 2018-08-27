@@ -38,8 +38,13 @@ void lc3::core::MemWriteEvent::updateState(MachineState & state) const
     assert(addr < 0xFFFF);
 
     if(addr == DDR) {
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
+        char newline = 13;
+#else
+        char newline = 10;
+#endif
         char char_value = (char) (value & 0xFF);
-        if(char_value == 0xa) {
+        if(char_value == newline) {
             state.logger.newline();
         } else {
             state.logger.print(std::string(1, char_value));
@@ -64,7 +69,7 @@ void lc3::core::SwapSPEvent::updateState(MachineState & state) const
 
 bool lc3::core::SwapSPEvent::shouldSwap(MachineState const & state) const
 {
-    bool target_ssp = target == MachineState::SPType::SSP;
+    bool target_usp = target == MachineState::SPType::USP;
     bool system_mode = (state.mem[PSR].getValue() & 0x8000) == 0x0000;
-    return target_ssp ^ system_mode;
+    return target_usp || (!system_mode);
 }

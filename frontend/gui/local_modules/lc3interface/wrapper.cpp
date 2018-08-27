@@ -64,7 +64,7 @@ NAN_METHOD(Init)
         printer = new utils::UIPrinter();
         inputter = new utils::UIInputter();
         as = new lc3::as(*printer);
-        sim = new lc3::sim(*printer, *inputter, _PRINT_LEVEL, os_path);
+        sim = new lc3::sim(*printer, *inputter, os_path, _PRINT_LEVEL);
     } catch(lc3::utils::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -194,11 +194,11 @@ NAN_METHOD(GetRegValue)
     } else if(reg_name == "ir") {
         ret_val = state.mem[state.pc].getValue();
     } else if(reg_name == "psr") {
-        ret_val = state.getPSR();
+        ret_val = sim->getPSR();
     } else if(reg_name == "pc") {
-        ret_val =  state.pc;
+        ret_val =  sim->getPC();
     } else if(reg_name == "mcr") {
-        ret_val = state.getMCR();
+        ret_val = sim->getMCR();
     }
 
     auto ret = Nan::New<v8::Number>(ret_val);
@@ -233,11 +233,11 @@ NAN_METHOD(SetRegValue)
         }
         state.regs[reg_num] = value;
     } else if(reg_name == "psr") {
-        state.setPSR(value);
+        sim->setPSR(value);
     } else if(reg_name == "pc") {
-        state.pc = value;
+        sim->setPC(value);
     } else if(reg_name == "mcr") {
-        state.setMCR(value);
+        sim->setMCR(value);
     }
 }
 

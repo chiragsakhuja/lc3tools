@@ -53,9 +53,9 @@
       <v-container fluid fill-height>
         <v-layout row wrap>
           <v-flex xs12 shrink class="editor-console-wrapper">
-            <h3 style="text-align: center"><strong>{{ getFilename }}</strong></h3>
-            <editor class="editor elevation-2" v-model="editor.current_content" @init="editorInit" lang="javascript" theme="textmate" height="100%" width="98%"> </editor>
-            <div class="console elevation-4" v-html="console_str"></div>
+            <h3 id="filename" class="view-header">{{ getFilename }}</h3>
+            <editor id="editor" class = "elevation-2" v-model="editor.current_content" @init="editorInit" lang="text" theme="textmate" height="100%" width="98%"> </editor>
+            <div id="console" class = "elevation-4" v-html="console_str"></div>
           </v-flex>
         </v-layout>
       </v-container>
@@ -120,7 +120,8 @@ export default {
       let selected_files = [path];
       if (!path) {
         selected_files = remote.dialog.showOpenDialog({
-          properties: ["openFile"]
+          properties: ["openFile"],
+          filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
         });
       }
 
@@ -190,12 +191,17 @@ export default {
   overflow: hidden;
 }
 
-.editor {
+#filename {
+  text-align: center;
+}
+
+#editor {
   overflow: hidden;
+  font-size: 1.5em;
   justify-self: center;
 }
 
-.console {
+#console {
   overflow: auto;
   font-family: 'Courier New', Courier, monospace;
   margin: 15px 10px 5px 10px;

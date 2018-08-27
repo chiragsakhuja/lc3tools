@@ -21,18 +21,18 @@
           <v-list-tile slot="activator" @click="toggleSimulator('run')">
             <v-list-tile-action>
               <v-icon v-if="!sim.running" large>play_arrow</v-icon>
-              <v-icon v-else large color="red accent-2">pause</v-icon>
+              <v-icon v-else large>pause</v-icon>
             </v-list-tile-action>
           </v-list-tile>
           <span>Run</span>
         </v-tooltip>
         <v-tooltip right>
-          <v-list-tile slot="activator" @click="">
+          <v-list-tile slot="activator" @click="reloadFiles">
             <v-list-tile-action>
               <v-icon large>refresh</v-icon>
             </v-list-tile-action>
           </v-list-tile>
-          <span>Reload</span>
+          <span>Reload Object Files</span>
         </v-tooltip>
         <v-tooltip right>
           <v-list-tile slot="activator" @click="toggleSimulator('over')">
@@ -68,14 +68,15 @@
           <v-flex xs12 shrink class="simulator-wrapper">
             <div class="left-wrapper">
 
-              <div class="regs-wrapper" ref="regView">
+              <div id="regs-wrapper" ref="regView">
                 <h3 class="view-header">Registers</h3>
                 <v-data-table class="elevation-4" hide-headers hide-actions :items="sim.regs">
                   <template slot="items" slot-scope="props">
-                    <tr class="reg-row">
+                    <tr class="reg-row" v-bind:style="data_bg">
                       <div class="data-cell"><strong>{{ props.item.name.toUpperCase() }}</strong></div>
                       <div class="data-cell editable">
-                        <v-edit-dialog lazy>
+                        <span v-if="sim.running">{{ toHex(props.item.value) }}</span>
+                        <v-edit-dialog v-else lazy>
                           {{ toHex(props.item.value) }}
                           <v-text-field
                             slot="input" label="Hex Value"
@@ -87,7 +88,8 @@
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell editable">
-                        <v-edit-dialog lazy>
+                        <span v-if="sim.running">{{ props.item.value }}</span>
+                        <v-edit-dialog v-else lazy>
                           {{ props.item.value }}
                           <v-text-field
                             slot="input" label="Decimal Value"
@@ -106,30 +108,37 @@
                   </template>
                 </v-data-table>
               </div>
+              <div id="regs-wrapper-cover"></div>
 
-              <div class="console-wrapper">
-                <h3 class="view-header">Console</h3>
-                <div class="console" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
+              <div id="console-wrapper">
+                <h3 class="view-header">Console (click to focus)</h3> 
+                <div id="console" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
               </div>
 
             </div>
             <div class="right-wrapper">
 
-              <div class="memview" ref="memView">
+              <div id="memview" ref="memView">
                 <h3 class="view-header">Memory</h3>
                 <v-data-table class="elevation-4" hide-headers hide-actions :items="mem_view.data">
                   <template slot="items" slot-scope="props">
-                    <tr class="mem-row">
-                      <a class="data-cell breakpoint" @click="toggleBreakpoint(props.item.addr)">
-                        <v-icon v-if="breakpointAt(props.item.addr)" color="red">report</v-icon>
-                        <v-icon v-else small color="grey">report</v-icon>
-                      </a>
-                      <div class="pc">
-                        <v-icon v-if="PCAt(props.item.addr)" color="blue">play_arrow</v-icon>
+                    <tr class="mem-row" v-bind:style="data_bg">
+                      <div>
+                        <a class="data-cell data-button" @click="toggleBreakpoint(props.item.addr)">
+                          <v-icon v-if="breakpointAt(props.item.addr)" color="red">report</v-icon>
+                          <v-icon v-else small color="grey" class="breakpoint-icon">report</v-icon>
+                        </a>
+                      </div>
+                      <div>
+                        <a class="data-cell data-button" @click="setPC(props.item.addr)">
+                          <v-icon v-if="PCAt(props.item.addr)" color="blue">play_arrow</v-icon>
+                          <v-icon v-else small color="grey" class="pc-icon">play_arrow</v-icon>
+                        </a>
                       </div>
                       <div class="data-cell"><strong>{{ toHex(props.item.addr) }}</strong></div>
                       <div class="data-cell editable">
-                        <v-edit-dialog lazy>
+                        <span v-if="sim.running">{{ toHex(props.item.value) }}</span>
+                        <v-edit-dialog v-else lazy>
                           {{ toHex(props.item.value) }}
                           <v-text-field
                             slot="input" label="Hex Value"
@@ -141,7 +150,8 @@
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell editable">
-                        <v-edit-dialog lazy>
+                        <span v-if="sim.running">{{ props.item.value }}</span>
+                        <v-edit-dialog v-else lazy>
                           {{ props.item.value }}
                           <v-text-field
                             slot="input" label="Decimal Value"
@@ -161,23 +171,31 @@
               </div>
 
               <div id="controls">
-                  <div id="jump-to-location">
-                    <v-text-field single-line label="Jump To Location" @change="jumpToMemViewStr"></v-text-field>
-                  </div>
-                  <div id="jump-buttons">
-                    <v-tooltip top>
-                      <v-btn flat @click="jumpToPC(true)" slot="activator"><span class="title">PC</span></v-btn>
-                      <span>Jump to PC</span>
-                    </v-tooltip>
-                    <v-tooltip top>
-                      <v-btn icon @click="jumpToPrevMemView" slot="activator"><v-icon>arrow_back</v-icon></v-btn>
-                      <span>{{ toHex((mem_view.start - mem_view.data.length) & 0xffff) }}</span>
-                    </v-tooltip>
-                    <v-tooltip top>
-                      <v-btn icon @click="jumpToNextMemView" slot="activator"><v-icon>arrow_forward</v-icon></v-btn>
-                      <span>{{ toHex((mem_view.start + mem_view.data.length) & 0xffff) }}</span>
-                    </v-tooltip>
-                  </div>
+                <div id="jump-to-location">
+                  <v-text-field single-line label="Jump To Location" @change="jumpToMemViewStr"></v-text-field>
+                </div>
+                <div id="jump-buttons">
+                  <v-tooltip top>
+                    <v-btn flat @click="jumpToPC(true)" slot="activator"><span class="title">PC</span></v-btn>
+                    <span>Jump to PC</span>
+                  </v-tooltip>
+                  <v-tooltip top>
+                    <v-btn icon @click="jumpToPrevMemView" slot="activator"><v-icon large>arrow_back</v-icon></v-btn>
+                    <span>{{ toHex((mem_view.start - mem_view.data.length) & 0xffff) }}</span>
+                  </v-tooltip>
+                  <v-tooltip top>
+                    <v-btn icon @click="jumpToPrevPartMemView" slot="activator"><v-icon>arrow_back</v-icon></v-btn>
+                    <span>{{ toHex((mem_view.start - 5) & 0xffff) }}</span>
+                  </v-tooltip>
+                  <v-tooltip top>
+                    <v-btn icon @click="jumpToNextPartMemView" slot="activator"><v-icon>arrow_forward</v-icon></v-btn>
+                    <span>{{ toHex((mem_view.start + 5) & 0xffff) }}</span>
+                  </v-tooltip>
+                  <v-tooltip top>
+                    <v-btn icon @click="jumpToNextMemView" slot="activator"><v-icon large>arrow_forward</v-icon></v-btn>
+                    <span>{{ toHex((mem_view.start + mem_view.data.length) & 0xffff) }}</span>
+                  </v-tooltip>
+                </div>
               </div>
 
             </div>
@@ -208,14 +226,16 @@ export default {
         // !! Do not change the order of these registers because regs[9] is referenced everywhere for PC !!
         regs: [{name: "r0", value: 0},  {name: "r1", value: 0}, {name: "r2", value: 0}, {name: "r3", value: 0},
                {name: "r4", value: 0},  {name: "r5", value: 0}, {name: "r6", value: 0}, {name: "r7", value: 0},
-               {name: "psr", value: 0}, {name: "pc", value: 0}, {name: "ir", value: 0}, {name: "mcr", value: 0}],
+               {name: "psr", value: 0}, {name: "pc", value: 0}, {name: "mcr", value: 0}],
         breakpoints: [],
         running: false,
       },
       mem_view: {start: 0x3000, data: []},
+      loaded_files: [],
       console_str: "",
-      inst_executed: 0,
+      prev_inst_executed: 0,
       poll_output_handle: null,
+      data_bg: { backgroundColor: "" },
       rules: {
         hex: function(value) {
           return (parseInt(value, 16) == value) || "Invalid hex number"
@@ -242,25 +262,31 @@ export default {
       this.mem_view.data.push({addr: 0, value: 0, line: ""});
     }
     this.updateUI();
+    this.jumpToPC(true);
   },
   methods: {
     openFile(path) {
       // Todo: try catch around this
-      // if not given a path, open a dialog to ask user for file
       let selectedFiles = [path];
       if (!path) {
         selectedFiles = remote.dialog.showOpenDialog({
-          properties: ["openFile"]
+          properties: ["openFile", "multiSelections"],
+          filters: [{name: "Objects", extensions: ["obj"]}]
         });
       }
 
       // Dialog returns an array of files, we only care about the first one
       if (selectedFiles) {
-        for(let i = 0; i < selectedFiles.length; i++) {
-          lc3.LoadObjectFile(selectedFiles[i]);
-        }
+        this.loaded_files = selectedFiles.slice(0);
+        this.reloadFiles();
       }
-      this.mem_view.start = lc3.GetRegValue('pc');
+      this.mem_view.start = lc3.GetRegValue("pc");
+      this.updateUI();
+    },
+    reloadFiles() {
+      for(let i = 0; i < this.loaded_files.length; i++) {
+        lc3.LoadObjectFile(this.loaded_files[i]);
+      }
       this.updateUI();
     },
     toggleSimulator(run_function_str) {
@@ -269,10 +295,11 @@ export default {
       }
       if(!this.sim.running) {
         this.sim.running = true;
+        this.data_bg.backgroundColor = "lightgrey";
         return new Promise((resolve, reject) => {
           let callback = (error) => {
             if(error) { reject(error); return; }
-            this.endSimulation();
+            this.endSimulation(run_function_str != "run");
             resolve();
           };
           if(run_function_str == "in") { lc3.StepIn(callback); }
@@ -282,23 +309,28 @@ export default {
         });
       } else {
         lc3.Pause();
-        this.endSimulation();
+        this.endSimulation(false);
       }
     },
-    endSimulation() {
-      lc3.ClearInput();
-      this.sim.running = false;
-      this.sim.regs[9].value;
-
-      this.updateUI();
-
+    endSimulation(jump_to_pc) {
       clearInterval(this.poll_output_handle);
       this.poll_output_handle = null;
+
+      lc3.ClearInput();
+      this.sim.running = false;
+      this.sim.regs[9].value = lc3.GetRegValue("pc");
+
+      if(jump_to_pc) { this.jumpToPC(false); }
+      this.updateUI();
+      this.data_bg.backgroundColor = "";
+      this.prev_inst_executed = lc3.GetInstExecCount();
     },
 
     // UI update functions
     handleConsoleInput(event) {
-      lc3.AddInput(event.key);
+      if(event.keyCode == 13) {
+        lc3.AddInput(event.key);
+      }
     },
     setDataValue(event, data_cell, type) {
       data_cell.value = parseInt(event);
@@ -329,7 +361,7 @@ export default {
       // Console
       this.console_str += lc3.GetOutput();
       lc3.ClearOutput();
-      this.inst_executed = lc3.GetInstExecCount();
+      this.prev_inst_executed = lc3.GetInstExecCount();
     },
 
     toggleBreakpoint(addr) {
@@ -341,6 +373,11 @@ export default {
         this.sim.breakpoints.splice(idx, 1);
         lc3.RemoveBreakpoint(addr);
       }
+    },
+    setPC(addr) {
+      let new_pc = addr & 0xffff;
+      this.sim.regs[9].value = new_pc;
+      lc3.SetRegValue("pc", new_pc);
     },
     breakpointAt(addr) {
       return this.sim.breakpoints.includes(addr);
@@ -361,20 +398,27 @@ export default {
       let new_start = this.mem_view.start - this.mem_view.data.length;
       this.jumpToMemView(new_start);
     },
+    jumpToPrevPartMemView() {
+      let new_start = this.mem_view.start - 5;
+      this.jumpToMemView(new_start);
+    },
     jumpToNextMemView() {
       let new_start = this.mem_view.start + this.mem_view.data.length;
       this.jumpToMemView(new_start);
     },
+    jumpToNextPartMemView() {
+      let new_start = this.mem_view.start + 5;
+      this.jumpToMemView(new_start);
+    },
     jumpToPC(jump_if_in_view) {
       let mem_view_end = (this.mem_view.start + this.mem_view.data.length) & 0xffff;
-      console.log(mem_view_end);
       let pc = this.sim.regs[9].value & 0xffff;
       let in_view = pc >= this.mem_view.start && pc < mem_view_end;
       if(this.mem_view.start > mem_view_end) {
         in_view = pc >= this.mem_view.start || pc < mem_view_end;
       }
       if(jump_if_in_view || !in_view) {
-        this.jumpToMemView(lc3.GetRegValue("PC"));
+        this.jumpToMemView(pc);
       }
     },
 
@@ -421,7 +465,7 @@ export default {
 
 .simulator-wrapper {
   display: grid;
-  grid-template-columns: 30% auto;
+  grid-template-columns: 35% auto;
   grid-template-rows: 100%;
   grid-gap: 10px;
   overflow: hidden;
@@ -449,20 +493,11 @@ export default {
   grid-template-rows: auto;
 }
 
-.breakpoint {
-  text-align: center !important;
-  cursor: pointer;
-}
-
-.editable {
-}
-
 /* Register view styles */
-.regs-wrapper {
+#regs-wrapper {
   padding: 0px 5px 5px 5px;
   order: 1;
   overflow: hidden;
-  user-select: none;
 }
 
 .reg-row {
@@ -473,7 +508,7 @@ export default {
 }
 
 /* Console styles */
-.console-wrapper {
+#console-wrapper {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
@@ -483,11 +518,7 @@ export default {
   padding: 0px 5px 5px 5px;
 }
 
-.console-header {
-  order: 1;
-}
-
-.console {
+#console {
   flex: 1;
   order: 2;
   height: 100%;
@@ -500,10 +531,9 @@ export default {
   box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
 }
 
-.console:focus {
+#console:focus {
   font-size: 1.25em;
   outline: none;
-  /* border: 1px solid orange; */
   box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
 }
 
@@ -513,6 +543,31 @@ export default {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* Memory view styles */
+#memview {
+  flex: 1;
+  order: 1;
+  padding: 0px 5px 5px 5px;
+}
+
+.mem-row {
+  display: grid;
+  grid-template-columns: 2em 2em 1fr 1fr 1fr 4fr;
+  align-items: center;
+}
+
+.data-button {
+  text-align: center !important;
+}
+
+.breakpoint-icon:hover {
+  color: red !important;
+}
+
+.pc-icon:hover {
+  color: #2196f3 !important;
 }
 
 /* Memory view controls styles */
@@ -537,17 +592,4 @@ export default {
   text-align: right;
 }
 
-/* Memory view styles */
-.memview {
-  flex: 1;
-  order: 1;
-  user-select: none;
-  padding: 0px 5px 5px 5px;
-}
-
-.mem-row {
-  display: grid;
-  grid-template-columns: 3em 2em 1fr 1fr 1fr 4fr;
-  align-items: center;
-}
 </style>

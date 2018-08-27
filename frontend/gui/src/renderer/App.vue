@@ -43,4 +43,8 @@ export default {
 .text-bold {
   font-weight: bold;
 }
+body {
+  user-select: none;
+  cursor: default;
+}
 </style>

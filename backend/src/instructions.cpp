@@ -156,7 +156,11 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
     PIEvent psr_change;
     uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
 
-    if((psr_value & 0x8000) == 0x8000) {
+    bool current_psr_change_mem;
+    PIEvent current_psr_change;
+    uint32_t current_psr_value = state.readMem(PSR, current_psr_change_mem, current_psr_change);
+
+    if((current_psr_value & 0x8000) == 0x8000) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x0, MachineState::SysCallType::INT);
     }
 
@@ -175,7 +179,11 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
         ret.push_back(psr_change);
     }
 
-    if(state.sys_call_types.size() == 1) {
+    if(current_psr_change_mem) {
+        ret.push_back(current_psr_change);
+    }
+
+    if((current_psr_value & 0x8000) == 0x0000 && (psr_value & 0x8000) == 0x8000) {
         ret.push_back(std::make_shared<SwapSPEvent>(MachineState::SPType::USP));
     }
 
@@ -663,7 +671,7 @@ std::vector<PIEvent> STInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
 
     if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
