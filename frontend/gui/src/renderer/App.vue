@@ -63,6 +63,8 @@
 <script>
 import * as lc3 from "lc3interface";
 import {ipcRenderer} from "electron";
+import path from "path";
+import fs from "fs";
 
 export default {
   name: "lc3tools",
@@ -81,7 +83,9 @@ export default {
   },
 
   created() {
-    lc3.Init("static/lc3os.obj");
+    let content = fs.readFileSync(__static + "/lc3os.obj");
+    fs.writeFileSync("lc3os.obj", content);
+    lc3.Init("lc3os.obj");
   },
 
   mounted() {

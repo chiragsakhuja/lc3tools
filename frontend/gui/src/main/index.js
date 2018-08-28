@@ -30,6 +30,7 @@ function createWindow () {
 
   mainWindow.webContents.on('did-finish-load', () => {
     mainWindow.setTitle("lc3tools v" + autoUpdater.currentVersion);
+    //mainWindow.webContents.openDevTools();
   });
 
   mainWindow.loadURL(winURL)

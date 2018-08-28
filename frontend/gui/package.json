@@ -22,6 +22,7 @@
     "lc3": "yarn add file:./local_modules/lc3interface",
     "release": "build"
   },
+  "extraResources": "static/lc3os.obj",
   "build": {
     "productName": "lc3tools",
     "appId": "org.devtools.lc3tools",
@@ -29,8 +30,7 @@
       "output": "build"
     },
     "files": [
-      "dist/electron/**/*",
-      "static/lc3os.obj"
+      "dist/electron/**/*"
     ],
     "dmg": {
       "contents": [
@@ -48,16 +48,10 @@
       ]
     },
     "mac": {
-      "icon": "build/icons/icon.icns",
-      "target": [
-        "zip"
-      ]
+      "icon": "build/icons/icon.icns"
     },
     "win": {
-      "icon": "build/icons/icon.ico",
-      "target": [
-        "zip"
-      ]
+      "icon": "build/icons/icon.ico"
     },
     "linux": {
       "icon": "build/icons"
