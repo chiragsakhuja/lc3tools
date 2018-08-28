@@ -1,6 +1,6 @@
 # Building lc3tools
 
-lc3tools uses CMake to build the command line tools and Yarn to build the GUI.
+`lc3tools` uses CMake to build the command line tools and Yarn to build the GUI.
 
 ## Command line tools
 The command line tools require a C++11 compiler and CMake to be installed.
