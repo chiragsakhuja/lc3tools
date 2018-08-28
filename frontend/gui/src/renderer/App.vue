@@ -17,19 +17,96 @@
       <keep-alive>
         <router-view></router-view>
       </keep-alive>
+
+      <v-dialog
+        v-model="update_dialog"
+        max-width="400"
+        persistent
+      >
+        <v-card>
+          <v-card-title v-if="!download_bar" class="headline">Update available</v-card-title>
+
+          <v-card-text>
+            {{
+              download_bar ?
+                ("Downloading at " + (update.download_speed / 1024).toFixed(0) + " KB/s") :
+                "A newer version of LC3Tools is available. Would you like to download the update?"
+            }}
+            <v-progress-linear v-if="download_bar" v-bind:value="(update.download_transferred / update.download_size) * 100"></v-progress-linear>
+          </v-card-text>
+
+          <v-card-actions v-if="!download_bar">
+            <v-spacer></v-spacer>
+            <v-btn
+              color="green darken-1"
+              flat="flat"
+              @click="update_dialog = false"
+            >
+              Cancel
+            </v-btn>
+
+            <v-btn
+              color="green darken-1"
+              flat="flat"
+              @click="updateConfirmed"
+            >
+              Ok
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
     </v-app>
   </div>
 </template>
 
 <script>
 import * as lc3 from "lc3interface";
+import {ipcRenderer} from "electron";
 
 export default {
   name: "lc3tools",
 
+    data: function() {
+    return {
+      // Update downloading
+      update: {
+        download_speed: 0,
+        download_transferred: 0,
+        download_size: 0
+      },
+      update_dialog: false,
+      download_bar: false
+    };
+  },
+
   created() {
     lc3.Init("static/lc3os.obj");
-  }
+  },
+
+  mounted() {
+    ipcRenderer.on("auto_updater", (event, message, progress) => {
+      if(message === "update_available") {
+        // Show the settings modal
+        this.update_dialog = true;
+      }
+      if(message === "download_progress") {
+        this.update.download_speed = progress.bytesPerSecond;
+        this.update.download_size = progress.total;
+        this.update.download_transferred = progress.transferred;
+      }
+    });
+
+  },
+
+  methods: {
+    // Updater
+    updateConfirmed: function() {
+      this.download_bar = true;
+      ipcRenderer.send("auto_updater", "update_confirmed");
+    }
+}
+
 };
 </script>
 

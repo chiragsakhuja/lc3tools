@@ -1,10 +1,14 @@
 {
   "name": "lc3tools",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "author": "Chirag Sakhuja <dev.sakhuja@gmail.com>",
   "description": "LC3 tools frontend",
-  "license": null,
+  "license": "MIT",
   "main": "./dist/electron/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/chiragsakhuja/lc3tools.git"
+  },
   "scripts": {
     "build": "node .electron-vue/build.js && electron-builder",
     "build:dir": "node .electron-vue/build.js && electron-builder --dir",
@@ -14,17 +18,19 @@
     "pack": "npm run pack:main && npm run pack:renderer",
     "pack:main": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.main.config.js",
     "pack:renderer": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.renderer.config.js",
-    "postinstall": "./node_modules/.bin/electron-rebuild",
-    "lc3": "yarn add file:./local_modules/lc3interface"
+    "postinstall": "electron-builder install-app-deps",
+    "lc3": "yarn add file:./local_modules/lc3interface",
+    "release": "build"
   },
   "build": {
     "productName": "lc3tools",
-    "appId": "org.simulatedgreg.electron-vue",
+    "appId": "org.devtools.lc3tools",
     "directories": {
       "output": "build"
     },
     "files": [
-      "dist/electron/**/*"
+      "dist/electron/**/*",
+      "static/lc3os.obj"
     ],
     "dmg": {
       "contents": [
@@ -42,17 +48,30 @@
       ]
     },
     "mac": {
-      "icon": "build/icons/icon.icns"
+      "icon": "build/icons/icon.icns",
+      "target": [
+        "zip"
+      ]
     },
     "win": {
-      "icon": "build/icons/icon.ico"
+      "icon": "build/icons/icon.ico",
+      "target": [
+        "zip"
+      ]
     },
     "linux": {
       "icon": "build/icons"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "chiragsakhuja",
+      "repo": "lc3tools"
     }
   },
   "dependencies": {
     "axios": "^0.16.1",
+    "electron-log": "^2.2.17",
+    "electron-updater": "^3.1.1",
     "lc3interface": "file:./local_modules/lc3interface",
     "material-design-icons-iconfont": "^3.0.3",
     "vue": "^2.3.3",
@@ -81,7 +100,6 @@
     "electron-builder": "^19.19.1",
     "electron-debug": "^1.4.0",
     "electron-devtools-installer": "^2.2.0",
-    "electron-rebuild": "^1.8.2",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^0.11.2",
     "html-webpack-plugin": "^2.30.1",

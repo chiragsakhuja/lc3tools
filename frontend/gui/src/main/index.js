@@ -28,14 +28,16 @@ function createWindow () {
     mainWindow.maximize();
   })
 
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.setTitle("lc3tools v" + autoUpdater.currentVersion);
+  });
+
   mainWindow.loadURL(winURL)
 
   mainWindow.on('closed', () => {
     mainWindow = null
   })
 }
-
-app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
@@ -56,15 +58,38 @@ app.on('activate', () => {
  * support auto updating. Code Signing with a valid certificate is required.
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-electron-builder.html#auto-updating
  */
-
-/*
-import { autoUpdater } from 'electron-updater'
-
-autoUpdater.on('update-downloaded', () => {
-  autoUpdater.quitAndInstall()
-})
-
+ 
+import { autoUpdater, AppUpdater } from 'electron-updater'
+ 
 app.on('ready', () => {
-  if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
+  createWindow();
+  if (process.env.NODE_ENV === 'production') {
+    autoUpdater.logger = require("electron-log")
+    autoUpdater.logger.transports.file.level = "debug"
+ 
+    autoUpdater.autoDownload = false;
+    autoUpdater.checkForUpdates();
+  }
 })
- */
+ 
+ipcMain.on('auto_updater', (event, text) => {
+  if (text === "update_confirmed") {
+    autoUpdater.downloadUpdate();
+  }
+})
+ 
+autoUpdater.on('update-available', (info) => {
+  mainWindow.webContents.send('auto_updater', "update_available")
+})
+ 
+autoUpdater.on('error', (err) => {
+  mainWindow.webContents.send('auto_updater', err);
+})
+ 
+autoUpdater.on('download-progress', (progress) => {
+  mainWindow.webContents.send('auto_updater', "download_progress", progress);
+})
+ 
+autoUpdater.on('update-downloaded', (info) => {
+  autoUpdater.quitAndInstall();
+})

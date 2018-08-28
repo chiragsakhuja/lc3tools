@@ -42,7 +42,7 @@
               <v-icon large>build</v-icon>
             </v-list-tile-action>
           </v-list-tile>
-          <span>Assemble Code</span>
+          <span>Build Code</span>
         </v-tooltip>
       </v-list>
     </v-navigation-drawer>
@@ -139,7 +139,11 @@ export default {
       if (this.editor.content_changed) {
         this.saveFile();
       }
-      lc3.Assemble(this.editor.current_file);
+      if(this.editor.current_file.endsWith(".bin")) {
+        lc3.ConvertBin(this.editor.current_file);
+      } else {
+        lc3.Assemble(this.editor.current_file);
+      }
       this.console_str = lc3.GetOutput();
       lc3.ClearOutput();
     },
@@ -197,7 +201,7 @@ export default {
 
 #editor {
   overflow: hidden;
-  font-size: 1.5em;
+  font-size: 1.25em;
   justify-self: center;
 }
 
@@ -205,6 +209,7 @@ export default {
   overflow: auto;
   font-family: 'Courier New', Courier, monospace;
   margin: 15px 10px 5px 10px;
+  padding: 10px;
 }
 
 .text {

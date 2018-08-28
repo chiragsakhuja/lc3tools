@@ -78,6 +78,24 @@ NAN_METHOD(Shutdown)
     delete printer;
 }
 
+NAN_METHOD(ConvertBin)
+{
+    if(!info[0]->IsString()) {
+        Nan::ThrowError("Must provide filename as a string argument");
+        return;
+    }
+
+    v8::String::Utf8Value str(info[0]->ToString());
+
+    std::string bin_filename((char const *) (*str));
+
+    try {
+        as->convertBin(bin_filename);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
 NAN_METHOD(Assemble)
 {
     if(!info[0]->IsString()) {
@@ -207,8 +225,6 @@ NAN_METHOD(GetRegValue)
 
 NAN_METHOD(SetRegValue)
 {
-    uint32_t ret_val = 0;
-
     if(!info[0]->IsString()) {
         Nan::ThrowError("First argument must be register name as a string");
         return;
@@ -354,6 +370,7 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, Init);
     NAN_EXPORT(target, Shutdown);
 
+    NAN_EXPORT(target, ConvertBin);
     NAN_EXPORT(target, Assemble);
     NAN_EXPORT(target, LoadObjectFile);
 

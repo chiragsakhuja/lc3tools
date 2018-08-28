@@ -47,6 +47,7 @@ backend/src/parser_gen/*
 backend/src/configured_paths.h
 
 # Ignore GUI files
+frontend/gui/setup_token.sh
 frontend/gui/.DS_Store
 frontend/gui/dist/electron/*
 frontend/gui/dist/web/*
