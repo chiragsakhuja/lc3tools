@@ -1,11 +1,15 @@
 <template>
   <div id="app">
-    <v-app id="lc3tools" light>
+    <v-app id="lc3tools" v-bind:dark="dark_mode">
       <!-- Toolbar -->
       <v-toolbar app fixed dense>
         <v-toolbar-title><strong>LC3</strong>Tools</v-toolbar-title>
         <v-spacer></v-spacer>
         <v-toolbar-items>
+          <v-btn large flat exact v-on:click="dark_mode = !dark_mode">
+            <v-icon large v-if="!dark_mode">brightness_5</v-icon>
+            <v-icon large v-else>brightness_3</v-icon>
+          </v-btn>
           <v-btn large flat exact to="/assembler">
             <v-icon large>code</v-icon>
           </v-btn>
@@ -14,8 +18,9 @@
           </v-btn>
         </v-toolbar-items>
       </v-toolbar>
+
       <keep-alive>
-        <router-view></router-view>
+        <router-view :dark_mode="dark_mode"></router-view>
       </keep-alive>
 
       <v-dialog
@@ -78,7 +83,8 @@ export default {
         download_size: 0
       },
       update_dialog: false,
-      download_bar: false
+      download_bar: false,
+      dark_mode: false
     };
   },
 
