@@ -1,15 +1,33 @@
 <template>
   <div id="app">
-    <v-app id="lc3tools" v-bind:dark="dark_mode">
+    <v-app id="lc3tools" v-bind:dark="isDarkMode">
       <!-- Toolbar -->
       <v-toolbar app fixed dense>
-        <v-toolbar-title><strong>LC3</strong>Tools</v-toolbar-title>
+        <v-toolbar-title>
+          <strong>LC3</strong>Tools
+          <v-menu model="settings_menu" :close-on-content-click="false" offset-y>
+            <v-btn flat slot="activator">
+              <v-icon>settings</v-icon>
+            </v-btn>
+            <v-card>
+              <v-container fill-height>
+                <v-layout column>
+                  <v-flex xs2>
+                    <h3>Theme</h3>
+                  </v-flex>
+                  <v-flex xs10>
+                    <v-radio-group v-model="theme" row>
+                      <v-radio label="Light" value="light"></v-radio>
+                      <v-radio label="Dark" value="dark"></v-radio>
+                    </v-radio-group>
+                  </v-flex>
+                </v-layout>
+              </v-container>
+            </v-card>
+          </v-menu>
+        </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-toolbar-items>
-          <v-btn large flat exact v-on:click="dark_mode = !dark_mode">
-            <v-icon large v-if="!dark_mode">brightness_5</v-icon>
-            <v-icon large v-else>brightness_3</v-icon>
-          </v-btn>
           <v-btn large flat exact to="/assembler">
             <v-icon large>code</v-icon>
           </v-btn>
@@ -20,7 +38,7 @@
       </v-toolbar>
 
       <keep-alive>
-        <router-view :dark_mode="dark_mode"></router-view>
+        <router-view :dark_mode="isDarkMode"></router-view>
       </keep-alive>
 
       <v-dialog
@@ -84,7 +102,8 @@ export default {
       },
       update_dialog: false,
       download_bar: false,
-      dark_mode: false
+      theme: "light",
+      settings_menu: false
     };
   },
 
@@ -115,7 +134,13 @@ export default {
       this.download_bar = true;
       ipcRenderer.send("auto_updater", "update_confirmed");
     }
-}
+  },
+
+  computed: {
+    isDarkMode() {
+      return this.theme === "dark";
+    }
+  }
 
 };
 </script>
