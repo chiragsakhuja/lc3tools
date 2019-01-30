@@ -24,7 +24,7 @@
   },
   "extraResources": "static/lc3os.obj",
   "build": {
-    "productName": "lc3tools",
+    "productName": "LC3Tools",
     "appId": "org.devtools.lc3tools",
     "directories": {
       "output": "build"

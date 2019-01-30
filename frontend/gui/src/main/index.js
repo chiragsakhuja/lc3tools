@@ -29,7 +29,7 @@ function createWindow () {
   })
 
   mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.setTitle("lc3tools v" + autoUpdater.currentVersion);
+    mainWindow.setTitle("LC3Tools v" + autoUpdater.currentVersion);
     //mainWindow.webContents.openDevTools();
   });
 

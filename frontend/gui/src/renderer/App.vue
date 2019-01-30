@@ -85,7 +85,7 @@
 
 <script>
 import * as lc3 from "lc3interface";
-import {ipcRenderer} from "electron";
+import {ipcRenderer, remote} from "electron";
 import path from "path";
 import fs from "fs";
 
@@ -109,8 +109,9 @@ export default {
 
   created() {
     let content = fs.readFileSync(__static + "/lc3os.obj");
-    fs.writeFileSync("lc3os.obj", content);
-    lc3.Init("lc3os.obj");
+    let user_dir = remote.app.getPath('userData');
+    fs.writeFileSync(user_dir + "lc3os.obj", content);
+    lc3.Init(user_dir + "lc3os.obj");
   },
 
   mounted() {
