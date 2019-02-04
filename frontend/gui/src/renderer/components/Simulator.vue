@@ -58,6 +58,22 @@
           </v-list-tile>
           <span>Step Out</span>
         </v-tooltip>
+        <v-tooltip right>
+          <v-list-tile slot="activator" @click="reinitializeMachine()">
+            <v-list-tile-action>
+              <v-icon large>power_settings_new</v-icon>
+            </v-list-tile-action>
+          </v-list-tile>
+          <span>Reinitialize Machine</span>
+        </v-tooltip>
+        <v-tooltip right>
+          <v-list-tile slot="activator" @click="randomizeMachine()">
+            <v-list-tile-action>
+              <v-icon large>shuffle</v-icon>
+            </v-list-tile-action>
+          </v-list-tile>
+          <span>Randomize Machine</span>
+        </v-tooltip>
       </v-list>
     </v-navigation-drawer>
 
@@ -81,7 +97,7 @@
                           <v-text-field
                             slot="input" label="Hex Value"
                             v-bind:value="toHex(props.item.value)" 
-                            @change="setDataValue($event, props.item, 'reg')"
+                            @change="setDataValue($event, props.item, 'reg', [rules.hex, rules.size16bit])"
                             :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
@@ -94,7 +110,7 @@
                           <v-text-field
                             slot="input" label="Decimal Value"
                             v-bind:value="props.item.value"
-                            @change="setDataValue($event, props.item, 'reg')"
+                            @change="setDataValue($event, props.item, 'reg', [rules.dec, rules.size16bit])"
                             :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
@@ -108,10 +124,17 @@
                   </template>
                 </v-data-table>
               </div>
-              <div id="regs-wrapper-cover"></div>
 
               <div id="console-wrapper">
-                <h3 class="view-header">Console (click to focus)</h3>
+                <div id="console-header">
+                  <div id="console-title"><h3 class="view-header">Console (click to focus)</h3></div>
+                  <div id="console-clear">
+                    <v-tooltip left>
+                        <v-icon slot="activator" @click="clearConsole()">clear</v-icon>
+                        <span>Clear Console</span>
+                    </v-tooltip>
+                  </div>
+                </div>
                 <div v-bind:id="dark_mode ? 'console-dark' : 'console'" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
               </div>
 
@@ -143,7 +166,7 @@
                           <v-text-field
                             slot="input" label="Hex Value"
                             v-bind:value="toHex(props.item.value)" 
-                            @change="setDataValue($event, props.item, 'mem')"
+                            @change="setDataValue($event, props.item, 'mem', [rules.hex, rules.size16bit])"
                             :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
@@ -156,7 +179,7 @@
                           <v-text-field
                             slot="input" label="Decimal Value"
                             v-bind:value="props.item.value"
-                            @change="setDataValue($event, props.item, 'mem')"
+                            @change="setDataValue($event, props.item, 'mem', [rules.dec, rules.size16bit])"
                             :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
@@ -238,14 +261,20 @@ export default {
       data_bg: { backgroundColor: "" },
       rules: {
         hex: function(value) {
+          if(value[0] == 'x') {
+            value = '0' + value;
+          }
           return (parseInt(value, 16) == value) || "Invalid hex number"
         },
         dec: function(value) {
           return (parseInt(value, 10) == value) || "Invalid decimal number"
         },
         size16bit: function(value) {
+          if(value[0] == 'x') {
+            value = '0' + value;
+          }
           let int_value = parseInt(value);
-          return (int_value >= 0 && int_value <= 0xffff) || "Value must be between 0 and 0xFFFF"
+          return (int_value >= 0 && int_value <= 0xffff) || "Value must be between 0 and xFFFF"
         }
       }
     };
@@ -294,6 +323,7 @@ export default {
         this.poll_output_handle = setInterval(this.updateConsole, 50)
       }
       if(!this.sim.running) {
+        lc3.ClearInput();
         this.sim.running = true;
         this.data_bg.backgroundColor = "lightgrey";
         return new Promise((resolve, reject) => {
@@ -312,6 +342,14 @@ export default {
         this.endSimulation(false);
       }
     },
+    reinitializeMachine() {
+      lc3.ReinitializeMachine();
+      this.updateUI();
+    },
+    randomizeMachine() {
+      lc3.RandomizeMachine();
+      this.updateUI();
+    },
     endSimulation(jump_to_pc) {
       clearInterval(this.poll_output_handle);
       this.poll_output_handle = null;
@@ -324,6 +362,10 @@ export default {
       this.updateUI();
       this.data_bg.backgroundColor = "";
       this.prev_inst_executed = lc3.GetInstExecCount();
+    },
+    clearConsole() {
+      this.console_str = "";
+      lc3.ClearOutput();
     },
 
     // UI update functions
@@ -341,12 +383,24 @@ export default {
         lc3.AddInput(event.key);
       }
     },
-    setDataValue(event, data_cell, type) {
-      data_cell.value = parseInt(event);
+    setDataValue(event, data_cell, type, rules) {
+      for(let i = 0; i < rules.length; i += 1) {
+        if(rules[i](event) != true) {
+          if(type == "reg") {
+            data_cell.value = lc3.GetRegValue(data_cell.name);
+          } else if(type == "mem") {
+            data_call.value = lc3.GetMemValue(data_cell.addr);
+          }
+          return;
+        }
+      }
+      data_cell.value = this.parseValueString(event);
       if(type == "reg") {
         lc3.SetRegValue(data_cell.name, data_cell.value);
       } else if(type == "mem") {
         lc3.SetMemValue(data_cell.addr, data_cell.value);
+        data_cell.line = "";
+        lc3.SetMemLine(data_cell.addr, "");
       }
       this.updateUI();
     },
@@ -401,7 +455,7 @@ export default {
       this.updateUI();
     },
     jumpToMemViewStr(value) {
-      this.jumpToMemView(parseInt(value));
+      this.jumpToMemView(this.parseValueString(value));
     },
     jumpToPrevMemView() {
       let new_start = this.mem_view.start - this.mem_view.data.length;
@@ -439,14 +493,21 @@ export default {
       } else if(cc == 0x2) {
         return "Z";
       } else if(cc == 0x4) {
-        return "P";
+        return "N";
       } else {
         return "Undefined";
       }
     },
     toHex(value) {
       let hex = value.toString(16).toUpperCase();
-      return "0x" + "0".repeat(4 - hex.length) + hex;
+      return "x" + "0".repeat(4 - hex.length) + hex;
+    },
+    parseValueString : (value) => {
+      let mod_value = value;
+      if(mod_value[0] == 'x') {
+        mod_value = '0' + mod_value;
+      }
+      return parseInt(mod_value)
     }
   },
   computed: {
@@ -484,8 +545,11 @@ export default {
 .left-wrapper {
   grid-column: 1;
   grid-row: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: 484px auto;
+  height: calc(100vh - 90px);
+  overflow: hidden;
 }
 
 .data-cell {
@@ -506,7 +570,8 @@ export default {
 /* Register view styles */
 #regs-wrapper {
   padding: 0px 5px 5px 5px;
-  order: 1;
+  grid-row: 1;
+  grid-column: 1;
   overflow: hidden;
 }
 
@@ -519,13 +584,31 @@ export default {
 
 /* Console styles */
 #console-wrapper {
+  grid-row: 2;
+  grid-column: 1;
   margin-top: 10px;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  order: 2;
   overflow: hidden;
   padding: 0px 5px 5px 5px;
+}
+
+#console-header {
+  display: grid;
+  grid-template-columns: 30px auto 30px;
+  grid-template-rows: 100%;
+  justify-items: center;
+  overflow: hidden;
+}
+
+#console-title {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+#console-clear {
+  grid-column: 3;
+  grid-row: 1;
 }
 
 #console {

@@ -605,7 +605,6 @@ std::vector<PIEvent> LEAIInstruction::execute(MachineState const & state)
     uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
 
     std::vector<PIEvent> ret {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, psr_value)),
         std::make_shared<RegEvent>(dr, addr)
     };
 

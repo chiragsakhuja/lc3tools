@@ -17,6 +17,7 @@ namespace core
         void setValue(uint16_t value) { this->value = value; }
         bool isOrig(void) const { return orig; }
         std::string getLine(void) const { return line; }
+        void setLine(std::string const & line) { this->line = line; }
 
         friend std::ostream & operator<<(std::ostream & out, MemEntry const & in);
         friend std::istream & operator>>(std::istream & in, MemEntry & out);

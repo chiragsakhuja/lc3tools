@@ -231,6 +231,16 @@ void lc3::sim::setMemString(uint32_t addr, std::string const & value)
     getMachineState().mem[addr + value.size()].setValue(0);
 }
 
+void lc3::sim::setMemLine(uint32_t addr, std::string const & value)
+{
+#ifdef _ENABLE_DEBUG
+    assert(addr <= 0xffff);
+#else
+    addr &= 0xffff;
+#endif
+    getMachineState().mem[addr].setLine(value);
+}
+
 void lc3::sim::setPC(uint32_t value)
 {
 #ifdef _ENABLE_DEBUG

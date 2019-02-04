@@ -131,6 +131,24 @@ NAN_METHOD(LoadObjectFile)
     }
 }
 
+NAN_METHOD(ReinitializeMachine)
+{
+    try {
+        sim->reinitialize();
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
+NAN_METHOD(RandomizeMachine)
+{
+    try {
+        sim->randomize();
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
 NAN_METHOD(Run)
 {
     if(!info[0]->IsFunction()) {
@@ -301,6 +319,26 @@ NAN_METHOD(GetMemLine)
     info.GetReturnValue().Set(ret);
 }
 
+NAN_METHOD(SetMemLine)
+{
+    if(!info[0]->IsNumber()) {
+        Nan::ThrowError("Must provide memory address as a numerical argument");
+        return;
+    }
+
+    if(!info[1]->IsString()) {
+        Nan::ThrowError("Second argument must be string");
+        return;
+    }
+
+    uint32_t addr = (uint32_t) info[0]->NumberValue();
+    v8::String::Utf8Value str(info[1]->ToString());
+    std::string line((char const *) *str);
+
+    lc3::core::MachineState & state = sim->getMachineState();
+    sim->setMemLine(addr, line);
+}
+
 NAN_METHOD(ClearInput)
 {
     inputter->clearInput();
@@ -374,6 +412,9 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, Assemble);
     NAN_EXPORT(target, LoadObjectFile);
 
+    NAN_EXPORT(target, ReinitializeMachine);
+    NAN_EXPORT(target, RandomizeMachine);
+
     NAN_EXPORT(target, Run);
     NAN_EXPORT(target, StepIn);
     NAN_EXPORT(target, StepOver);
@@ -385,6 +426,7 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, GetMemValue);
     NAN_EXPORT(target, SetMemValue);
     NAN_EXPORT(target, GetMemLine);
+    NAN_EXPORT(target, SetMemLine);
 
     NAN_EXPORT(target, ClearInput);
     NAN_EXPORT(target, AddInput);

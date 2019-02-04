@@ -66,6 +66,7 @@ namespace lc3
         void setReg(uint32_t id, uint32_t value);
         void setMem(uint32_t addr, uint32_t value);
         void setMemString(uint32_t addr, std::string const & value);
+        void setMemLine(uint32_t addr, std::string const & value);
         void setPC(uint32_t value);
         void setPSR(uint32_t value);
         void setMCR(uint32_t value);

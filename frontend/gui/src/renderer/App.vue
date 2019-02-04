@@ -5,35 +5,41 @@
       <v-toolbar app fixed dense>
         <v-toolbar-title>
           <strong>LC3</strong>Tools
-          <v-menu model="settings_menu" :close-on-content-click="false" offset-y>
-            <v-btn flat slot="activator">
-              <v-icon>settings</v-icon>
-            </v-btn>
-            <v-card>
-              <v-container fill-height>
-                <v-layout column>
-                  <v-flex xs2>
-                    <h3>Theme</h3>
-                  </v-flex>
-                  <v-flex xs10>
-                    <v-radio-group v-model="theme" row>
-                      <v-radio label="Light" value="light"></v-radio>
-                      <v-radio label="Dark" value="dark"></v-radio>
-                    </v-radio-group>
-                  </v-flex>
-                </v-layout>
-              </v-container>
-            </v-card>
-          </v-menu>
         </v-toolbar-title>
+        <v-menu model="settings_menu" :close-on-content-click="false" offset-y>
+          <v-btn flat slot="activator">
+            <v-icon>settings</v-icon>
+          </v-btn>
+          <v-card>
+            <v-container fill-height>
+              <v-layout column>
+                <v-flex xs2>
+                  <h3>Theme</h3>
+                </v-flex>
+                <v-flex xs10>
+                  <v-radio-group v-model="theme" row>
+                    <v-radio label="Light" value="light"></v-radio>
+                    <v-radio label="Dark" value="dark"></v-radio>
+                  </v-radio-group>
+                </v-flex>
+              </v-layout>
+            </v-container>
+          </v-card>
+        </v-menu>
         <v-spacer></v-spacer>
         <v-toolbar-items>
-          <v-btn large flat exact to="/assembler">
-            <v-icon large>code</v-icon>
-          </v-btn>
-          <v-btn large flat exact to="/simulator">
-            <v-icon large>play_arrow</v-icon>
-          </v-btn>
+          <v-tooltip bottom>
+            <v-btn large flat exact to="/assembler" slot="activator">
+              <v-icon large>code</v-icon>
+            </v-btn>
+            <span>Assembler</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <v-btn large flat exact to="/simulator" slot="activator">
+              <v-icon large>play_arrow</v-icon>
+            </v-btn>
+            <span>Simulator</span>
+          </v-tooltip>
         </v-toolbar-items>
       </v-toolbar>
 
