@@ -134,7 +134,11 @@ uint32_t InstructionEncoder::encodeInstruction(Statement const & state, lc3::cor
 
         bool encode_success = true;
         encoding <<= op->width;
-        encoding |= op->encode(tok, oper_count, regs, symbols, logger, encode_success);
+        try {
+            encoding |= op->encode(tok, oper_count, regs, symbols, logger, encode_success);
+        } catch(lc3::utils::exception const & e) {
+            success = false;
+        }
         success &= encode_success;
 
         if(op->type != OperType::FIXED) {

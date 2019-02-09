@@ -293,14 +293,30 @@ uint32_t NumOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_co
 
     if(sext) {
         if((int32_t) oper.num < -(1 << (width - 1)) || (int32_t) oper.num > ((1 << (width - 1)) - 1)) {
-            logger.asmPrintf(lc3::utils::PrintType::P_WARNING, oper, "immediate %d truncated to %d", oper.num,
+#ifdef _LIBERAL_ASM
+	    lc3::utils::PrintType p_type = lc3::utils::PrintType::P_WARNING;
+#else
+	    lc3::utils::PrintType p_type = lc3::utils::PrintType::P_ERROR;
+#endif
+            logger.asmPrintf(p_type, oper, "immediate %d truncated to %d", oper.num,
                 lc3::utils::sextTo32(token_val, width));
             logger.newline();
+#ifndef _LIBERAL_ASM
+	    throw lc3::utils::exception("invalid immediate");
+#endif
         }
     } else {
         if(oper.num > ((1 << width) - 1)) {
-            logger.asmPrintf(lc3::utils::PrintType::P_WARNING, oper, "immediate %d truncated to %u", oper.num, token_val);
+#ifdef _LIBERAL_ASM
+	    lc3::utils::PrintType p_type = lc3::utils::PrintType::P_WARNING;
+#else
+	    lc3::utils::PrintType p_type = lc3::utils::PrintType::P_ERROR;
+#endif
+            logger.asmPrintf(p_type, oper, "immediate %d truncated to %u", oper.num, token_val);
             logger.newline();
+#ifndef _LIBERAL_ASM
+	    throw lc3::utils::exception("invalid immediate");
+#endif
         }
     }
 

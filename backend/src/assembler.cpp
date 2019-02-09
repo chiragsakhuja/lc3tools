@@ -58,9 +58,11 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     }
 
     markPC(statements, logger);
-    SymbolTable symbol_table = firstPass(statements, logger);
-    bool success;
-    std::vector<MemEntry> obj_blob = secondPass(statements, symbol_table, logger, success);
+    bool success = true, success_tmp = true;
+    SymbolTable symbol_table = firstPass(statements, logger, success_tmp);
+    success &= success_tmp;
+    std::vector<MemEntry> obj_blob = secondPass(statements, symbol_table, logger, success_tmp);
+    success &= success_tmp;
 
 #ifdef _ENABLE_DEBUG
     auto end = std::chrono::high_resolution_clock::now();
@@ -149,12 +151,13 @@ void Assembler::convertBin(std::string const & bin_filename, std::string const &
 }
 
 SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statements,
-    lc3::utils::AssemblerLogger & logger)
+    lc3::utils::AssemblerLogger & logger, bool & success)
 {
     using namespace asmbl;
     using namespace lc3::utils;
 
     SymbolTable symbol_table;
+    success = true;
 
     for(Statement const & state : statements) {
         if(! state.hasLabel()) { continue; }
@@ -162,7 +165,13 @@ SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statement
         auto search = symbol_table.find(state.label.str);
         if(search != symbol_table.end()) {
             uint32_t old_val = search->second;
-            logger.asmPrintf(PrintType::P_WARNING, state.label, "redifining label from 0x%0.4x to 0x%0.4x", old_val,
+#ifdef _LIBERAL_ASM
+	    PrintType p_type = PrintType::P_WARNING;
+#else
+	    PrintType p_type = PrintType::P_ERROR;
+	    success = false;
+#endif
+            logger.asmPrintf(p_type, state.label, "redefining label from 0x%0.4x to 0x%0.4x", old_val,
                 state.pc);
             logger.newline();
         }
@@ -183,9 +192,19 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
     success = true;
 
     std::vector<MemEntry> ret;
+    uint32_t lines_after_end = 0;
+    bool found_end = false;
     for(Statement const & state : statements) {
+	if(found_end) {
+	    lines_after_end += 1;
+	}
         for(StatementToken const & tok : state.invalid_operands) {
+#ifdef _LIBERAL_ASM
             logger.asmPrintf(PrintType::P_WARNING, tok, "ignoring unexpected token");
+#else
+            logger.asmPrintf(PrintType::P_ERROR, tok, "unexpected token");
+	    success = false;
+#endif
             logger.newline();
         }
 
@@ -195,6 +214,8 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
             success &= encode_success;
             ret.emplace_back(encoding, false, state.line);
         } else if(checkIfValidPseudoStatement(state, ".orig", logger, false)) {
+	    lines_after_end = 0;
+	    found_end = false;
             ret.emplace_back(state.operands[0].num & 0xffff, true, state.line);
         } else if(checkIfValidPseudoStatement(state, ".stringz", logger, false)) {
             std::string const & value = state.operands[0].str;
@@ -224,8 +245,32 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
                 ret.emplace_back(search->second, false, state.line);
             }
         } else if(checkIfValidPseudoStatement(state, ".end", logger, false)) {
-            // don't need to do anything
+	    found_end = true;
         }
+    }
+
+    if(!found_end) {
+#ifdef _LIBERAL_ASM
+        logger.printf(PrintType::P_WARNING, true, "assembly did not end in .end", lines_after_end);
+#else
+        logger.printf(PrintType::P_ERROR, true, "assembly did not end in .end", lines_after_end);
+#endif
+	logger.newline();
+#ifndef _LIBERAL_ASM
+        throw utils::exception("assembly did not end in .end");
+#endif
+    }
+
+    if(lines_after_end > 0) {
+#ifdef _LIBERAL_ASM
+        logger.printf(PrintType::P_WARNING, true, "ignoring %d lines after final .end", lines_after_end);
+#else
+        logger.printf(PrintType::P_ERROR, true, "%d invalid lines after final .end", lines_after_end);
+#endif
+	logger.newline();
+#ifndef _LIBERAL_ASM
+        throw utils::exception("assembly did not end in .end");
+#endif
     }
     return ret;
 }
@@ -485,8 +530,16 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
         uint32_t val = state.operands[0].num;
         uint32_t trunc_val = val & 0xffff;
         if(val != trunc_val) {
-            logger.asmPrintf(PrintType::P_WARNING, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
+#ifdef _LIBERAL_ASM
+	    PrintType p_type = PrintType::P_WARNING;
+#else
+	    PrintType p_type = PrintType::P_ERROR;
+#endif
+            logger.asmPrintf(p_type, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
             logger.newline();
+#ifndef _LIBERAL_ASM
+	    throw utils::exception("could not find valid .orig");
+#endif
         }
 
         cur_pc = trunc_val;
@@ -499,7 +552,15 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
     }
 
     if(cur_pos != 0) {
+#ifdef _LIBERAL_ASM
         logger.printf(PrintType::P_WARNING, true, "ignoring %d lines before .orig", cur_pos);
+#else
+        logger.printf(PrintType::P_ERROR, true, "%d invalid lines before .orig", cur_pos);
+#endif
+	logger.newline();
+#ifndef _LIBERAL_ASM
+        throw utils::exception("orig is not first line in program");
+#endif
     }
 
     // start at the statement right after the first orig
@@ -528,8 +589,16 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
             uint32_t val = state.operands[0].num;
             uint32_t trunc_val = val & 0xffff;
             if(val != trunc_val) {
-                logger.asmPrintf(PrintType::P_WARNING, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
-                logger.newline();
+#ifdef _LIBERAL_ASM
+		PrintType p_type = PrintType::P_WARNING;
+#else
+		PrintType p_type = PrintType::P_ERROR;
+#endif
+		logger.asmPrintf(p_type, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
+		logger.newline();
+#ifndef _LIBERAL_ASM
+		throw utils::exception("could not find valid .orig");
+#endif
             }
 
             cur_pc = trunc_val;

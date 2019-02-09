@@ -110,7 +110,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
 bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, int32_t & val) const
 {
     char const * c_str = str.c_str();
-#ifdef LIBERAL_CONSTANTS
+#ifdef _LIBERAL_ASM
     if(c_str[0] == '0' && c_str[1] != '\0') { c_str += 1; }
 #endif
 
@@ -127,7 +127,7 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
             }
             return true;
         } else {
-#ifdef LIBERAL_CONSTANTS
+#ifdef _LIBERAL_ASM
             val = std::stoi(c_str);
             return true;
 #endif

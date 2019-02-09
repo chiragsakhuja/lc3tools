@@ -30,7 +30,7 @@ namespace core
         asmbl::InstructionEncoder encoder;
 
         SymbolTable firstPass(std::vector<asmbl::Statement> const & statements,
-            lc3::utils::AssemblerLogger & logger);
+            lc3::utils::AssemblerLogger & logger, bool & success);
         std::vector<MemEntry> secondPass(std::vector<asmbl::Statement> const & statements,
             SymbolTable const & symbol_table, lc3::utils::AssemblerLogger & logger, bool & success);
         void writeFile(std::vector<MemEntry> const & obj_blob, std::string const & obj_filename,
