@@ -6,7 +6,8 @@
 
 lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, std::string const & os_path,
     uint32_t print_level, bool propagate_exceptions) :
-    printer(printer), simulator(*this, printer, inputter, print_level), propagate_exceptions(propagate_exceptions)
+    printer(printer), simulator(*this, printer, inputter, print_level), os_path(os_path),
+    propagate_exceptions(propagate_exceptions)
 {
     simulator.registerPreInstructionCallback(lc3::sim::preInstructionCallback);
     simulator.registerPostInstructionCallback(lc3::sim::postInstructionCallback);
@@ -48,6 +49,7 @@ bool lc3::sim::loadObjectFile(std::string const & obj_filename)
 void lc3::sim::reinitialize(void)
 {
     simulator.reset();
+    simulator.loadOS(os_path);
 }
 
 void lc3::sim::randomize(void)
@@ -396,75 +398,75 @@ lc3::utils::IPrinter const & lc3::sim::getPrinter(void) const { return printer; 
 void lc3::sim::setPropagateExceptions(void) { propagate_exceptions = true; }
 void lc3::sim::clearPropagateExceptions(void) { propagate_exceptions = false; }
 
-void lc3::sim::preInstructionCallback(lc3::sim & sim_int, lc3::core::MachineState & state)
+void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineState & state)
 {
-    for(auto const & x : sim_int.breakpoints) {
+    for(auto const & x : sim_inst.breakpoints) {
         if(state.pc == x.loc) {
-            if(sim_int.breakpoint_callback_v) {
-                sim_int.breakpoint_callback(state, x);
+            if(sim_inst.breakpoint_callback_v) {
+                sim_inst.breakpoint_callback(state, x);
             }
             state.hit_breakpoint = true;
             break;
         }
     }
 
-    if(sim_int.until_halt_run && state.mem[state.pc].getValue() == 0xf025) {
-        sim_int.counted_run = false;
-        sim_int.step_out_run = false;
-        sim_int.until_halt_run = false;
+    if(sim_inst.until_halt_run && state.mem[state.pc].getValue() == 0xf025) {
+        sim_inst.counted_run = false;
+        sim_inst.step_out_run = false;
+        sim_inst.until_halt_run = false;
         state.hit_breakpoint = true;
     }
 
-    if(sim_int.pre_instruction_callback_v) {
-        sim_int.pre_instruction_callback(state);
+    if(sim_inst.pre_instruction_callback_v) {
+        sim_inst.pre_instruction_callback(state);
     }
 }
 
-void lc3::sim::postInstructionCallback(lc3::sim & sim_int, core::MachineState & state)
+void lc3::sim::postInstructionCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
-    sim_int.inst_exec_count += 1;
-    if((sim_int.counted_run && sim_int.inst_exec_count == sim_int.target_inst_count) ||
-        (sim_int.step_out_run && sim_int.sub_depth == 0))
+    sim_inst.inst_exec_count += 1;
+    if((sim_inst.counted_run && sim_inst.inst_exec_count == sim_inst.target_inst_count) ||
+        (sim_inst.step_out_run && sim_inst.sub_depth == 0))
     {
-        sim_int.counted_run = false;
-        sim_int.step_out_run = false;
+        sim_inst.counted_run = false;
+        sim_inst.step_out_run = false;
         state.running = false;
     }
 
-    if(sim_int.post_instruction_callback_v) {
-        sim_int.post_instruction_callback(state);
+    if(sim_inst.post_instruction_callback_v) {
+        sim_inst.post_instruction_callback(state);
     }
 }
 
-void lc3::sim::interruptEnterCallback(lc3::sim & sim_int, core::MachineState & state)
+void lc3::sim::interruptEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
-    sim_int.sub_depth += 1;
-    if(sim_int.interrupt_enter_callback_v) {
-        sim_int.interrupt_enter_callback(state);
+    sim_inst.sub_depth += 1;
+    if(sim_inst.interrupt_enter_callback_v) {
+        sim_inst.interrupt_enter_callback(state);
     }
 }
 
-void lc3::sim::interruptExitCallback(lc3::sim & sim_int, core::MachineState & state)
+void lc3::sim::interruptExitCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
-    sim_int.sub_depth -= 1;
-    if(sim_int.interrupt_exit_callback_v) {
-        sim_int.interrupt_exit_callback(state);
+    sim_inst.sub_depth -= 1;
+    if(sim_inst.interrupt_exit_callback_v) {
+        sim_inst.interrupt_exit_callback(state);
     }
 }
 
-void lc3::sim::subEnterCallback(lc3::sim & sim_int, core::MachineState & state)
+void lc3::sim::subEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
-    sim_int.sub_depth += 1;
-    if(sim_int.sub_enter_callback_v) {
-        sim_int.sub_enter_callback(state);
+    sim_inst.sub_depth += 1;
+    if(sim_inst.sub_enter_callback_v) {
+        sim_inst.sub_enter_callback(state);
     }
 }
 
-void lc3::sim::subExitCallback(lc3::sim & sim_int, core::MachineState & state)
+void lc3::sim::subExitCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
-    sim_int.sub_depth -= 1;
-    if(sim_int.sub_exit_callback_v) {
-        sim_int.sub_exit_callback(state);
+    sim_inst.sub_depth -= 1;
+    if(sim_inst.sub_exit_callback_v) {
+        sim_inst.sub_exit_callback(state);
     }
 }
 

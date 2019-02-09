@@ -58,6 +58,7 @@ namespace asmbl
         uint32_t pc;
 
         std::vector<StatementToken> operands;
+        std::vector<StatementToken> invalid_operands;
 
         std::string line;
     };

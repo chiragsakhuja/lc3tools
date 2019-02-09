@@ -91,6 +91,7 @@ namespace lc3
     private:
         utils::IPrinter & printer;
         core::Simulator simulator;
+        std::string os_path;
 
         friend class core::Simulator;
         static void preInstructionCallback(sim & sim_int, core::MachineState & state);

@@ -131,6 +131,15 @@ NAN_METHOD(LoadObjectFile)
     }
 }
 
+NAN_METHOD(RestartMachine)
+{
+    try {
+        sim->restart();
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
 NAN_METHOD(ReinitializeMachine)
 {
     try {
@@ -412,6 +421,7 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, Assemble);
     NAN_EXPORT(target, LoadObjectFile);
 
+    NAN_EXPORT(target, RestartMachine);
     NAN_EXPORT(target, ReinitializeMachine);
     NAN_EXPORT(target, RandomizeMachine);
 

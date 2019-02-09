@@ -184,6 +184,11 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
 
     std::vector<MemEntry> ret;
     for(Statement const & state : statements) {
+        for(StatementToken const & tok : state.invalid_operands) {
+            logger.asmPrintf(PrintType::P_WARNING, tok, "ignoring unexpected token");
+            logger.newline();
+        }
+
         if(state.isInst()) {
             bool encode_success = false;
             uint32_t encoding = encodeInstruction(state, symbol_table, logger, encode_success);
@@ -210,7 +215,7 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
                 StatementToken const & oper = state.operands[0];
                 auto search = symbol_table.find(oper.str);
                 if(search == symbol_table.end()) {
-                    logger.asmPrintf(lc3::utils::PrintType::P_ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
+                    logger.asmPrintf(PrintType::P_ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
                     logger.newline();
                     success = false;
                     continue;
@@ -218,6 +223,8 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
 
                 ret.emplace_back(search->second, false, state.line);
             }
+        } else if(checkIfValidPseudoStatement(state, ".end", logger, false)) {
+            // don't need to do anything
         }
     }
     return ret;
@@ -242,7 +249,7 @@ void Assembler::writeFile(std::vector<MemEntry> const & obj_blob, std::string co
 }
 
 asmbl::Statement Assembler::makeStatement(std::vector<asmbl::Token> const & tokens)
-{ 
+{
     using namespace asmbl;
 
     std::vector<StatementToken> ret_tokens;
@@ -295,8 +302,13 @@ void Assembler::markInstTokens(std::vector<asmbl::StatementToken> & tokens)
             // the sole token on this line is not a string, so it cannot be an instruction
         }
     } else {
-        if(tokens[0].type == TokenType::STRING) {
-            uint32_t token_0_dist = encoder.getDistanceToNearestInstructionName(tokens[0].str);
+        if(tokens[0].type == TokenType::STRING || tokens[0].type == TokenType::NUM) {
+            // if the first token is a number, it was probably an attempt at making a label that looks like a number
+            // in this case, make the distance too large to be close to an instruction
+            uint32_t token_0_dist = 1 << 31;
+            if(tokens[0].type != TokenType::NUM) {
+                token_0_dist = encoder.getDistanceToNearestInstructionName(tokens[0].str);
+            }
             if(tokens[1].type == TokenType::STRING) {
                 // first two tokens are both strings, maybe they're instructions?
                 uint32_t token_1_dist = encoder.getDistanceToNearestInstructionName(tokens[1].str);
@@ -326,7 +338,7 @@ void Assembler::markInstTokens(std::vector<asmbl::StatementToken> & tokens)
                 } else {
                     if(token_0_dist < 3) {
                         tokens[0].type = TokenType::INST;
-                        tokens[0].lev_dist = token_0_dist;;
+                        tokens[0].lev_dist = token_0_dist;
                     } else {
                         // too far from an instruction
                     }
@@ -334,10 +346,12 @@ void Assembler::markInstTokens(std::vector<asmbl::StatementToken> & tokens)
             } else {
                 uint32_t lev_thresh = 1;
                 if(tokens[1].type == TokenType::PSEUDO) {
-                    // if the second token is a pseudo op, then the first token should be considered a label, even if
-                    // it matches an instruction
-                    tokens[0].type = TokenType::LABEL;
-                    return;
+                    if(tokens[0].type == TokenType::STRING) {
+                        // if the second token is a pseudo op, then the first token should be considered a label, even if
+                        // it matches an instruction
+                        tokens[0].type = TokenType::LABEL;
+                        return;
+                    }
                 } else {
                     lev_thresh += 1;
                 }
@@ -378,25 +392,29 @@ asmbl::Statement Assembler::makeStatementFromTokens(std::vector<asmbl::Statement
     using namespace asmbl;
 
     Statement ret;
+    uint32_t pos = 0;
     if(tokens.size() > 0) {
         ret.line = tokens[0].line;
         if(tokens[0].type == TokenType::LABEL) {
             StatementToken temp = tokens[0];
             std::transform(temp.str.begin(), temp.str.end(), temp.str.begin(), ::tolower);
             ret.label = temp;
+            pos += 1;
         }
     }
 
-    uint32_t pos = 0;
-    for(pos = 0; pos < tokens.size(); pos += 1) {
+    while(pos < tokens.size()) {
         if(tokens[pos].type == TokenType::INST || tokens[pos].type == TokenType::PSEUDO) {
             StatementToken temp = tokens[pos];
             std::transform(temp.str.begin(), temp.str.end(), temp.str.begin(), ::tolower);
-
             ret.inst_or_pseudo = temp;
             pos += 1;
             break;
+        } else {
+            // all tokens before an instruction (excluding a possible label) are invalid
+            ret.invalid_operands.push_back(tokens[pos]);
         }
+        pos += 1;
     }
 
     while(pos < tokens.size()) {

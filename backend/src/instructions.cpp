@@ -188,9 +188,9 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
     }
 
     if(sys_call_type == MachineState::SysCallType::TRAP) {
-        ret.push_back(std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback));
+        ret.push_back(std::make_shared<CallbackEvent>(state.sub_exit_callback_v, state.sub_exit_callback));
     } else {
-        ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_enter_callback_v, state.interrupt_enter_callback));
+        ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_exit_callback_v, state.interrupt_exit_callback));
     }
     ret.push_back(std::make_shared<PopSysCallTypeEvent>());
 
@@ -600,17 +600,9 @@ std::vector<PIEvent> LEAIInstruction::execute(MachineState const & state)
     uint32_t dr = operands[1]->value;
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
-    bool psr_change_mem;
-    PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
-
     std::vector<PIEvent> ret {
         std::make_shared<RegEvent>(dr, addr)
     };
-
-    if(psr_change_mem) {
-        ret.push_back(psr_change);
-    }
 
     return ret;
 }
@@ -620,18 +612,9 @@ std::vector<PIEvent> LEALInstruction::execute(MachineState const & state)
     uint32_t dr = operands[1]->value;
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
 
-    bool psr_change_mem;
-    PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
-
     std::vector<PIEvent> ret {
-        std::make_shared<PSREvent>(lc3::utils::computePSRCC(addr, psr_value)),
         std::make_shared<RegEvent>(dr, addr)
     };
-
-    if(psr_change_mem) {
-        ret.push_back(psr_change);
-    }
 
     return ret;
 }

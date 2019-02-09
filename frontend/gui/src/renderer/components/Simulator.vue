@@ -439,8 +439,9 @@ export default {
     },
     setPC(addr) {
       let new_pc = addr & 0xffff;
-      this.sim.regs[9].value = new_pc;
       lc3.SetRegValue("pc", new_pc);
+      lc3.RestartMachine();
+      this.updateUI();
     },
     breakpointAt(addr) {
       return this.sim.breakpoints.includes(addr);
