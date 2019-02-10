@@ -205,6 +205,9 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
             logger.asmPrintf(PrintType::P_ERROR, tok, "unexpected token");
 	    success = false;
 #endif
+            // TODO: I think the only time there will be an invalid operand is if there is a number at the beginning
+            // of the line (or multiple times before an instruction)
+            logger.printf(PrintType::P_NOTE, false, "labels cannot look like numbers");
             logger.newline();
         }
 
@@ -243,10 +246,22 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
                 }
 
                 ret.emplace_back(search->second, false, state.line);
-            }
+	    }
         } else if(checkIfValidPseudoStatement(state, ".end", logger, false)) {
 	    found_end = true;
-        }
+        } else {
+	    if(state.invalid_operands.size() == 0) {
+		StatementToken state_tok;
+		state_tok.line = state.line;
+#ifdef _LIBERAL_ASM
+		logger.asmPrintf(PrintType::P_WARNING, 0, state_tok.line.size(), state_tok, "ignoring invalid line");
+#else
+		logger.asmPrintf(PrintType::P_ERROR, 0, state_tok.line.size(), state_tok, "invalid line");
+		success = false;
+#endif
+		logger.newline();
+	    }
+	}
     }
 
     if(!found_end) {

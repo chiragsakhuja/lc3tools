@@ -42,7 +42,9 @@
               <v-icon large>build</v-icon>
             </v-list-tile-action>
           </v-list-tile>
-          <span>Build Code</span>
+          <span v-if="this.editor.current_file.endsWith('.asm')">Assemble</span>
+          <span v-else-if="this.editor.current_file.endsWith('.bin')">Convert</span>
+          <span v-else>Assemble or Convert</span>
         </v-tooltip>
       </v-list>
     </v-navigation-drawer>
