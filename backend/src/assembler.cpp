@@ -250,7 +250,7 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
         } else if(checkIfValidPseudoStatement(state, ".end", logger, false)) {
 	    found_end = true;
         } else {
-	    if(state.invalid_operands.size() == 0) {
+	    if(!state.hasLabel() && state.invalid_operands.size() == 0) {
 		StatementToken state_tok;
 		state_tok.line = state.line;
 #ifdef _LIBERAL_ASM

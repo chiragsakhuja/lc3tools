@@ -40,7 +40,7 @@ namespace core
         std::array<uint32_t, 8> regs;
         uint32_t pc;
 
-        uint32_t backup_sp;
+        //uint32_t backup_sp;
 
         std::stack<SysCallType> sys_call_types;
 
@@ -49,7 +49,12 @@ namespace core
         bool running;
         bool hit_breakpoint;
 
-        uint32_t readMem(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const;
+        uint32_t readMemEvent(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const;
+        uint32_t readMemSafe(uint32_t addr);
+        uint32_t readMemRaw(uint32_t addr) const;
+        void writeMemEvent(uint32_t addr, uint16_t value, bool & change_mem, std::shared_ptr<IEvent> & change);
+        void writeMemSafe(uint32_t addr, uint16_t value);
+        void writeMemRaw(uint32_t addr, uint16_t value);
 
         bool pre_instruction_callback_v;
         bool post_instruction_callback_v;
@@ -108,9 +113,9 @@ namespace core
     public:
         PSREvent(uint32_t value) : IEvent(EventType::EVENT_PSR), value(value) {}
 
-        virtual void updateState(MachineState & state) const override { state.mem[PSR].setValue(value & 0xFFFF); }
+        virtual void updateState(MachineState & state) const override { state.writeMemRaw(PSR, value & 0xFFFF); }
         virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("PSR: 0x%0.4x => 0x%0.4x", state.mem[PSR].getValue(), value); }
+            return utils::ssprintf("PSR: 0x%0.4x => 0x%0.4x", state.readMemRaw(PSR), value); }
     private:
         uint32_t value;
     };
@@ -134,7 +139,7 @@ namespace core
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("MEM[0x%0.4x]: 0x%0.4x => 0x%0.4x", addr, state.mem[addr].getValue(), value); }
+            return utils::ssprintf("MEM[0x%0.4x]: 0x%0.4x => 0x%0.4x", addr, state.readMemRaw(addr), value); }
     private:
         uint32_t addr;
         uint32_t value;
@@ -148,7 +153,7 @@ namespace core
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {
             if(shouldSwap(state)) {
-                return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.backup_sp);
+                return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.readMemRaw(BSP));
             } else {
                 return "";
             }

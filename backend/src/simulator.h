@@ -27,7 +27,7 @@ namespace core
         void loadOS(std::string const & os_path);
         void simulate(void);
         void pause(void);
-        void reset(void);
+        void reinitialize(void);
 
         void registerPreInstructionCallback(callback_func_t func);
         void registerPostInstructionCallback(callback_func_t func);

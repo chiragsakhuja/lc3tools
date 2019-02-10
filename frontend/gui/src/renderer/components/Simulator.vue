@@ -399,8 +399,6 @@ export default {
         lc3.SetRegValue(data_cell.name, data_cell.value);
       } else if(type == "mem") {
         lc3.SetMemValue(data_cell.addr, data_cell.value);
-        data_cell.line = "";
-        lc3.SetMemLine(data_cell.addr, "");
       }
       this.updateUI();
     },

@@ -99,13 +99,15 @@ std::vector<PIEvent> IInstruction::buildSysCallEnterHelper(MachineState const & 
 {
     bool change_mem;
     PIEvent change;
-    uint32_t vector = state.readMem(vector_id, change_mem, change);
+    uint32_t vector = state.readMemEvent(vector_id, change_mem, change);
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
-    uint32_t sp = state.backup_sp;
+    bool bsp_change_mem;
+    PIEvent bsp_change;
+    uint32_t sp = state.readMemEvent(BSP, bsp_change_mem, bsp_change);
     if((psr_value & 0x8000) == 0x0000) {
         sp = state.regs[6];
     }
@@ -135,6 +137,10 @@ std::vector<PIEvent> IInstruction::buildSysCallEnterHelper(MachineState const & 
         ret.push_back(psr_change);
     }
 
+    if(bsp_change_mem) {
+        ret.push_back(bsp_change);
+    }
+
     if(sys_call_type == MachineState::SysCallType::TRAP) {
         ret.push_back(std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback));
     } else {
@@ -150,15 +156,15 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
 {
     bool pc_change_mem;
     PIEvent pc_change;
-    uint32_t pc_value = state.readMem(state.regs[6], pc_change_mem, pc_change);
+    uint32_t pc_value = state.readMemEvent(state.regs[6], pc_change_mem, pc_change);
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(state.regs[6] + 1, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(state.regs[6] + 1, psr_change_mem, psr_change);
 
     bool current_psr_change_mem;
     PIEvent current_psr_change;
-    uint32_t current_psr_value = state.readMem(PSR, current_psr_change_mem, current_psr_change);
+    uint32_t current_psr_value = state.readMemEvent(PSR, current_psr_change_mem, current_psr_change);
 
     if((current_psr_value & 0x8000) == 0x8000) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x0, MachineState::SysCallType::INT);
@@ -358,7 +364,7 @@ std::vector<PIEvent> ADDRInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     std::vector<PIEvent> ret {
         std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
@@ -381,7 +387,7 @@ std::vector<PIEvent> ADDIInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     std::vector<PIEvent> ret {
         std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
@@ -404,7 +410,7 @@ std::vector<PIEvent> ANDRInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     std::vector<PIEvent> ret {
         std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
@@ -427,7 +433,7 @@ std::vector<PIEvent> ANDIInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     std::vector<PIEvent> ret {
         std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
@@ -448,7 +454,7 @@ std::vector<PIEvent> BRInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if((operands[1]->value & (psr_value & 0x0007)) != 0) {
         ret.push_back(std::make_shared<PCEvent>(addr));
@@ -506,7 +512,7 @@ std::vector<PIEvent> LDInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
@@ -514,7 +520,7 @@ std::vector<PIEvent> LDInstruction::execute(MachineState const & state)
 
     bool change_mem;
     PIEvent change;
-    uint32_t value = state.readMem(addr, change_mem, change);
+    uint32_t value = state.readMemEvent(addr, change_mem, change);
 
 
     std::vector<PIEvent> ret {
@@ -540,15 +546,15 @@ std::vector<PIEvent> LDIInstruction::execute(MachineState const & state)
 
     bool change_mem1;
     PIEvent change1;
-    uint32_t addr2 = state.readMem(addr1, change_mem1, change1);
+    uint32_t addr2 = state.readMemEvent(addr1, change_mem1, change1);
 
     bool change_mem2;
     PIEvent change2;
-    uint32_t value = state.readMem(addr2, change_mem2, change2);
+    uint32_t value = state.readMemEvent(addr2, change_mem2, change2);
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if(((addr1 <= SYSTEM_END || addr1 >= MMIO_START) || (addr2 <= SYSTEM_END || addr2 >= MMIO_START))
         && (psr_value & 0x8000) != 0x0000)
@@ -585,7 +591,7 @@ std::vector<PIEvent> LDRInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
@@ -593,7 +599,7 @@ std::vector<PIEvent> LDRInstruction::execute(MachineState const & state)
 
     bool change_mem;
     PIEvent change;
-    uint32_t value = state.readMem(addr, change_mem, change);
+    uint32_t value = state.readMemEvent(addr, change_mem, change);
 
     std::vector<PIEvent> ret {
         std::make_shared<PSREvent>(lc3::utils::computePSRCC(value, psr_value)),
@@ -643,7 +649,7 @@ std::vector<PIEvent> NOTInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     std::vector<PIEvent> ret {
         std::make_shared<PSREvent>(lc3::utils::computePSRCC(result, psr_value)),
@@ -669,7 +675,7 @@ std::vector<PIEvent> STInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
@@ -692,11 +698,11 @@ std::vector<PIEvent> STIInstruction::execute(MachineState const & state)
 
     bool change_mem;
     PIEvent change;
-    uint32_t addr2 = state.readMem(addr1, change_mem, change);
+    uint32_t addr2 = state.readMemEvent(addr1, change_mem, change);
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if(((addr1 <= SYSTEM_END || addr1 >= MMIO_START) || (addr2 <= SYSTEM_END || addr2 >= MMIO_START))
         && (psr_value & 0x8000) != 0x0000)
@@ -729,7 +735,7 @@ std::vector<PIEvent> STRInstruction::execute(MachineState const & state)
 
     bool psr_change_mem;
     PIEvent psr_change;
-    uint32_t psr_value = state.readMem(PSR, psr_change_mem, psr_change);
+    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);

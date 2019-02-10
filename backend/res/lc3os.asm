@@ -518,26 +518,37 @@
 
 
 OS_START    ; machine starts executing at x0200
+    LD R6,OS_SP            ; set system stack pointer
     LEA R0,OS_START_MSG    ; print a welcome message
     PUTS
+    LDI R0,OS_PSR          ; go to user mode
+    LD R1, MASK_HI
+    NOT R0,R0
+    AND R0,R0,R1
+    NOT R0,R0
+    ; normally this part would be in user space and the
+    ; loader would set the PC
+    STI R0,OS_PSR
     HALT
 
 OS_START_MSG    .STRINGZ ""
 
 OS_KBSR    .FILL xFE00
 OS_KBDR    .FILL xFE02
-OS_DSR    .FILL xFE04
-OS_DDR    .FILL xFE06
-OS_MCR    .FILL xFFFE
-MASK_HI .FILL x7FFF
+OS_DSR     .FILL xFE04
+OS_DDR     .FILL xFE06
+OS_PSR     .FILL xFFFC
+OS_MCR     .FILL xFFFE
+OS_SP      .FILL x3000
+MASK_HI    .FILL x7FFF
 LOW_8_BITS .FILL x00FF
-TOUT_R1 .BLKW 1
-TIN_R7  .BLKW 1
-OS_R0   .BLKW 1
-OS_R1   .BLKW 1
-OS_R2   .BLKW 1
-OS_R3   .BLKW 1
-OS_R7   .BLKW 1
+TOUT_R1    .BLKW #1
+TIN_R7     .BLKW #1
+OS_R0      .BLKW #1
+OS_R1      .BLKW #1
+OS_R2      .BLKW #1
+OS_R3      .BLKW #1
+OS_R7      .BLKW #1
 
 
 TRAP_GETC
@@ -556,37 +567,35 @@ TRAP_OUT_WAIT
     RTI
 
 TRAP_PUTS
-    ST R0,OS_R0        ; save R0, R1, and R7
+    ST R0,OS_R0          ; save R0, R1, and R7
     ST R1,OS_R1
     ST R7,OS_R7
-    ADD R1,R0,#0        ; move string pointer (R0) into R1
-
+    ADD R1,R0,#0         ; move string pointer (R0) into R1
 TRAP_PUTS_LOOP
-    LDR R0,R1,#0        ; write characters in string using OUT
+    LDR R0,R1,#0         ; write characters in string using OUT
     BRz TRAP_PUTS_DONE
     OUT
     ADD R1,R1,#1
     BRnzp TRAP_PUTS_LOOP
-
 TRAP_PUTS_DONE
-    LD R0,OS_R0        ; restore R0, R1, and R7
+    LD R0,OS_R0          ; restore R0, R1, and R7
     LD R1,OS_R1
     LD R7,OS_R7
     RTI
 
 TRAP_IN
-    ST R7,TIN_R7        ; save R7 (no need to save R0, since we
-                ;    overwrite later
-    LEA R0,TRAP_IN_MSG    ; prompt for input
+    ST R7,TIN_R7       ; save R7 (no need to save R0, since we
+                       ; overwrite later
+    LEA R0,TRAP_IN_MSG ; prompt for input
     PUTS
-    GETC            ; read a character
-    OUT            ; echo back to monitor
+    GETC               ; read a character
+    OUT                ; echo back to monitor
     ST R0,OS_R0        ; save the character
-    AND R0,R0,#0        ; write a linefeed, too
+    AND R0,R0,#0       ; write a linefeed, too
     ADD R0,R0,#10
     OUT
     LD R0,OS_R0        ; restore the character
-    LD R7,TIN_R7        ; restore R7
+    LD R7,TIN_R7       ; restore R7
     RTI
 
 TRAP_PUTSP
@@ -594,20 +603,18 @@ TRAP_PUTSP
     ; packed form, despite the P&P second edition's requirement
     ; of a double NUL.
 
-    ST R0,OS_R0        ; save R0, R1, R2, R3, and R7
+    ST R0,OS_R0         ; save R0, R1, R2, R3, and R7
     ST R1,OS_R1
     ST R2,OS_R2
     ST R3,OS_R3
     ST R7,OS_R7
     ADD R1,R0,#0        ; move string pointer (R0) into R1
-
 TRAP_PUTSP_LOOP
     LDR R2,R1,#0        ; read the next two characters
     LD R0,LOW_8_BITS    ; use mask to get low byte
     AND R0,R0,R2        ; if low byte is NUL, quit printing
     BRz TRAP_PUTSP_DONE
-    OUT            ; otherwise print the low byte
-
+    OUT                 ; otherwise print the low byte
     AND R0,R0,#0        ; shift high byte into R0
     ADD R3,R0,#8
 TRAP_PUTSP_S_LOOP
@@ -619,16 +626,13 @@ TRAP_PUTSP_MSB_0
     ADD R2,R2,R2        ; shift R2 left
     ADD R3,R3,#-1
     BRp TRAP_PUTSP_S_LOOP
-
     ADD R0,R0,#0        ; if high byte is NUL, quit printing
     BRz TRAP_PUTSP_DONE
-    OUT            ; otherwise print the low byte
-
+    OUT                 ; otherwise print the low byte
     ADD R1,R1,#1        ; and keep going
     BRnzp TRAP_PUTSP_LOOP
-
 TRAP_PUTSP_DONE
-    LD R0,OS_R0        ; restore R0, R1, R2, R3, and R7
+    LD R0,OS_R0         ; restore R0, R1, R2, R3, and R7
     LD R1,OS_R1
     LD R2,OS_R2
     LD R3,OS_R3
@@ -637,13 +641,13 @@ TRAP_PUTSP_DONE
 
 TRAP_HALT
     ; an infinite loop of lowering OS_MCR's MSB
-    LEA R0,TRAP_HALT_MSG    ; give a warning
+    LEA R0,TRAP_HALT_MSG ; give a warning
     PUTS
     LDI R0,OS_MCR        ; halt the machine
     LD R1,MASK_HI
     AND R0,R0,R1
     STI R0,OS_MCR
-    BRnzp TRAP_HALT        ; HALT again...
+    BRnzp TRAP_HALT      ; HALT again...
 
 BAD_TRAP
     ; print an error message, then HALT

@@ -313,6 +313,7 @@ NAN_METHOD(SetMemValue)
     uint32_t value = (uint32_t) info[1]->NumberValue();
     lc3::core::MachineState & state = sim->getMachineState();
     state.mem[addr].setValue(value);
+    state.mem[addr].setLine("");
 }
 
 NAN_METHOD(GetMemLine)

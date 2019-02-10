@@ -48,7 +48,7 @@ bool lc3::sim::loadObjectFile(std::string const & obj_filename)
 
 void lc3::sim::reinitialize(void)
 {
-    simulator.reset();
+    simulator.reinitialize();
     simulator.loadOS(os_path);
 }
 
@@ -162,7 +162,7 @@ uint32_t lc3::sim::getMem(uint32_t addr) const
 #else
     addr &= 0xffff;
 #endif
-    return getMachineState().mem[addr].getValue();
+    return getMachineState().readMemRaw(addr);
 }
 
 std::string lc3::sim::getMemLine(uint32_t addr) const
@@ -217,7 +217,8 @@ void lc3::sim::setMem(uint32_t addr, uint32_t value)
     addr &= 0xffff;
     value &= 0xffff;
 #endif
-    getMachineState().mem[addr].setValue(value);
+    getMachineState().writeMemSafe(addr, value);
+    getMachineState().mem[addr].setLine("");
 }
 
 void lc3::sim::setMemString(uint32_t addr, std::string const & value)
@@ -228,9 +229,11 @@ void lc3::sim::setMemString(uint32_t addr, std::string const & value)
     addr &= 0xffff;
 #endif
     for(uint32_t i = 0; i < value.size(); i += 1) {
-        getMachineState().mem[addr + i].setValue(static_cast<uint32_t>(value[i]));
+        getMachineState().writeMemRaw(addr + i, static_cast<uint32_t>(value[i]));
+        getMachineState().mem[addr + i].setLine(std::string(1, value[i]));
     }
-    getMachineState().mem[addr + value.size()].setValue(0);
+    getMachineState().writeMemRaw(addr + value.size(), 0);
+    getMachineState().mem[addr + value.size()].setLine(value);
 }
 
 void lc3::sim::setMemLine(uint32_t addr, std::string const & value)
@@ -410,7 +413,7 @@ void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineSta
         }
     }
 
-    if(sim_inst.until_halt_run && state.mem[state.pc].getValue() == 0xf025) {
+    if(sim_inst.until_halt_run && state.readMemRaw(state.pc) == 0xf025) {
         sim_inst.counted_run = false;
         sim_inst.step_out_run = false;
         sim_inst.until_halt_run = false;

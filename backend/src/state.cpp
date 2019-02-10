@@ -12,9 +12,9 @@ namespace core
 };
 };
 
-uint32_t lc3::core::MachineState::readMem(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const
+uint32_t lc3::core::MachineState::readMemEvent(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const
 {
-    assert(addr < 0xFFFF);
+    assert(addr <= 0xFFFF);
 
     change_mem = false;
     change = nullptr;
@@ -22,15 +22,71 @@ uint32_t lc3::core::MachineState::readMem(uint32_t addr, bool & change_mem, std:
     uint32_t value;
     if(addr == KBSR || addr == KBDR) {
         std::lock_guard<std::mutex> guard(g_io_lock);
-        value = mem[addr].getValue();
+        value = readMemRaw(addr);
         if(addr == KBDR) {
             change_mem = true;
-            change = std::make_shared<MemWriteEvent>(KBSR, mem[KBSR].getValue() & 0x7FFF);
+            change = std::make_shared<MemWriteEvent>(KBSR, readMemRaw(KBSR) & 0x7FFF);
         }
     } else {
-        value = mem[addr].getValue();
+        value = readMemRaw(addr);
     }
     return value;
+}
+
+uint32_t lc3::core::MachineState::readMemSafe(uint32_t addr)
+{
+    bool change_mem;
+    std::shared_ptr<IEvent> change;
+
+    uint32_t value = readMemEvent(addr, change_mem, change);
+
+    if(change_mem) {
+        change->updateState(*this);
+    }
+
+    return value;
+}
+
+uint32_t lc3::core::MachineState::readMemRaw(uint32_t addr) const {
+    assert(addr <= 0xFFFF);
+
+    return mem[addr].getValue();
+}
+
+void lc3::core::MachineState::writeMemEvent(uint32_t addr, uint16_t value, bool & change_mem,
+    std::shared_ptr<IEvent> & change)
+{
+    assert(addr <= 0xFFFF);
+
+    change_mem = false;
+    change = nullptr;
+
+    if(addr == PSR) {
+        SPType target = (value & 0x8000) == 0 ? SPType::SSP : SPType::USP;
+        change_mem = true;
+        change = std::make_shared<SwapSPEvent>(target);
+    }
+
+    writeMemRaw(addr, value);
+}
+
+void lc3::core::MachineState::writeMemSafe(uint32_t addr, uint16_t value)
+{
+    bool change_mem;
+    std::shared_ptr<IEvent> change;
+
+    writeMemEvent(addr, value, change_mem, change);
+
+    if(change_mem) {
+        change->updateState(*this);
+    }
+}
+
+void lc3::core::MachineState::writeMemRaw(uint32_t addr, uint16_t value)
+{
+    assert(addr <= 0xFFFF);
+
+    mem[addr].setValue(value);
 }
 
 void lc3::core::MemWriteEvent::updateState(MachineState & state) const
@@ -46,25 +102,25 @@ void lc3::core::MemWriteEvent::updateState(MachineState & state) const
         }
     } else if(addr == KBSR) {
         std::lock_guard<std::mutex> guard(g_io_lock);
-        state.mem[addr].setValue(value & 0x4000);
+        state.writeMemSafe(addr, value & 0x4000);
         return;
     }
 
-    state.mem[addr].setValue(value);
+    state.writeMemSafe(addr, value);
 }
 
 void lc3::core::SwapSPEvent::updateState(MachineState & state) const
 {
     if(shouldSwap(state)) {
         uint32_t old_sp = state.regs[6];
-        state.regs[6] = state.backup_sp;
-        state.backup_sp = old_sp;
+        state.regs[6] = state.readMemRaw(BSP);
+        state.writeMemRaw(BSP, old_sp);
     }
 }
 
 bool lc3::core::SwapSPEvent::shouldSwap(MachineState const & state) const
 {
     bool target_usp = target == MachineState::SPType::USP;
-    bool system_mode = (state.mem[PSR].getValue() & 0x8000) == 0x0000;
+    bool system_mode = (state.readMemRaw(PSR) & 0x8000) == 0x0000;
     return target_usp || (!system_mode);
 }
