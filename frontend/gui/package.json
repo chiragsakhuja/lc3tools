@@ -23,6 +23,7 @@
     "release": "build"
   },
   "extraResources": "static/lc3os.obj",
+  "buildResources": "static",
   "build": {
     "productName": "LC3Tools",
     "appId": "org.devtools.lc3tools",
@@ -30,7 +31,8 @@
       "output": "build"
     },
     "files": [
-      "dist/electron/**/*"
+      "dist/electron/**/*",
+      "static/icons/*"
     ],
     "dmg": {
       "contents": [
@@ -48,13 +50,13 @@
       ]
     },
     "mac": {
-      "icon": "build/icons/icon.icns"
+      "icon": "static/icons/icon.icns"
     },
     "win": {
-      "icon": "build/icons/icon.ico"
+      "icon": "static/icons/icon.ico"
     },
     "linux": {
-      "icon": "build/icons"
+      "icon": "static/icons"
     },
     "publish": {
       "provider": "github",
