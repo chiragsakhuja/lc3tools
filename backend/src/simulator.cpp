@@ -17,7 +17,7 @@ namespace core
 };
 
 Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter,
-    uint32_t log_level) : state(simulator, logger), logger(printer, log_level), inputter(inputter),
+    uint32_t print_level) : state(simulator, logger), logger(printer, print_level), inputter(inputter),
     collecting_input(false)
 {
     state.mem.resize(1 << 16);
@@ -203,7 +203,7 @@ void Simulator::reinitialize(void)
     }
 
     state.writeMemRaw(BSP, 0x3000);
-    state.writeMemRaw(PSR, 0x0002);
+    state.writeMemRaw(PSR, 0x8002);
     state.writeMemRaw(MCR, 0x8000);  // indicate the machine is running
     state.running = true;
     state.hit_breakpoint = false;

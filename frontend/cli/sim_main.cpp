@@ -63,6 +63,9 @@ void help(void)
               << "list [N]                 - display the next instruction to be executed with N rows of context\n"
               << "load <filename>          - loads an object file\n"
               << "mem <start> [<end>]      - display values in memory addresses start to end\n"
+#ifdef _DEBUG
+              << "printlevel N             - sets the print level to N\n"
+#endif
               << "quit                     - exit the simulator\n"
               << "randomize                - randomize the memory and general purpose registers\n"
               << "regs                     - display register values\n"
@@ -128,6 +131,15 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
                 std::cout << formatMem(simulator, pc + pos) << "\n";
             }
         }
+    } else if(command == "load") {
+        std::string filename;
+        command_tokens >> filename;
+        if(command_tokens.fail()) {
+            std::cout << "must supply filename argument to load\n";
+            return true;
+        }
+
+        simulator.loadObjectFile(filename);
     } else if(command == "mem") {
         std::string start_s, end_s;
         command_tokens >> start_s;
@@ -154,15 +166,16 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
                 std::cout << formatMem(simulator, addr) << "\n";
             }
         }
-    } else if(command == "load") {
-        std::string filename;
-        command_tokens >> filename;
+#ifdef _DEBUG
+    } else if(command == "printlevel") {
+        uint32_t print_level;
+        command_tokens >> print_level;
         if(command_tokens.fail()) {
-            std::cout << "must supply filename argument to load\n";
+            std::cout << "must supply print level\n";
             return true;
         }
-
-        simulator.loadObjectFile(filename);
+        simulator.setPrintLevel(print_level);
+#endif
     } else if(command == "quit") {
         return false;
     } else if(command == "randomize") {

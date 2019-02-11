@@ -101,14 +101,15 @@ std::vector<PIEvent> IInstruction::buildSysCallEnterHelper(MachineState const & 
     PIEvent change;
     uint32_t vector = state.readMemEvent(vector_id, change_mem, change);
 
-    bool psr_change_mem;
-    PIEvent psr_change;
-    uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
+    bool current_psr_change_mem;
+    PIEvent current_psr_change;
+    uint32_t current_psr_value = state.readMemEvent(PSR, current_psr_change_mem, current_psr_change);
+    uint32_t new_psr_value = computeNewPSRValue(current_psr_value) & 0xffff;
 
     bool bsp_change_mem;
     PIEvent bsp_change;
     uint32_t sp = state.readMemEvent(BSP, bsp_change_mem, bsp_change);
-    if((psr_value & 0x8000) == 0x0000) {
+    if((current_psr_value & 0x8000) == 0x0000) {
         sp = state.regs[6];
     }
 
@@ -119,22 +120,24 @@ std::vector<PIEvent> IInstruction::buildSysCallEnterHelper(MachineState const & 
         throw utils::exception("triple fault: invalid top of stack address");
     }
 
-    std::vector<PIEvent> ret {
-        std::make_shared<SwapSPEvent>(MachineState::SPType::SSP),
-        std::make_shared<RegEvent>(6, sp - 1),
-        std::make_shared<MemWriteEvent>(sp - 1, psr_value),
-        std::make_shared<RegEvent>(6, sp - 2),
-        std::make_shared<MemWriteEvent>(sp - 2, state.pc),
-        std::make_shared<PSREvent>(computeNewPSRValue(psr_value) & 0xffff),
-        std::make_shared<PCEvent>(vector & 0xffff),
-    };
+    std::vector<PIEvent> ret;
+    if(((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
+        ret.emplace_back(std::make_shared<SwapSPEvent>());
+    }
+
+    ret.emplace_back(std::make_shared<RegEvent>(6, sp - 1));
+    ret.emplace_back(std::make_shared<MemWriteEvent>(sp - 1, current_psr_value));
+    ret.emplace_back(std::make_shared<RegEvent>(6, sp - 2));
+    ret.emplace_back(std::make_shared<MemWriteEvent>(sp - 2, state.pc));
+    ret.emplace_back(std::make_shared<PSREvent>(new_psr_value));
+    ret.emplace_back(std::make_shared<PCEvent>(vector & 0xffff));
 
     if(change_mem) {
         ret.push_back(change);
     }
 
-    if(psr_change_mem) {
-        ret.push_back(psr_change);
+    if(current_psr_change_mem) {
+        ret.push_back(current_psr_change);
     }
 
     if(bsp_change_mem) {
@@ -158,39 +161,58 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
     PIEvent pc_change;
     uint32_t pc_value = state.readMemEvent(state.regs[6], pc_change_mem, pc_change);
 
-    bool psr_change_mem;
-    PIEvent psr_change;
-    uint32_t psr_value = state.readMemEvent(state.regs[6] + 1, psr_change_mem, psr_change);
+    bool new_psr_change_mem;
+    PIEvent new_psr_change;
+    uint32_t new_psr_value = state.readMemEvent(state.regs[6] + 1, new_psr_change_mem, new_psr_change);
 
     bool current_psr_change_mem;
     PIEvent current_psr_change;
     uint32_t current_psr_value = state.readMemEvent(PSR, current_psr_change_mem, current_psr_change);
 
+    bool bsp_change_mem;
+    PIEvent bsp_change;
+    uint32_t sp = state.readMemEvent(BSP, bsp_change_mem, bsp_change);
+    if((current_psr_value & 0x8000) == 0x0000) {
+        sp = state.regs[6];
+    }
+
+    uint32_t bottom_of_stack = (sp + 2) & 0xffff;
+    if(bottom_of_stack >= MMIO_START) {
+        state.logger.printf(lc3::utils::PrintType::P_ERROR, true, "triple fault: invalid bottom of stack address 0x%0.4x",
+            bottom_of_stack);
+        throw utils::exception("triple fault: invalid bottom of stack address");
+    }
+
     if((current_psr_value & 0x8000) == 0x8000) {
-        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x0, MachineState::SysCallType::INT);
+        // if an RTI is encountered in user mode, trigger an access violation exception
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
 
     std::vector<PIEvent> ret {
         std::make_shared<PCEvent>(pc_value),
-        std::make_shared<RegEvent>(6, state.regs[6] + 1),
-        std::make_shared<PSREvent>(psr_value),
-        std::make_shared<RegEvent>(6, state.regs[6] + 2),
+        std::make_shared<RegEvent>(6, sp + 1),
+        std::make_shared<PSREvent>(new_psr_value),
+        std::make_shared<RegEvent>(6, sp + 2),
     };
+
+    if(((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
+        ret.emplace_back(std::make_shared<SwapSPEvent>());
+    }
 
     if(pc_change_mem) {
         ret.push_back(pc_change);
     }
 
-    if(psr_change_mem) {
-        ret.push_back(psr_change);
+    if(new_psr_change_mem) {
+        ret.push_back(new_psr_change);
     }
 
     if(current_psr_change_mem) {
         ret.push_back(current_psr_change);
     }
 
-    if((current_psr_value & 0x8000) == 0x0000 && (psr_value & 0x8000) == 0x8000) {
-        ret.push_back(std::make_shared<SwapSPEvent>(MachineState::SPType::USP));
+    if(bsp_change_mem) {
+        ret.push_back(bsp_change);
     }
 
     if(sys_call_type == MachineState::SysCallType::TRAP) {
@@ -300,28 +322,28 @@ uint32_t NumOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_co
     if(sext) {
         if((int32_t) oper.num < -(1 << (width - 1)) || (int32_t) oper.num > ((1 << (width - 1)) - 1)) {
 #ifdef _LIBERAL_ASM
-	    lc3::utils::PrintType p_type = lc3::utils::PrintType::P_WARNING;
+            lc3::utils::PrintType p_type = lc3::utils::PrintType::P_WARNING;
 #else
-	    lc3::utils::PrintType p_type = lc3::utils::PrintType::P_ERROR;
+            lc3::utils::PrintType p_type = lc3::utils::PrintType::P_ERROR;
 #endif
             logger.asmPrintf(p_type, oper, "immediate %d truncated to %d", oper.num,
                 lc3::utils::sextTo32(token_val, width));
             logger.newline();
 #ifndef _LIBERAL_ASM
-	    throw lc3::utils::exception("invalid immediate");
+            throw lc3::utils::exception("invalid immediate");
 #endif
         }
     } else {
         if(oper.num > ((1 << width) - 1)) {
 #ifdef _LIBERAL_ASM
-	    lc3::utils::PrintType p_type = lc3::utils::PrintType::P_WARNING;
+            lc3::utils::PrintType p_type = lc3::utils::PrintType::P_WARNING;
 #else
-	    lc3::utils::PrintType p_type = lc3::utils::PrintType::P_ERROR;
+            lc3::utils::PrintType p_type = lc3::utils::PrintType::P_ERROR;
 #endif
             logger.asmPrintf(p_type, oper, "immediate %d truncated to %u", oper.num, token_val);
             logger.newline();
 #ifndef _LIBERAL_ASM
-	    throw lc3::utils::exception("invalid immediate");
+            throw lc3::utils::exception("invalid immediate");
 #endif
         }
     }

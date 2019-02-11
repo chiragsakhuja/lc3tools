@@ -28,6 +28,7 @@ namespace utils
         void print(std::string const & str) {
             if(print_level > static_cast<uint32_t>(PrintType::P_NONE)) { printer.print(str); }
         }
+        void setPrintLevel(uint32_t print_level) { this->print_level = print_level; }
     };
 
     class AssemblerLogger : public Logger

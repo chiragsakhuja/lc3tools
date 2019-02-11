@@ -148,20 +148,12 @@ namespace core
     class SwapSPEvent : public IEvent
     {
     public:
-        SwapSPEvent(MachineState::SPType target) : IEvent(EventType::EVENT_SWAP_SP), target(target) {}
+        SwapSPEvent() : IEvent(EventType::EVENT_SWAP_SP) {}
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {
-            if(shouldSwap(state)) {
-                return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.readMemRaw(BSP));
-            } else {
-                return "";
-            }
+            return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.readMemRaw(BSP));
         }
-    private:
-        bool shouldSwap(MachineState const & state) const;
-
-        MachineState::SPType target;
     };
 
     class CallbackEvent : public IEvent

@@ -85,6 +85,7 @@ namespace lc3
         void registerBreakpointCallback(breakpoint_callback_func_t func);
 
         utils::IPrinter const & getPrinter(void) const;
+        void setPrintLevel(uint32_t print_level);
         void setPropagateExceptions(void);
         void clearPropagateExceptions(void);
 

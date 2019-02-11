@@ -39,6 +39,8 @@ namespace core
         MachineState & getMachineState(void) { return state; }
         MachineState const & getMachineState(void) const { return state; }
 
+        void setPrintLevel(uint32_t print_level) { logger.setPrintLevel(print_level); }
+
     private:
         sim::InstructionDecoder decoder;
 

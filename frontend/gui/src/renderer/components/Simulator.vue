@@ -92,7 +92,11 @@
                       <div class="data-cell"><strong>{{ props.item.name.toUpperCase() }}</strong></div>
                       <div class="data-cell editable">
                         <span v-if="sim.running">{{ toHex(props.item.value) }}</span>
-                        <v-edit-dialog v-else lazy>
+                        <v-edit-dialog v-else
+                          @open="setDataWriteable(true)"
+                          @close="setDataWriteable(false)"
+                          lazy
+                        >
                           {{ toHex(props.item.value) }}
                           <v-text-field
                             slot="input" label="Hex Value"
@@ -105,7 +109,11 @@
                       </div>
                       <div class="data-cell editable">
                         <span v-if="sim.running">{{ props.item.value }}</span>
-                        <v-edit-dialog v-else lazy>
+                        <v-edit-dialog v-else
+                          @open="setDataWriteable(true)"
+                          @close="setDataWriteable(false)"
+                          lazy
+                        >
                           {{ props.item.value }}
                           <v-text-field
                             slot="input" label="Decimal Value"
@@ -161,7 +169,11 @@
                       <div class="data-cell"><strong>{{ toHex(props.item.addr) }}</strong></div>
                       <div class="data-cell editable">
                         <span v-if="sim.running">{{ toHex(props.item.value) }}</span>
-                        <v-edit-dialog v-else lazy>
+                        <v-edit-dialog v-else
+                          @open="setDataWriteable(true)"
+                          @close="setDataWriteable(false)"
+                          lazy
+                        >
                           {{ toHex(props.item.value) }}
                           <v-text-field
                             slot="input" label="Hex Value"
@@ -174,7 +186,11 @@
                       </div>
                       <div class="data-cell editable">
                         <span v-if="sim.running">{{ props.item.value }}</span>
-                        <v-edit-dialog v-else lazy>
+                        <v-edit-dialog v-else
+                          @open="setDataWriteable(true)"
+                          @close="setDataWriteable(false)"
+                          lazy
+                        >
                           {{ props.item.value }}
                           <v-text-field
                             slot="input" label="Decimal Value"
@@ -259,6 +275,7 @@ export default {
       prev_inst_executed: 0,
       poll_output_handle: null,
       data_bg: { backgroundColor: "" },
+      data_writeable: false,
       rules: {
         hex: function(value) {
           if(value[0] == 'x') {
@@ -383,24 +400,29 @@ export default {
         lc3.AddInput(event.key);
       }
     },
+    setDataWriteable(value) {
+      this.data_writeable = value;
+    },
     setDataValue(event, data_cell, type, rules) {
-      for(let i = 0; i < rules.length; i += 1) {
-        if(rules[i](event) != true) {
-          if(type == "reg") {
-            data_cell.value = lc3.GetRegValue(data_cell.name);
-          } else if(type == "mem") {
-            data_call.value = lc3.GetMemValue(data_cell.addr);
+      if(this.data_writeable) {
+        for(let i = 0; i < rules.length; i += 1) {
+          if(rules[i](event) != true) {
+            if(type == "reg") {
+              data_cell.value = lc3.GetRegValue(data_cell.name);
+            } else if(type == "mem") {
+              data_call.value = lc3.GetMemValue(data_cell.addr);
+            }
+            return;
           }
-          return;
         }
+        data_cell.value = this.parseValueString(event);
+        if(type == "reg") {
+          lc3.SetRegValue(data_cell.name, data_cell.value);
+        } else if(type == "mem") {
+          lc3.SetMemValue(data_cell.addr, data_cell.value);
+        }
+        this.updateUI();
       }
-      data_cell.value = this.parseValueString(event);
-      if(type == "reg") {
-        lc3.SetRegValue(data_cell.name, data_cell.value);
-      } else if(type == "mem") {
-        lc3.SetMemValue(data_cell.addr, data_cell.value);
-      }
-      this.updateUI();
     },
     updateUI() {
       // Registers

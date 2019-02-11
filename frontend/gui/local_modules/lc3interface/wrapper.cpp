@@ -237,7 +237,7 @@ NAN_METHOD(GetRegValue)
         }
         ret_val = state.regs[reg_num];
     } else if(reg_name == "ir") {
-        ret_val = state.mem[state.pc].getValue();
+        ret_val = state.readMemRaw(state.pc);
     } else if(reg_name == "psr") {
         ret_val = sim->getPSR();
     } else if(reg_name == "pc") {
@@ -293,7 +293,7 @@ NAN_METHOD(GetMemValue)
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
     lc3::core::MachineState const & state = sim->getMachineState();
-    auto ret = Nan::New<v8::Number>(state.mem[addr].getValue());
+    auto ret = Nan::New<v8::Number>(state.readMemRaw(addr));
     info.GetReturnValue().Set(ret);
 }
 
@@ -312,7 +312,7 @@ NAN_METHOD(SetMemValue)
     uint32_t addr = (uint32_t) info[0]->NumberValue();
     uint32_t value = (uint32_t) info[1]->NumberValue();
     lc3::core::MachineState & state = sim->getMachineState();
-    state.mem[addr].setValue(value);
+    state.writeMemSafe(addr, value);
     state.mem[addr].setLine("");
 }
 

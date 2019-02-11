@@ -62,9 +62,11 @@ void lc3::core::MachineState::writeMemEvent(uint32_t addr, uint16_t value, bool 
     change = nullptr;
 
     if(addr == PSR) {
-        SPType target = (value & 0x8000) == 0 ? SPType::SSP : SPType::USP;
-        change_mem = true;
-        change = std::make_shared<SwapSPEvent>(target);
+        uint32_t current_psr = readMemRaw(PSR);
+        if(((current_psr & 0x8000) ^ (value & 0x8000)) == 0x8000) {
+            change_mem = true;
+            change = std::make_shared<SwapSPEvent>();
+        }
     }
 
     writeMemRaw(addr, value);
@@ -111,16 +113,7 @@ void lc3::core::MemWriteEvent::updateState(MachineState & state) const
 
 void lc3::core::SwapSPEvent::updateState(MachineState & state) const
 {
-    if(shouldSwap(state)) {
-        uint32_t old_sp = state.regs[6];
-        state.regs[6] = state.readMemRaw(BSP);
-        state.writeMemRaw(BSP, old_sp);
-    }
-}
-
-bool lc3::core::SwapSPEvent::shouldSwap(MachineState const & state) const
-{
-    bool target_usp = target == MachineState::SPType::USP;
-    bool system_mode = (state.readMemRaw(PSR) & 0x8000) == 0x0000;
-    return target_usp || (!system_mode);
+    uint32_t old_sp = state.regs[6];
+    state.regs[6] = state.readMemRaw(BSP);
+    state.writeMemRaw(BSP, old_sp);
 }

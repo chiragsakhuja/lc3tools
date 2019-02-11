@@ -653,19 +653,19 @@ BAD_TRAP
     ; print an error message, then HALT
     LEA R0,BAD_TRAP_MSG    ; give an error message
     PUTS
-    BRnzp TRAP_HALT        ; execute HALT
+    HALT                   ; execute HALT
 
 EX_PRIV
     ; print an error message, then HALT
     LEA R0,EX_PRIV_MSG     ; give an error message
     PUTS
-    BRnzp TRAP_HALT        ; execute HALT
+    HALT                   ; execute HALT
 
 EX_ILL
     ; print an error message, then HALT
     LEA R0,EX_ILL_MSG      ; give an error message
     PUTS
-    BRnzp TRAP_HALT        ; execute HALT
+    HALT                   ; execute HALT
 
 BAD_INT        RTI
 
