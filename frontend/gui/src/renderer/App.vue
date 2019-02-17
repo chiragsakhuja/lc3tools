@@ -59,7 +59,7 @@
             {{
               download_bar ?
                 ("Downloading at " + (update.download_speed / 1024).toFixed(0) + " KB/s") :
-                "A newer version of LC3Tools is available. Would you like to download the update?"
+                "A newer version of LC3Tools is available. Would you like to download the update? (It will be fast!)"
             }}
             <v-progress-linear v-if="download_bar" v-bind:value="(update.download_transferred / update.download_size) * 100"></v-progress-linear>
           </v-card-text>
