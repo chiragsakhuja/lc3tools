@@ -6,8 +6,8 @@ Patel.
 This project has the following aims:
 
 * Consistent cross-platform support (across Windows, macOS, and Linux)
+* Consistent behavior across the GUI, command line tools, and other applications
 * Intuitive user interface
-* Consistent and comprehensive support for a GUI and command line tools
 * Powerful grading API for classroom settings
 * Well-documented, simple, open-source code base
 
@@ -22,10 +22,11 @@ command line tools and graders must be built from source as described in
 the following section.
 
 ## Building from Source
-Building the command line tools and the graders only requires CMake and a
-compiler that supports C++11. The command line tools and graders are built
-simultaneously with a single command. More details on how to build these
-two components can be found in the [build document](BUILD.md).
+Building the command line tools and the graders only requires
+[CMake](https://cmake.org) and a compiler that supports C++11. The command line
+tools and graders are built simultaneously with a single command. More details 
+on how to build these two components can be found in the
+[build document](BUILD.md).
 
 The GUI can also be built from source but additionally requires
 [NodeJS](https://nodejs.org/en/) and [Yarn](https://yarnpkg.com/en/) to be

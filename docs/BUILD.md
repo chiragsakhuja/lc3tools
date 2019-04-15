@@ -1,49 +1,109 @@
-# Building lc3tools
+# Building from Source
 
-`lc3tools` uses CMake to build the command line tools and Yarn to build the GUI.
+There are two build systems in place for LC3Tools. The command line tools and
+graders are built simultaneously and only require [CMake](https://cmake.org) and
+a C++11 compiler. The GUI additionally requires
+[NodeJS](https://nodejs.org/en/) and [Yarn](https://yarnpkg.com/en/).
 
-## Command line tools
-The command line tools require a C++11 compiler and CMake to be installed.
+The command line tools and graders can be built independently of the GUI.
+However, the GUI requires the command line tools and graders to be built first.
+
+## Command Line Tools and Graders
+Building the command line tools and graders require [CMake](https://cmake.org) 
+and a C++11 compiler to be installed. Building instructions vary between
+[*NIX systems](https://github.com/chiragsakhuja/lc3tools/blob/master/docs/BUILD.md#nix-system) (macOS and Linux) and
+[Windows](https://github.com/chiragsakhuja/lc3tools/blob/master/docs/BUILD.md#windows)
+
+
+### Products of Building
+The build process will produce a static library and several executables. At
+the least, the products will be the following:
+
+* `assembler`: The command line tool for converting assembly programs and
+  binary code into machine code files that can be consumed by the simulator
+  (in custom `*.obj` format).
+* `simulator`: The command line tool for simulating LC-3 programs.
+* `liblc3tools.a` (or some other platform-specific name): The
+  static library that provides consistent behavior for each of the components.
+
+Additionally, an executable for each grader will also be produced with the same
+name as the source file for the grader. More details on the grading executables
+can be found in the [grading document](GRADE.md).
 
 ### *NIX system
-To build on macOS and Linux, you may invoke the following commands from the root of the repository:
+To build on macOS and Linux, you may invoke the following commands from the
+root directory:
+
 ```
-# create build directory
+# Create build directory
 mkdir build && cd build
-# set up build directory
+# Set up build directory
 cmake -DCMAKE_BUILD_TYPE=Release ..
 cmake -DCMAKE_BUILD_TYPE=Release ..
-# build
+# Build
 make
 ```
 
-The assembler, simulator, and graders will be built under `build/bin`, and a static library will be built under
-`build/lib`. The interface to the static library is described in depth in API.md.
+Relative to the root directory, the binaries for the command line tools and 
+graders will be built under `build/bin`, and the static library will be built
+under `build/lib`.
 
 ### Windows
-To build on Windows, Visual Studio, MSYS2, or some other build system can be used as long as it is supported by CMake.
-If using Visual Studio, you may invoke `cmake-gui` to configure the project and then open it in Visual Studio. It is
-necessary to build the Release configuration for the GUI.
+Building on Windows may be done with any build system that CMake supports (e.g.
+Visual Studio, MSYS2, etc.). This document will focus on building with Visual
+Studio. Some of the build system files may need to be changed for other build
+systems on Windows, as they are untested.
 
-The assembler, simulator, and graders will be built under `build/bin/Release`, and a static library will be built under
-`build/lib/Release`.
+To build on Windows, first create a `build` directory in the root directory of
+this project. Then create a Visual Studio project with the CMake GUI as
+follows: Open the CMake GUI through the Start Menu or the command line via the
+`cmake-gui` command. Select the root directory of the project as the source and 
+the `build` directory as the target in the CMake GUI. Press the Configure button 
+and then the Generate button.
 
+Open the Visual Studio solution produced in the `build` directory. In Visual
+Studio select the x64 Release configuration and build the solution.
+
+Relative to the root directory, the binaries for the command line tools and
+graders will be built under `build/bin/Release`, and the static library will
+be built under `build/lib/Release`.
 
 ## GUI
-The GUI is built with Electron and requires Yarn and its dependencies to build. To run the GUI, invoke the following
-commands from the `frontend/gui` directory.
+**Ensure that you have already completed the steps outlined in the
+[previous section](https://github.com/chiragsakhuja/lc3tools/blob/master/docs/BUILD.md#command-line-tools-and-graders).**
+
+The GUI is built on the [Electron](https://electronjs.org/) framework and thus
+requires [NodeJS](https://nodejs.org/en/) and [Yarn](https://yarnpkg.com/en/) to
+be installed. Once the tools are installed, you may invoke the following
+commands from the root directory (on all platforms):
+
 ```
-# install packages
+# Navigate to GUI directory
+cd frontend/gui
+# Install packages
 yarn
-# build lc3 node module
+# Build LC3Tools node module
 yarn lc3
-# run lc3tools
+```
+
+### Running the GUI
+Electron applications require an additional step to create a standalone
+executable. However, this step takes a couple of minutes to run, so it is
+also possible to run the application through Yarn.
+
+To run the application in development mode through Yarn, you may invoke the
+following command from the `frontend/gui` directory:
+
+```
 yarn run dev
 ```
 
-Additionally, the GUI may be packaged into a standalone executable by invoking the following command:
+To optionally create a standalone executable, you may invoke the following
+command from the `frontend/gui` directory:
+
 ```
 yarn build
 ```
 
-The resulting package will be in `frontend/gui/build` and its format will depend on the platform it is being built on.
+The standalone executable will be produced in `frontend/gui/build` and its
+format will depend on the platform it is being built on (`.exe`, `.app.`, etc.).
