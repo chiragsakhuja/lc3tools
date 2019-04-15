@@ -1,18 +1,26 @@
-# lc3tools [![Build Status](https://travis-ci.org/chiragsakhuja/lc3tools.svg?branch=master)](https://travis-ci.org/chiragsakhuja/lc3tools)
-`lc3tools` is a set of tools to build code for and simulate the LC-3 system described in *Introduction to Computing* by
-Dr. Yale Patt and Dr. Sanjay Patel. The motivation behind creating a new set of tools is to address the following
-pitfalls of the existing tools.
-* Lack of consistent cross-platform tools and behavior.
-* Lack of any available simulator on macOS, lack of a GUI on Linux, and lack of command line tools on Windows.
-* Lack of available source code.
-* Ad-hoc grading system built on top of parsing output and without real support for interrupts.
+# LC3Tools [![Build Status](https://travis-ci.org/chiragsakhuja/lc3tools.svg?branch=master)](https://travis-ci.org/chiragsakhuja/lc3tools)
+LC3Tools is a modern set of tools to build code for and simulate the LC-3 
+system described in *Introduction to Computing* by Dr. Yale Patt and Dr. Sanjay
+Patel.
 
-`lc3tools` is open-source and requires only cross-platform (i.e. Windows, macOS, and Linux) development tools to build.
-Additionally, the tools runs as standalone executable packages on all three major platforms. The executables include a
-command line assembler, simulator, and graders as well as a GUI.  All executables interface with a common static library
-so that behavior is consistent between tools on a platform and between platforms.
+This project has the following aims:
+
+* Consistent cross-platform support (across Windows, macOS, and Linux)
+* Intuitive user interface
+* Consistent and comprehensive support for a GUI and command line tools
+* Powerful grading API for classroom settings
+* Well-documented, simple, open-source code base
 
 ## Usage
+
+All of the code for the project lives in this repository, but it can be broken
+down into three logical categories: a set of command line tools, a GUI, and
+a series of graders.
+
+Building the command line tools and the graders only requires `CMake` and a
+compiler that supports C++11. The command line tools and graders are built
+simultaneously with a single command. More details on how to build these
+categories can be found in the [BUILD document](docs/BUILD.md).
 
 ### assembler
 `assembler` accepts assembly or binary files as arguments and generates object files alongside the sources. The
