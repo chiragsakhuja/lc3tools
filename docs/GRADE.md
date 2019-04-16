@@ -83,7 +83,7 @@ void shutdown(void) {}
 ```
 
 To build the grader, you must first rerun CMake to make it aware of the new
-source file Then you may build the grader. Navigate to the `build/` directory
+source file. Then you may build the grader. Navigate to the `build/` directory
 that was created during the [initial build](BUILD.md) and invoke the following 
 commands:
 
@@ -127,8 +127,8 @@ The `setPC` function, as expected, sets the PC to location 0x3000. The `setMem`
 function sets the location 0x3200 (i.e. the first argument) to the value 0 (i.e.
 the second argument).
 
-Now all that is necessary is to run the program and verify the result. It is
-usually best to restrict the total number of instructions that are executed
+Now all that is necessary is to run the input program and verify the result. It 
+is usually best to restrict the total number of instructions that are executed
 so that the grader terminates even if the input program does not. To be safe,
 set a limit of 50000 instructions (which will execute in well under 1 second) and then run the program by adding the following lines to the `ZeroTest` function:
 
@@ -137,8 +137,8 @@ sim.setRunInstLimit(50000);
 sim.run();
 ```
 
-The `setRunInstLimit` sets the maximum number of instructions to 50000. The
-`run` function will execute the program until the program halts or the
+The `setRunInstLimit` function sets the maximum number of instructions to 50000. 
+The `run` function will execute the input program until the program halts or the
 instruction limit is reached.
 
 
@@ -265,7 +265,7 @@ variables that were initialized in the `setup` function for the grader to use.
 
 ## Conclusion
 The full source code of this tutorial can be found in
-[frontend/grader/labs/tutorial_grader.cpp](https://https://github.com/chiragsakhuja/lc3tools/blob/master/frontend/grader/labs/tutorial_grader.cpp).
+[frontend/grader/labs/tutorial_grader.cpp](https://github.com/chiragsakhuja/lc3tools/blob/master/frontend/grader/labs/tutorial_grader.cpp).
 This tutorial covered a small subset of the capabilities of the grading
 framework and API. Some other features include: easy-to-use I/O checks; hooks 
 before and after instruction execution, subroutine calls, interrupts, etc.; and 

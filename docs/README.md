@@ -26,12 +26,12 @@ Building the command line tools and the graders only requires
 [CMake](https://cmake.org) and a compiler that supports C++11. The command line
 tools and graders are built simultaneously with a single command. More details 
 on how to build these two components can be found in the
-[build document](BUILD.md).
+[build document](BUILD.md#command-line-tools-and-graders).
 
 The GUI can also be built from source but additionally requires
 [NodeJS](https://nodejs.org/en/) and [Yarn](https://yarnpkg.com/en/) to be
 installed. Directions on how to build the GUI can also be found in the
-[build document](BUILD.md).
+[build document](BUILD.md#gui).
 
 ## Additional Information
 More details on how to use the individual components can be found in the

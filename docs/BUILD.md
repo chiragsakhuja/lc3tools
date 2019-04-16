@@ -37,9 +37,9 @@ root directory:
 ```
 # Create build directory
 mkdir build && cd build
-# Set up build directory
+# Set up build directory (run twice)
 cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Release .. 
 # Build
 make
 ```
