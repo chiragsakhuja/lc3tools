@@ -1,5 +1,5 @@
 # LC3Tools [![Build Status](https://travis-ci.org/chiragsakhuja/lc3tools.svg?branch=master)](https://travis-ci.org/chiragsakhuja/lc3tools)
-LC3Tools is a modern set of tools to build code for and simulate the LC-3 
+LC3Tools is a modern set of tools to build code for and simulate the LC-3
 system described in *Introduction to Computing* by Dr. Yale Patt and Dr. Sanjay
 Patel.
 
@@ -24,7 +24,7 @@ the following section.
 ## Building from Source
 Building the command line tools and the graders only requires
 [CMake](https://cmake.org) and a compiler that supports C++11. The command line
-tools and graders are built simultaneously with a single command. More details 
+tools and graders are built simultaneously with a single command. More details
 on how to build these two components can be found in the
 [build document](BUILD.md#command-line-tools-and-graders).
 

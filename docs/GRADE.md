@@ -1,13 +1,13 @@
 # Graders
 Graders are standalone executables that consume LC-3 source code in binary
 (`*.bin`) or assembly (`*.asm`), perform a series of tests, and output a report.
-They are written in C++ and use the static library produced alongside the 
+They are written in C++ and use the static library produced alongside the
 command line tools as well as a simple framework to interact with LC-3 programs
 in real time as they run. Graders are also compiled alongside the command line
 tools.
 
 Graders are written in a similar fashion to unit tests. There will be a single
-grader for each assignment that defines the test cases. In practice (i.e. in a classroom setting) there may be scripts that run each students' assignments 
+grader for each assignment that defines the test cases. In practice (i.e. in a classroom setting) there may be scripts that run each students' assignments
 through a grader executable and then aggregate the results.
 
 Grader source files live in the `frontend/grader/labs/` directory. When they are
@@ -20,7 +20,7 @@ Details on the grading framework and full API can be found in the
 
 # Tutorial
 This tutorial will cover all the steps necessary to create a grader for a simple
-assignment. This tutorial will assume you are using a *NIX system (macOS or 
+assignment. This tutorial will assume you are using a *NIX system (macOS or
 Linux), although Windows works fine. For a Windows system, adjust the build
 commands as described in the [build document](BUILD.md#Windows).
 
@@ -67,7 +67,7 @@ You can create this file in the root directory as `tutorial_sol.asm`.
 
 ## Creating a New Grader
 From the root directory, navigate to `frontend/grader/labs/` and create a file
-for this grader called `tutorial_grader.cpp`. Each grader is expected to define four functions. For now just define empty functions. As the tutorial progresses, explanations for each function will be provided. Fill in the 
+for this grader called `tutorial_grader.cpp`. Each grader is expected to define four functions. For now just define empty functions. As the tutorial progresses, explanations for each function will be provided. Fill in the
 following code in `tutorial_grader.cpp`:
 
 ```
@@ -84,7 +84,7 @@ void shutdown(void) {}
 
 To build the grader, you must first rerun CMake to make it aware of the new
 source file. Then you may build the grader. Navigate to the `build/` directory
-that was created during the [initial build](BUILD.md) and invoke the following 
+that was created during the [initial build](BUILD.md) and invoke the following
 commands:
 
 ```
@@ -98,11 +98,11 @@ the first time, it suffices to just run the `make` command from the `build/`
 directory to rebuild.
 
 ## Adding a Test Case
-A test case takes the form of a function. Test cases should accept a single 
+A test case takes the form of a function. Test cases should accept a single
 parameter of type `lc3::sim &`. Each test case is executed with a newly
 initialized copy of the simulator to prevent contamination.
 
-For the first test case, check if the program terminates correctly when there 
+For the first test case, check if the program terminates correctly when there
 are 0 numbers in the input (i.e. the value at location 0x3200 is 0).
 
 First, define a new function:
@@ -113,9 +113,9 @@ void ZeroTest(lc3::sim & sim)
 }
 ```
 
-Since the simulator is reinitialized for every test case, it is always necessary 
-to initialize the PC as well as other input values. In this case that means 
-additionally initializing location 0x3200. Initialize the values by adding the 
+Since the simulator is reinitialized for every test case, it is always necessary
+to initialize the PC as well as other input values. In this case that means
+additionally initializing location 0x3200. Initialize the values by adding the
 following code to the `ZeroTest` function:
 
 ```
@@ -127,7 +127,7 @@ The `setPC` function, as expected, sets the PC to location 0x3000. The `setMem`
 function sets the location 0x3200 (i.e. the first argument) to the value 0 (i.e.
 the second argument).
 
-Now all that is necessary is to run the input program and verify the result. It 
+Now all that is necessary is to run the input program and verify the result. It
 is usually best to restrict the total number of instructions that are executed
 so that the grader terminates even if the input program does not. To be safe,
 set a limit of 50000 instructions (which will execute in well under 1 second) and then run the program by adding the following lines to the `ZeroTest` function:
@@ -137,7 +137,7 @@ sim.setRunInstLimit(50000);
 sim.run();
 ```
 
-The `setRunInstLimit` function sets the maximum number of instructions to 50000. 
+The `setRunInstLimit` function sets the maximum number of instructions to 50000.
 The `run` function will execute the input program until the program halts or the
 instruction limit is reached.
 
@@ -175,7 +175,7 @@ argument) total.
 
 ### Running the Grader
 Build the grader by running the `make` command from the `build/` directory. To
-run the grader, simply invoke the `tutorial_grader` executable with 
+run the grader, simply invoke the `tutorial_grader` executable with
 `tutorial_sol.asm` as an argument. This can be done by running the following
 command from the root directory:
 
@@ -192,6 +192,14 @@ Test points earned: 10/10 (100%)
 ==========
 ==========
 Total points earned: 10/10 (100%)
+```
+
+Full operation of the grader executable is as follows:
+
+```
+grader [--print-level=N] FILE [FILE ...]
+  --print-level=N    (default=6) A number 0-9 to indicate the output verbosity
+  FILE               A source file to be assembled or converted
 ```
 
 ## Adding Another Test Case
@@ -221,7 +229,7 @@ void SimpleTest(lc3::sim & sim)
 }
 ```
 
-Also, register the test case to be valued at 20 points by adding the following 
+Also, register the test case to be valued at 20 points by adding the following
 line to the `setup` function.
 
 ```
@@ -250,7 +258,7 @@ some redundancy. These functions are run before and after, respectively, every
 test case. This is unlike the `setup` function which is run only once before
 any test cases (before the first `testBringup`).
 
-To remove some redundancy in the initialization of the test cases, add the 
+To remove some redundancy in the initialization of the test cases, add the
 following lines to the `testBringup` function and remove them from the
 `ZeroTest` and `SimpleTest` functions:
 
@@ -267,7 +275,7 @@ variables that were initialized in the `setup` function for the grader to use.
 The full source code of this tutorial can be found in
 [frontend/grader/labs/tutorial_grader.cpp](https://github.com/chiragsakhuja/lc3tools/blob/master/frontend/grader/labs/tutorial_grader.cpp).
 This tutorial covered a small subset of the capabilities of the grading
-framework and API. Some other features include: easy-to-use I/O checks; hooks 
-before and after instruction execution, subroutine calls, interrupts, etc.; and 
+framework and API. Some other features include: easy-to-use I/O checks; hooks
+before and after instruction execution, subroutine calls, interrupts, etc.; and
 control over every element of the LC-3 state. Full details can be found in the
 [API document](API.md).

@@ -9,7 +9,7 @@ The command line tools and graders can be built independently of the GUI.
 However, the GUI requires the command line tools and graders to be built first.
 
 ## Command Line Tools and Graders
-Building the command line tools and graders require [CMake](https://cmake.org) 
+Building the command line tools and graders require [CMake](https://cmake.org)
 and a C++11 compiler to be installed. Building instructions vary between
 [*NIX systems](BUILD.md#nix-system) (macOS and Linux) and
 [Windows](BUILD.md#windows).
@@ -39,12 +39,12 @@ root directory:
 mkdir build && cd build
 # Set up build directory (run twice)
 cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake -DCMAKE_BUILD_TYPE=Release .. 
+cmake -DCMAKE_BUILD_TYPE=Release ..
 # Build
 make
 ```
 
-Relative to the root directory, the binaries for the command line tools and 
+Relative to the root directory, the binaries for the command line tools and
 graders will be built under `build/bin/`, and the static library will be built
 under `build/lib/`.
 
@@ -57,8 +57,8 @@ systems on Windows, as they are untested.
 To build on Windows, first create a `build/` directory in the root directory of
 this project. Then create a Visual Studio project with the CMake GUI as
 follows: Open the CMake GUI through the Start Menu or the command line via the
-`cmake-gui` command. Select the root directory of the project as the source and 
-the `build/` directory as the target in the CMake GUI. Press the Configure 
+`cmake-gui` command. Select the root directory of the project as the source and
+the `build/` directory as the target in the CMake GUI. Press the Configure
 button and then the Generate button.
 
 Open the Visual Studio solution produced in the `build/` directory. In Visual
