@@ -46,3 +46,5 @@ void setup(void)
     REGISTER_TEST(AllPowers, AllPowerTest, 60);
     REGISTER_RANDOM_TEST(AllPowers, AllPowerTest, 10);
 }
+
+void shutdown(void) {}

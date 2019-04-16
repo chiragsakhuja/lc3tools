@@ -13,6 +13,7 @@ struct CLIArgs
 };
 
 void setup(void);
+void shutdown(void);
 void testBringup(lc3::sim & sim);
 void testTeardown(lc3::sim & sim);
 
@@ -147,7 +148,7 @@ int main(int argc, char * argv[])
 
             float percent_points_earned = ((float) verify_valid) / verify_count;
             uint32_t points_earned = (uint32_t) ( percent_points_earned * test.points);
-            std::cout << "test points earned: " << points_earned << "/" << test.points << " ("
+            std::cout << "Test points earned: " << points_earned << "/" << test.points << " ("
                       << (percent_points_earned * 100) << "%)\n";
             std::cout << "==========\n";
 
@@ -162,8 +163,10 @@ int main(int argc, char * argv[])
     } else {
         percent_points_earned = ((float) total_points_earned) / total_possible_points;
     }
-    std::cout << "total points earned: " << total_points_earned << "/" << total_possible_points << " ("
+    std::cout << "Total points earned: " << total_points_earned << "/" << total_possible_points << " ("
               << (percent_points_earned * 100) << "%)\n";
+
+    shutdown();
 
     return 0;
 }

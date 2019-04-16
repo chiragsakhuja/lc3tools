@@ -2,24 +2,45 @@
 
 void ZeroTest(lc3::sim & sim)
 {
-    sim.setPC(0x3000);
     sim.setMem(0x3200, 0);
 
-    sim.setRunInstLimit(50000);
     sim.run();
 
     VERIFY(sim.getMem(0x3100) == 0);
 }
 
-void testBringup(lc3::sim & sim)
+void SimpleTest(lc3::sim & sim)
 {
+    // Initialize the values and compute their sum in C++ to compare against
+    uint16_t values[] = {5, 4, 3, 2, 1, 0};
+    uint64_t num_values = sizeof(values) / sizeof(uint16_t);
+    uint16_t real_sum = 0;
+
+    for(uint64_t i = 0; i < num_values; i += 1) {
+        sim.setMem(0x3200 + static_cast<uint16_t>(i), values[i]);
+        real_sum += values[i];
+    }
+
+    // Run test case
+    sim.setRunInstLimit(50000);
+    sim.run();
+
+    // Verify result
+    VERIFY(sim.getMem(0x3100) == real_sum);
 }
 
-void testTeardown(lc3::sim & sim)
+void testBringup(lc3::sim & sim)
 {
+    sim.setPC(0x3000);
+    sim.setRunInstLimit(50000);
 }
+
+void testTeardown(lc3::sim & sim) {}
 
 void setup(void)
 {
-    REGISTER_TEST(Zero, ZeroTest, 100);
+    REGISTER_TEST(Zero, ZeroTest, 10);
+    REGISTER_TEST(Simple, SimpleTest, 20);
 }
+
+void shutdown(void) {}

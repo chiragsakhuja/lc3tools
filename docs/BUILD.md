@@ -11,8 +11,8 @@ However, the GUI requires the command line tools and graders to be built first.
 ## Command Line Tools and Graders
 Building the command line tools and graders require [CMake](https://cmake.org) 
 and a C++11 compiler to be installed. Building instructions vary between
-[*NIX systems](https://github.com/chiragsakhuja/lc3tools/blob/master/docs/BUILD.md#nix-system) (macOS and Linux) and
-[Windows](https://github.com/chiragsakhuja/lc3tools/blob/master/docs/BUILD.md#windows).
+[*NIX systems](BUILD.md#nix-system) (macOS and Linux) and
+[Windows](BUILD.md#windows).
 
 
 ### Products of Building
@@ -70,7 +70,7 @@ be built under `build/lib/Release/`.
 
 ## GUI
 **Ensure that you have already completed the steps outlined in the
-[previous section](https://github.com/chiragsakhuja/lc3tools/blob/master/docs/BUILD.md#command-line-tools-and-graders).**
+[previous section](BUILD.md#command-line-tools-and-graders).**
 
 The GUI is built on the [Electron](https://electronjs.org/) framework and thus
 requires [NodeJS](https://nodejs.org/en/) and [Yarn](https://yarnpkg.com/en/) to

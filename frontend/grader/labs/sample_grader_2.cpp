@@ -37,3 +37,5 @@ void setup(void)
 {
     REGISTER_RANDOM_TEST(Basic, BasicTest, 100);
 }
+
+void shutdown(void) {}
