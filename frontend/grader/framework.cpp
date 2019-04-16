@@ -100,6 +100,10 @@ int main(int argc, char * argv[])
         }
     }
 
+    if(obj_filenames.size() == 0) {
+        return 1;
+    }
+
     setup();
 
     uint32_t total_points_earned = 0;
@@ -109,7 +113,7 @@ int main(int argc, char * argv[])
         for(TestCase const & test : tests) {
             BufferedPrinter sim_printer(args.print_output);
             FileInputter sim_inputter;
-            lc3::sim simulator(sim_printer, sim_inputter, "lc3os.obj",
+            lc3::sim simulator(sim_printer, sim_inputter,
                 args.print_level_override ? args.print_level : 1, true);
 
             testBringup(simulator);

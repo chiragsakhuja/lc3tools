@@ -24,7 +24,7 @@ namespace core
         ~Simulator(void) = default;
 
         void loadObjectFile(std::string const & obj_file);
-        void loadOS(std::string const & os_path);
+        void loadOS();
         void simulate(void);
         void pause(void);
         void reinitialize(void);
@@ -51,6 +51,7 @@ namespace core
 
         std::atomic<bool> collecting_input;
 
+        void loadObjectFileFromBuffer(std::istream & buffer);
         std::vector<PIEvent> executeInstruction(void);
         std::vector<PIEvent> checkAndSetupInterrupts();
         void executeEventChain(std::vector<PIEvent> & events);

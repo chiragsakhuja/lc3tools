@@ -1,6 +1,7 @@
 #include <fstream>
 #include <mutex>
 #include <thread>
+#include <sstream>
 
 #include "device_regs.h"
 #include "simulator.h"
@@ -38,14 +39,19 @@ void Simulator::loadObjectFile(std::string const & filename)
         throw utils::exception("could not open file");
     }
 
+    loadObjectFileFromBuffer(file);
+}
+
+void Simulator::loadObjectFileFromBuffer(std::istream & buffer)
+{
     uint32_t fill_pc = 0;
     uint32_t offset = 0;
     bool first_orig_set = false;
-    while(! file.eof()) {
+    while(! buffer.eof()) {
         MemEntry statement;
-        file >> statement;
+        buffer >> statement;
 
-        if(file.eof()) {
+        if(buffer.eof()) {
             break;
         }
 
@@ -68,9 +74,13 @@ void Simulator::loadObjectFile(std::string const & filename)
     state.writeMemRaw(MCR, value | 0x8000);
 }
 
-void Simulator::loadOS(std::string const & os_path)
+void Simulator::loadOS()
 {
-    loadObjectFile(os_path);
+    extern char const * lc3os_src;
+
+    std::stringstream buffer;
+    buffer << lc3os_src;
+    loadObjectFileFromBuffer(buffer);
     state.pc = RESET_PC;
 }
 

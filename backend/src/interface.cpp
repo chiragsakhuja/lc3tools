@@ -4,10 +4,8 @@
 #include "device_regs.h"
 #include "interface.h"
 
-lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, std::string const & os_path,
-    uint32_t print_level, bool propagate_exceptions) :
-    printer(printer), simulator(*this, printer, inputter, print_level), os_path(os_path),
-    propagate_exceptions(propagate_exceptions)
+lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level, bool propagate_exceptions) :
+    printer(printer), simulator(*this, printer, inputter, print_level), propagate_exceptions(propagate_exceptions)
 {
     simulator.registerPreInstructionCallback(lc3::sim::preInstructionCallback);
     simulator.registerPostInstructionCallback(lc3::sim::postInstructionCallback);
@@ -16,10 +14,10 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, std::strin
     simulator.registerSubEnterCallback(lc3::sim::subEnterCallback);
     simulator.registerSubExitCallback(lc3::sim::subExitCallback);
     if(propagate_exceptions) {
-        simulator.loadOS(os_path);
+        simulator.loadOS();
     } else {
         try {
-            simulator.loadOS(os_path);
+            simulator.loadOS();
         } catch(utils::exception const & e) {
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()) + "\n");
@@ -49,7 +47,7 @@ bool lc3::sim::loadObjectFile(std::string const & obj_filename)
 void lc3::sim::reinitialize(void)
 {
     simulator.reinitialize();
-    simulator.loadOS(os_path);
+    simulator.loadOS();
 }
 
 void lc3::sim::randomize(void)

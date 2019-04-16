@@ -34,7 +34,7 @@ namespace lc3
     class sim
     {
     public:
-        sim(utils::IPrinter & printer, utils::IInputter & inputter, std::string const & os_path,
+        sim(utils::IPrinter & printer, utils::IInputter & inputter,
             uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false);
         ~sim(void) = default;
 
@@ -92,7 +92,6 @@ namespace lc3
     private:
         utils::IPrinter & printer;
         core::Simulator simulator;
-        std::string os_path;
 
         friend class core::Simulator;
         static void preInstructionCallback(sim & sim_int, core::MachineState & state);

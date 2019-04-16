@@ -1,3 +1,9 @@
+namespace lc3
+{
+namespace core
+{
+
+char const * lc3os_src = R"LC3OS(
     .ORIG x0000
 
 ; the TRAP vector table
@@ -676,5 +682,7 @@ EX_ILL_MSG     .STRINGZ "\n\n--- Illegal opcode ---\n\n"
 BAD_TRAP_MSG   .STRINGZ "\n\n--- Undefined trap executed ---\n\n"
 
     .END
+)LC3OS";
 
-
+};
+};
