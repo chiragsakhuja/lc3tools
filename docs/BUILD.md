@@ -45,8 +45,8 @@ make
 ```
 
 Relative to the root directory, the binaries for the command line tools and 
-graders will be built under `build/bin`, and the static library will be built
-under `build/lib`.
+graders will be built under `build/bin/`, and the static library will be built
+under `build/lib/`.
 
 ### Windows
 Building on Windows may be done with any build system that CMake supports (e.g.
@@ -54,19 +54,19 @@ Visual Studio, MSYS2, etc.). This document will focus on building with Visual
 Studio. Some of the build system files may need to be changed for other build
 systems on Windows, as they are untested.
 
-To build on Windows, first create a `build` directory in the root directory of
+To build on Windows, first create a `build/` directory in the root directory of
 this project. Then create a Visual Studio project with the CMake GUI as
 follows: Open the CMake GUI through the Start Menu or the command line via the
 `cmake-gui` command. Select the root directory of the project as the source and 
-the `build` directory as the target in the CMake GUI. Press the Configure button 
-and then the Generate button.
+the `build/` directory as the target in the CMake GUI. Press the Configure 
+button and then the Generate button.
 
-Open the Visual Studio solution produced in the `build` directory. In Visual
+Open the Visual Studio solution produced in the `build/` directory. In Visual
 Studio select the x64 Release configuration and build the solution.
 
 Relative to the root directory, the binaries for the command line tools and
-graders will be built under `build/bin/Release`, and the static library will
-be built under `build/lib/Release`.
+graders will be built under `build/bin/Release/`, and the static library will
+be built under `build/lib/Release/`.
 
 ## GUI
 **Ensure that you have already completed the steps outlined in the
@@ -92,18 +92,18 @@ executable. However, this step takes a couple of minutes to run, so it is
 also possible to run the application through Yarn.
 
 To run the application in development mode through Yarn, you may invoke the
-following command from the `frontend/gui` directory:
+following command from the `frontend/gui/` directory:
 
 ```
 yarn run dev
 ```
 
 To optionally create a standalone executable, you may invoke the following
-command from the `frontend/gui` directory:
+command from the `frontend/gui/` directory:
 
 ```
 yarn build
 ```
 
-The standalone executable will be produced in `frontend/gui/build` and its
+The standalone executable will be produced in `frontend/gui/build/` and its
 format will depend on the platform it is being built on (`.exe`, `.app.`, etc.).
