@@ -12,7 +12,7 @@ However, the GUI requires the command line tools and graders to be built first.
 Building the command line tools and graders require [CMake](https://cmake.org) 
 and a C++11 compiler to be installed. Building instructions vary between
 [*NIX systems](https://github.com/chiragsakhuja/lc3tools/blob/master/docs/BUILD.md#nix-system) (macOS and Linux) and
-[Windows](https://github.com/chiragsakhuja/lc3tools/blob/master/docs/BUILD.md#windows)
+[Windows](https://github.com/chiragsakhuja/lc3tools/blob/master/docs/BUILD.md#windows).
 
 
 ### Products of Building
