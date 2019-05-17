@@ -1,5 +1,5 @@
 # find directories with includes
-include_directories(${PROJECT_SOURCE_DIR}/backend/src)
+include_directories(${PROJECT_SOURCE_DIR}/backend)
 
 find_package(Threads)
 
