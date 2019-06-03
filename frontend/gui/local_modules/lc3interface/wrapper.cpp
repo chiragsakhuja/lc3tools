@@ -53,11 +53,11 @@ public:
 NAN_METHOD(Init)
 {
     if(!info[0]->IsString()) {
-        Nan::ThrowError("Must provide OS path as a string argument");
+        Nan::ThrowError("First argument must be OS path as a string");
         return;
     }
 
-    v8::String::Utf8Value str(info[0]->ToString());
+    v8::String::Utf8Value str(info[0].As<v8::String>());
     std::string os_path((char const *) *str);
 
     try {
@@ -85,7 +85,7 @@ NAN_METHOD(ConvertBin)
         return;
     }
 
-    v8::String::Utf8Value str(info[0]->ToString());
+    v8::String::Utf8Value str(info[0].As<v8::String>());
 
     std::string bin_filename((char const *) (*str));
 
@@ -103,7 +103,7 @@ NAN_METHOD(Assemble)
         return;
     }
 
-    v8::String::Utf8Value str(info[0]->ToString());
+    v8::String::Utf8Value str(info[0].As<v8::String>());
 
     std::string asm_filename((char const *) (*str));
 
@@ -121,7 +121,7 @@ NAN_METHOD(LoadObjectFile)
         return;
     }
 
-    v8::String::Utf8Value str(info[0]->ToString());
+    v8::String::Utf8Value str(info[0].As<v8::String>());
     std::string filename((char const *) *str);
 
     try {
@@ -224,7 +224,7 @@ NAN_METHOD(GetRegValue)
         return;
     }
 
-    v8::String::Utf8Value str(info[0]->ToString());
+    v8::String::Utf8Value str(info[0].As<v8::String>());
     std::string reg_name((char const *) *str);
     std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
 
@@ -262,7 +262,7 @@ NAN_METHOD(SetRegValue)
         return;
     }
 
-    v8::String::Utf8Value str(info[0]->ToString());
+    v8::String::Utf8Value str(info[0].As<v8::String>());
     std::string reg_name((char const *) *str);
     std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
     uint32_t value = (uint32_t) info[1]->NumberValue();
@@ -342,11 +342,17 @@ NAN_METHOD(SetMemLine)
     }
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
-    v8::String::Utf8Value str(info[1]->ToString());
+    v8::String::Utf8Value str(info[1].As<v8::String>());
     std::string line((char const *) *str);
 
-    lc3::core::MachineState & state = sim->getMachineState();
     sim->setMemLine(addr, line);
+}
+
+NAN_METHOD(SetPrivilegedMode)
+{
+    uint32_t mcr = sim->getMCR();
+    mcr &= 0x7FFF;
+    sim->setMCR(mcr);
 }
 
 NAN_METHOD(ClearInput)
@@ -361,7 +367,7 @@ NAN_METHOD(AddInput)
         return;
     }
 
-    v8::String::Utf8Value str(info[0]->ToString());
+    v8::String::Utf8Value str(info[0].As<v8::String>());
     std::string c((char const *) *str);
     if(c.size() != 1) {
         Nan::ThrowError("String must be a single character");
@@ -438,6 +444,7 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, SetMemValue);
     NAN_EXPORT(target, GetMemLine);
     NAN_EXPORT(target, SetMemLine);
+    NAN_EXPORT(target, SetPrivilegedMode);
 
     NAN_EXPORT(target, ClearInput);
     NAN_EXPORT(target, AddInput);

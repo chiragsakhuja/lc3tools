@@ -11,18 +11,23 @@
             <v-icon>settings</v-icon>
           </v-btn>
           <v-card>
-            <v-container fill-height>
-              <v-layout column>
-                <v-flex xs2>
-                  <h3>Theme</h3>
-                </v-flex>
-                <v-flex xs10>
-                  <v-radio-group v-model="theme" row>
+            <v-container>
+              <v-layout row>
+                <v-flex grow><h3>Theme</h3></v-flex>
+                <v-flex shrink>
+                  <v-radio-group @change="saveSettings('theme')" v-model="settings.theme" row>
                     <v-radio label="Light" value="light"></v-radio>
                     <v-radio label="Dark" value="dark"></v-radio>
                   </v-radio-group>
                 </v-flex>
               </v-layout>
+              <v-layout row>
+                <v-flex grow><h3>Ignore privileged mode</h3></v-flex>
+                <v-flex shrink>
+                  <v-switch @change="saveSettings('privilege')" v-model="settings.ignore_privilege"></v-switch>
+                </v-flex>
+              </v-layout>
+              <h4>Issues? Email chirag.sakhuja@utexas.edu</h4>
             </v-container>
           </v-card>
         </v-menu>
@@ -98,7 +103,7 @@ import fs from "fs";
 export default {
   name: "lc3tools",
 
-    data: function() {
+  data: function() {
     return {
       // Update downloading
       update: {
@@ -108,16 +113,20 @@ export default {
       },
       update_dialog: false,
       download_bar: false,
-      theme: "light",
-      settings_menu: false
+      settings_menu: false,
+      settings: {
+        theme: "light",
+        ignore_privilege: false
+      }
     };
   },
 
   created() {
     let content = fs.readFileSync(__static + "/lc3os.obj");
-    let user_dir = remote.app.getPath('userData');
+    let user_dir = remote.app.getPath("userData");
     fs.writeFileSync(user_dir + "lc3os.obj", content);
     lc3.Init(user_dir + "lc3os.obj");
+    this.getSettings();
   },
 
   mounted() {
@@ -132,7 +141,6 @@ export default {
         this.update.download_transferred = progress.transferred;
       }
     });
-
   },
 
   methods: {
@@ -140,12 +148,31 @@ export default {
     updateConfirmed: function() {
       this.download_bar = true;
       ipcRenderer.send("auto_updater", "update_confirmed");
+    },
+    getSettings: function() {
+      this.$storage.isPathExists("settings.json", (exists) => {
+        if(exists) {
+          this.$storage.get("settings.json", (err, data) => {
+            if(err) { console.error(err); }
+            else { this.settings = data; }
+          });
+        }
+      });
+    },
+    saveSettings: function(setting) {
+      if(setting == 'privilege') {
+        this.SetIgnorePrivilege(this.settings.ignore_privilege);
+      }
+
+      this.$storage.set("settings.json", this.settings, (err) => {
+        if(err) { console.error(err); }
+      });
     }
   },
 
   computed: {
     isDarkMode() {
-      return this.theme === "dark";
+      return this.settings.theme === "dark";
     }
   }
 

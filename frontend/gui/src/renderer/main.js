@@ -8,7 +8,10 @@ import store from './store'
 import 'material-design-icons-iconfont/dist/material-design-icons.css'
 import 'vuetify/dist/vuetify.min.css'
 
-if (!process.env.IS_WEB) Vue.use(require('vue-electron'))
+if (!process.env.IS_WEB) {
+  Vue.use(require('vue-electron'))
+  Vue.use(require('vue-electron-storage'))
+}
 Vue.http = Vue.prototype.$http = axios
 Vue.config.productionTip = false
 
