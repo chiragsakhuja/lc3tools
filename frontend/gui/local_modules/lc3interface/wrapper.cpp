@@ -13,6 +13,7 @@
 utils::UIPrinter *printer = nullptr;
 utils::UIInputter *inputter = nullptr;
 lc3::as *as = nullptr;
+lc3::conv *conv = nullptr;
 lc3::sim *sim = nullptr;
 
 class SimulatorAsyncWorker : public Nan::AsyncWorker
@@ -64,7 +65,8 @@ NAN_METHOD(Init)
         printer = new utils::UIPrinter();
         inputter = new utils::UIInputter();
         as = new lc3::as(*printer);
-        sim = new lc3::sim(*printer, *inputter, os_path, _PRINT_LEVEL);
+        conv = new lc3::conv(*printer);
+        sim = new lc3::sim(*printer, *inputter, _PRINT_LEVEL);
     } catch(lc3::utils::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -73,6 +75,7 @@ NAN_METHOD(Init)
 NAN_METHOD(Shutdown)
 {
     delete sim;
+    delete conv;
     delete as;
     delete inputter;
     delete printer;
@@ -90,7 +93,7 @@ NAN_METHOD(ConvertBin)
     std::string bin_filename((char const *) (*str));
 
     try {
-        as->convertBin(bin_filename);
+        conv->convertBin(bin_filename);
     } catch(lc3::utils::exception const & e) {
         Nan::ThrowError(e.what());
     }
