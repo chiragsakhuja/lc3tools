@@ -2,35 +2,22 @@
 
 #include "tokenizer.h"
 
-lc3::core::asmbl::Tokenizer::Tokenizer(std::string const & filename) : filename(filename), file_opened(false),
-    get_new_line(true), return_newline(false), row(-1), col(0), done(false)
-{}
-
-lc3::core::asmbl::Tokenizer::~Tokenizer(void)
-{
-    if(file_opened) {
-        file.close();
-    }
-}
+lc3::core::asmbl::Tokenizer::Tokenizer(std::istream & buffer) : buffer(buffer), get_new_line(true),
+    return_new_line(false), row(-1), col(0), done(false)
+{ }
 
 lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & token)
 {
-    // if this is the first time stream is used, open the file
-    if(! file_opened) {
-        file.open(filename);
-        // If the file cannot be opened, consider stream to be empty
-        if(! file.is_open()) {
-            done = true;
-            return *this;
-        }
-        file_opened = true;
+    // if the buffer is empty, just return
+    if(done) {
+        return *this;
     }
 
     // check if we need to fetch a new line i.e. previous line is done being tokenized
     if(get_new_line) {
         // check if an end-of-statement token should be returned
-        if(return_newline) {
-            return_newline = false;
+        if(return_new_line) {
+            return_new_line = false;
             token.type = TokenType::EOS;
             return *this;
         }
@@ -39,7 +26,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
         row += 1;
 
         // get another line and check if we've reached the end of the file
-        if(! std::getline(file, line)) {
+        if(! std::getline(buffer, line)) {
             done = true;
             return *this;
         }
@@ -55,7 +42,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
         } else {
             // if this line had nothing on it after trimming, get a new line
             get_new_line = true;
-            return_newline = false;
+            return_new_line = false;
             operator>>(token);
             return *this;
         }
@@ -73,7 +60,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
     // note that this ignores trailing delimiters
     if(col >= line.size()) {
         get_new_line = true;
-        return_newline = true;
+        return_new_line = true;
         operator>>(token);
         return *this;
     }

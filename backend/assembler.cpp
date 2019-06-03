@@ -31,7 +31,6 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
         logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", asm_filename.c_str());
         throw lc3::utils::exception("could not open file for reading");
     }
-    file.close();
 
 #ifdef _ENABLE_DEBUG
     auto start = std::chrono::high_resolution_clock::now();
@@ -40,8 +39,35 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     logger.printf(PrintType::P_INFO, true, "attemping to assemble \'%s\' into \'%s\'", asm_filename.c_str(),
         obj_filename.c_str());
 
+    std::vector<MemEntry> obj_blob;
+    bool success = assembleFromBuffer(file, logger, obj_blob);
+
+#ifdef _ENABLE_DEBUG
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+
+    logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
+#endif
+
+    file.close();
+
+    if(success) {
+        logger.printf(PrintType::P_INFO, true, "assembly successful");
+        writeFile(obj_blob, obj_filename, logger);
+    } else {
+        logger.printf(PrintType::P_ERROR, true, "assembly failed");
+        throw lc3::utils::exception("assembly failed");
+    }
+}
+
+bool Assembler::assembleFromBuffer(std::istream & buffer, utils::AssemblerLogger & logger,
+    std::vector<MemEntry> & obj_blob)
+{
+    using namespace asmbl;
+    using namespace lc3::utils;
+
     // build statements from tokens
-    Tokenizer tokenizer(asm_filename);
+    Tokenizer tokenizer(buffer);
     std::vector<Statement> statements;
     while(! tokenizer.isDone()) {
         std::vector<Token> tokens;
@@ -61,23 +87,10 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     bool success = true, success_tmp = true;
     SymbolTable symbol_table = firstPass(statements, logger, success_tmp);
     success &= success_tmp;
-    std::vector<MemEntry> obj_blob = secondPass(statements, symbol_table, logger, success_tmp);
+    obj_blob = secondPass(statements, symbol_table, logger, success_tmp);
     success &= success_tmp;
 
-#ifdef _ENABLE_DEBUG
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-
-    logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
-#endif
-
-    if(success) {
-        logger.printf(PrintType::P_INFO, true, "assembly successful");
-        writeFile(obj_blob, obj_filename, logger);
-    } else {
-        logger.printf(PrintType::P_ERROR, true, "assembly failed");
-        throw lc3::utils::exception("assembly failed");
-    }
+    return success;
 }
 
 void Assembler::convertBin(std::string const & bin_filename, std::string const & obj_filename)

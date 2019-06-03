@@ -16,8 +16,8 @@ namespace asmbl
     class Tokenizer
     {
     public:
-        Tokenizer(std::string const & filename);
-        ~Tokenizer(void);
+        Tokenizer(std::istream & buffer);
+        ~Tokenizer(void) = default;
 
         Tokenizer & operator>>(Token & token);
         bool isDone(void) const;
@@ -25,11 +25,9 @@ namespace asmbl
         explicit operator bool() const;
 
     private:
-        std::string filename;
-        bool file_opened;
+        std::istream & buffer;
         bool get_new_line;
-        bool return_newline;
-        std::ifstream file;
+        bool return_new_line;
         std::string line;
         uint32_t row, col;
         bool done;

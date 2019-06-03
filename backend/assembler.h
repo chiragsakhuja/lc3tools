@@ -16,10 +16,12 @@ namespace core
     public:
         Assembler(lc3::utils::IPrinter & printer, uint32_t print_level) : printer(printer), print_level(print_level) {}
         Assembler(Assembler const &) = default;
-        Assembler & operator=(Assembler const &) = default;
+        Assembler & operator=(Assembler const &) = delete;
         ~Assembler(void) = default;
 
         void assemble(std::string const & asm_filename, std::string const & obj_filename);
+        bool assembleFromBuffer(std::istream & buffer, utils::AssemblerLogger & logger,
+            std::vector<MemEntry> & obj_blob);
         void convertBin(std::string const & bin_filename, std::string const & obj_filename);
 
     private:
