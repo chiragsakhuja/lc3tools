@@ -4,6 +4,7 @@
 #include <atomic>
 #include <functional>
 
+#include "assembler.h"
 #include "inputter.h"
 #include "instruction_decoder.h"
 #include "logger.h"

@@ -1,6 +1,4 @@
 #include <algorithm>
-#include <bitset>
-#include <cctype>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -23,11 +21,11 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     using namespace lc3::utils;
 
     SymbolTable symbols;
-    AssemblerLogger logger(printer, print_level, asm_filename);
+    logger.setFilename(asm_filename);
 
     // check if file exists
-    std::ifstream file(asm_filename);
-    if(! file.is_open()) {
+    std::ifstream in_file(asm_filename);
+    if(! in_file.is_open()) {
         logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", asm_filename.c_str());
         throw lc3::utils::exception("could not open file for reading");
     }
@@ -39,8 +37,7 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     logger.printf(PrintType::P_INFO, true, "attemping to assemble \'%s\' into \'%s\'", asm_filename.c_str(),
         obj_filename.c_str());
 
-    std::vector<MemEntry> obj_blob;
-    bool success = assembleFromBuffer(file, logger, obj_blob);
+    std::stringstream output = assembleBuffer(in_file);
 
 #ifdef _ENABLE_DEBUG
     auto end = std::chrono::high_resolution_clock::now();
@@ -49,19 +46,20 @@ void Assembler::assemble(std::string const & asm_filename, std::string const & o
     logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
 #endif
 
-    file.close();
+    logger.printf(PrintType::P_INFO, true, "assembly successful");
+    in_file.close();
 
-    if(success) {
-        logger.printf(PrintType::P_INFO, true, "assembly successful");
-        writeFile(obj_blob, obj_filename, logger);
-    } else {
-        logger.printf(PrintType::P_ERROR, true, "assembly failed");
-        throw lc3::utils::exception("assembly failed");
+    std::ofstream out_file(obj_filename);
+    if(! out_file.is_open()) {
+        logger.printf(PrintType::P_ERROR, true, "could not open file %s for writing", obj_filename.c_str());
+        throw lc3::utils::exception("could not open file for writing");
     }
+
+    out_file << output.rdbuf();
+    out_file.close();
 }
 
-bool Assembler::assembleFromBuffer(std::istream & buffer, utils::AssemblerLogger & logger,
-    std::vector<MemEntry> & obj_blob)
+std::stringstream Assembler::assembleBuffer(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -83,88 +81,28 @@ bool Assembler::assembleFromBuffer(std::istream & buffer, utils::AssemblerLogger
         }
     }
 
-    markPC(statements, logger);
+    markPC(statements);
     bool success = true, success_tmp = true;
-    SymbolTable symbol_table = firstPass(statements, logger, success_tmp);
+    SymbolTable symbol_table = firstPass(statements, success_tmp);
     success &= success_tmp;
-    obj_blob = secondPass(statements, symbol_table, logger, success_tmp);
+    std::vector<MemEntry> obj_blob = secondPass(statements, symbol_table, success_tmp);
     success &= success_tmp;
 
-    return success;
+    if(!success) {
+        logger.printf(PrintType::P_ERROR, true, "assembly failed");
+        throw lc3::utils::exception("assembly failed");
+    }
+
+    std::stringstream ret;
+
+    for(MemEntry entry : obj_blob) {
+        ret << entry;
+    }
+
+    return ret;
 }
 
-void Assembler::convertBin(std::string const & bin_filename, std::string const & obj_filename)
-{
-    using namespace lc3::utils;
-
-    Logger logger(printer, print_level);
-
-    // check if file exists
-    std::ifstream file(bin_filename);
-    if(! file.is_open()) {
-        logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", bin_filename.c_str());
-        throw lc3::utils::exception("could not open file for reading");
-    }
-
-#ifdef _ENABLE_DEBUG
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
-
-    logger.printf(PrintType::P_INFO, true, "attemping to convert \'%s\' into \'%s\'", bin_filename.c_str(),
-        obj_filename.c_str());
-
-    std::string line;
-    std::vector<MemEntry> obj_blob;
-    uint32_t line_no = 1;
-    bool wrote_orig = false;
-    bool success = true;
-
-    while(std::getline(file, line)) {
-        line = line.substr(0, line.find_first_of(';'));
-        line.erase(std::remove_if(line.begin(), line.end(), ::isspace), line.end());
-        line_no += 1;
-
-        if(line.size() != 0 && line.size() != 16) {
-            logger.printf(PrintType::P_ERROR, true, "line %d is %s", line_no, line_no < 16 ? "too short" : "too long");
-            success = false;
-            continue;
-        }
-
-        //if(line.size() == 0) { continue; }
-
-        for(char c : line) {
-            if(c != '0' && c != '1') {
-                success = false;
-                continue;
-            }
-        }
-
-        uint32_t val = std::bitset<16>(line).to_ulong();
-        logger.printf(PrintType::P_DEBUG, false, "%s => 0x%04x", line.c_str(), val);
-        obj_blob.emplace_back((uint16_t) val, ! wrote_orig, line);
-        wrote_orig = true;
-    }
-
-#ifdef _ENABLE_DEBUG
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-
-    logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
-#endif
-
-    file.close();
-
-    if(success) {
-        logger.printf(PrintType::P_INFO, true, "conversion successful");
-        writeFile(obj_blob, obj_filename, logger);
-    } else {
-        logger.printf(PrintType::P_ERROR, true, "conversion failed");
-        throw lc3::utils::exception("conversion failed");
-    }
-}
-
-SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statements,
-    lc3::utils::AssemblerLogger & logger, bool & success)
+SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statements, bool & success)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -179,10 +117,10 @@ SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statement
         if(search != symbol_table.end()) {
             uint32_t old_val = search->second;
 #ifdef _LIBERAL_ASM
-	    PrintType p_type = PrintType::P_WARNING;
+            PrintType p_type = PrintType::P_WARNING;
 #else
-	    PrintType p_type = PrintType::P_ERROR;
-	    success = false;
+            PrintType p_type = PrintType::P_ERROR;
+            success = false;
 #endif
             logger.asmPrintf(p_type, state.label, "redefining label from 0x%0.4x to 0x%0.4x", old_val,
                 state.pc);
@@ -197,7 +135,7 @@ SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statement
 }
 
 std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statement> const & statements,
-    SymbolTable const & symbol_table, lc3::utils::AssemblerLogger & logger, bool & success)
+    SymbolTable const & symbol_table, bool & success)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -208,15 +146,15 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
     uint32_t lines_after_end = 0;
     bool found_end = false;
     for(Statement const & state : statements) {
-	if(found_end) {
-	    lines_after_end += 1;
-	}
+        if(found_end) {
+            lines_after_end += 1;
+        }
         for(StatementToken const & tok : state.invalid_operands) {
 #ifdef _LIBERAL_ASM
             logger.asmPrintf(PrintType::P_WARNING, tok, "ignoring unexpected token");
 #else
             logger.asmPrintf(PrintType::P_ERROR, tok, "unexpected token");
-	    success = false;
+            success = false;
 #endif
             // TODO: I think the only time there will be an invalid operand is if there is a number at the beginning
             // of the line (or multiple times before an instruction)
@@ -226,24 +164,24 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
 
         if(state.isInst()) {
             bool encode_success = false;
-            uint32_t encoding = encodeInstruction(state, symbol_table, logger, encode_success);
+            uint32_t encoding = encodeInstruction(state, symbol_table, encode_success);
             success &= encode_success;
             ret.emplace_back(encoding, false, state.line);
-        } else if(checkIfValidPseudoStatement(state, ".orig", logger, false)) {
-	    lines_after_end = 0;
-	    found_end = false;
+        } else if(checkIfValidPseudoStatement(state, ".orig", false)) {
+            lines_after_end = 0;
+            found_end = false;
             ret.emplace_back(state.operands[0].num & 0xffff, true, state.line);
-        } else if(checkIfValidPseudoStatement(state, ".stringz", logger, false)) {
+        } else if(checkIfValidPseudoStatement(state, ".stringz", false)) {
             std::string const & value = state.operands[0].str;
             for(char c : value) {
                 ret.emplace_back(c, false, std::string(1, c));
             }
             ret.emplace_back((uint16_t) 0, false, state.line);
-        } else if(checkIfValidPseudoStatement(state, ".blkw", logger, false)) {
+        } else if(checkIfValidPseudoStatement(state, ".blkw", false)) {
             for(uint32_t i = 0; i < (uint32_t) state.operands[0].num; i += 1) {
                 ret.emplace_back(0, false, state.line);
             }
-        } else if(checkIfValidPseudoStatement(state, ".fill", logger, false)) {
+        } else if(checkIfValidPseudoStatement(state, ".fill", false)) {
             if(state.operands[0].type == TokenType::NUM) {
                 ret.emplace_back(state.operands[0].num, false, state.line);
             } else if(state.operands[0].type == TokenType::LABEL) {
@@ -259,22 +197,22 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
                 }
 
                 ret.emplace_back(search->second, false, state.line);
-	    }
-        } else if(checkIfValidPseudoStatement(state, ".end", logger, false)) {
-	    found_end = true;
+            }
+        } else if(checkIfValidPseudoStatement(state, ".end", false)) {
+            found_end = true;
         } else {
-	    if(!state.hasLabel() && state.invalid_operands.size() == 0) {
-		StatementToken state_tok;
-		state_tok.line = state.line;
+            if(!state.hasLabel() && state.invalid_operands.size() == 0) {
+                StatementToken state_tok;
+                state_tok.line = state.line;
 #ifdef _LIBERAL_ASM
-		logger.asmPrintf(PrintType::P_WARNING, 0, state_tok.line.size(), state_tok, "ignoring invalid line");
+                logger.asmPrintf(PrintType::P_WARNING, 0, state_tok.line.size(), state_tok, "ignoring invalid line");
 #else
-		logger.asmPrintf(PrintType::P_ERROR, 0, state_tok.line.size(), state_tok, "invalid line");
-		success = false;
+                logger.asmPrintf(PrintType::P_ERROR, 0, state_tok.line.size(), state_tok, "invalid line");
+                success = false;
 #endif
-		logger.newline();
-	    }
-	}
+                logger.newline();
+            }
+        }
     }
 
     if(!found_end) {
@@ -283,7 +221,7 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
 #else
         logger.printf(PrintType::P_ERROR, true, "assembly did not end in .end", lines_after_end);
 #endif
-	logger.newline();
+        logger.newline();
 #ifndef _LIBERAL_ASM
         throw utils::exception("assembly did not end in .end");
 #endif
@@ -295,30 +233,12 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
 #else
         logger.printf(PrintType::P_ERROR, true, "%d invalid lines after final .end", lines_after_end);
 #endif
-	logger.newline();
+        logger.newline();
 #ifndef _LIBERAL_ASM
         throw utils::exception("assembly did not end in .end");
 #endif
     }
     return ret;
-}
-
-void Assembler::writeFile(std::vector<MemEntry> const & obj_blob, std::string const & obj_filename,
-    lc3::utils::Logger & logger)
-{
-    using namespace lc3::utils;
-
-    std::ofstream file(obj_filename);
-    if(! file.is_open()) {
-        logger.printf(PrintType::P_ERROR, true, "could not open file %s for writing", obj_filename.c_str());
-        throw lc3::utils::exception("could not open file for writing");
-    }
-
-    for(MemEntry entry : obj_blob) {
-        file << entry;
-    }
-
-    file.close();
 }
 
 asmbl::Statement Assembler::makeStatement(std::vector<asmbl::Token> const & tokens)
@@ -526,7 +446,7 @@ asmbl::Statement Assembler::makeStatementFromTokens(std::vector<asmbl::Statement
     return ret;
 }
 
-void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::AssemblerLogger & logger)
+void Assembler::markPC(std::vector<asmbl::Statement> & statements)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -540,7 +460,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
         while(cur_pos < statements.size())  {
             Statement const & state = statements[cur_pos];
 
-            if(checkIfValidPseudoStatement(state, ".orig", logger, true)) {
+            if(checkIfValidPseudoStatement(state, ".orig", true)) {
                 found_orig = true;
                 break;
             }
@@ -559,14 +479,14 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
         uint32_t trunc_val = val & 0xffff;
         if(val != trunc_val) {
 #ifdef _LIBERAL_ASM
-	    PrintType p_type = PrintType::P_WARNING;
+            PrintType p_type = PrintType::P_WARNING;
 #else
-	    PrintType p_type = PrintType::P_ERROR;
+            PrintType p_type = PrintType::P_ERROR;
 #endif
             logger.asmPrintf(p_type, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
             logger.newline();
 #ifndef _LIBERAL_ASM
-	    throw utils::exception("could not find valid .orig");
+            throw utils::exception("could not find valid .orig");
 #endif
         }
 
@@ -585,7 +505,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
 #else
         logger.printf(PrintType::P_ERROR, true, "%d invalid lines before .orig", cur_pos);
 #endif
-	logger.newline();
+        logger.newline();
 #ifndef _LIBERAL_ASM
         throw utils::exception("orig is not first line in program");
 #endif
@@ -609,23 +529,23 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
             operand.pc = cur_pc;
         }
 
-        if(checkIfValidPseudoStatement(state, ".blkw", logger, true)) {
+        if(checkIfValidPseudoStatement(state, ".blkw", true)) {
             cur_pc += state.operands[0].num;
-        } else if(checkIfValidPseudoStatement(state, ".stringz", logger, true)) {
+        } else if(checkIfValidPseudoStatement(state, ".stringz", true)) {
             cur_pc += state.operands[0].str.size() + 1;
-        } else if(checkIfValidPseudoStatement(state, ".orig", logger, true)) {
+        } else if(checkIfValidPseudoStatement(state, ".orig", true)) {
             uint32_t val = state.operands[0].num;
             uint32_t trunc_val = val & 0xffff;
             if(val != trunc_val) {
 #ifdef _LIBERAL_ASM
-		PrintType p_type = PrintType::P_WARNING;
+                PrintType p_type = PrintType::P_WARNING;
 #else
-		PrintType p_type = PrintType::P_ERROR;
+                PrintType p_type = PrintType::P_ERROR;
 #endif
-		logger.asmPrintf(p_type, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
-		logger.newline();
+                logger.asmPrintf(p_type, state.operands[0], "truncating address to 0x%0.4x", trunc_val);
+                logger.newline();
 #ifndef _LIBERAL_ASM
-		throw utils::exception("could not find valid .orig");
+                throw utils::exception("could not find valid .orig");
 #endif
             }
 
@@ -638,8 +558,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements, lc3::utils::A
     }
 }
 
-uint32_t Assembler::encodeInstruction(asmbl::Statement const & state, SymbolTable const & symbol_table,
-    lc3::utils::AssemblerLogger & logger, bool & success)
+uint32_t Assembler::encodeInstruction(asmbl::Statement const & state, SymbolTable const & symbol_table, bool & success)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -712,8 +631,7 @@ bool Assembler::checkIfValidPseudoToken(asmbl::StatementToken const & tok, std::
     return false;
 }
 
-bool Assembler::checkIfValidPseudoStatement(asmbl::Statement const & state, std::string const & check,
-    lc3::utils::AssemblerLogger & logger, bool log_enable)
+bool Assembler::checkIfValidPseudoStatement(asmbl::Statement const & state, std::string const & check, bool log_enable)
 {
     using namespace asmbl;
     using namespace lc3::utils;

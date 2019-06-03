@@ -83,6 +83,7 @@ int main(int argc, char * argv[])
 
     lc3::ConsolePrinter asm_printer;
     lc3::as assembler(asm_printer, args.print_level_override ? args.print_level : 0);
+    lc3::conv converter(asm_printer, args.print_level_override ? args.print_level : 0);
 
     std::vector<std::string> obj_filenames;
     bool valid_program = true;
@@ -91,7 +92,7 @@ int main(int argc, char * argv[])
         if(filename[0] != '-') {
             std::pair<bool, std::string> result;
             if(endsWith(filename, ".bin")) {
-                result = assembler.convertBin(filename);
+                result = converter.convertBin(filename);
             } else {
                 result = assembler.assemble(filename);
             }

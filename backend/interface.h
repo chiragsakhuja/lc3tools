@@ -13,6 +13,7 @@
 #include <utility>
 
 #include "assembler.h"
+#include "converter.h"
 #include "simulator.h"
 
 namespace lc3
@@ -137,7 +138,6 @@ namespace lc3
         ~as(void) = default;
 
         std::pair<bool, std::string> assemble(std::string const & asm_filename);
-        std::pair<bool, std::string> convertBin(std::string const & asm_filename);
 
         void setPropagateExceptions(void);
         void clearPropagateExceptions(void);
@@ -145,6 +145,23 @@ namespace lc3
     private:
         utils::IPrinter & printer;
         core::Assembler assembler;
+
+        bool propagate_exceptions;
+    };
+
+    class conv
+    {
+    public:
+        conv(utils::IPrinter & printer, uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false) :
+            printer(printer), converter(printer, print_level), propagate_exceptions(propagate_exceptions) {}
+        std::pair<bool, std::string> convertBin(std::string const & asm_filename);
+
+        void setPropagateExceptions(void);
+        void clearPropagateExceptions(void);
+
+    private:
+        utils::IPrinter & printer;
+        core::Converter converter;
 
         bool propagate_exceptions;
     };

@@ -27,12 +27,13 @@ int main(int argc, char *argv[])
 
     lc3::ConsolePrinter printer;
     lc3::as assembler(printer, args.print_level);
+    lc3::conv converter(printer, args.print_level);
 
     for(int i = 1; i < argc; i += 1) {
         std::string filename(argv[i]);
         if(filename[0] != '-') {
             if(endsWith(filename, ".bin")) {
-                assembler.convertBin(filename);
+                converter.convertBin(filename);
             } else {
                 assembler.assemble(filename);
             }

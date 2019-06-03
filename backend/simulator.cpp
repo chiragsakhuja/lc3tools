@@ -78,9 +78,12 @@ void Simulator::loadOS()
 {
     extern char const * lc3os_src;
 
-    std::stringstream buffer;
-    buffer << lc3os_src;
-    loadObjectFileFromBuffer(buffer);
+    Assembler as(logger.getPrinter(), logger.getPrintLevel());
+
+    std::stringstream src_buffer;
+    src_buffer << lc3os_src;
+    std::stringstream obj_buffer = as.assembleBuffer(src_buffer);
+    loadObjectFileFromBuffer(obj_buffer);
     state.pc = RESET_PC;
 }
 

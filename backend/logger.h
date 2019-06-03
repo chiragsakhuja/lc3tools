@@ -20,7 +20,7 @@ namespace utils
     public:
         Logger(IPrinter & printer, uint32_t print_level) : printer(printer), print_level(print_level) {}
 
-        lc3::utils::IPrinter const & getPrinter(void) { return printer; }
+        lc3::utils::IPrinter & getPrinter(void) const { return printer; }
 
         template<typename ... Args>
         void printf(PrintType level, bool bold, std::string const & format, Args ... args) const;
@@ -28,6 +28,7 @@ namespace utils
         void print(std::string const & str) {
             if(print_level > static_cast<uint32_t>(PrintType::P_NONE)) { printer.print(str); }
         }
+        uint32_t getPrintLevel(void) const { return print_level; }
         void setPrintLevel(uint32_t print_level) { this->print_level = print_level; }
     };
 
@@ -36,8 +37,11 @@ namespace utils
     public:
         using Logger::Logger;
 
+        AssemblerLogger(IPrinter & printer, uint32_t print_level) : AssemblerLogger(printer, print_level, "") {}
         AssemblerLogger(IPrinter & printer, uint32_t print_level, std::string const & filename) :
             Logger(printer, print_level), filename(filename) {}
+
+        void setFilename(std::string const & filename) { this->filename = filename; }
 
         template<typename ... Args>
         void asmPrintf(PrintType level, lc3::core::asmbl::StatementToken const & token, std::string const & format,
