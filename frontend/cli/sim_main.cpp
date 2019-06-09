@@ -17,6 +17,7 @@ void help(void);
 bool prompt(lc3::sim & simulator);
 bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens);
 void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens);
+void list(lc3::sim const & simulator, int32_t context);
 std::string formatMem(lc3::sim const & simulator, uint32_t addr);
 std::ostream & operator<<(std::ostream & out, lc3::Breakpoint const & x);
 void breakpointCallback(lc3::core::MachineState & state, lc3::Breakpoint const & bp);
@@ -119,18 +120,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
         if(command_tokens.fail()) {
             context = 2;
         }
-
-        uint32_t pc = simulator.getPC();
-        for(int32_t pos = -context; pos <= context; pos += 1) {
-            if(((int32_t) pc) + pos >= 0 && ((int32_t) pc) + pos <= 0xffff) {
-                if(pos == 0) {
-                    std::cout << "--> ";
-                } else {
-                    std::cout << "    ";
-                }
-                std::cout << formatMem(simulator, pc + pos) << "\n";
-            }
-        }
+        list(simulator, context);
     } else if(command == "load") {
         std::string filename;
         command_tokens >> filename;
@@ -263,10 +253,13 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
 
         if(sub_command == "in") {
             simulator.stepIn();
+            list(simulator, 2);
         } else if(sub_command == "out") {
             simulator.stepOut();
+            list(simulator, 2);
         } else if(sub_command == "over") {
             simulator.stepOver();
+            list(simulator, 2);
         } else {
             std::cout << "invalid step operation\n";
         }
@@ -327,6 +320,21 @@ void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens)
 
     } else  {
         std::cout << "unknown command\n";
+    }
+}
+
+void list(lc3::sim const & simulator, int32_t context)
+{
+    uint32_t pc = simulator.getPC();
+    for(int32_t pos = -context; pos <= context; pos += 1) {
+        if(((int32_t) pc) + pos >= 0 && ((int32_t) pc) + pos <= 0xffff) {
+            if(pos == 0) {
+                std::cout << "--> ";
+            } else {
+                std::cout << "    ";
+            }
+            std::cout << formatMem(simulator, pc + pos) << "\n";
+        }
     }
 }
 
