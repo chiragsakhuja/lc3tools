@@ -258,6 +258,12 @@ void Simulator::registerSubExitCallback(callback_func_t func)
     state.sub_exit_callback = func;
 }
 
+void Simulator::registerInputPollCallback(callback_func_t func)
+{
+    state.input_poll_callback_v = true;
+    state.input_poll_callback = func;
+}
+
 void Simulator::handleInput(void)
 {
     while(collecting_input) {

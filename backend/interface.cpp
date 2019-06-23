@@ -13,6 +13,7 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t p
     simulator.registerInterruptExitCallback(lc3::sim::interruptExitCallback);
     simulator.registerSubEnterCallback(lc3::sim::subEnterCallback);
     simulator.registerSubExitCallback(lc3::sim::subExitCallback);
+    simulator.registerInputPollCallback(lc3::sim::inputPollCallback);
     if(propagate_exceptions) {
         simulator.loadOS();
     } else {
@@ -101,6 +102,14 @@ bool lc3::sim::run(void)
 bool lc3::sim::runUntilHalt(void)
 {
     until_halt_run = true;
+    until_input_run = false;
+    return run();
+}
+
+bool lc3::sim::runUntilInputPoll(void)
+{
+    until_halt_run = false;
+    until_input_run = true;
     return run();
 }
 
@@ -120,6 +129,8 @@ bool lc3::sim::stepOver(void)
     counted_run = false;
     step_out_run = true;
     until_halt_run = false;
+    until_input_run = false;
+
     // this will immediately be incremented by the sub enter callback if it is about to enter a subroutine
     sub_depth = 0;
     return run();
@@ -130,6 +141,7 @@ bool lc3::sim::stepOut(void)
     counted_run = false;
     step_out_run = true;
     until_halt_run = false;
+    until_input_run = false;
     // act like we are already in a subroutine
     sub_depth = 1;
     return run();
@@ -406,6 +418,7 @@ void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineSta
             if(sim_inst.breakpoint_callback_v) {
                 sim_inst.breakpoint_callback(state, x);
             }
+            sim_inst.step_out_run = false;
             state.hit_breakpoint = true;
             break;
         }
@@ -415,6 +428,7 @@ void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineSta
         sim_inst.counted_run = false;
         sim_inst.step_out_run = false;
         sim_inst.until_halt_run = false;
+        sim_inst.until_input_run = false;
         state.hit_breakpoint = true;
     }
 
@@ -427,7 +441,7 @@ void lc3::sim::postInstructionCallback(lc3::sim & sim_inst, core::MachineState &
 {
     sim_inst.inst_exec_count += 1;
     if((sim_inst.counted_run && sim_inst.inst_exec_count == sim_inst.target_inst_count) ||
-        (sim_inst.step_out_run && sim_inst.sub_depth == 0))
+        (sim_inst.step_out_run && sim_inst.sub_depth <= 0))
     {
         sim_inst.counted_run = false;
         sim_inst.step_out_run = false;
@@ -468,6 +482,20 @@ void lc3::sim::subExitCallback(lc3::sim & sim_inst, core::MachineState & state)
     sim_inst.sub_depth -= 1;
     if(sim_inst.sub_exit_callback_v) {
         sim_inst.sub_exit_callback(state);
+    }
+}
+
+void lc3::sim::inputPollCallback(lc3::sim & sim_inst, core::MachineState & state)
+{
+    if(sim_inst.until_input_run) {
+        sim_inst.step_out_run = false;
+        sim_inst.until_halt_run = false;
+        sim_inst.until_input_run = false;
+        state.hit_breakpoint = true;
+    }
+
+    if(sim_inst.input_poll_callback_v) {
+        sim_inst.input_poll_callback(state);
     }
 }
 

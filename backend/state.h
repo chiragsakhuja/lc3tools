@@ -58,16 +58,18 @@ namespace core
 
         bool pre_instruction_callback_v;
         bool post_instruction_callback_v;
-        bool interrupt_enter_callback_v;;
-        bool interrupt_exit_callback_v;;
-        bool sub_enter_callback_v;;
-        bool sub_exit_callback_v;;
+        bool interrupt_enter_callback_v;
+        bool interrupt_exit_callback_v;
+        bool sub_enter_callback_v;
+        bool sub_exit_callback_v;
+        bool input_poll_callback_v;
         callback_func_t pre_instruction_callback;
         callback_func_t post_instruction_callback;
         callback_func_t interrupt_enter_callback;
         callback_func_t interrupt_exit_callback;
         callback_func_t sub_enter_callback;
         callback_func_t sub_exit_callback;
+        callback_func_t input_poll_callback;
 
         sim & simulator;
     };

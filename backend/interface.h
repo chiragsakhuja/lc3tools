@@ -47,6 +47,7 @@ namespace lc3
         void setRunInstLimit(uint32_t inst_limit);
         bool run(void);
         bool runUntilHalt(void);
+        bool runUntilInputPoll(void);
         void pause(void);
         bool stepIn(void);
         bool stepOver(void);
@@ -101,13 +102,15 @@ namespace lc3
         static void interruptExitCallback(sim & sim_int, core::MachineState & state);
         static void subEnterCallback(sim & sim_int, core::MachineState & state);
         static void subExitCallback(sim & sim_int, core::MachineState & state);
+        static void inputPollCallback(sim & sim_int, core::MachineState & state);
 
         uint32_t inst_exec_count = 0;
         uint32_t target_inst_count = 0;
         bool counted_run = false;
         bool step_out_run = false;
         bool until_halt_run = false;
-        uint32_t sub_depth = 0;
+        bool until_input_run = false;
+        int32_t sub_depth = 0;
 
         bool pre_instruction_callback_v = false;
         bool post_instruction_callback_v = false;
@@ -115,6 +118,7 @@ namespace lc3
         bool interrupt_exit_callback_v = false;
         bool sub_enter_callback_v = false;
         bool sub_exit_callback_v = false;
+        bool input_poll_callback_v = false;
         bool breakpoint_callback_v = false;
         callback_func_t pre_instruction_callback;
         callback_func_t post_instruction_callback;
@@ -122,6 +126,7 @@ namespace lc3
         callback_func_t interrupt_exit_callback;
         callback_func_t sub_enter_callback;
         callback_func_t sub_exit_callback;
+        callback_func_t input_poll_callback;
         breakpoint_callback_func_t breakpoint_callback;
 
         uint32_t breakpoint_id = 0;

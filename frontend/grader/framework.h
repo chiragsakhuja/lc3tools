@@ -31,19 +31,13 @@ private:
     bool print_output;
 };
 
-class FileInputter : public lc3::utils::IInputter
-{
-public:
-    void beginInput(void) {}
-    bool getChar(char & c);
-    void endInput(void) {}
-};
-
 class StringInputter : public lc3::utils::IInputter
 {
 public:
-    StringInputter(std::string const & source);
+    StringInputter(void) { setString(""); }
+    StringInputter(std::string const & source) { setString(source); }
 
+    void setString(std::string const & source);
     void beginInput(void) {}
     bool getChar(char & c);
     void endInput(void) {}
