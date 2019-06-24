@@ -2,33 +2,33 @@
 
 static constexpr uint64_t InstLimit = 100000;
 
-void OneTest(lc3::sim & sim)
+void OneTest(lc3::sim & sim, StringInputter & inputter)
 {
     // Setup
     sim.runUntilInputPoll();
     VERIFY_OUTPUT("Type a professor's name and then press enter:");
+
+    inputter.setString("Dan\n");
+    sim.runUntilInputPoll();
+    VERIFY_OUTPUT_HAD("16000");
+
 /*
- *    inputter.setString("Dan\n");
- *
- *    sim.runUntilInputPoll();
- *    VERIFY_OUTPUT_HAD("16000");
  *    inputter.setString("Dani\n");
- *
  *    sim.runUntilInputPoll();
  *    VERIFY_OUTPUT_HAD("No Entry");
- *    inputter.setString("Daniel");
  *
+ *    inputter.setString("Daniel");
  *    sim.runUntilInputPoll();
  *    VERIFY_OUTPUT_HAD("24000");
- *    inputter.setString("dan");
  *
+ *    inputter.setString("dan");
  *    sim.runUntilInputPoll();
  *    VERIFY_OUTPUT_HAD("No Entry");
- *    inputter.setString("d");
- *
- *    bool success = sim.runUntilHalt();
- *    VERIFY(success && sim.getInstExecCount() < InstLimit);
  */
+    inputter.setString("d");
+
+    bool success = sim.runUntilHalt();
+    VERIFY(success && sim.getInstExecCount() < InstLimit);
 }
 
 void testBringup(lc3::sim & sim)

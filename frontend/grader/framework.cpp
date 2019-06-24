@@ -21,7 +21,6 @@ std::vector<TestCase> tests;
 uint32_t verify_count;
 uint32_t verify_valid;
 
-
 bool endsWith(std::string const & search, std::string const & suffix)
 {
     if(suffix.size() > search.size()) { return false; }
@@ -55,6 +54,7 @@ bool StringInputter::getChar(char & c)
     if(pos == source.size()) {
         return false;
     }
+    std::cout << "here\n";
 
     c = source[pos];
     pos += 1;
@@ -133,7 +133,7 @@ int main(int argc, char * argv[])
             }
 
             try {
-                test.test_func(simulator);
+                test.test_func(simulator, sim_inputter);
             } catch(lc3::utils::exception const & e) {
                 std::cout << "Test case ran into exception: " << e.what() << "\n";
                 continue;
@@ -166,22 +166,40 @@ int main(int argc, char * argv[])
     return 0;
 }
 
-bool outputCompare(lc3::utils::IPrinter const & printer, std::string check)
+bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr)
 {
     BufferedPrinter const & buffered_printer = static_cast<BufferedPrinter const &>(printer);
-    check += "\n\n--- Halting the LC-3 ---\n\n";
 
+    std::cout << check << (substr ? " sub? " : " ?= ");
     for(uint32_t i = 0; i < buffered_printer.display_buffer.size(); i += 1) {
         std::cout << buffered_printer.display_buffer[i];
     }
-    std::cout << " ?= " << check << '\n';
+    std::cout << '\n';
 
-    if(buffered_printer.display_buffer.size() != check.size()) { return false; }
+    if(substr) {
+        bool match = false;
+        for(uint32_t i = 0; i < check.size(); i += 1) {
+            if(i + check.size() >= buffered_printer.display_buffer.size()) { return false; }
 
-    for(uint32_t i = 0; i < check.size(); i += 1) {
-        if(buffered_printer.display_buffer[i] != check[i]) { return false; }
+            match = true;
+            for(uint32_t j = 0; j < check.size(); i += 1) {
+                if(buffered_printer.display_buffer[i] != check[i]) {
+                    match = false;
+                    break;
+                }
+            }
+            if(match) { break; }
+        }
+
+        return match;
+    } else {
+        if(buffered_printer.display_buffer.size() != check.size()) { return false; }
+
+        for(uint32_t i = 0; i < check.size(); i += 1) {
+            if(buffered_printer.display_buffer[i] != check[i]) { return false; }
+        }
+        return true;
     }
-
-    return true;
+    return false;
 }
 

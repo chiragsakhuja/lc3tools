@@ -1,6 +1,6 @@
 #include "../framework.h"
 
-void ZeroTest(lc3::sim & sim)
+void ZeroTest(lc3::sim & sim, StringInputter & inputter)
 {
     sim.setMem(0x3200, 0);
 
@@ -9,7 +9,7 @@ void ZeroTest(lc3::sim & sim)
     VERIFY(sim.getMem(0x3100) == 0);
 }
 
-void SimpleTest(lc3::sim & sim)
+void SimpleTest(lc3::sim & sim, StringInputter & inputter)
 {
     // Initialize the values and compute their sum in C++ to compare against
     uint16_t values[] = {5, 4, 3, 2, 1, 0};

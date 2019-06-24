@@ -50,11 +50,12 @@ private:
 struct TestCase
 {
     std::string name;
-    std::function<void(lc3::sim &)> test_func;
+    std::function<void(lc3::sim &, StringInputter &)> test_func;
     uint32_t points;
     bool randomize;
 
-    TestCase(char const * name, std::function<void(lc3::sim &)> test_func, uint32_t points, bool randomize)
+    TestCase(char const * name, std::function<void(lc3::sim &, StringInputter &)> test_func, uint32_t points,
+        bool randomize)
     {
         this->name = name;
         this->test_func = test_func;
@@ -63,7 +64,7 @@ struct TestCase
     }
 };
 
-bool outputCompare(lc3::utils::IPrinter const & printer, std::string check);
+bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr);
 
 #define REGISTER_TEST(name, function, points)                        \
     tests.emplace_back( #name , ( function ), ( points ), false);    \
@@ -71,9 +72,9 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check);
 #define REGISTER_RANDOM_TEST(name, function, points)                 \
     tests.emplace_back( #name , ( function ), ( points ), true);     \
     do {} while(false)
-#define VERIFY(check)                                                \
+#define VERIFY_NAMED(message, check)                                 \
     verify_count += 1;                                               \
-    std::cout << "  " << ( #check ) << " => ";                       \
+    std::cout << "  " << ( message ) << " => ";                      \
     if(( check ) == true) {                                          \
         verify_valid += 1;                                           \
         std::cout << "yes\n";                                        \
@@ -81,10 +82,12 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check);
         std::cout << "no\n";                                         \
     }                                                                \
     do {} while(false)
+#define VERIFY(check)                                                \
+    VERIFY_NAMED(#check, check)
 #define VERIFY_OUTPUT_NAMED(message, check)                          \
     verify_count += 1;                                               \
     std::cout << " " << ( message ) << " => ";                       \
-    if(outputCompare(sim.getPrinter(), check)) {                     \
+    if(outputCompare(sim.getPrinter(), check, false)) {              \
         verify_valid += 1;                                           \
         std::cout << "yes\n";                                        \
     } else {                                                         \
@@ -93,3 +96,15 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check);
     do {} while(false)
 #define VERIFY_OUTPUT(check)                                         \
     VERIFY_OUTPUT_NAMED(#check, check)
+#define VERIFY_OUTPUT_HAD_NAMED(message, check)                      \
+    verify_count += 1;                                               \
+    std::cout << " " << ( message ) << " => ";                       \
+    if(outputCompare(sim.getPrinter(), check, true)) {               \
+        verify_valid += 1;                                           \
+        std::cout << "yes\n";                                        \
+    } else {                                                         \
+        std::cout << "no\n";                                         \
+    }                                                                \
+    do {} while(false)
+#define VERIFY_OUTPUT_HAD(check)                                     \
+    VERIFY_OUTPUT_HAD_NAMED(#check, check)

@@ -2,7 +2,7 @@
 
 uint32_t sub_count = 0;
 
-void BasicTest(lc3::sim & sim)
+void BasicTest(lc3::sim & sim, StringInputter & inputter)
 {
     // Setup
     sub_count = 0;

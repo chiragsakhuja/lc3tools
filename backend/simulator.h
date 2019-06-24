@@ -25,7 +25,6 @@ namespace core
         ~Simulator(void) = default;
 
         void loadObjectFile(std::string const & obj_file);
-        void loadOS();
         void simulate(void);
         void pause(void);
         void reinitialize(void);
@@ -42,6 +41,9 @@ namespace core
         MachineState const & getMachineState(void) const { return state; }
 
         void setPrintLevel(uint32_t print_level) { logger.setPrintLevel(print_level); }
+        uint32_t getPrintLevel(void) const { return logger.getPrintLevel(); }
+
+        void loadObjectFileFromBuffer(std::istream & buffer);
 
     private:
         sim::InstructionDecoder decoder;
@@ -53,7 +55,6 @@ namespace core
 
         std::atomic<bool> collecting_input;
 
-        void loadObjectFileFromBuffer(std::istream & buffer);
         std::vector<PIEvent> executeInstruction(void);
         std::vector<PIEvent> checkAndSetupInterrupts();
         void executeEventChain(std::vector<PIEvent> & events);

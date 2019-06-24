@@ -133,6 +133,8 @@ namespace lc3
         std::vector<Breakpoint> breakpoints;
 
         bool propagate_exceptions;
+
+        void loadOS(void);
     };
 
     class as
@@ -148,10 +150,14 @@ namespace lc3
         void clearPropagateExceptions(void);
 
     private:
+        friend class sim;
+
         utils::IPrinter & printer;
         core::Assembler assembler;
 
         bool propagate_exceptions;
+
+        std::stringstream assembleBuffer(std::istream & buffer);
     };
 
     class conv
