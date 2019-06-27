@@ -21,8 +21,7 @@ namespace core
         Assembler & operator=(Assembler const &) = delete;
         ~Assembler(void) = default;
 
-        void assemble(std::string const & asm_filename, std::string const & obj_filename);
-        std::stringstream assembleBuffer(std::istream & buffer);
+        std::stringstream assemble(std::istream & buffer);
 
     private:
         std::vector<std::string> file_buffer;

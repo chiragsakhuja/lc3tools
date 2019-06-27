@@ -30,19 +30,7 @@ Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::
     state.interrupt_exit_callback_v = false;
 }
 
-void Simulator::loadObjectFile(std::string const & filename)
-{
-    std::ifstream file(filename);
-    if(! file) {
-        logger.printf(lc3::utils::PrintType::P_ERROR, true, "could not open file \'%s\' for reading",
-            filename.c_str());
-        throw utils::exception("could not open file");
-    }
-
-    loadObjectFileFromBuffer(file);
-}
-
-void Simulator::loadObjectFileFromBuffer(std::istream & buffer)
+void Simulator::loadObj(std::istream & buffer)
 {
     uint32_t fill_pc = 0;
     uint32_t offset = 0;

@@ -1,4 +1,5 @@
 #include <cassert>
+#include <string>
 #include <random>
 
 #include "device_regs.h"
@@ -30,13 +31,23 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t p
     restart();
 }
 
-bool lc3::sim::loadObjectFile(std::string const & obj_filename)
+bool lc3::sim::loadObjFile(std::string const & obj_filename)
 {
+    std::ifstream obj_file(obj_filename);
+    if(! obj_file) {
+        printer.print("could not open file " + obj_filename + "\n");
+        if(propagate_exceptions) {
+            throw utils::exception("could not open file");
+        } else {
+            return false;
+        }
+    }
+
     if(propagate_exceptions) {
-        simulator.loadObjectFile(obj_filename);
+        simulator.loadObj(obj_file);
     } else {
         try {
-            simulator.loadObjectFile(obj_filename);
+            simulator.loadObj(obj_file);
         } catch(utils::exception const & e) {
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()) + "\n");
@@ -55,12 +66,12 @@ void lc3::sim::reinitialize(void)
 
 void lc3::sim::loadOS(void)
 {
-    as assembler(printer, simulator.getPrintLevel());
+    core::Assembler assembler(printer, simulator.getPrintLevel());
 
     std::stringstream src_buffer;
     src_buffer << getOSStr();
-    std::stringstream obj_buffer = assembler.assembleBuffer(src_buffer);
-    simulator.loadObjectFileFromBuffer(obj_buffer);
+    std::stringstream obj_stream = assembler.assemble(src_buffer);
+    simulator.loadObj(obj_stream);
     getMachineState().pc = RESET_PC;
 }
 
@@ -512,45 +523,124 @@ void lc3::sim::inputPollCallback(lc3::sim & sim_inst, core::MachineState & state
     }
 }
 
-std::pair<bool, std::string> lc3::as::assemble(std::string const & asm_filename)
+lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
 {
     std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
+    std::ifstream in_file(asm_filename);
+    if(! in_file.is_open()) {
+        printer.print("could not open file " + asm_filename + "\n");
+        if(propagate_exceptions) {
+            throw lc3::utils::exception("could not open file for reading");
+        } else {
+            return {};
+        }
+    }
+
+    printer.print("attemping to assemble " + asm_filename + " into " + obj_filename + "\n");
+
+    std::stringstream out_stream;
+
+#ifdef _ENABLE_DEBUG
+    auto start = std::chrono::high_resolution_clock::now();
+#endif
+
     if(propagate_exceptions) {
-        assembler.assemble(asm_filename, obj_filename);
+        out_stream = assembler.assemble(in_file);
     } else {
         try {
-            assembler.assemble(asm_filename, obj_filename);
+            out_stream = assembler.assemble(in_file);
         } catch(utils::exception const & e) {
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
-            return std::make_pair(false, obj_filename);
+            return {};
         }
     }
-    return std::make_pair(true, obj_filename);
+
+#ifdef _ENABLE_DEBUG
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+
+    printer.print("elapsed time: " + std::to_string(elapsed.count() * 1000) + " ms");
+#endif
+
+    printer.print("assembly successful\n");
+    in_file.close();
+
+    std::ofstream out_file(obj_filename);
+    if(! out_file.is_open()) {
+        printer.print("could not open " + obj_filename + " for writing\n");
+        if(propagate_exceptions) {
+            throw lc3::utils::exception("could not open file for writing");
+        } else {
+            return {};
+        }
+    }
+
+    out_file << out_stream.rdbuf();
+    out_file.close();
+
+    return obj_filename;
 }
 
-std::stringstream lc3::as::assembleBuffer(std::istream & buffer)
-{
-    return assembler.assembleBuffer(buffer);
-}
-
-std::pair<bool, std::string> lc3::conv::convertBin(std::string const & bin_filename)
+lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filename)
 {
     std::string obj_filename(bin_filename.substr(0, bin_filename.find_last_of('.')) + ".obj");
+    std::ifstream in_file(bin_filename);
+    if(! in_file.is_open()) {
+        printer.print("could not open file " + bin_filename + "\n");
+        if(propagate_exceptions) {
+            throw lc3::utils::exception("could not open file for reading");
+        } else {
+            return {};
+        }
+    }
+
+    printer.print("attemping to convert " + bin_filename + " into " + obj_filename + "\n");
+
+    std::stringstream out_stream;
+
+#ifdef _ENABLE_DEBUG
+    auto start = std::chrono::high_resolution_clock::now();
+#endif
+
     if(propagate_exceptions) {
-        converter.convertBin(bin_filename, obj_filename);
+        out_stream = converter.convertBin(in_file);
     } else {
         try {
-            converter.convertBin(bin_filename, obj_filename);
+            out_stream = converter.convertBin(in_file);
         } catch(utils::exception const & e) {
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
-            return std::make_pair(false, obj_filename);
+            return {};
         }
     }
-    return std::make_pair(true, obj_filename);
+
+#ifdef _ENABLE_DEBUG
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+
+    printer.print("elapsed time: " + std::to_string(elapsed.count() * 1000) + " ms");
+#endif
+
+    printer.print("conversion successful\n");
+    in_file.close();
+
+    std::ofstream out_file(obj_filename);
+    if(! out_file.is_open()) {
+        printer.print("could not open " + obj_filename + " for writing\n");
+        if(propagate_exceptions) {
+            throw lc3::utils::exception("could not open file for writing");
+        } else {
+            return {};
+        }
+    }
+
+    out_file << out_stream.rdbuf();
+    out_file.close();
+
+    return obj_filename;
 }
 
 void lc3::as::setPropagateExceptions(void) { propagate_exceptions = true; }

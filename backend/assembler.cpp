@@ -15,51 +15,53 @@
 
 using namespace lc3::core;
 
-void Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
-{
-    using namespace asmbl;
-    using namespace lc3::utils;
-
-    SymbolTable symbols;
-    logger.setFilename(asm_filename);
-
-    // check if file exists
-    std::ifstream in_file(asm_filename);
-    if(! in_file.is_open()) {
-        logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", asm_filename.c_str());
-        throw lc3::utils::exception("could not open file for reading");
-    }
-
-#ifdef _ENABLE_DEBUG
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
-
-    logger.printf(PrintType::P_INFO, true, "attemping to assemble \'%s\' into \'%s\'", asm_filename.c_str(),
-        obj_filename.c_str());
-
-    std::stringstream output = assembleBuffer(in_file);
-
-#ifdef _ENABLE_DEBUG
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-
-    logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
-#endif
-
-    logger.printf(PrintType::P_INFO, true, "assembly successful");
-    in_file.close();
-
-    std::ofstream out_file(obj_filename);
-    if(! out_file.is_open()) {
-        logger.printf(PrintType::P_ERROR, true, "could not open file %s for writing", obj_filename.c_str());
-        throw lc3::utils::exception("could not open file for writing");
-    }
-
-    out_file << output.rdbuf();
-    out_file.close();
-}
-
-std::stringstream Assembler::assembleBuffer(std::istream & buffer)
+/*
+ *void Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
+ *{
+ *    using namespace asmbl;
+ *    using namespace lc3::utils;
+ *
+ *    SymbolTable symbols;
+ *    logger.setFilename(asm_filename);
+ *
+ *    // check if file exists
+ *    std::ifstream in_file(asm_filename);
+ *    if(! in_file.is_open()) {
+ *        logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", asm_filename.c_str());
+ *        throw lc3::utils::exception("could not open file for reading");
+ *    }
+ *
+ *#ifdef _ENABLE_DEBUG
+ *    auto start = std::chrono::high_resolution_clock::now();
+ *#endif
+ *
+ *    logger.printf(PrintType::P_INFO, true, "attemping to assemble \'%s\' into \'%s\'", asm_filename.c_str(),
+ *        obj_filename.c_str());
+ *
+ *    std::stringstream output = assembleBuffer(in_file);
+ *
+ *#ifdef _ENABLE_DEBUG
+ *    auto end = std::chrono::high_resolution_clock::now();
+ *    std::chrono::duration<double> elapsed = end - start;
+ *
+ *    logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
+ *#endif
+ *
+ *    logger.printf(PrintType::P_INFO, true, "assembly successful");
+ *    in_file.close();
+ *
+ *    std::ofstream out_file(obj_filename);
+ *    if(! out_file.is_open()) {
+ *        logger.printf(PrintType::P_ERROR, true, "could not open file %s for writing", obj_filename.c_str());
+ *        throw lc3::utils::exception("could not open file for writing");
+ *    }
+ *
+ *    out_file << output.rdbuf();
+ *    out_file.close();
+ *}
+ *
+ */
+std::stringstream Assembler::assemble(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;

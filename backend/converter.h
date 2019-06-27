@@ -12,7 +12,7 @@ namespace core
     {
     public:
         Converter(lc3::utils::IPrinter & printer, uint32_t print_level) : logger(printer, print_level) {}
-        void convertBin(std::string const & bin_filename, std::string const & obj_filename);
+        std::stringstream convertBin(std::istream & buffer);
 
     private:
         lc3::utils::Logger logger;

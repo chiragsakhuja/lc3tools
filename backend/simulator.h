@@ -24,7 +24,7 @@ namespace core
             uint32_t print_level);
         ~Simulator(void) = default;
 
-        void loadObjectFile(std::string const & obj_file);
+        void loadObj(std::istream & buffer);
         void simulate(void);
         void enableClock(void);
         void disableClock(void);
@@ -44,8 +44,6 @@ namespace core
 
         void setPrintLevel(uint32_t print_level) { logger.setPrintLevel(print_level); }
         uint32_t getPrintLevel(void) const { return logger.getPrintLevel(); }
-
-        void loadObjectFileFromBuffer(std::istream & buffer);
 
     private:
         sim::InstructionDecoder decoder;

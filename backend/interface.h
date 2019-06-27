@@ -14,6 +14,7 @@
 
 #include "assembler.h"
 #include "converter.h"
+#include "optional.h"
 #include "simulator.h"
 
 namespace lc3
@@ -39,7 +40,7 @@ namespace lc3
             uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false);
         ~sim(void) = default;
 
-        bool loadObjectFile(std::string const & obj_filename);
+        bool loadObjFile(std::string const & obj_filename);
         void reinitialize(void);
         void randomize(void);
         void restart(void);
@@ -144,7 +145,7 @@ namespace lc3
             printer(printer), assembler(printer, print_level), propagate_exceptions(propagate_exceptions) {}
         ~as(void) = default;
 
-        std::pair<bool, std::string> assemble(std::string const & asm_filename);
+        optional<std::string> assemble(std::string const & asm_filename);
 
         void setPropagateExceptions(void);
         void clearPropagateExceptions(void);
@@ -156,8 +157,6 @@ namespace lc3
         core::Assembler assembler;
 
         bool propagate_exceptions;
-
-        std::stringstream assembleBuffer(std::istream & buffer);
     };
 
     class conv
@@ -165,7 +164,7 @@ namespace lc3
     public:
         conv(utils::IPrinter & printer, uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false) :
             printer(printer), converter(printer, print_level), propagate_exceptions(propagate_exceptions) {}
-        std::pair<bool, std::string> convertBin(std::string const & asm_filename);
+        optional<std::string> convertBin(std::string const & asm_filename);
 
         void setPropagateExceptions(void);
         void clearPropagateExceptions(void);
