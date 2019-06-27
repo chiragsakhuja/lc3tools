@@ -54,7 +54,6 @@ bool StringInputter::getChar(char & c)
     if(pos == source.size()) {
         return false;
     }
-    std::cout << "here\n";
 
     c = source[pos];
     pos += 1;

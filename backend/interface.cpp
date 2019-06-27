@@ -432,7 +432,7 @@ void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineSta
                 sim_inst.breakpoint_callback(state, x);
             }
             sim_inst.step_out_run = false;
-            state.hit_breakpoint = true;
+            sim_inst.pause();
             break;
         }
     }
@@ -442,7 +442,7 @@ void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineSta
         sim_inst.step_out_run = false;
         sim_inst.until_halt_run = false;
         sim_inst.until_input_run = false;
-        state.hit_breakpoint = true;
+        sim_inst.pause();
     }
 
     if(sim_inst.pre_instruction_callback_v) {
@@ -458,7 +458,7 @@ void lc3::sim::postInstructionCallback(lc3::sim & sim_inst, core::MachineState &
     {
         sim_inst.counted_run = false;
         sim_inst.step_out_run = false;
-        state.running = false;
+        sim_inst.pause();
     }
 
     if(sim_inst.post_instruction_callback_v) {
@@ -504,7 +504,7 @@ void lc3::sim::inputPollCallback(lc3::sim & sim_inst, core::MachineState & state
         sim_inst.step_out_run = false;
         sim_inst.until_halt_run = false;
         sim_inst.until_input_run = false;
-        state.hit_breakpoint = true;
+        sim_inst.pause();
     }
 
     if(sim_inst.input_poll_callback_v) {

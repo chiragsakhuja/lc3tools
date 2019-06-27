@@ -6,7 +6,7 @@ void OneTest(lc3::sim & sim, StringInputter & inputter)
 {
     // Setup
     sim.runUntilInputPoll();
-    VERIFY_OUTPUT("Type a professor's name and then press enter:");
+    VERIFY_OUTPUT_NAMED("Correct prompt", "Type a professor's name and then press enter:");
 
     inputter.setString("Dan\n");
     sim.runUntilInputPoll();
@@ -25,10 +25,12 @@ void OneTest(lc3::sim & sim, StringInputter & inputter)
  *    sim.runUntilInputPoll();
  *    VERIFY_OUTPUT_HAD("No Entry");
  */
-    inputter.setString("d");
-
-    bool success = sim.runUntilHalt();
-    VERIFY(success && sim.getInstExecCount() < InstLimit);
+/*
+ *    inputter.setString("d");
+ *
+ *    bool success = sim.runUntilHalt();
+ *    VERIFY(success && sim.getInstExecCount() < InstLimit);
+ */
 }
 
 void testBringup(lc3::sim & sim)
