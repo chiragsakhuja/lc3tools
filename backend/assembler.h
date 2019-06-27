@@ -23,6 +23,7 @@ namespace core
         ~Assembler(void) = default;
 
         std::stringstream assemble(std::istream & buffer);
+        void setFilename(std::string const & filename) { logger.setFilename(filename); }
 
     private:
         std::vector<std::string> file_buffer;

@@ -67,6 +67,7 @@ void lc3::sim::reinitialize(void)
 void lc3::sim::loadOS(void)
 {
     core::Assembler assembler(printer, simulator.getPrintLevel());
+    assembler.setFilename("lc3os");
 
     std::stringstream src_buffer;
     src_buffer << getOSStr();
@@ -526,6 +527,7 @@ void lc3::sim::inputPollCallback(lc3::sim & sim_inst, core::MachineState & state
 lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
 {
     std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
+    assembler.setFilename(asm_filename);
     std::ifstream in_file(asm_filename);
     if(! in_file.is_open()) {
         printer.print("could not open file " + asm_filename + "\n");

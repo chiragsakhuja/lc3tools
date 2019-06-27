@@ -41,11 +41,8 @@ std::stringstream Assembler::assemble(std::istream & buffer)
     bool success = true;
     optional<SymbolTable> symbol_table = firstPass(statements);
     success &= static_cast<bool>(symbol_table);
-    optional<std::vector<MemEntry>> obj_blob;
-    if(success) {
-        obj_blob = secondPass(statements, *symbol_table);
-        success &= static_cast<bool>(obj_blob);
-    }
+    optional<std::vector<MemEntry>> obj_blob = secondPass(statements, *symbol_table);
+    success &= static_cast<bool>(obj_blob);
 
     if(! success) {
         logger.printf(PrintType::P_ERROR, true, "assembly failed");
@@ -90,8 +87,8 @@ lc3::optional<SymbolTable> Assembler::firstPass(std::vector<asmbl::Statement> co
         logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' => 0x%0.4x", state.label.str.c_str(), state.pc);
     }
 
-    if(success) { return {}; }
-    else { return symbol_table; }
+    if(success) { return symbol_table; }
+    else { return {}; }
 }
 
 lc3::optional<std::vector<MemEntry>> lc3::core::Assembler::secondPass(std::vector<asmbl::Statement> const & statements,
@@ -201,8 +198,8 @@ lc3::optional<std::vector<MemEntry>> lc3::core::Assembler::secondPass(std::vecto
 #endif
     }
 
-    if(success) { return {}; }
-    else { return ret; }
+    if(success) { return ret; }
+    else { return {}; }
 }
 
 asmbl::Statement Assembler::makeStatement(std::vector<asmbl::Token> const & tokens)
