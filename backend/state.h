@@ -40,8 +40,6 @@ namespace core
         std::array<uint32_t, 8> regs;
         uint32_t pc;
 
-        //uint32_t backup_sp;
-
         std::stack<SysCallType> sys_call_types;
 
         lc3::utils::Logger & logger;

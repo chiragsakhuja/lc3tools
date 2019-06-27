@@ -6,6 +6,7 @@
 
 #include "instruction_encoder.h"
 #include "logger.h"
+#include "optional.h"
 #include "printer.h"
 #include "tokenizer.h"
 
@@ -29,9 +30,9 @@ namespace core
 
         asmbl::InstructionEncoder encoder;
 
-        SymbolTable firstPass(std::vector<asmbl::Statement> const & statements, bool & success);
-        std::vector<MemEntry> secondPass(std::vector<asmbl::Statement> const & statements,
-            SymbolTable const & symbol_table, bool & success);
+        optional<SymbolTable> firstPass(std::vector<asmbl::Statement> const & statements);
+        optional<std::vector<MemEntry>> secondPass(std::vector<asmbl::Statement> const & statements,
+            SymbolTable const & symbol_table);
 
         asmbl::Statement makeStatement(std::vector<asmbl::Token> const & tokens);
         void markRegAndPseudoTokens(std::vector<asmbl::StatementToken> & tokens);
@@ -39,10 +40,8 @@ namespace core
         void markLabelTokens(std::vector<asmbl::StatementToken> & tokens);
         asmbl::Statement makeStatementFromTokens(std::vector<asmbl::StatementToken> & tokens);
         void markPC(std::vector<asmbl::Statement> & statements);
-        uint32_t encodeInstruction(asmbl::Statement const & statement, SymbolTable const & symbol_table,
-            bool & success);
-        uint32_t encodePseudo(asmbl::Statement const & statement, SymbolTable const & symbol_table,
-            bool & success);
+        optional<uint32_t> encodeInstruction(asmbl::Statement const & statement, SymbolTable const & symbol_table);
+        optional<uint32_t> encodePseudo(asmbl::Statement const & statement, SymbolTable const & symbol_table);
 
         bool checkIfValidPseudoToken(asmbl::StatementToken const & tok, std::string const & check);
         bool checkIfValidPseudoStatement(asmbl::Statement const & state, std::string const & check,

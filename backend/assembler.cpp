@@ -15,52 +15,6 @@
 
 using namespace lc3::core;
 
-/*
- *void Assembler::assemble(std::string const & asm_filename, std::string const & obj_filename)
- *{
- *    using namespace asmbl;
- *    using namespace lc3::utils;
- *
- *    SymbolTable symbols;
- *    logger.setFilename(asm_filename);
- *
- *    // check if file exists
- *    std::ifstream in_file(asm_filename);
- *    if(! in_file.is_open()) {
- *        logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", asm_filename.c_str());
- *        throw lc3::utils::exception("could not open file for reading");
- *    }
- *
- *#ifdef _ENABLE_DEBUG
- *    auto start = std::chrono::high_resolution_clock::now();
- *#endif
- *
- *    logger.printf(PrintType::P_INFO, true, "attemping to assemble \'%s\' into \'%s\'", asm_filename.c_str(),
- *        obj_filename.c_str());
- *
- *    std::stringstream output = assembleBuffer(in_file);
- *
- *#ifdef _ENABLE_DEBUG
- *    auto end = std::chrono::high_resolution_clock::now();
- *    std::chrono::duration<double> elapsed = end - start;
- *
- *    logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
- *#endif
- *
- *    logger.printf(PrintType::P_INFO, true, "assembly successful");
- *    in_file.close();
- *
- *    std::ofstream out_file(obj_filename);
- *    if(! out_file.is_open()) {
- *        logger.printf(PrintType::P_ERROR, true, "could not open file %s for writing", obj_filename.c_str());
- *        throw lc3::utils::exception("could not open file for writing");
- *    }
- *
- *    out_file << output.rdbuf();
- *    out_file.close();
- *}
- *
- */
 std::stringstream Assembler::assemble(std::istream & buffer)
 {
     using namespace asmbl;
@@ -84,33 +38,36 @@ std::stringstream Assembler::assemble(std::istream & buffer)
     }
 
     markPC(statements);
-    bool success = true, success_tmp = true;
-    SymbolTable symbol_table = firstPass(statements, success_tmp);
-    success &= success_tmp;
-    std::vector<MemEntry> obj_blob = secondPass(statements, symbol_table, success_tmp);
-    success &= success_tmp;
+    bool success = true;
+    optional<SymbolTable> symbol_table = firstPass(statements);
+    success &= static_cast<bool>(symbol_table);
+    optional<std::vector<MemEntry>> obj_blob;
+    if(success) {
+        obj_blob = secondPass(statements, *symbol_table);
+        success &= static_cast<bool>(obj_blob);
+    }
 
-    if(!success) {
+    if(! success) {
         logger.printf(PrintType::P_ERROR, true, "assembly failed");
         throw lc3::utils::exception("assembly failed");
     }
 
     std::stringstream ret;
 
-    for(MemEntry entry : obj_blob) {
+    for(MemEntry entry : *obj_blob) {
         ret << entry;
     }
 
     return ret;
 }
 
-SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statements, bool & success)
+lc3::optional<SymbolTable> Assembler::firstPass(std::vector<asmbl::Statement> const & statements)
 {
     using namespace asmbl;
     using namespace lc3::utils;
 
     SymbolTable symbol_table;
-    success = true;
+    bool success = true;
 
     for(Statement const & state : statements) {
         if(! state.hasLabel()) { continue; }
@@ -133,16 +90,17 @@ SymbolTable Assembler::firstPass(std::vector<asmbl::Statement> const & statement
         logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' => 0x%0.4x", state.label.str.c_str(), state.pc);
     }
 
-    return symbol_table;
+    if(success) { return {}; }
+    else { return symbol_table; }
 }
 
-std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statement> const & statements,
-    SymbolTable const & symbol_table, bool & success)
+lc3::optional<std::vector<MemEntry>> lc3::core::Assembler::secondPass(std::vector<asmbl::Statement> const & statements,
+    SymbolTable const & symbol_table)
 {
     using namespace asmbl;
     using namespace lc3::utils;
 
-    success = true;
+    bool success = true;
 
     std::vector<MemEntry> ret;
     uint32_t lines_after_end = 0;
@@ -165,10 +123,12 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
         }
 
         if(state.isInst()) {
-            bool encode_success = false;
-            uint32_t encoding = encodeInstruction(state, symbol_table, encode_success);
-            success &= encode_success;
-            ret.emplace_back(encoding, false, state.line);
+            optional<uint32_t> encoding = encodeInstruction(state, symbol_table);
+            if(encoding) {
+                ret.emplace_back(*encoding, false, state.line);
+            } else {
+                success = false;
+            }
         } else if(checkIfValidPseudoStatement(state, ".orig", false)) {
             lines_after_end = 0;
             found_end = false;
@@ -240,7 +200,9 @@ std::vector<MemEntry> lc3::core::Assembler::secondPass(std::vector<asmbl::Statem
         throw utils::exception("assembly did not end in .end");
 #endif
     }
-    return ret;
+
+    if(success) { return {}; }
+    else { return ret; }
 }
 
 asmbl::Statement Assembler::makeStatement(std::vector<asmbl::Token> const & tokens)
@@ -560,7 +522,7 @@ void Assembler::markPC(std::vector<asmbl::Statement> & statements)
     }
 }
 
-uint32_t Assembler::encodeInstruction(asmbl::Statement const & state, SymbolTable const & symbol_table, bool & success)
+lc3::optional<uint32_t> Assembler::encodeInstruction(asmbl::Statement const & state, SymbolTable const & symbol_table)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -605,19 +567,18 @@ uint32_t Assembler::encodeInstruction(asmbl::Statement const & state, SymbolTabl
             logger.printf(PrintType::P_NOTE, false, "...other possible options hidden");
         }
         logger.newline();
-        success = false;
-        return 0;
+        return {};
     }
 
     // if we've made it here, we've found a valid instruction
     logger.printf(PrintType::P_EXTRA, true, "%s", stripped_line.c_str());
-    uint32_t encoding = encoder.encodeInstruction(state, std::get<0>(candidates[0]), symbol_table, logger, success);
-    if(success) {
-        logger.printf(PrintType::P_EXTRA, true, " => 0x%0.4x", encoding);
+    optional<uint32_t> encoding = encoder.encodeInstruction(state, std::get<0>(candidates[0]), symbol_table, logger);
+    if(encoding) {
+        logger.printf(PrintType::P_EXTRA, true, " => 0x%0.4x", *encoding);
         return encoding;
     }
 
-    return 0;
+    return {};
 }
 
 bool Assembler::checkIfValidPseudoToken(asmbl::StatementToken const & tok, std::string const & check)

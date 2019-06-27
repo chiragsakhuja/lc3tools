@@ -9,6 +9,7 @@
 #include "aliases.h"
 #include "asm_types.h"
 #include "logger.h"
+#include "optional.h"
 #include "state.h"
 
 namespace lc3
@@ -39,9 +40,9 @@ namespace core
         IOperand(OperType type, std::string const & type_str, uint32_t width);
         virtual ~IOperand(void) = default;
 
-        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+        virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
-            lc3::utils::AssemblerLogger & logger, bool & success) = 0;
+            lc3::utils::AssemblerLogger & logger) = 0;
         bool isEqualType(OperType other) const;
     };
 
@@ -88,18 +89,18 @@ namespace core
     public:
         FixedOperand(uint32_t width, uint32_t value) : IOperand(OperType::FIXED, "fixed", width)
             { this->value = value; }
-        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+        virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
-            lc3::utils::AssemblerLogger & logger, bool & success) override;
+            lc3::utils::AssemblerLogger & logger) override;
     };
 
     class RegOperand : public IOperand
     {
     public:
         RegOperand(uint32_t width) : IOperand(OperType::REG, "reg", width) {}
-        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+        virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
-            lc3::utils::AssemblerLogger & logger, bool & success) override;
+            lc3::utils::AssemblerLogger & logger) override;
     };
 
     class NumOperand : public IOperand
@@ -108,18 +109,18 @@ namespace core
         bool sext;
 
         NumOperand(uint32_t width, bool sext) : IOperand(OperType::NUM, "imm", width) { this->sext = sext; }
-        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+        virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
-            lc3::utils::AssemblerLogger & logger, bool & success) override;
+            lc3::utils::AssemblerLogger & logger) override;
     };
 
     class LabelOperand : public IOperand
     {
     public:
         LabelOperand(uint32_t width) : IOperand(OperType::LABEL, "label", width) {}
-        virtual uint32_t encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+        virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
-            lc3::utils::AssemblerLogger & logger, bool & success) override;
+            lc3::utils::AssemblerLogger & logger) override;
     };
 
     class ADDRInstruction : public IInstruction

@@ -11,11 +11,11 @@ lc3::core::sim::InstructionDecoder::InstructionDecoder(void) : InstructionHandle
     }
 }
 
-lc3::core::PIInstruction lc3::core::sim::InstructionDecoder::findInstructionByEncoding(uint32_t encoding, bool & valid)
+lc3::optional<lc3::core::PIInstruction> lc3::core::sim::InstructionDecoder::findInstructionByEncoding(uint32_t encoding)
     const
 {
     auto search = instructions_by_opcode.find(utils::getBits(encoding, 15, 12));
-    valid = false;
+    bool valid = false;
 
     if(search != instructions_by_opcode.end()) {
         for(PIInstruction inst : search->second) {
@@ -40,8 +40,8 @@ lc3::core::PIInstruction lc3::core::sim::InstructionDecoder::findInstructionByEn
         }
 
         // if we reach here, we never returned true, so there was no valid match
-        return nullptr;
+        return {};
     }
 
-    return nullptr;
+    return {};
 }

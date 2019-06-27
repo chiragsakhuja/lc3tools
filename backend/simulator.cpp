@@ -133,18 +133,17 @@ std::vector<PIEvent> Simulator::executeInstruction(void)
     }
     uint32_t encoded_inst = state.readMemSafe(state.pc);
 
-    bool valid;
-    PIInstruction candidate = decoder.findInstructionByEncoding(encoded_inst, valid);
-    if(! valid) {
+    optional<PIInstruction> candidate = decoder.findInstructionByEncoding(encoded_inst);
+    if(! candidate) {
         logger.printf(lc3::utils::PrintType::P_EXTRA, true, "illegal opcode");
         return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x1, MachineState::SysCallType::INT);
     }
 
-    candidate->assignOperands(encoded_inst);
+    (*candidate)->assignOperands(encoded_inst);
     logger.printf(lc3::utils::PrintType::P_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
         state.mem[state.pc].getLine().c_str(), encoded_inst);
     state.pc = (state.pc + 1) & 0xffff;
-    std::vector<PIEvent> events = candidate->execute(state);
+    std::vector<PIEvent> events = (*candidate)->execute(state);
 
     return events;
 }

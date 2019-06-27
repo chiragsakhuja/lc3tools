@@ -280,26 +280,24 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(std::make_shared<HALTInstruction>());
 }
 
-uint32_t FixedOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+lc3::optional<uint32_t> FixedOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
     std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
-    lc3::utils::AssemblerLogger & logger, bool & success)
+    lc3::utils::AssemblerLogger & logger)
 {
     (void) oper;
     (void) oper_count;
     (void) regs;
     (void) symbols;
     (void) logger;
-    success = true;
 
     return value & ((1 << width) - 1);
 }
 
-uint32_t RegOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+lc3::optional<uint32_t> RegOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
     std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
-    lc3::utils::AssemblerLogger & logger, bool & success)
+    lc3::utils::AssemblerLogger & logger)
 {
     (void) symbols;
-    success = true;
 
     uint32_t token_val = regs.at(oper.str) & ((1 << width) - 1);
 
@@ -309,13 +307,12 @@ uint32_t RegOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_co
     return token_val;
 }
 
-uint32_t NumOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
     std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
-    lc3::utils::AssemblerLogger & logger, bool & success)
+    lc3::utils::AssemblerLogger & logger)
 {
     (void) regs;
     (void) symbols;
-    success = true;
 
     uint32_t token_val = oper.num & ((1 << width) - 1);
 
@@ -354,19 +351,17 @@ uint32_t NumOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_co
     return token_val;
 }
 
-uint32_t LabelOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
+lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
     std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
-    lc3::utils::AssemblerLogger & logger, bool & success)
+    lc3::utils::AssemblerLogger & logger)
 {
     (void) regs;
-    success = true;
 
     auto search = symbols.find(oper.str);
     if(search == symbols.end()) {
         logger.asmPrintf(lc3::utils::PrintType::P_ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
         logger.newline();
-        success = false;
-        return 0;
+        return {};
     }
 
     uint32_t token_val = (((int32_t) search->second) - (oper.pc + 1)) & ((1 << width) - 1);
