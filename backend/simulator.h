@@ -26,7 +26,9 @@ namespace core
 
         void loadObjectFile(std::string const & obj_file);
         void simulate(void);
-        void pause(void);
+        void enableClock(void);
+        void disableClock(void);
+        bool isClockEnabled(void) const;
         void reinitialize(void);
 
         void registerPreInstructionCallback(callback_func_t func);
@@ -56,11 +58,12 @@ namespace core
         std::atomic<bool> collecting_input;
 
         std::vector<PIEvent> executeInstruction(void);
-        std::vector<PIEvent> checkAndSetupInterrupts();
+        void checkAndSetupInterrupts();
         void executeEventChain(std::vector<PIEvent> & events);
         void executeEvent(PIEvent event);
         void updateDevices(void);
-        void handleInput(void);
+        void collectInput(void);
+        void inputThread(void);
     };
 };
 };

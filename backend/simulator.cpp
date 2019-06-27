@@ -70,8 +70,7 @@ void Simulator::loadObjectFileFromBuffer(std::istream & buffer)
         }
 
     }
-    uint16_t value = state.readMemRaw(MCR);
-    state.writeMemRaw(MCR, value | 0x8000);
+    enableClock();
 }
 
 void Simulator::simulate(void)
@@ -81,12 +80,13 @@ void Simulator::simulate(void)
     bool exception_valid = false;
 
     try {
-        state.running = true;
+        enableClock();
+
         collecting_input = true;
         inputter.beginInput();
+        input_thread = std::thread(&core::Simulator::inputThread, this);
 
-        input_thread = std::thread(&core::Simulator::handleInput, this);
-        while(state.running && (state.readMemRaw(MCR) & 0x8000) != 0) {
+        while(isClockEnabled()) {
             if(! state.hit_breakpoint) {
                 executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
                     state.pre_instruction_callback));
@@ -101,15 +101,14 @@ void Simulator::simulate(void)
                 state.post_instruction_callback));
             executeEventChain(events);
             updateDevices();
-            events = checkAndSetupInterrupts();
-            executeEventChain(events);
+            checkAndSetupInterrupts();
         }
     } catch(utils::exception & e) {
         exception = e;
         exception_valid = true;
     } catch(std::exception & e) { }
 
-    state.running = false;
+    disableClock();
     collecting_input = false;
     if(input_thread.joinable()) {
         input_thread.join();
@@ -121,9 +120,21 @@ void Simulator::simulate(void)
     }
 }
 
-void Simulator::pause(void)
+void Simulator::enableClock(void)
 {
-    state.running = false;
+    uint16_t mcr = state.readMemRaw(MCR);
+    state.writeMemRaw(MCR, mcr | 0x8000);
+}
+
+void Simulator::disableClock(void)
+{
+    uint16_t mcr = state.readMemRaw(MCR);
+    state.writeMemRaw(MCR, mcr & (~0x8000));
+}
+
+bool Simulator::isClockEnabled(void) const
+{
+    return (state.readMemRaw(MCR) & 0x8000) == 0x8000;
 }
 
 std::vector<PIEvent> Simulator::executeInstruction(void)
@@ -154,22 +165,22 @@ void Simulator::updateDevices(void)
 {
     uint16_t value = state.readMemRaw(DSR);
     state.writeMemRaw(DSR, value | 0x8000);
+
+    collectInput();
 }
 
-std::vector<PIEvent> Simulator::checkAndSetupInterrupts(void)
+void Simulator::checkAndSetupInterrupts(void)
 {
     uint32_t value = state.readMemRaw(KBSR);
 
     if((value & 0xc000) == 0xc000) {
         logger.printf(lc3::utils::PrintType::P_EXTRA, true, "jumping to keyboard ISR");
 
-        std::vector<PIEvent> ret = IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x80,
+        std::vector<PIEvent> events = IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x80,
             MachineState::SysCallType::INT, [](uint32_t psr_value) { return (psr_value & 0x78ff) | 0x0400; });
-        ret.push_back(std::make_shared<MemWriteEvent>(KBSR, state.readMemRaw(KBSR) & 0x7fff));
-        return ret;
+        events.push_back(std::make_shared<MemWriteEvent>(KBSR, state.readMemRaw(KBSR) & 0x7fff));
+        executeEventChain(events);
     }
-
-    return {};
 }
 
 void Simulator::executeEventChain(std::vector<PIEvent> & events)
@@ -204,8 +215,7 @@ void Simulator::reinitialize(void)
 
     state.writeMemRaw(BSP, 0x3000);
     state.writeMemRaw(PSR, 0x8002);
-    state.writeMemRaw(MCR, 0x8000);  // indicate the machine is running
-    state.running = true;
+    enableClock();
     state.hit_breakpoint = false;
 }
 
@@ -251,15 +261,21 @@ void Simulator::registerInputPollCallback(callback_func_t func)
     state.input_poll_callback = func;
 }
 
-void Simulator::handleInput(void)
+void Simulator::collectInput(void)
+{
+    char c;
+    uint16_t kbsr = state.readMemRaw(KBSR);
+    if((kbsr & 0x8000) == 0 && inputter.getChar(c)) {
+        std::lock_guard<std::mutex> guard(g_io_lock);
+        state.writeMemRaw(KBSR, kbsr | 0x8000);
+        state.writeMemRaw(KBDR, ((uint32_t) c) & 0xFF);
+    }
+}
+
+void Simulator::inputThread(void)
 {
     while(collecting_input) {
-        char c;
-        if(inputter.getChar(c)) {
-            std::lock_guard<std::mutex> guard(g_io_lock);
-            state.writeMemRaw(KBSR, state.readMemRaw(KBSR) | 0x8000);
-            state.writeMemRaw(KBDR, ((uint32_t) c) & 0xFF);
-        }
+        collectInput();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }

@@ -46,7 +46,6 @@ namespace core
 
         lc3::utils::Logger & logger;
 
-        bool running;
         bool hit_breakpoint;
 
         uint32_t readMemEvent(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const;

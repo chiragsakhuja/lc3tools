@@ -128,7 +128,7 @@ bool lc3::sim::runUntilInputPoll(void)
 
 void lc3::sim::pause(void)
 {
-    simulator.pause();
+    simulator.disableClock();
 }
 
 bool lc3::sim::stepIn(void)
