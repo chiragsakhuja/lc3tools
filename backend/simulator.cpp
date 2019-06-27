@@ -75,6 +75,8 @@ void Simulator::simulate(void)
         input_thread = std::thread(&core::Simulator::inputThread, this);
 
         while(isClockEnabled()) {
+            executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
+                state.pre_instruction_callback));
             std::vector<PIEvent> events = executeInstruction();
             events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
                 state.post_instruction_callback));

@@ -436,16 +436,6 @@ void lc3::sim::clearPropagateExceptions(void) { propagate_exceptions = false; }
 
 void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineState & state)
 {
-    for(auto const & x : sim_inst.breakpoints) {
-        if(state.pc == x.loc) {
-            if(sim_inst.breakpoint_callback_v) {
-                sim_inst.breakpoint_callback(state, x);
-            }
-            sim_inst.pause();
-            break;
-        }
-    }
-
     if(sim_inst.run_type == RunType::UNTIL_HALT && state.readMemRaw(state.pc) == 0xf025) {
         sim_inst.pause();
     }
@@ -468,6 +458,16 @@ void lc3::sim::postInstructionCallback(lc3::sim & sim_inst, core::MachineState &
 
     if(sim_inst.run_type == RunType::UNTIL_DEPTH && sim_inst.sub_depth <= 0) {
         sim_inst.pause();
+    }
+
+    for(auto const & x : sim_inst.breakpoints) {
+        if(state.pc == x.loc) {
+            if(sim_inst.breakpoint_callback_v) {
+                sim_inst.breakpoint_callback(state, x);
+            }
+            sim_inst.pause();
+            break;
+        }
     }
 
     if(sim_inst.post_instruction_callback_v) {
