@@ -16,7 +16,7 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t p
     simulator.registerInterruptExitCallback(lc3::sim::interruptExitCallback);
     simulator.registerSubEnterCallback(lc3::sim::subEnterCallback);
     simulator.registerSubExitCallback(lc3::sim::subExitCallback);
-    simulator.registerInputPollCallback(lc3::sim::inputPollCallback);
+    simulator.registerWaitForInputCallback(lc3::sim::waitForInputCallback);
     if(propagate_exceptions) {
         loadOS();
     } else {
@@ -29,6 +29,7 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t p
         }
     }
     restart();
+    run_type = RunType::NORMAL;
 }
 
 bool lc3::sim::loadObjFile(std::string const & obj_filename)
@@ -99,16 +100,50 @@ void lc3::sim::restart(void)
     setMem(MCR, mcr | 0x8000);
 }
 
-void lc3::sim::setRunInstLimit(uint32_t inst_limit)
+void lc3::sim::setRunInstLimit(uint64_t inst_limit)
 {
-    target_inst_count = inst_exec_count + inst_limit;
-    counted_run = true;
-    step_out_run = false;
+    remaining_inst_count = inst_limit;
 }
 
 bool lc3::sim::run(void)
 {
+    return run(RunType::NORMAL);
+}
+
+bool lc3::sim::runUntilHalt(void)
+{
+    return run(RunType::UNTIL_HALT);
+}
+
+bool lc3::sim::runUntilInputPoll(void)
+{
+    return run(RunType::UNTIL_INPUT);
+}
+
+bool lc3::sim::stepIn(void)
+{
+    setRunInstLimit(1);
+    return run(RunType::NORMAL);
+}
+
+bool lc3::sim::stepOver(void)
+{
+    sub_depth = 0;
+    return run(RunType::UNTIL_DEPTH);
+}
+
+bool lc3::sim::stepOut(void)
+{
+    sub_depth = 1;
+    return run(RunType::UNTIL_DEPTH);
+}
+
+
+bool lc3::sim::run(lc3::sim::RunType cur_run_type)
+{
     restart();
+    run_type = cur_run_type;
+
     if(propagate_exceptions) {
         simulator.simulate();
     } else {
@@ -124,59 +159,16 @@ bool lc3::sim::run(void)
     return true;
 }
 
-bool lc3::sim::runUntilHalt(void)
-{
-    until_halt_run = true;
-    until_input_run = false;
-    return run();
-}
-
-bool lc3::sim::runUntilInputPoll(void)
-{
-    until_halt_run = false;
-    until_input_run = true;
-    return run();
-}
-
 void lc3::sim::pause(void)
 {
     simulator.disableClock();
-}
-
-bool lc3::sim::stepIn(void)
-{
-    setRunInstLimit(1);
-    return run();
-}
-
-bool lc3::sim::stepOver(void)
-{
-    counted_run = false;
-    step_out_run = true;
-    until_halt_run = false;
-    until_input_run = false;
-
-    // this will immediately be incremented by the sub enter callback if it is about to enter a subroutine
-    sub_depth = 0;
-    return run();
-}
-
-bool lc3::sim::stepOut(void)
-{
-    counted_run = false;
-    step_out_run = true;
-    until_halt_run = false;
-    until_input_run = false;
-    // act like we are already in a subroutine
-    sub_depth = 1;
-    return run();
 }
 
 lc3::core::MachineState & lc3::sim::getMachineState(void) { return simulator.getMachineState(); }
 
 lc3::core::MachineState const & lc3::sim::getMachineState(void) const { return simulator.getMachineState(); }
 
-uint32_t lc3::sim::getInstExecCount(void) const { return inst_exec_count; }
+uint64_t lc3::sim::getInstExecCount(void) const { return inst_exec_count; }
 
 std::vector<lc3::Breakpoint> const & lc3::sim::getBreakpoints(void) const { return breakpoints; }
 
@@ -425,6 +417,12 @@ void lc3::sim::registerSubExitCallback(callback_func_t func)
     sub_exit_callback = func;
 }
 
+void lc3::sim::registerWaitForInputCallback(callback_func_t func)
+{
+    wait_for_input_callback_v = true;
+    wait_for_input_callback = func;
+}
+
 void lc3::sim::registerBreakpointCallback(breakpoint_callback_func_t func)
 {
     breakpoint_callback_v = true;
@@ -443,17 +441,12 @@ void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineSta
             if(sim_inst.breakpoint_callback_v) {
                 sim_inst.breakpoint_callback(state, x);
             }
-            sim_inst.step_out_run = false;
             sim_inst.pause();
             break;
         }
     }
 
-    if(sim_inst.until_halt_run && state.readMemRaw(state.pc) == 0xf025) {
-        sim_inst.counted_run = false;
-        sim_inst.step_out_run = false;
-        sim_inst.until_halt_run = false;
-        sim_inst.until_input_run = false;
+    if(sim_inst.run_type == RunType::UNTIL_HALT && state.readMemRaw(state.pc) == 0xf025) {
         sim_inst.pause();
     }
 
@@ -465,11 +458,15 @@ void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineSta
 void lc3::sim::postInstructionCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
     sim_inst.inst_exec_count += 1;
-    if((sim_inst.counted_run && sim_inst.inst_exec_count == sim_inst.target_inst_count) ||
-        (sim_inst.step_out_run && sim_inst.sub_depth <= 0))
-    {
-        sim_inst.counted_run = false;
-        sim_inst.step_out_run = false;
+
+    if(sim_inst.remaining_inst_count >= 0) {
+        sim_inst.remaining_inst_count -= 1;
+        if(sim_inst.remaining_inst_count == 0) {
+            sim_inst.pause();
+        }
+    }
+
+    if(sim_inst.run_type == RunType::UNTIL_DEPTH && sim_inst.sub_depth <= 0) {
         sim_inst.pause();
     }
 
@@ -481,6 +478,7 @@ void lc3::sim::postInstructionCallback(lc3::sim & sim_inst, core::MachineState &
 void lc3::sim::interruptEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
     sim_inst.sub_depth += 1;
+
     if(sim_inst.interrupt_enter_callback_v) {
         sim_inst.interrupt_enter_callback(state);
     }
@@ -489,6 +487,7 @@ void lc3::sim::interruptEnterCallback(lc3::sim & sim_inst, core::MachineState & 
 void lc3::sim::interruptExitCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
     sim_inst.sub_depth -= 1;
+
     if(sim_inst.interrupt_exit_callback_v) {
         sim_inst.interrupt_exit_callback(state);
     }
@@ -497,6 +496,7 @@ void lc3::sim::interruptExitCallback(lc3::sim & sim_inst, core::MachineState & s
 void lc3::sim::subEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
     sim_inst.sub_depth += 1;
+
     if(sim_inst.sub_enter_callback_v) {
         sim_inst.sub_enter_callback(state);
     }
@@ -505,22 +505,20 @@ void lc3::sim::subEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
 void lc3::sim::subExitCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
     sim_inst.sub_depth -= 1;
+
     if(sim_inst.sub_exit_callback_v) {
         sim_inst.sub_exit_callback(state);
     }
 }
 
-void lc3::sim::inputPollCallback(lc3::sim & sim_inst, core::MachineState & state)
+void lc3::sim::waitForInputCallback(lc3::sim & sim_inst, core::MachineState & state)
 {
-    if(sim_inst.until_input_run) {
-        sim_inst.step_out_run = false;
-        sim_inst.until_halt_run = false;
-        sim_inst.until_input_run = false;
+    if(sim_inst.run_type == RunType::UNTIL_INPUT) {
         sim_inst.pause();
     }
 
-    if(sim_inst.input_poll_callback_v) {
-        sim_inst.input_poll_callback(state);
+    if(sim_inst.wait_for_input_callback_v) {
+        sim_inst.wait_for_input_callback(state);
     }
 }
 

@@ -44,8 +44,6 @@ namespace core
 
         lc3::utils::Logger & logger;
 
-        bool hit_breakpoint;
-
         uint32_t readMemEvent(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const;
         uint32_t readMemSafe(uint32_t addr);
         uint32_t readMemRaw(uint32_t addr) const;
@@ -59,14 +57,14 @@ namespace core
         bool interrupt_exit_callback_v;
         bool sub_enter_callback_v;
         bool sub_exit_callback_v;
-        bool input_poll_callback_v;
+        bool wait_for_input_callback_v;
         callback_func_t pre_instruction_callback;
         callback_func_t post_instruction_callback;
         callback_func_t interrupt_enter_callback;
         callback_func_t interrupt_exit_callback;
         callback_func_t sub_enter_callback;
         callback_func_t sub_exit_callback;
-        callback_func_t input_poll_callback;
+        callback_func_t wait_for_input_callback;
 
         sim & simulator;
     };

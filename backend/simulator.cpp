@@ -75,15 +75,6 @@ void Simulator::simulate(void)
         input_thread = std::thread(&core::Simulator::inputThread, this);
 
         while(isClockEnabled()) {
-            if(! state.hit_breakpoint) {
-                executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
-                    state.pre_instruction_callback));
-                if(state.hit_breakpoint) {
-                    break;
-                }
-            }
-            state.hit_breakpoint = false;
-
             std::vector<PIEvent> events = executeInstruction();
             events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
                 state.post_instruction_callback));
@@ -203,7 +194,6 @@ void Simulator::reinitialize(void)
     state.writeMemRaw(BSP, 0x3000);
     state.writeMemRaw(PSR, 0x8002);
     enableClock();
-    state.hit_breakpoint = false;
 }
 
 void Simulator::registerPreInstructionCallback(callback_func_t func)
@@ -242,10 +232,10 @@ void Simulator::registerSubExitCallback(callback_func_t func)
     state.sub_exit_callback = func;
 }
 
-void Simulator::registerInputPollCallback(callback_func_t func)
+void Simulator::registerWaitForInputCallback(callback_func_t func)
 {
-    state.input_poll_callback_v = true;
-    state.input_poll_callback = func;
+    state.wait_for_input_callback_v = true;
+    state.wait_for_input_callback = func;
 }
 
 void Simulator::collectInput(void)

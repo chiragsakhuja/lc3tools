@@ -37,7 +37,7 @@ namespace core
         void registerInterruptExitCallback(callback_func_t func);
         void registerSubEnterCallback(callback_func_t func);
         void registerSubExitCallback(callback_func_t func);
-        void registerInputPollCallback(callback_func_t func);
+        void registerWaitForInputCallback(callback_func_t func);
 
         MachineState & getMachineState(void) { return state; }
         MachineState const & getMachineState(void) const { return state; }

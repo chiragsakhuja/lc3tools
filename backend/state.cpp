@@ -28,7 +28,7 @@ uint32_t lc3::core::MachineState::readMemEvent(uint32_t addr, bool & change_mem,
             change = std::make_shared<MemWriteEvent>(KBSR, readMemRaw(KBSR) & 0x7FFF);
         } else if(addr == KBSR && (value & 0x8000) == 0) {
             change_mem = true;
-            change = std::make_shared<CallbackEvent>(input_poll_callback_v, input_poll_callback);
+            change = std::make_shared<CallbackEvent>(wait_for_input_callback_v, wait_for_input_callback);
         }
     } else {
         value = readMemRaw(addr);
