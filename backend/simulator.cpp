@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "device_regs.h"
+#include "lc3os.h"
 #include "simulator.h"
 #include "utils.h"
 
@@ -76,12 +77,10 @@ void Simulator::loadObjectFileFromBuffer(std::istream & buffer)
 
 void Simulator::loadOS()
 {
-    extern char const * lc3os_src;
-
     Assembler as(logger.getPrinter(), logger.getPrintLevel());
 
     std::stringstream src_buffer;
-    src_buffer << lc3os_src;
+    src_buffer << getOSSrc();
     std::stringstream obj_buffer = as.assembleBuffer(src_buffer);
     loadObjectFileFromBuffer(obj_buffer);
     state.pc = RESET_PC;

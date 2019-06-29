@@ -1,9 +1,12 @@
+#include "lc3os.h"
+
 namespace lc3
 {
 namespace core
 {
-
-char const * lc3os_src = R"LC3OS(
+    std::string getOSSrc(void)
+    {
+        char const * lc3os_src_1 = R"LC3OS1(
     .ORIG x0000
 
 ; the TRAP vector table
@@ -520,10 +523,10 @@ char const * lc3os_src = R"LC3OS(
     .FILL BAD_INT    ; xFC
     .FILL BAD_INT    ; xFD
     .FILL BAD_INT    ; xFE
-    .FILL BAD_INT    ; xFF
+    .FILL BAD_INT    ; xFF)LC3OS1";
 
-
-OS_START    ; machine starts executing at x0200
+        char const * lc3os_src_2 = R"LC3OS2(
+    OS_START    ; machine starts executing at x0200
     LD R6,OS_SP            ; set system stack pointer
     LEA R0,OS_START_MSG    ; print a welcome message
     PUTS
@@ -682,7 +685,8 @@ EX_ILL_MSG     .STRINGZ "\n\n--- Illegal opcode ---\n\n"
 BAD_TRAP_MSG   .STRINGZ "\n\n--- Undefined trap executed ---\n\n"
 
     .END
-)LC3OS";
-
+)LC3OS2";
+        return std::string(lc3os_src_1) + std::string(lc3os_src_2);
+    }
 };
 };
