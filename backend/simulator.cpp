@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include "device_regs.h"
+#include "lc3os.h"
 #include "simulator.h"
 #include "utils.h"
 
@@ -72,6 +73,17 @@ void Simulator::loadObjectFileFromBuffer(std::istream & buffer)
     }
     uint16_t value = state.readMemRaw(MCR);
     state.writeMemRaw(MCR, value | 0x8000);
+}
+
+void Simulator::loadOS()
+{
+    Assembler as(logger.getPrinter(), logger.getPrintLevel());
+
+    std::stringstream src_buffer;
+    src_buffer << getOSSrc();
+    std::stringstream obj_buffer = as.assembleBuffer(src_buffer);
+    loadObjectFileFromBuffer(obj_buffer);
+    state.pc = RESET_PC;
 }
 
 void Simulator::simulate(void)
