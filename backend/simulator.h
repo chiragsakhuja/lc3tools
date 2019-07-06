@@ -21,7 +21,7 @@ namespace core
     {
     public:
         Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, utils::IInputter & inputter,
-            uint32_t print_level);
+            uint32_t print_level, bool threaded_input);
         ~Simulator(void) = default;
 
         void loadObj(std::istream & buffer);
@@ -53,6 +53,7 @@ namespace core
         lc3::utils::Logger logger;
         lc3::utils::IInputter & inputter;
 
+        bool threaded_input;
         std::atomic<bool> collecting_input;
 
         std::vector<PIEvent> executeInstruction(void);

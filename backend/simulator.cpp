@@ -18,8 +18,8 @@ namespace core
 };
 
 Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter,
-    uint32_t print_level) : state(simulator, logger), logger(printer, print_level), inputter(inputter),
-    collecting_input(false)
+    uint32_t print_level, bool threaded_input) : state(simulator, logger), logger(printer, print_level),
+    inputter(inputter), threaded_input(threaded_input), collecting_input(false)
 {
     state.mem.resize(1 << 16);
     reinitialize();
@@ -72,7 +72,9 @@ void Simulator::simulate(void)
 
         collecting_input = true;
         inputter.beginInput();
-        input_thread = std::thread(&core::Simulator::inputThread, this);
+        if(threaded_input) {
+            input_thread = std::thread(&core::Simulator::inputThread, this);
+        }
 
         while(isClockEnabled()) {
             executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
@@ -82,6 +84,9 @@ void Simulator::simulate(void)
                 state.post_instruction_callback));
             executeEventChain(events);
             updateDevices();
+            if(! threaded_input) {
+                collectInput();
+            }
             checkAndSetupInterrupts();
         }
     } catch(utils::exception & e) {
@@ -91,7 +96,7 @@ void Simulator::simulate(void)
 
     disableClock();
     collecting_input = false;
-    if(input_thread.joinable()) {
+    if(threaded_input && input_thread.joinable()) {
         input_thread.join();
     }
     inputter.endInput();
@@ -145,8 +150,6 @@ void Simulator::updateDevices(void)
 {
     uint16_t value = state.readMemRaw(DSR);
     state.writeMemRaw(DSR, value | 0x8000);
-
-    collectInput();
 }
 
 void Simulator::checkAndSetupInterrupts(void)

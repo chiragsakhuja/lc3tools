@@ -108,7 +108,7 @@ int main(int argc, char * argv[])
         for(TestCase const & test : tests) {
             BufferedPrinter sim_printer(args.print_output);
             StringInputter sim_inputter;
-            lc3::sim simulator(sim_printer, sim_inputter,
+            lc3::sim simulator(sim_printer, sim_inputter, false,
                 args.print_level_override ? args.print_level : 1, true);
 
             testBringup(simulator);

@@ -7,8 +7,10 @@
 
 constexpr char const * getOSStr(void);
 
-lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level, bool propagate_exceptions) :
-    printer(printer), simulator(*this, printer, inputter, print_level), propagate_exceptions(propagate_exceptions)
+lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threaded_input, uint32_t print_level,
+    bool propagate_exceptions) :
+    printer(printer), simulator(*this, printer, inputter, print_level, threaded_input),
+    propagate_exceptions(propagate_exceptions)
 {
     simulator.registerPreInstructionCallback(lc3::sim::preInstructionCallback);
     simulator.registerPostInstructionCallback(lc3::sim::postInstructionCallback);

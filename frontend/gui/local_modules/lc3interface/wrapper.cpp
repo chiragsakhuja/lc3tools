@@ -59,14 +59,13 @@ NAN_METHOD(Init)
     }
 
     v8::String::Utf8Value str(info[0].As<v8::String>());
-    std::string os_path((char const *) *str);
 
     try {
         printer = new utils::UIPrinter();
         inputter = new utils::UIInputter();
         as = new lc3::as(*printer);
         conv = new lc3::conv(*printer);
-        sim = new lc3::sim(*printer, *inputter, _PRINT_LEVEL);
+        sim = new lc3::sim(*printer, *inputter, true, _PRINT_LEVEL);
     } catch(lc3::utils::exception const & e) {
         Nan::ThrowError(e.what());
     }

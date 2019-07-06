@@ -36,7 +36,7 @@ namespace lc3
     class sim
     {
     public:
-        sim(utils::IPrinter & printer, utils::IInputter & inputter,
+        sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threaded_input,
             uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false);
         ~sim(void) = default;
 
