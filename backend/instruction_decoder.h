@@ -5,6 +5,7 @@
 #include <map>
 
 #include "instructions.h"
+#include "optional.h"
 
 namespace lc3
 {
@@ -17,7 +18,7 @@ namespace sim
     public:
         InstructionDecoder(void);
 
-        PIInstruction findInstructionByEncoding(uint32_t encoding, bool & valid) const;
+        optional<PIInstruction> findInstructionByEncoding(uint32_t encoding) const;
 
     private:
         std::map<uint32_t, std::vector<PIInstruction>> instructions_by_opcode;

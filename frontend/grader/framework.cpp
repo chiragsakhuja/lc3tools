@@ -83,15 +83,15 @@ int main(int argc, char * argv[])
     for(int i = 1; i < argc; i += 1) {
         std::string filename(argv[i]);
         if(filename[0] != '-') {
-            std::pair<bool, std::string> result;
+            lc3::optional<std::string> result;
             if(endsWith(filename, ".bin")) {
                 result = converter.convertBin(filename);
             } else {
                 result = assembler.assemble(filename);
             }
 
-            if(! result.first) { valid_program = false; }
-            obj_filenames.push_back(result.second);
+            if(! result) { valid_program = false; }
+            obj_filenames.push_back(*result);
         }
     }
 
@@ -108,7 +108,7 @@ int main(int argc, char * argv[])
         for(TestCase const & test : tests) {
             BufferedPrinter sim_printer(args.print_output);
             StringInputter sim_inputter;
-            lc3::sim simulator(sim_printer, sim_inputter,
+            lc3::sim simulator(sim_printer, sim_inputter, false,
                 args.print_level_override ? args.print_level : 1, true);
 
             testBringup(simulator);
@@ -125,7 +125,7 @@ int main(int argc, char * argv[])
             }
             std::cout << std::endl;
             for(std::string const & obj_filename : obj_filenames) {
-                if(! simulator.loadObjectFile(obj_filename)) {
+                if(! simulator.loadObjFile(obj_filename)) {
                     std::cout << "could not init simulator\n";
                     return 2;
                 }

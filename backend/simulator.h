@@ -21,12 +21,14 @@ namespace core
     {
     public:
         Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, utils::IInputter & inputter,
-            uint32_t print_level);
+            uint32_t print_level, bool threaded_input);
         ~Simulator(void) = default;
 
-        void loadObjectFile(std::string const & obj_file);
+        void loadObj(std::istream & buffer);
         void simulate(void);
-        void pause(void);
+        void enableClock(void);
+        void disableClock(void);
+        bool isClockEnabled(void) const;
         void reinitialize(void);
 
         void registerPreInstructionCallback(callback_func_t func);
@@ -35,15 +37,13 @@ namespace core
         void registerInterruptExitCallback(callback_func_t func);
         void registerSubEnterCallback(callback_func_t func);
         void registerSubExitCallback(callback_func_t func);
-        void registerInputPollCallback(callback_func_t func);
+        void registerWaitForInputCallback(callback_func_t func);
 
         MachineState & getMachineState(void) { return state; }
         MachineState const & getMachineState(void) const { return state; }
 
         void setPrintLevel(uint32_t print_level) { logger.setPrintLevel(print_level); }
         uint32_t getPrintLevel(void) const { return logger.getPrintLevel(); }
-
-        void loadObjectFileFromBuffer(std::istream & buffer);
 
     private:
         sim::InstructionDecoder decoder;
@@ -53,14 +53,16 @@ namespace core
         lc3::utils::Logger logger;
         lc3::utils::IInputter & inputter;
 
+        bool threaded_input;
         std::atomic<bool> collecting_input;
 
         std::vector<PIEvent> executeInstruction(void);
-        std::vector<PIEvent> checkAndSetupInterrupts();
+        void checkAndSetupInterrupts();
         void executeEventChain(std::vector<PIEvent> & events);
         void executeEvent(PIEvent event);
         void updateDevices(void);
-        void handleInput(void);
+        void collectInput(void);
+        void inputThread(void);
     };
 };
 };

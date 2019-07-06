@@ -5,6 +5,7 @@
 
 #include "instructions.h"
 #include "logger.h"
+#include "optional.h"
 
 namespace lc3
 {
@@ -20,8 +21,8 @@ namespace asmbl
         uint32_t getDistanceToNearestInstructionName(std::string const & search) const;
         bool isValidReg(std::string const & search) const;
         std::vector<std::pair<PIInstruction, uint32_t>> getInstructionCandidates(Statement const & state) const;
-        uint32_t encodeInstruction(Statement const & state, PIInstruction pattern, SymbolTable const & symbols,
-            lc3::utils::AssemblerLogger & logger, bool & success) const;
+        optional<uint32_t> encodeInstruction(Statement const & state, PIInstruction pattern, SymbolTable const & symbols,
+            lc3::utils::AssemblerLogger & logger) const;
 
     private:
         std::map<std::string, std::vector<PIInstruction>> instructions_by_name;

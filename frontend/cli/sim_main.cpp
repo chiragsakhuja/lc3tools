@@ -41,14 +41,14 @@ int main(int argc, char * argv[])
 
     lc3::ConsolePrinter printer;
     lc3::ConsoleInputter inputter;
-    lc3::sim simulator(printer, inputter, args.print_level);
+    lc3::sim simulator(printer, inputter, true, args.print_level);
 
     simulator.registerBreakpointCallback(breakpointCallback);
 
     for(int i = 1; i < argc; i += 1) {
         std::string arg(argv[i]);
         if(arg[0] != '-') {
-            simulator.loadObjectFile(std::string(argv[i]));
+            simulator.loadObjFile(std::string(argv[i]));
         }
     }
 
@@ -129,7 +129,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
             return true;
         }
 
-        simulator.loadObjectFile(filename);
+        simulator.loadObjFile(filename);
     } else if(command == "mem") {
         std::string start_s, end_s;
         command_tokens >> start_s;

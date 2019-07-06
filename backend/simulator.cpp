@@ -19,8 +19,8 @@ namespace core
 };
 
 Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter,
-    uint32_t print_level) : state(simulator, logger), logger(printer, print_level), inputter(inputter),
-    collecting_input(false)
+    uint32_t print_level, bool threaded_input) : state(simulator, logger), logger(printer, print_level),
+    inputter(inputter), threaded_input(threaded_input), collecting_input(false)
 {
     state.mem.resize(1 << 16);
     reinitialize();
@@ -31,19 +31,7 @@ Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::
     state.interrupt_exit_callback_v = false;
 }
 
-void Simulator::loadObjectFile(std::string const & filename)
-{
-    std::ifstream file(filename);
-    if(! file) {
-        logger.printf(lc3::utils::PrintType::P_ERROR, true, "could not open file \'%s\' for reading",
-            filename.c_str());
-        throw utils::exception("could not open file");
-    }
-
-    loadObjectFileFromBuffer(file);
-}
-
-void Simulator::loadObjectFileFromBuffer(std::istream & buffer)
+void Simulator::loadObj(std::istream & buffer)
 {
     uint32_t fill_pc = 0;
     uint32_t offset = 0;
@@ -71,8 +59,7 @@ void Simulator::loadObjectFileFromBuffer(std::istream & buffer)
         }
 
     }
-    uint16_t value = state.readMemRaw(MCR);
-    state.writeMemRaw(MCR, value | 0x8000);
+    enableClock();
 }
 
 void Simulator::simulate(void)
@@ -82,37 +69,35 @@ void Simulator::simulate(void)
     bool exception_valid = false;
 
     try {
-        state.running = true;
+        enableClock();
+
         collecting_input = true;
         inputter.beginInput();
+        if(threaded_input) {
+            input_thread = std::thread(&core::Simulator::inputThread, this);
+        }
 
-        input_thread = std::thread(&core::Simulator::handleInput, this);
-        while(state.running && (state.readMemRaw(MCR) & 0x8000) != 0) {
-            if(! state.hit_breakpoint) {
-                executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
-                    state.pre_instruction_callback));
-                if(state.hit_breakpoint) {
-                    break;
-                }
-            }
-            state.hit_breakpoint = false;
-
+        while(isClockEnabled()) {
+            executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
+                state.pre_instruction_callback));
             std::vector<PIEvent> events = executeInstruction();
             events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
                 state.post_instruction_callback));
             executeEventChain(events);
             updateDevices();
-            events = checkAndSetupInterrupts();
-            executeEventChain(events);
+            if(! threaded_input) {
+                collectInput();
+            }
+            checkAndSetupInterrupts();
         }
     } catch(utils::exception & e) {
         exception = e;
         exception_valid = true;
     } catch(std::exception & e) { }
 
-    state.running = false;
+    disableClock();
     collecting_input = false;
-    if(input_thread.joinable()) {
+    if(threaded_input && input_thread.joinable()) {
         input_thread.join();
     }
     inputter.endInput();
@@ -122,9 +107,21 @@ void Simulator::simulate(void)
     }
 }
 
-void Simulator::pause(void)
+void Simulator::enableClock(void)
 {
-    state.running = false;
+    uint16_t mcr = state.readMemRaw(MCR);
+    state.writeMemRaw(MCR, mcr | 0x8000);
+}
+
+void Simulator::disableClock(void)
+{
+    uint16_t mcr = state.readMemRaw(MCR);
+    state.writeMemRaw(MCR, mcr & (~0x8000));
+}
+
+bool Simulator::isClockEnabled(void) const
+{
+    return (state.readMemRaw(MCR) & 0x8000) == 0x8000;
 }
 
 std::vector<PIEvent> Simulator::executeInstruction(void)
@@ -135,18 +132,17 @@ std::vector<PIEvent> Simulator::executeInstruction(void)
     }
     uint32_t encoded_inst = state.readMemSafe(state.pc);
 
-    bool valid;
-    PIInstruction candidate = decoder.findInstructionByEncoding(encoded_inst, valid);
-    if(! valid) {
+    optional<PIInstruction> candidate = decoder.findInstructionByEncoding(encoded_inst);
+    if(! candidate) {
         logger.printf(lc3::utils::PrintType::P_EXTRA, true, "illegal opcode");
         return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x1, MachineState::SysCallType::INT);
     }
 
-    candidate->assignOperands(encoded_inst);
+    (*candidate)->assignOperands(encoded_inst);
     logger.printf(lc3::utils::PrintType::P_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
         state.mem[state.pc].getLine().c_str(), encoded_inst);
     state.pc = (state.pc + 1) & 0xffff;
-    std::vector<PIEvent> events = candidate->execute(state);
+    std::vector<PIEvent> events = (*candidate)->execute(state);
 
     return events;
 }
@@ -157,20 +153,18 @@ void Simulator::updateDevices(void)
     state.writeMemRaw(DSR, value | 0x8000);
 }
 
-std::vector<PIEvent> Simulator::checkAndSetupInterrupts(void)
+void Simulator::checkAndSetupInterrupts(void)
 {
     uint32_t value = state.readMemRaw(KBSR);
 
     if((value & 0xc000) == 0xc000) {
         logger.printf(lc3::utils::PrintType::P_EXTRA, true, "jumping to keyboard ISR");
 
-        std::vector<PIEvent> ret = IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x80,
+        std::vector<PIEvent> events = IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x80,
             MachineState::SysCallType::INT, [](uint32_t psr_value) { return (psr_value & 0x78ff) | 0x0400; });
-        ret.push_back(std::make_shared<MemWriteEvent>(KBSR, state.readMemRaw(KBSR) & 0x7fff));
-        return ret;
+        events.push_back(std::make_shared<MemWriteEvent>(KBSR, state.readMemRaw(KBSR) & 0x7fff));
+        executeEventChain(events);
     }
-
-    return {};
 }
 
 void Simulator::executeEventChain(std::vector<PIEvent> & events)
@@ -205,9 +199,7 @@ void Simulator::reinitialize(void)
 
     state.writeMemRaw(BSP, 0x3000);
     state.writeMemRaw(PSR, 0x8002);
-    state.writeMemRaw(MCR, 0x8000);  // indicate the machine is running
-    state.running = true;
-    state.hit_breakpoint = false;
+    enableClock();
 }
 
 void Simulator::registerPreInstructionCallback(callback_func_t func)
@@ -246,21 +238,27 @@ void Simulator::registerSubExitCallback(callback_func_t func)
     state.sub_exit_callback = func;
 }
 
-void Simulator::registerInputPollCallback(callback_func_t func)
+void Simulator::registerWaitForInputCallback(callback_func_t func)
 {
-    state.input_poll_callback_v = true;
-    state.input_poll_callback = func;
+    state.wait_for_input_callback_v = true;
+    state.wait_for_input_callback = func;
 }
 
-void Simulator::handleInput(void)
+void Simulator::collectInput(void)
+{
+    char c;
+    uint16_t kbsr = state.readMemRaw(KBSR);
+    if((kbsr & 0x8000) == 0 && inputter.getChar(c)) {
+        std::lock_guard<std::mutex> guard(g_io_lock);
+        state.writeMemRaw(KBSR, kbsr | 0x8000);
+        state.writeMemRaw(KBDR, ((uint32_t) c) & 0xFF);
+    }
+}
+
+void Simulator::inputThread(void)
 {
     while(collecting_input) {
-        char c;
-        if(inputter.getChar(c)) {
-            std::lock_guard<std::mutex> guard(g_io_lock);
-            state.writeMemRaw(KBSR, state.readMemRaw(KBSR) | 0x8000);
-            state.writeMemRaw(KBDR, ((uint32_t) c) & 0xFF);
-        }
+        collectInput();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }

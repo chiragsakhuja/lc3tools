@@ -2,6 +2,7 @@
 #include <bitset>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <vector>
 
 #ifdef _ENABLE_DEBUG
@@ -11,23 +12,9 @@
 #include "mem.h"
 #include "converter.h"
 
-void lc3::core::Converter::convertBin(std::string const & bin_filename, std::string const & obj_filename)
+std::stringstream lc3::core::Converter::convertBin(std::istream & buffer)
 {
     using namespace lc3::utils;
-
-    // check if file exists
-    std::ifstream in_file(bin_filename);
-    if(! in_file.is_open()) {
-        logger.printf(PrintType::P_ERROR, true, "could not open %s for reading", bin_filename.c_str());
-        throw lc3::utils::exception("could not open file for reading");
-    }
-
-#ifdef _ENABLE_DEBUG
-    auto start = std::chrono::high_resolution_clock::now();
-#endif
-
-    logger.printf(PrintType::P_INFO, true, "attemping to convert \'%s\' into \'%s\'", bin_filename.c_str(),
-        obj_filename.c_str());
 
     std::string line;
     std::vector<MemEntry> obj_blob;
@@ -35,7 +22,7 @@ void lc3::core::Converter::convertBin(std::string const & bin_filename, std::str
     bool wrote_orig = false;
     bool success = true;
 
-    while(std::getline(in_file, line)) {
+    while(std::getline(buffer, line)) {
         line = line.substr(0, line.find_first_of(';'));
         line.erase(std::remove_if(line.begin(), line.end(), ::isspace), line.end());
         line_no += 1;
@@ -61,32 +48,18 @@ void lc3::core::Converter::convertBin(std::string const & bin_filename, std::str
         wrote_orig = true;
     }
 
-#ifdef _ENABLE_DEBUG
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-
-    logger.printf(PrintType::P_EXTRA, true, "elapsed time: %f ms", elapsed * 1000);
-#endif
-
-    in_file.close();
-
-    if(success) {
-        logger.printf(PrintType::P_INFO, true, "conversion successful");
-
-        std::ofstream out_file(obj_filename);
-        if(! out_file.is_open()) {
-            logger.printf(PrintType::P_ERROR, true, "could not open file %s for writing", obj_filename.c_str());
-            throw lc3::utils::exception("could not open file for writing");
-        }
-
-        for(MemEntry entry : obj_blob) {
-            out_file << entry;
-        }
-
-        out_file.close();
-    } else {
+    if(! success) {
         logger.printf(PrintType::P_ERROR, true, "conversion failed");
         throw lc3::utils::exception("conversion failed");
     }
+
+    logger.printf(PrintType::P_INFO, true, "conversion successful");
+
+    std::stringstream ret;
+    for(MemEntry entry : obj_blob) {
+        ret << entry;
+    }
+
+    return ret;
 }
 
