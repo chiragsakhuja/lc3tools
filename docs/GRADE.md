@@ -285,3 +285,62 @@ framework and API. Some other features include: easy-to-use I/O checks; hooks
 before and after instruction execution, subroutine calls, interrupts, etc.; and
 control over every element of the LC-3 state. Full details can be found in the
 [API document](API.md).
+
+## Appendix: Common Paradigms
+There are a couple of common paradigms that can be found across test cases, such
+as I/O grading.
+
+### Successful Exit Paradigm
+There are typically two conditions for a successful exit: the program did not
+trigger any exceptions and it did not exceed the instruction limit. The variants
+of the `run` functions, detailed in the [API document](API.md), return a boolean
+based on the status of execution. If the return value is `true`, the program
+did not trigger any exceptions. The `didExceedInstLimit` function returns
+whether or not the program exceeded the instruction limit. Assuming the limit
+is set to a reasonably high number, exceeding the limit typically means
+the program did not halt.
+
+Thus, the following simple check can be added at the end of each test case to
+verify the program behaved correctly.
+
+```
+VERIFY(sim.runUntilHalt() && ! sim.didExceedInstLimit());
+```
+
+### I/O Paradigm
+Assume you would like to grade an assignment that prints a prompt, requests
+input, does something with the input, then prints the prompt again. This process repeats until the user types in a reponse that quits the program. For example,
+take a program that repeats the inputted character 5 times:
+
+```
+Enter a character (q to exit): a
+aaaaa
+Enter a character (q to exit): b
+bbbbb
+Enter a character (q to exit): q
+```
+
+A test case could be written using the I/O API, detailed in the [API
+document](API.md).
+
+```
+sim.runUntilInputPoll();
+VERIFY_OUTPUT("Enter a character (q to exit): ");
+inputter.setString("a");
+sim.runUntilInputPoll();
+VERIFY_OUTPUT_HAD("aaaaa");
+inputter.setString("b");
+sim.runUntilInputPoll();
+VERIFY_OUTPUT_HAD("bbbbb");
+inputter.setString("q");
+VERIFY(sim.runUntilHalt() && ! sim.didExceedInstLimit());
+```
+
+To verify the prompt is correct, run the program until input is requested. Then
+verify that the output is exactly the prompt. Set the input string and run again
+until input is requested. This time, the run will cover the part of the program
+that is supposed to print the input 5 times. Therefore, we can check that the
+correct string was present in the output. We continue this pattern until we
+set the input to be our quit command. At this point, we simply run to completion
+and then verify the program halted successfully as described in the [Successful
+Exit Paradigm](GRADE.MD#successful-exit-paradigm).

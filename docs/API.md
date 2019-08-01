@@ -4,7 +4,7 @@ is relevant to grading. The full API can be found in `src/backend/interface.h`.
 It is highly recommended to read the [Graders](GRADE.md) document before reading
 this document.
 
-There are three main components to the API: [`lc3::sim`](API.md#lc3-sim),
+There are three main components to the API: [`lc3::sim`](API.md#lc3sim),
 [`StringInputter`](API.md#stringinputter), and the [grading
 framework](API.md#grading-framework).
 
