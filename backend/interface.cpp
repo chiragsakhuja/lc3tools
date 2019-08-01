@@ -104,7 +104,7 @@ void lc3::sim::restart(void)
 
 void lc3::sim::setRunInstLimit(uint64_t inst_limit)
 {
-    remaining_inst_count = inst_limit;
+    this->inst_limit = inst_limit;
 }
 
 bool lc3::sim::run(void)
@@ -145,6 +145,8 @@ bool lc3::sim::run(lc3::sim::RunType cur_run_type)
 {
     restart();
     run_type = cur_run_type;
+    total_inst_limit += inst_limit;
+    remaining_inst_count = inst_limit;
 
     if(propagate_exceptions) {
         simulator.simulate();
@@ -171,6 +173,8 @@ lc3::core::MachineState & lc3::sim::getMachineState(void) { return simulator.get
 lc3::core::MachineState const & lc3::sim::getMachineState(void) const { return simulator.getMachineState(); }
 
 uint64_t lc3::sim::getInstExecCount(void) const { return inst_exec_count; }
+
+bool lc3::sim::didExceedInstLimit(void) const { return inst_exec_count > total_inst_limit; }
 
 std::vector<lc3::Breakpoint> const & lc3::sim::getBreakpoints(void) const { return breakpoints; }
 
@@ -431,6 +435,7 @@ void lc3::sim::registerBreakpointCallback(breakpoint_callback_func_t func)
     breakpoint_callback = func;
 }
 
+lc3::utils::IPrinter & lc3::sim::getPrinter(void) { return printer; }
 lc3::utils::IPrinter const & lc3::sim::getPrinter(void) const { return printer; }
 void lc3::sim::setPrintLevel(uint32_t print_level) { simulator.setPrintLevel(print_level); }
 void lc3::sim::setPropagateExceptions(void) { propagate_exceptions = true; }

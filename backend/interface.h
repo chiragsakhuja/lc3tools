@@ -57,6 +57,7 @@ namespace lc3
         core::MachineState & getMachineState(void);
         core::MachineState const & getMachineState(void) const;
         uint64_t getInstExecCount(void) const;
+        bool didExceedInstLimit(void) const;
         std::vector<Breakpoint> const & getBreakpoints() const;
 
         uint32_t getReg(uint32_t id) const;
@@ -88,6 +89,7 @@ namespace lc3
         void registerWaitForInputCallback(callback_func_t func);
         void registerBreakpointCallback(breakpoint_callback_func_t func);
 
+        utils::IPrinter & getPrinter(void);
         utils::IPrinter const & getPrinter(void) const;
         void setPrintLevel(uint32_t print_level);
         void setPropagateExceptions(void);
@@ -107,6 +109,8 @@ namespace lc3
         static void waitForInputCallback(sim & sim_int, core::MachineState & state);
 
         uint64_t inst_exec_count = 0;
+        uint64_t total_inst_limit = 0;
+        uint64_t inst_limit = 0;
         int64_t remaining_inst_count = -1;
         int32_t sub_depth = 0;
 

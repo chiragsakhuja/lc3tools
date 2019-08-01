@@ -26,6 +26,7 @@ public:
     virtual void setColor(lc3::utils::PrintColor color) override { (void) color; }
     virtual void print(std::string const & string) override;
     virtual void newline(void) override;
+    void clear(void) { display_buffer.clear(); }
 
 private:
     bool print_output;
@@ -93,6 +94,7 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool
     } else {                                                         \
         std::cout << "no\n";                                         \
     }                                                                \
+    static_cast<BufferedPrinter &>(sim.getPrinter()).clear();        \
     do {} while(false)
 #define VERIFY_OUTPUT(check)                                         \
     VERIFY_OUTPUT_NAMED(#check, check)
@@ -105,6 +107,7 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool
     } else {                                                         \
         std::cout << "no\n";                                         \
     }                                                                \
+    static_cast<BufferedPrinter &>(sim.getPrinter()).clear();        \
     do {} while(false)
 #define VERIFY_OUTPUT_HAD(check)                                     \
     VERIFY_OUTPUT_HAD_NAMED(#check, check)
