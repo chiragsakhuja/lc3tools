@@ -343,4 +343,4 @@ that is supposed to print the input 5 times. Therefore, we can check that the
 correct string was present in the output. We continue this pattern until we
 set the input to be our quit command. At this point, we simply run to completion
 and then verify the program halted successfully as described in the [Successful
-Exit Paradigm](GRADE.MD#successful-exit-paradigm).
+Exit Paradigm](GRADE.md#successful-exit-paradigm).
