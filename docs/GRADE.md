@@ -7,7 +7,8 @@ in real time as they run. Graders are also compiled alongside the command line
 tools.
 
 Graders are written in a similar fashion to unit tests. There will be a single
-grader for each assignment that defines the test cases. In practice (i.e. in a classroom setting) there may be scripts that run each students' assignments
+grader for each assignment that defines the test cases. In practice (i.e. in a
+classroom setting) there may be scripts that run each students' assignments
 through a grader executable and then aggregate the results.
 
 Grader source files live in the `frontend/grader/labs/` directory. When they are
@@ -28,7 +29,8 @@ It is recommended that you follow this tutorial from top to bottom to get a
 better understanding of how to utilize the grading framework.
 
 ## Assignment Description
-Write an LC-3 assembly program that performs unsigned addition on a set of numbers in memory and saves the result in location 0x3100. The set of numbers
+Write an LC-3 assembly program that performs unsigned addition on a set of
+numbers in memory and saves the result in location 0x3100. The set of numbers
 begins at location 0x3200 and continues until the value 0x0000 is encountered in
 a memory location. You may ignore overflow and you may assume there will be no
 more than 2048 total numbers to add. Your program must start at location 0x3000.
@@ -67,8 +69,10 @@ You can create this file in the root directory as `tutorial_sol.asm`.
 
 ## Creating a New Grader
 From the root directory, navigate to `frontend/grader/labs/` and create a file
-for this grader called `tutorial_grader.cpp`. Each grader is expected to define four functions. For now just define empty functions. As the tutorial progresses, explanations for each function will be provided. Fill in the
-following code in `tutorial_grader.cpp`:
+for this grader called `tutorial_grader.cpp`. Each grader is expected to define
+four functions. For now just define empty functions. As the tutorial progresses,
+explanations for each function will be provided. Fill in the following code in
+`tutorial_grader.cpp`:
 
 ```
 #include "../framework.h"
@@ -130,7 +134,9 @@ the second argument).
 Now all that is necessary is to run the input program and verify the result. It
 is usually best to restrict the total number of instructions that are executed
 so that the grader terminates even if the input program does not. To be safe,
-set a limit of 50000 instructions (which will execute in well under 1 second) and then run the program by adding the following lines to the `ZeroTest` function:
+set a limit of 50000 instructions (which will execute in well under 1 second)
+and then run the program by adding the following lines to the `ZeroTest`
+function:
 
 ```
 sim.setRunInstLimit(50000);
