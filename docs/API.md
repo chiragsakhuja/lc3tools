@@ -163,7 +163,7 @@ callback functions must match the signature defined by `callback_func_t`.
 
 ### `callback_func_t`
 The callback function protoype that all callback functions must follow, defined
-as `std::function<void(core::MachineState &)`.
+as `std::function<void(core::MachineState &)>`.
 
 ### `void registerPreInstructionCallback(callback_func_t func)`
 Register a function that is called before each instruction execution.
@@ -218,4 +218,94 @@ Return Value:
 
 * `true` if the instruction limit was exceeded, `false` otherwise.
 
+# `StringInputter`
+This object is used to set the keyboard input values that the program will
+consume. The `StringInputter` object is provided as an argument into each test
+case. See the [I/O Paradigm](GRADE.md#io-paradigm) for more details on usage.
+
+### `void setString(std::string const & source)`
+Set the string that the simulator will consume through the keyboard emulator.
+
+Arguments:
+
+* `source`: The string that the simulator will consume through the keyboard
+emulator.
+
 # Grading Framework
+Additionally, the grading framework provides a set of macros that should be used
+for verifying programs.
+
+### `REGISTER_TEST(name, function, points)`
+Register a test case.
+
+Arguments:
+
+* `name`: Name of the test case on the report.
+* `function`: Function for the test case. Must have the signature 
+`void(lc3::sim &, StringInputter &)`.
+* `points`: Total number of points allocated to the test case.
+
+### `REGISTER_RANDOM_TEST(name, function, points)`
+Register a test case, but randomize the machine before running it.
+
+Arguments:
+
+* `name`: Name of the test case on the report.
+* `function`: Function for the test case. Must have the signature 
+`void(lc3::sim &, StringInputter &)`.
+* `points`: Total number of points allocated to the test case.
+
+### `VERIFY(check)`
+Checks a predicate and adds points if `true`. The number of points assigned
+are split evenly across all `VERIFY` statements in a test case.
+
+Arguments:
+
+* `check`: Predicate to be checked.
+
+### `VERIFY_NAMED(message, check)`
+Checks a predicate and adds points if `true`. The number of points assigned
+are split evenly across all `VERIFY` statements in a test case.
+
+Arguments:
+
+* `message`: Message to display on the report.
+* `check`: Predicate to be checked.
+
+### `VERIFY_OUTPUT(check)`
+Checks if the display output matches a string and add points if exact match. The 
+number of points assigned are split evenly across all `VERIFY` statements in a
+test case.
+
+Arguments:
+
+* `check`: String to compare output to.
+
+### `VERIFY_OUTPUT_NAMED(message, check)`
+Checks if the display output matches a string and add points if exact match. The 
+number of points assigned are split evenly across all `VERIFY` statements in a
+test case.
+
+Arguments:
+
+* `message`: Message to display on the report.
+* `check`: String to compare output to.
+
+### `VERIFY_OUTPUT_HAD(check)`
+Checks if any part of the display output matches a string and add points if
+so. The number of points assigned are split evenly across all `VERIFY`
+statements in a test case.
+
+Arguments:
+
+* `check`: String to compare output to.
+
+### `VERIFY_OUTPUT_HAD_NAMED(message, check)`
+Checks if any part of the display output matches a string and add points if
+so. The number of points assigned are split evenly across all `VERIFY`
+statements in a test case.
+
+Arguments:
+
+* `message`: Message to display on the report.
+* `check`: String to compare output to.
