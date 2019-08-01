@@ -1,0 +1,16 @@
+0011 0000 0000 0000   ; start at location x3000
+0101 010 010 1 00000  ; clear R2, used to store result into x3050
+1010 000 000000111    ; load data (LDI) into R0
+0000 010 000000100    ; if 0, not a power of 2 (jump to EXIT)
+0001 001 000 1 11111  ; R1 <- R0 - 1
+0101 000 000 0 00 001 ; R0 <- R0 & R1
+0000 101 000000001    ; if non-zero, not a power of 2 (jump to EXIT)
+0001 010 010 1 00001  ; set R2 to 1
+1011 010 000000010    ; EXIT: store R2 (STI) into x3051
+1111 0000 00100101    ; HALT
+0011 0000 0101 0000   ; data value x3050
+0011 0000 0101 0001   ; data value x3051
+; use a trick that x & (x - 1) will only be 0 if
+; x is a power of 2
+; x of 0 is a special case that needs to be handled
+; separately
