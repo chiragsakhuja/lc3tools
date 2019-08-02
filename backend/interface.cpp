@@ -131,12 +131,14 @@ bool lc3::sim::stepIn(void)
 bool lc3::sim::stepOver(void)
 {
     sub_depth = 0;
+    setRunInstLimit(0);
     return run(RunType::UNTIL_DEPTH);
 }
 
 bool lc3::sim::stepOut(void)
 {
     sub_depth = 1;
+    setRunInstLimit(0);
     return run(RunType::UNTIL_DEPTH);
 }
 

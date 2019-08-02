@@ -80,6 +80,7 @@ void Simulator::simulate(void)
         while(isClockEnabled()) {
             executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
                 state.pre_instruction_callback));
+	    if(! isClockEnabled()) { break; }    // pre_instruction_callback may pause machine
             std::vector<PIEvent> events = executeInstruction();
             events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
                 state.post_instruction_callback));
