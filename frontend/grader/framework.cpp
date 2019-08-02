@@ -171,26 +171,28 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool
 
     std::cout << check << (substr ? " sub? " : " ?= ");
     for(uint32_t i = 0; i < buffered_printer.display_buffer.size(); i += 1) {
-        std::cout << buffered_printer.display_buffer[i];
+        if(buffered_printer.display_buffer[i] == '\n') {
+            std::cout << "\\n";
+        } else {
+            std::cout << buffered_printer.display_buffer[i];
+        }
     }
     std::cout << '\n';
 
     if(substr) {
         bool match = false;
-        for(uint32_t i = 0; i < check.size(); i += 1) {
-            if(i + check.size() >= buffered_printer.display_buffer.size()) { return false; }
-
-            match = true;
-            for(uint32_t j = 0; j < check.size(); i += 1) {
-                if(buffered_printer.display_buffer[i] != check[i]) {
-                    match = false;
+        uint64_t buffer_pos = 0;
+        while(buffer_pos + check.size() < buffered_printer.display_buffer.size()) {
+            uint64_t check_pos;
+            for(check_pos = 0; check_pos < check.size(); check_pos += 1) {
+                if(check[check_pos] != buffered_printer.display_buffer[buffer_pos + check_pos]) {
                     break;
                 }
             }
-            if(match) { break; }
+            if(check_pos == check.size()) { return true; }
+            buffer_pos += 1;
         }
-
-        return match;
+        return false;
     } else {
         if(buffered_printer.display_buffer.size() != check.size()) { return false; }
 
