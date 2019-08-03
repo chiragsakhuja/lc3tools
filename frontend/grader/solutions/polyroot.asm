@@ -110,15 +110,6 @@ rshfa_noset
         ret
 .end
 
-.orig x4001
-.fill #2
-.fill #100
-.fill #2
-.fill #1
-.fill #-4
-.fill #0
-.end
-
 .orig x5000
 ; compute the polynomial
 ; x is given in r1 and the result is given in r0
@@ -163,7 +154,11 @@ poly_table
 multiply
         str r1, r6, #-1
         str r2, r6, #-2
-        add r6, r6, #-2
+        str r3, r6, #-3
+        add r6, r6, #-3
+
+        and r3, r3, #0
+        st r3, negate
 
         add r1, r1,#0
         brzp multiply_check_op2
@@ -197,7 +192,8 @@ multiply_done
         add r0, r0, #1
 
 multiply_exit
-        add r6, r6, #2
+        add r6, r6, #3
+        ldr r3, r6, #-3
         ldr r2, r6, #-2
         ldr r1, r6, #-1
         ret
