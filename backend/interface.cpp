@@ -5,7 +5,7 @@
 #include "device_regs.h"
 #include "interface.h"
 
-constexpr char const * getOSStr(void);
+char const * getOSStr(void);
 
 lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threaded_input, uint32_t print_level,
     bool propagate_exceptions) :
@@ -656,7 +656,7 @@ void lc3::as::setPropagateExceptions(void) { propagate_exceptions = true; }
 void lc3::as::clearPropagateExceptions(void) { propagate_exceptions = false; }
 
 
-constexpr char const * getOSStr(void)
+char const * getOSStr(void)
 {
     char const * lc3os_src = R"LC3OS(
         .ORIG x0000
