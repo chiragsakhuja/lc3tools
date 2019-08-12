@@ -17,10 +17,10 @@ public:
     optional(void) : valid(false) {}
 
     optional(T const & value) : valid(true), value(value) {}
-    optional(T && other) noexcept : valid(true) { std::swap(value, other); }
+    optional(T && other) : valid(true) { std::swap(value, other); }
 
     optional(optional const & other) = default;
-    optional(optional && other) noexcept = default;
+    optional(optional && other) = default;
 
     optional & operator=(T const & other)
     {
@@ -29,7 +29,7 @@ public:
         return *this;
     }
 
-    optional & operator=(T && other) noexcept
+    optional & operator=(T && other)
     {
         valid = true;
         std::swap(value, other.value);
@@ -37,7 +37,7 @@ public:
     }
 
     optional & operator=(optional const & other) = default;
-    optional & operator=(optional && other) noexcept = default;
+    optional & operator=(optional && other) = default;
 
     T & operator*(void) { return value; }
     T const & operator*(void) const { return value; }

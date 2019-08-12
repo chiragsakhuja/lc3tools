@@ -12,6 +12,7 @@
 #include "asm_types.h"
 #include "assembler.h"
 #include "device_regs.h"
+#include "optional.h"
 #include "tokenizer.h"
 
 using namespace lc3::core;
