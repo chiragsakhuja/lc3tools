@@ -18,7 +18,7 @@ std::stringstream lc3::core::Converter::convertBin(std::istream & buffer)
 
     std::string line;
     std::vector<MemEntry> obj_blob;
-    uint32_t line_no = 1;
+    uint32_t line_no = 0;
     bool wrote_orig = false;
     bool success = true;
 
@@ -33,14 +33,19 @@ std::stringstream lc3::core::Converter::convertBin(std::istream & buffer)
             continue;
         }
 
-        //if(line.size() == 0) { continue; }
+        if(line.size() == 0) { continue; }
 
+        bool skip_conversion = false;
         for(char c : line) {
             if(c != '0' && c != '1') {
                 success = false;
-                continue;
+                skip_conversion = true;
+                logger.printf(PrintType::P_ERROR, true, "line %d contains illegal characters", line_no);
+                break;
             }
         }
+
+        if(skip_conversion) { continue; }
 
         uint32_t val = std::bitset<16>(line).to_ulong();
         logger.printf(PrintType::P_DEBUG, false, "%s => 0x%04x", line.c_str(), val);
