@@ -127,7 +127,7 @@ NAN_METHOD(LoadObjectFile)
     std::string filename((char const *) *str);
 
     try {
-        sim->loadObjectFile(filename);
+        sim->loadObjFile(filename);
     } catch(lc3::utils::exception const & e) {
         Nan::ThrowError(e.what());
     }
