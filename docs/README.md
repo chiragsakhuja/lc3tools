@@ -15,6 +15,15 @@ All of the code for the project lives in this repository, but it can be broken
 down into three components: a set of command line tools, a GUI, and
 a series of graders.
 
+## Quick Start
+Students trying to use LC3Tools can refer to the
+[downloading/installing guide](DownloadingAndInstalling.pdf) and the
+[beginniner's usage guide](GuideToUsingLC3Tools.pdf).
+
+Instructors trying to use the grading infrastructure will need to [build from
+source](README.md#building-from-source) and use the [command line
+utilities](README.md#additional-information).
+
 ## Downloading Releases
 Pre-built GUI packages for Windows, macOS, and Linux can be found in the
 [Releases](https://github.com/chiragsakhuja/lc3tools/releases) tab. The
