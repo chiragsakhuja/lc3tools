@@ -19,6 +19,7 @@ namespace asmbl
         InstructionEncoder(void);
 
         uint32_t getDistanceToNearestInstructionName(std::string const & search) const;
+        bool isPseudo(std::string const & search) const;
         bool isValidReg(std::string const & search) const;
         std::vector<std::pair<PIInstruction, uint32_t>> getInstructionCandidates(Statement const & state) const;
         optional<uint32_t> encodeInstruction(Statement const & state, PIInstruction pattern, SymbolTable const & symbols,
@@ -29,7 +30,7 @@ namespace asmbl
 
         uint32_t levDistance(std::string const & a, std::string const & b) const;
         uint32_t levDistanceHelper(std::string const & a, uint32_t a_len, std::string const & b, uint32_t b_len) const;
-        OperType tokenTypeToOperType(TokenType type) const;
+        OperType tokenTypeToOperType(Token::Type type) const;
     };
 };
 };

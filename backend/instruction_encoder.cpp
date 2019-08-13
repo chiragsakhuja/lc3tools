@@ -11,6 +11,11 @@ InstructionEncoder::InstructionEncoder(void) : InstructionHandler()
     }
 }
 
+bool InstructionEncoder::isPseudo(std::string const & search) const
+{
+    return search.size() > 0 && search[0] == '.';
+}
+
 bool InstructionEncoder::isValidReg(std::string const & search) const
 {
     std::string lower_search = search;
@@ -44,47 +49,51 @@ std::vector<std::pair<lc3::core::PIInstruction, uint32_t>> InstructionEncoder::g
     std::vector<std::pair<PIInstruction, uint32_t>> ret;
     StatementToken const & search = state.inst_or_pseudo;
 
-    if(search.type == TokenType::INST) {
-        for(auto const & inst : instructions_by_name) {
-            uint32_t inst_dist = levDistance(inst.first, search.str);
-            if(inst_dist <= search.lev_dist) {
-                for(PIInstruction inst_pattern : inst.second) {
-                    std::string op_string, search_string;
-                    for(PIOperand op : inst_pattern->operands) {
-                        if(op->type != OperType::FIXED) {
-                            op_string += '0' + static_cast<char>(op->type);
-                        }
-                    }
-                    for(StatementToken const & op : state.operands) {
-                        search_string += '0' + static_cast<char>(tokenTypeToOperType(op.type));
-                    }
-
-                    uint32_t op_dist = levDistance(op_string, search_string);
-                    if(op_dist < 3) {
-                        if(inst_dist + op_dist == 0) {
-                            ret.clear();
-                            ret.push_back(std::make_pair(inst_pattern, inst_dist + op_dist));
-                            break;
-                        }
-
-                        ret.push_back(std::make_pair(inst_pattern, inst_dist + op_dist));
-                    }
-                }
-            }
-        }
-    }
+/*
+ *    if(search.type == Token::Type::INST) {
+ *        for(auto const & inst : instructions_by_name) {
+ *            uint32_t inst_dist = levDistance(inst.first, search.str);
+ *            if(inst_dist <= search.lev_dist) {
+ *                for(PIInstruction inst_pattern : inst.second) {
+ *                    std::string op_string, search_string;
+ *                    for(PIOperand op : inst_pattern->operands) {
+ *                        if(op->type != OperType::FIXED) {
+ *                            op_string += '0' + static_cast<char>(op->type);
+ *                        }
+ *                    }
+ *                    for(StatementToken const & op : state.operands) {
+ *                        search_string += '0' + static_cast<char>(tokenTypeToOperType(op.type));
+ *                    }
+ *
+ *                    uint32_t op_dist = levDistance(op_string, search_string);
+ *                    if(op_dist < 3) {
+ *                        if(inst_dist + op_dist == 0) {
+ *                            ret.clear();
+ *                            ret.push_back(std::make_pair(inst_pattern, inst_dist + op_dist));
+ *                            break;
+ *                        }
+ *
+ *                        ret.push_back(std::make_pair(inst_pattern, inst_dist + op_dist));
+ *                    }
+ *                }
+ *            }
+ *        }
+ *    }
+ */
 
     return ret;
 }
 
-lc3::core::OperType InstructionEncoder::tokenTypeToOperType(TokenType type) const
+lc3::core::OperType InstructionEncoder::tokenTypeToOperType(Token::Type type) const
 {
-    if(type == TokenType::NUM) {
+    if(type == Token::Type::NUM) {
         return OperType::NUM;
-    } else if(type == TokenType::REG) {
-        return OperType::REG;
-    } else if(type == TokenType::LABEL) {
-        return OperType::LABEL;
+    /*
+     *} else if(type == Token::Type::REG) {
+     *    return OperType::REG;
+     *} else if(type == Token::Type::LABEL) {
+     *    return OperType::LABEL;
+     */
     } else {
         return OperType::INVALID;
     }

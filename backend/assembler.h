@@ -23,9 +23,14 @@ namespace core
         ~Assembler(void) = default;
 
         std::stringstream assemble(std::istream & buffer);
+        //std::vector<uint8_t> assemble(std::istream & buffer);
         void setFilename(std::string const & filename) { logger.setFilename(filename); }
 
     private:
+        std::vector<asmbl::StatementNew> makeStatements(std::istream & buffer);
+        bool setStatementPCField(std::vector<asmbl::StatementNew> & statements);
+        asmbl::StatementNew makeStatement(std::vector<asmbl::Token> const & tokens);
+
         std::vector<std::string> file_buffer;
         lc3::utils::AssemblerLogger logger;
 
@@ -35,7 +40,7 @@ namespace core
         optional<std::vector<MemEntry>> secondPass(std::vector<asmbl::Statement> const & statements,
             SymbolTable const & symbol_table);
 
-        asmbl::Statement makeStatement(std::vector<asmbl::Token> const & tokens);
+        //asmbl::Statement makeStatement(std::vector<asmbl::Token> const & tokens);
         void markRegAndPseudoTokens(std::vector<asmbl::StatementToken> & tokens);
         void markInstTokens(std::vector<asmbl::StatementToken> & tokens);
         void markLabelTokens(std::vector<asmbl::StatementToken> & tokens);

@@ -25,14 +25,14 @@ public:
     optional & operator=(T const & other)
     {
         valid = true;
-        value = other.value;
+        value = other;
         return *this;
     }
 
     optional & operator=(T && other)
     {
         valid = true;
-        std::swap(value, other.value);
+        std::swap(value, other);
         return *this;
     }
 

@@ -18,7 +18,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
         // check if an end-of-statement token should be returned
         if(return_new_line) {
             return_new_line = false;
-            token.type = TokenType::EOS;
+            token.type = Token::Type::EOL;
             return *this;
         }
 
@@ -79,10 +79,10 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
 
     int32_t token_num_val = 0;
     if(convertStringToNum(line.substr(col, len), token_num_val)) {
-        token.type = TokenType::NUM;
+        token.type = Token::Type::NUM;
         token.num = token_num_val;
     } else {
-        token.type = TokenType::STRING;
+        token.type = Token::Type::STRING;
         token.str = line.substr(col, len);
     }
     token.col = col;

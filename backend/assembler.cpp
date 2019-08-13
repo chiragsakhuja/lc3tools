@@ -18,6 +18,191 @@
 using namespace lc3::core;
 
 std::stringstream Assembler::assemble(std::istream & buffer)
+//std::vector<uint8_t> Assembler::assemble(std::istream & buffer)
+{
+    using namespace asmbl;
+
+    std::vector<StatementNew> statements = makeStatements(buffer);
+    setStatementPCField(statements);
+    return std::stringstream();
+}
+
+std::vector<lc3::core::asmbl::StatementNew> Assembler::makeStatements(std::istream & buffer)
+{
+    using namespace asmbl;
+
+    Tokenizer tokenizer(buffer);
+    std::vector<StatementNew> statements;
+
+    while(! tokenizer.isDone()) {
+        std::vector<Token> tokens;
+        Token cur_token;
+        while(! (tokenizer >> cur_token) && cur_token.type != Token::Type::EOL) {
+            tokens.push_back(cur_token);
+        }
+
+        if(! tokenizer.isDone()) {
+            statements.push_back(makeStatement(tokens));
+        }
+    }
+
+    return statements;
+}
+
+lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::asmbl::Token> const & tokens)
+{
+    using namespace asmbl;
+
+    StatementNew ret;
+
+    // A lot of special case logic here to identify tokens as labels, instructions, pseudo-ops, etc.
+    // Note: This DOES NOT check for valid statements, it just identifies tokens with what they should be
+    //       based on the structure of the statement.
+    // Note: There is some redundancy in the code below (not too much), but it was written this way so that it's
+    //       easier to follow the flowchart.
+    if(tokens.size() > 0) {
+        uint32_t operand_start_idx = 0;
+
+        if(tokens[0].type == Token::Type::STRING) {
+            // If the first token is a string, it could be a label, instruction, or pseudo-op.
+            if(encoder.isPseudo(tokens[0].str)) {
+                // If the token is identified as a pseudo-op, mark it as such.
+                ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::PSEUDO);
+                operand_start_idx = 1;
+            } else {
+                // If the token is not a pseudo-op, it could be either a label or an instruction.
+                uint32_t dist_from_inst_name = encoder.getDistanceToNearestInstructionName(tokens[0].str);
+                if(dist_from_inst_name == 0) {
+                    // The token has been identified to match a valid instruction string, but don't be too hasty
+                    // in marking it as an instruction yet.
+                    if(tokens.size() > 1 && tokens[1].type == Token::Type::STRING) {
+                        if(encoder.isPseudo(tokens[1].str)) {
+                            // If there's a following token that's a pseudo-op, the user probably accidentally used
+                            // an instruction name as a label, so mark it as such.
+                            ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
+                            ret.base = StatementPiece(tokens[1].str, StatementPiece::Type::PSEUDO);
+                            operand_start_idx = 2;
+                        } else {
+                            // In most cases, the following token doesn't make a difference and the token really is
+                            // an instruction.
+                            ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                            operand_start_idx = 1;
+                        }
+                    } else {
+                        // If the following token is a number, this token is an instruction.
+                        ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                        operand_start_idx = 1;
+                    }
+                } else {
+                    // The first token wasn't identified as an instruction, so it could either be a label or a typo-ed
+                    // instruction.
+                    if(tokens.size() > 1) {
+                        if(tokens[1].type == Token::Type::STRING) {
+                            if(encoder.isPseudo(tokens[1].str)) {
+                                // If the following token is a pseudo-op, assume the user meant to type a label.
+                                ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
+                                ret.base = StatementPiece(tokens[1].str, StatementPiece::Type::PSEUDO);
+                                operand_start_idx = 2;
+                            } else if(encoder.isValidReg(tokens[1].str)) {
+                                // If the following token is a register, assume the user meant to type an instruction...
+                                // unless the distance from any valid instruction is too large.
+                                if(dist_from_inst_name < 3) {
+                                    ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                    operand_start_idx = 1;
+                                } else {
+                                    ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                    operand_start_idx = 1;
+                                }
+                            } else {
+                                // If the following token is a string that was not identified as a pseudo-op or register,
+                                // compare to see which token has the closer distance to a valid instruction. Even then, only
+                                // mark as an instruction if the distance is close enough to a valid instruction.
+                                uint32_t next_dist_from_inst_name = encoder.getDistanceToNearestInstructionName(tokens[1].str);
+                                if(next_dist_from_inst_name < dist_from_inst_name) {
+                                    if(next_dist_from_inst_name < 3) {
+                                        ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
+                                        ret.base = StatementPiece(tokens[1].str, StatementPiece::Type::INST);
+                                        operand_start_idx = 2;
+                                    } else {
+                                        ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
+                                        operand_start_idx = 1;
+                                    }
+                                } else {
+                                    if(dist_from_inst_name < 3) {
+                                        ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                        operand_start_idx = 1;
+                                    } else {
+                                        ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
+                                        operand_start_idx = 1;
+                                    }
+                                }
+                            }
+                        } else {
+                            // If the following token is a number, assume the user meant to type an instruction...
+                            // unless the distance from any valid instruction is too large.
+                            if(dist_from_inst_name < 3) {
+                                ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                operand_start_idx = 1;
+                            } else {
+                                ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                operand_start_idx = 1;
+                            }
+                        }
+                    } else {
+                        // If there are no more tokens on the line, just assume the user typed in a label rather than a mis-typed
+                        // instruction.
+                        ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
+                        operand_start_idx = 1;
+                    }
+                }
+            }
+        } else {
+            ret.label = StatementPiece(tokens[0].num);
+            operand_start_idx = 1;
+        }
+
+        for(uint32_t i = operand_start_idx; i < tokens.size(); i += 1) {
+            if(tokens[i].type == Token::Type::STRING) {
+                if(encoder.isValidReg(tokens[i].str)) {
+                    ret.operands.emplace_back(tokens[i].str, StatementPiece::Type::REG);
+                } else {
+                    ret.operands.emplace_back(tokens[i].str, StatementPiece::Type::STRING);
+                }
+            } else {
+                ret.operands.emplace_back(tokens[i].num);
+            }
+        }
+    }
+
+    std::cout << ret << "\n\n";
+    return ret;
+}
+
+bool Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> & statements)
+{
+    using namespace asmbl;
+
+    uint64_t cur_idx = 0;
+
+    bool found_orig = false;
+    uint64_t cur_pc = 0;
+
+    while(cur_idx < statements.size()) {
+        StatementNew & statement = statements[cur_idx];
+
+        if(found_orig) {
+            statement.pc = cur_pc;
+            ++cur_pc;
+        }
+
+        ++cur_idx;
+    }
+
+    return true;
+}
+
+/*
+std::stringstream Assembler::assemble(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -638,3 +823,4 @@ bool Assembler::checkIfValidPseudoStatement(asmbl::Statement const & state, std:
 
     return true;
 }
+*/
