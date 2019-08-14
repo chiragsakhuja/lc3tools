@@ -77,13 +77,16 @@ namespace asmbl
         std::string str;
         uint32_t num;
 
+        uint32_t row, col, len;
+
         StatementPiece(void) : type(Type::INVALID) {}
-        StatementPiece(uint32_t num) : type(Type::NUM), num(num) {}
-        StatementPiece(std::string const & str, Type type) : type(type), str(str)
+        StatementPiece(Token const & token, Type type) : type(type), row(token.row), col(token.col), len(token.len)
         {
-#ifdef _ENABLE_DEBUG
-            assert(type != Type::NUM);
-#endif
+            if(type == Type::NUM) {
+                num = token.num;
+            } else {
+                str = token.str;
+            }
         }
     };
 
@@ -94,7 +97,9 @@ namespace asmbl
         std::vector<StatementPiece> operands;
 
         uint64_t pc;
+
         std::string line;
+        uint32_t row;
     };
 };
 };

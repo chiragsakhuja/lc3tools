@@ -47,8 +47,12 @@ namespace utils
         void asmPrintf(PrintType level, lc3::core::asmbl::StatementToken const & token, std::string const & format,
             Args ... args) const;
         template<typename ... Args>
-        void asmPrintf(PrintType level, uint32_t col, uint32_t len, lc3::core::asmbl::StatementToken const & token,
+        void asmPrintf(PrintType level, uint32_t row_num, uint32_t col_num, uint32_t len, std::string const & line,
             std::string const & format, Args ... args) const;
+
+        template<typename ... Args>
+        void asmPrintf(PrintType level, lc3::core::asmbl::StatementNew const & statement, std::string const & format,
+            Args ... args) const;
 
         std::string filename;
     };
@@ -119,32 +123,39 @@ template<typename ... Args>
 void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
     lc3::core::asmbl::StatementToken const & token, std::string const & format, Args ... args) const
 {
-    asmPrintf(level, token.col, token.len, token, format, args...);
+    asmPrintf(level, token.row, token.col, token.len, token.line, format, args...);
 }
 
 template<typename ... Args>
-void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level, uint32_t col_num, uint32_t len,
-    lc3::core::asmbl::StatementToken const & token, std::string const & format, Args ... args) const
+void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
+    lc3::core::asmbl::StatementNew const & statement, std::string const & format, Args ... args) const
+{
+    asmPrintf(level, statement.row, 0, statement.line.size(), statement.line, format, args...);
+}
+
+template<typename ... Args>
+void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level, uint32_t row_num, uint32_t col_num,
+    uint32_t len, std::string const & line, std::string const & format, Args ... args) const
 {
     printer.setColor(lc3::utils::PrintColor::BOLD);
-    printer.print(lc3::utils::ssprintf("%s:%d:%d: ", filename.c_str(), token.row + 1, col_num + 1));
- 
+    printer.print(lc3::utils::ssprintf("%s:%d:%d: ", filename.c_str(), row_num + 1, col_num + 1));
+
     printf(level, true, format, args...);
-    printer.print(lc3::utils::ssprintf("%s", token.line.c_str()));
+    printer.print(lc3::utils::ssprintf("%s", line.c_str()));
     printer.newline();
- 
+
     printer.setColor(lc3::utils::PrintColor::BOLD);
     printer.setColor(lc3::utils::PrintColor::GREEN);
- 
+
     for(uint32_t i = 0; i < col_num; i++) {
         printer.print(" ");
     }
     printer.print("^");
- 
+
     for(uint32_t i = 0; i < len - 1; i++) {
         printer.print("~");
     }
- 
+
     printer.setColor(lc3::utils::PrintColor::RESET);
     printer.newline();
 }

@@ -21,6 +21,16 @@ namespace asmbl
         uint32_t getDistanceToNearestInstructionName(std::string const & search) const;
         bool isPseudo(std::string const & search) const;
         bool isValidReg(std::string const & search) const;
+        bool isValidPseudoOrig(StatementNew const & statement) const;
+        bool isValidPseudoFill(StatementNew const & statement) const;
+        bool isValidPseudoBlock(StatementNew const & statement) const;
+        bool isValidPseudoString(StatementNew const & statement) const;
+        bool isValidPseudoEnd(StatementNew const & statement) const;
+
+        uint32_t encodePseudoOrig(StatementNew const & statement) const;
+        uint32_t getPseudoBlockSize(StatementNew const & statement) const;
+        uint32_t getPseudoStringSize(StatementNew const & statement) const;
+
         std::vector<std::pair<PIInstruction, uint32_t>> getInstructionCandidates(Statement const & state) const;
         optional<uint32_t> encodeInstruction(Statement const & state, PIInstruction pattern, SymbolTable const & symbols,
             lc3::utils::AssemblerLogger & logger) const;

@@ -54,3 +54,10 @@ uint32_t lc3::utils::computeBasePlusSOffset(uint32_t base, uint32_t signed_off, 
 {
     return (utils::sextTo32(base, (uint32_t) 16) + lc3::utils::sextTo32(signed_off, width)) & 0xffff;
 }
+
+std::string lc3::utils::toLower(std::string const & str)
+{
+    std::string ret = str;
+    std::transform(ret.begin(), ret.end(), ret.begin(), ::tolower);
+    return ret;
+}

@@ -23,10 +23,69 @@ bool InstructionEncoder::isValidReg(std::string const & search) const
     return regs.find(lower_search) != regs.end();
 }
 
+bool InstructionEncoder::isValidPseudoOrig(StatementNew const & statement) const
+{
+    bool success = statement.base && utils::toLower(statement.base->str) == ".orig";
+    success &= statement.operands.size() == 1 && statement.operands[0].type == StatementPiece::Type::NUM;
+    return success;
+}
+
+bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement) const
+{
+    bool success = statement.base && utils::toLower(statement.base->str) == ".fill";
+    success &= statement.operands.size() == 1 && (statement.operands[0].type == StatementPiece::Type::NUM ||
+                 statement.operands[0].type == StatementPiece::Type::STRING);
+    return success;
+}
+
+bool InstructionEncoder::isValidPseudoBlock(StatementNew const & statement) const
+{
+    bool success = statement.base && utils::toLower(statement.base->str) == ".blkw";
+    success &= statement.operands.size() == 1 && statement.operands[0].type == StatementPiece::Type::NUM;
+    return success;
+}
+
+bool InstructionEncoder::isValidPseudoString(StatementNew const & statement) const
+{
+    bool success = statement.base && utils::toLower(statement.base->str) == ".stringz";
+    success &= statement.operands.size() == 1 && statement.operands[0].type == StatementPiece::Type::STRING;
+    return success;
+}
+
+bool InstructionEncoder::isValidPseudoEnd(StatementNew const & statement) const
+{
+    bool success = statement.base && utils::toLower(statement.base->str) == ".end";
+    success &= statement.operands.size() == 0;
+    return success;
+}
+
+uint32_t InstructionEncoder::encodePseudoOrig(StatementNew const & statement) const
+{
+#ifdef _ENABLE_DEBUG
+    assert(isValidPseudoOrig(statement));
+#endif
+    return statement.operands[0].num;
+}
+
+uint32_t InstructionEncoder::getPseudoBlockSize(StatementNew const & statement) const
+{
+#ifdef _ENABLE_DEBUG
+    assert(isValidPseudoBlock(statement));
+#endif
+    return statement.operands[0].num;
+}
+
+uint32_t InstructionEncoder::getPseudoStringSize(StatementNew const & statement) const
+{
+#ifdef _ENABLE_DEBUG
+    assert(isValidPseudoString(statement));
+#endif
+    return statement.operands[0].str.size() + 1;
+}
+
 uint32_t InstructionEncoder::getDistanceToNearestInstructionName(std::string const & search) const
 {
-    std::string lower_search = search;
-    std::transform(lower_search.begin(), lower_search.end(), lower_search.begin(), ::tolower);
+    std::string lower_search = utils::toLower(search);
     uint32_t min_distance = 0;
     bool min_set = false;
     for(auto const & inst : instructions_by_name) {

@@ -103,12 +103,11 @@ std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementPiece c
 
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementNew const & statement)
 {
+    out << std::hex << "0x" << statement.pc << std::dec;
     if(statement.label) {
-        out << *statement.label;
-        if(statement.base) {
-            out << ": ";
-        }
+        out << " (" << *statement.label << ")";
     }
+    out << " : ";
     if(statement.base) {
         out << *statement.base;
     }
@@ -121,6 +120,8 @@ std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementNew con
             prefix = ", ";
         }
     }
+
+    out << " [" << statement.line << "]";
 
     return out;
 }

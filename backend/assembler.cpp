@@ -15,6 +15,8 @@
 #include "optional.h"
 #include "tokenizer.h"
 
+#define _LIBERAL_ASM
+
 using namespace lc3::core;
 
 std::stringstream Assembler::assemble(std::istream & buffer)
@@ -24,6 +26,11 @@ std::stringstream Assembler::assemble(std::istream & buffer)
 
     std::vector<StatementNew> statements = makeStatements(buffer);
     setStatementPCField(statements);
+
+    for(auto const & x : statements) {
+        std::cout << x << '\n';
+    }
+
     return std::stringstream();
 }
 
@@ -61,13 +68,15 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
     // Note: There is some redundancy in the code below (not too much), but it was written this way so that it's
     //       easier to follow the flowchart.
     if(tokens.size() > 0) {
+        ret.line = tokens[0].line;
+        ret.row = tokens[0].row;
         uint32_t operand_start_idx = 0;
 
         if(tokens[0].type == Token::Type::STRING) {
             // If the first token is a string, it could be a label, instruction, or pseudo-op.
             if(encoder.isPseudo(tokens[0].str)) {
                 // If the token is identified as a pseudo-op, mark it as such.
-                ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::PSEUDO);
+                ret.base = StatementPiece{tokens[0], StatementPiece::Type::PSEUDO};
                 operand_start_idx = 1;
             } else {
                 // If the token is not a pseudo-op, it could be either a label or an instruction.
@@ -79,18 +88,18 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
                         if(encoder.isPseudo(tokens[1].str)) {
                             // If there's a following token that's a pseudo-op, the user probably accidentally used
                             // an instruction name as a label, so mark it as such.
-                            ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
-                            ret.base = StatementPiece(tokens[1].str, StatementPiece::Type::PSEUDO);
+                            ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
+                            ret.base = StatementPiece{tokens[1], StatementPiece::Type::PSEUDO};
                             operand_start_idx = 2;
                         } else {
                             // In most cases, the following token doesn't make a difference and the token really is
                             // an instruction.
-                            ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                            ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
                             operand_start_idx = 1;
                         }
                     } else {
                         // If the following token is a number, this token is an instruction.
-                        ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                        ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
                         operand_start_idx = 1;
                     }
                 } else {
@@ -100,17 +109,17 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
                         if(tokens[1].type == Token::Type::STRING) {
                             if(encoder.isPseudo(tokens[1].str)) {
                                 // If the following token is a pseudo-op, assume the user meant to type a label.
-                                ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
-                                ret.base = StatementPiece(tokens[1].str, StatementPiece::Type::PSEUDO);
+                                ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
+                                ret.base = StatementPiece{tokens[1], StatementPiece::Type::PSEUDO};
                                 operand_start_idx = 2;
                             } else if(encoder.isValidReg(tokens[1].str)) {
                                 // If the following token is a register, assume the user meant to type an instruction...
                                 // unless the distance from any valid instruction is too large.
                                 if(dist_from_inst_name < 3) {
-                                    ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                    ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
                                     operand_start_idx = 1;
                                 } else {
-                                    ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                    ret.label = StatementPiece{tokens[0], StatementPiece::Type::INST};
                                     operand_start_idx = 1;
                                 }
                             } else {
@@ -120,19 +129,19 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
                                 uint32_t next_dist_from_inst_name = encoder.getDistanceToNearestInstructionName(tokens[1].str);
                                 if(next_dist_from_inst_name < dist_from_inst_name) {
                                     if(next_dist_from_inst_name < 3) {
-                                        ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
-                                        ret.base = StatementPiece(tokens[1].str, StatementPiece::Type::INST);
+                                        ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
+                                        ret.base = StatementPiece{tokens[1], StatementPiece::Type::INST};
                                         operand_start_idx = 2;
                                     } else {
-                                        ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
+                                        ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
                                         operand_start_idx = 1;
                                     }
                                 } else {
                                     if(dist_from_inst_name < 3) {
-                                        ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                        ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
                                         operand_start_idx = 1;
                                     } else {
-                                        ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
+                                        ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
                                         operand_start_idx = 1;
                                     }
                                 }
@@ -141,64 +150,176 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
                             // If the following token is a number, assume the user meant to type an instruction...
                             // unless the distance from any valid instruction is too large.
                             if(dist_from_inst_name < 3) {
-                                ret.base = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
                                 operand_start_idx = 1;
                             } else {
-                                ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::INST);
+                                ret.label = StatementPiece{tokens[0], StatementPiece::Type::INST};
                                 operand_start_idx = 1;
                             }
                         }
                     } else {
                         // If there are no more tokens on the line, just assume the user typed in a label rather than a mis-typed
                         // instruction.
-                        ret.label = StatementPiece(tokens[0].str, StatementPiece::Type::LABEL);
+                        ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
                         operand_start_idx = 1;
                     }
                 }
             }
         } else {
-            ret.label = StatementPiece(tokens[0].num);
+            ret.label = StatementPiece{tokens[0], StatementPiece::Type::NUM};
             operand_start_idx = 1;
         }
 
         for(uint32_t i = operand_start_idx; i < tokens.size(); i += 1) {
             if(tokens[i].type == Token::Type::STRING) {
                 if(encoder.isValidReg(tokens[i].str)) {
-                    ret.operands.emplace_back(tokens[i].str, StatementPiece::Type::REG);
+                    ret.operands.emplace_back(tokens[i], StatementPiece::Type::REG);
                 } else {
-                    ret.operands.emplace_back(tokens[i].str, StatementPiece::Type::STRING);
+                    ret.operands.emplace_back(tokens[i], StatementPiece::Type::STRING);
                 }
             } else {
-                ret.operands.emplace_back(tokens[i].num);
+                ret.operands.emplace_back(tokens[i], StatementPiece::Type::NUM);
             }
         }
     }
 
-    std::cout << ret << "\n\n";
     return ret;
 }
 
-bool Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> & statements)
+void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> & statements)
 {
     using namespace asmbl;
+    using namespace lc3::utils;
 
-    uint64_t cur_idx = 0;
+    uint32_t cur_idx = 0;
 
     bool found_orig = false;
-    uint64_t cur_pc = 0;
+    bool previous_region_ended = false;
+    uint32_t cur_pc = 0;
+    uint32_t skipped_before_orig = 0, skipped_after_end = 0;
 
+    // Iterate over the statements, setting the current PC every time a new .orig is found.
     while(cur_idx < statements.size()) {
         StatementNew & statement = statements[cur_idx];
 
+        if(statement.base && statement.base->type == StatementPiece::Type::PSEUDO) {
+            if(encoder.isValidPseudoOrig(statement)) {
+                if(found_orig) {
+#ifndef _LIBERAL_ASM
+                    if(! previous_region_ended) {
+                        // If found_orig is set, meaning we've seen at least one valid .orig, and previous_region_ended is not set,
+                        // meaning we haven't seen a .end yet, then the previous .orig was not ended properly.
+                        logger.asmPrintf(PrintType::P_ERROR, statement, "new .orig found, but previous region did not have .end");
+                        logger.newline();
+                        throw utils::exception("new .orig fund, but previous region did not have .end");
+                    }
+#endif
+                    previous_region_ended = false;
+                }
+                found_orig = true;
+                cur_pc = encoder.encodePseudoOrig(statement);
+                statement.pc = 0;
+                ++cur_idx;
+                continue;
+            } else if(encoder.isValidPseudoEnd(statement)) {
+                // If we see a .end, make sure we've seen at least one .orig already (indicated by found_orig being set).
+                if(! found_orig) { ++skipped_before_orig; }
+                previous_region_ended = true;
+                statement.pc = 0;
+                ++cur_idx;
+                continue;
+            }
+        }
+
+        if(statement.label && ! statement.base) {
+            // If the line is only a label, give it the same PC as the line it is pointing to.
+            if(! found_orig) { ++skipped_before_orig; }
+            statement.pc = cur_pc;
+            ++cur_idx;
+            continue;
+        }
+
         if(found_orig) {
+            if(cur_pc >= MMIO_START) {
+                // If the PC has reached the MMIO region, abort!
+                logger.asmPrintf(PrintType::P_ERROR, statement, "cannot write code into memory-mapped I/O region");
+                logger.newline();
+                throw utils::exception("cannot write code into memory-mapped I/O region");
+            }
+
+            if(previous_region_ended) {
+                // If found_orig and previous_region_ended are both set, that means we have not set
+                // previous_region_ended to false yet, which happens when we find a new .orig. In other
+                // words, this means there is a line between a .end and a .orig that should be ignored.
+                statement.pc = 0;
+                ++skipped_after_end;
+                ++cur_idx;
+                continue;
+            }
+
             statement.pc = cur_pc;
             ++cur_pc;
+        } else {
+            // If we make it here and haven't found a .orig yet, then there are extraneous lines at the beginning
+            // of the file.
+            statement.pc = 0;
+            ++skipped_before_orig;
+        }
+
+        // Finally, some pseudo-ops need to increment PC by more than 1.
+        if(statement.base && statement.base->type == StatementPiece::Type::PSEUDO) {
+            if(encoder.isValidPseudoBlock(statement)) {
+                cur_pc += encoder.getPseudoBlockSize(statement) - 1;
+            } else if(encoder.isValidPseudoString(statement)) {
+                cur_pc += encoder.getPseudoStringSize(statement) - 1;
+            }
         }
 
         ++cur_idx;
     }
 
-    return true;
+    // Trigger aggregate error/warning if there were extraneous lines at the beginning of the file.
+    if(found_orig && skipped_before_orig > 0) {
+#ifdef _LIBERAL_ASM
+        logger.printf(PrintType::P_WARNING, true, "ignoring %d invalid line(s) before .orig", skipped_before_orig);
+#else
+        logger.printf(PrintType::P_ERROR, true, "%d invalid line(s) before .orig", skipped_before_orig);
+#endif
+        logger.newline();
+#ifndef _LIBERAL_ASM
+        throw utils::exception("invalid line(s) before .orig");
+#endif
+    }
+
+#ifndef _LIBERAL_ASM
+    // Trigger error if there was no .end at the end of the file.
+    if(found_orig && ! previous_region_ended) {
+        logger.printf(PrintType::P_ERROR, true, "no .end at end of file");
+        logger.newline();
+        throw utils::exception("no .end at end of file");
+    }
+#endif
+
+    // Trigger aggregate error/warning if there were extraneous lines whose PC could not be determined (i.e. in between
+    // a .end and a .orig.
+    if(skipped_after_end > 0) {
+#ifdef _LIBERAL_ASM
+        logger.printf(PrintType::P_WARNING, true, "ignoring %d invalid line(s) after .end", skipped_after_end);
+#else
+        logger.printf(PrintType::P_ERROR, true, "%d invalid line(s) after .end", skipped_after_end);
+#endif
+        logger.newline();
+#ifndef _LIBERAL_ASM
+        throw utils::exception("invalid line(s) after .end");
+#endif
+    }
+
+    // Trigger an error if there was no valid .orig in the file.
+    if(! found_orig) {
+        logger.printf(PrintType::P_ERROR, true, "could not find valid .orig");
+        logger.newline();
+        throw utils::exception("could not find valid .orig");
+    }
 }
 
 /*

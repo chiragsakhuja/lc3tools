@@ -28,7 +28,7 @@ namespace core
 
     private:
         std::vector<asmbl::StatementNew> makeStatements(std::istream & buffer);
-        bool setStatementPCField(std::vector<asmbl::StatementNew> & statements);
+        void setStatementPCField(std::vector<asmbl::StatementNew> & statements);
         asmbl::StatementNew makeStatement(std::vector<asmbl::Token> const & tokens);
 
         std::vector<std::string> file_buffer;

@@ -41,6 +41,8 @@ public:
 
     T & operator*(void) { return value; }
     T const & operator*(void) const { return value; }
+    T * operator->(void) { return &value; }
+    T const * operator->(void) const { return &value; }
 
     operator bool(void) const { return valid; }
 };
