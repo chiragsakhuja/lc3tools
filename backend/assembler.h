@@ -27,9 +27,12 @@ namespace core
         void setFilename(std::string const & filename) { logger.setFilename(filename); }
 
     private:
-        std::vector<asmbl::StatementNew> makeStatements(std::istream & buffer);
+        std::vector<asmbl::StatementNew> buildStatements(std::istream & buffer);
+        asmbl::StatementNew buildStatement(std::vector<asmbl::Token> const & tokens);
         void setStatementPCField(std::vector<asmbl::StatementNew> & statements);
-        asmbl::StatementNew makeStatement(std::vector<asmbl::Token> const & tokens);
+        optional<SymbolTable> buildSymbolTable(std::vector<asmbl::StatementNew> const & statements);
+        optional<std::vector<MemEntry>> buildMachineCode(std::vector<asmbl::StatementNew> const & statements,
+            SymbolTable const & symbols);
 
         std::vector<std::string> file_buffer;
         lc3::utils::AssemblerLogger logger;
@@ -40,7 +43,7 @@ namespace core
         optional<std::vector<MemEntry>> secondPass(std::vector<asmbl::Statement> const & statements,
             SymbolTable const & symbol_table);
 
-        //asmbl::Statement makeStatement(std::vector<asmbl::Token> const & tokens);
+        //asmbl::Statement buildStatement(std::vector<asmbl::Token> const & tokens);
         void markRegAndPseudoTokens(std::vector<asmbl::StatementToken> & tokens);
         void markInstTokens(std::vector<asmbl::StatementToken> & tokens);
         void markLabelTokens(std::vector<asmbl::StatementToken> & tokens);

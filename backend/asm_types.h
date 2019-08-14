@@ -77,10 +77,10 @@ namespace asmbl
         std::string str;
         uint32_t num;
 
-        uint32_t row, col, len;
+        uint32_t col, len;
 
         StatementPiece(void) : type(Type::INVALID) {}
-        StatementPiece(Token const & token, Type type) : type(type), row(token.row), col(token.col), len(token.len)
+        StatementPiece(Token const & token, Type type) : type(type), col(token.col), len(token.len)
         {
             if(type == Type::NUM) {
                 num = token.num;
@@ -100,6 +100,8 @@ namespace asmbl
 
         std::string line;
         uint32_t row;
+
+        StatementNew(void) : pc(0), line(""), row(0) {}
     };
 };
 };

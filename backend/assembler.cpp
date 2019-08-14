@@ -19,22 +19,47 @@
 
 using namespace lc3::core;
 
+static constexpr uint32_t INST_NAME_CLOSENESS = 2;
+
 std::stringstream Assembler::assemble(std::istream & buffer)
 //std::vector<uint8_t> Assembler::assemble(std::istream & buffer)
 {
     using namespace asmbl;
+    using namespace lc3::utils;
 
-    std::vector<StatementNew> statements = makeStatements(buffer);
+    bool success = true;
+
+    logger.printf(PrintType::P_EXTRA, true, "===== begin identifying tokens =====");
+    std::vector<StatementNew> statements = buildStatements(buffer);
+    logger.printf(PrintType::P_EXTRA, true, "===== end identifying tokens =====");
+    logger.newline();
+
+    logger.printf(PrintType::P_EXTRA, true, "===== begin marking PCs =====");
     setStatementPCField(statements);
+    logger.printf(PrintType::P_EXTRA, true, "===== end marking PCs =====");
+    logger.newline();
 
-    for(auto const & x : statements) {
-        std::cout << x << '\n';
+    logger.printf(PrintType::P_EXTRA, true, "===== begin building symbol table =====");
+    optional<SymbolTable> symbols = buildSymbolTable(statements);
+    success &= symbols.isValid();
+    logger.printf(PrintType::P_EXTRA, true, "===== end building symbol table =====");
+    logger.newline();
+
+    logger.printf(PrintType::P_EXTRA, true, "===== begin assembling =====");
+    optional<std::vector<MemEntry>> machine_code_blob = buildMachineCode(statements, *symbols);
+    success &= machine_code_blob.isValid();
+    logger.printf(PrintType::P_EXTRA, true, "===== end assembling =====");
+    logger.newline();
+
+    if(! success) {
+        logger.printf(PrintType::P_ERROR, true, "assembly failed");
+        throw lc3::utils::exception("assembly failed");
     }
 
     return std::stringstream();
 }
 
-std::vector<lc3::core::asmbl::StatementNew> Assembler::makeStatements(std::istream & buffer)
+std::vector<lc3::core::asmbl::StatementNew> Assembler::buildStatements(std::istream & buffer)
 {
     using namespace asmbl;
 
@@ -49,16 +74,17 @@ std::vector<lc3::core::asmbl::StatementNew> Assembler::makeStatements(std::istre
         }
 
         if(! tokenizer.isDone()) {
-            statements.push_back(makeStatement(tokens));
+            statements.push_back(buildStatement(tokens));
         }
     }
 
     return statements;
 }
 
-lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::asmbl::Token> const & tokens)
+lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::asmbl::Token> const & tokens)
 {
     using namespace asmbl;
+    using namespace lc3::utils;
 
     StatementNew ret;
 
@@ -115,7 +141,7 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
                             } else if(encoder.isValidReg(tokens[1].str)) {
                                 // If the following token is a register, assume the user meant to type an instruction...
                                 // unless the distance from any valid instruction is too large.
-                                if(dist_from_inst_name < 3) {
+                                if(dist_from_inst_name < INST_NAME_CLOSENESS) {
                                     ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
                                     operand_start_idx = 1;
                                 } else {
@@ -128,7 +154,7 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
                                 // mark as an instruction if the distance is close enough to a valid instruction.
                                 uint32_t next_dist_from_inst_name = encoder.getDistanceToNearestInstructionName(tokens[1].str);
                                 if(next_dist_from_inst_name < dist_from_inst_name) {
-                                    if(next_dist_from_inst_name < 3) {
+                                    if(next_dist_from_inst_name < INST_NAME_CLOSENESS) {
                                         ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
                                         ret.base = StatementPiece{tokens[1], StatementPiece::Type::INST};
                                         operand_start_idx = 2;
@@ -137,7 +163,7 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
                                         operand_start_idx = 1;
                                     }
                                 } else {
-                                    if(dist_from_inst_name < 3) {
+                                    if(dist_from_inst_name < INST_NAME_CLOSENESS) {
                                         ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
                                         operand_start_idx = 1;
                                     } else {
@@ -149,7 +175,7 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
                         } else {
                             // If the following token is a number, assume the user meant to type an instruction...
                             // unless the distance from any valid instruction is too large.
-                            if(dist_from_inst_name < 3) {
+                            if(dist_from_inst_name < INST_NAME_CLOSENESS) {
                                 ret.base = StatementPiece{tokens[0], StatementPiece::Type::INST};
                                 operand_start_idx = 1;
                             } else {
@@ -182,6 +208,10 @@ lc3::core::asmbl::StatementNew Assembler::makeStatement(std::vector<lc3::core::a
             }
         }
     }
+
+    std::stringstream statement_str;
+    statement_str << ret;
+    logger.printf(PrintType::P_EXTRA, true, "\'%s\' ===> \'%s\'", ret.line.c_str(), statement_str.str().c_str());
 
     return ret;
 }
@@ -216,10 +246,12 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
 #endif
                     previous_region_ended = false;
                 }
+
                 found_orig = true;
                 cur_pc = encoder.encodePseudoOrig(statement);
                 statement.pc = 0;
                 ++cur_idx;
+                logger.printf(PrintType::P_EXTRA, true, "setting current PC to 0x%0.4x", cur_pc);
                 continue;
             } else if(encoder.isValidPseudoEnd(statement)) {
                 // If we see a .end, make sure we've seen at least one .orig already (indicated by found_orig being set).
@@ -259,6 +291,7 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
 
             statement.pc = cur_pc;
             ++cur_pc;
+            logger.printf(PrintType::P_EXTRA, true, "0x%0.4x : \'%s\'", statement.pc, statement.line.c_str());
         } else {
             // If we make it here and haven't found a .orig yet, then there are extraneous lines at the beginning
             // of the file.
@@ -322,6 +355,64 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
     }
 }
 
+lc3::optional<SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::asmbl::StatementNew> const & statements)
+{
+    using namespace asmbl;
+    using namespace lc3::utils;
+
+    SymbolTable symbols;
+    bool success = true;
+
+    for(StatementNew const & statement : statements) {
+        if(statement.label) {
+            if(statement.label->type == StatementPiece::Type::NUM) {
+                logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label, "label cannot be a numeric value");
+                logger.newline();
+                success = false;
+            } else {
+                if(! statement.base && statement.operands.size() > 0) {
+                    for(StatementPiece const & operand : statement.operands) {
+                        logger.asmPrintf(PrintType::P_ERROR, statement, operand, "illegal operand to a label");
+                        logger.newline();
+                    }
+                    success = false;
+                    continue;
+                }
+
+                auto search = symbols.find(statement.label->str);
+                if(search != symbols.end()) {
+                    uint32_t old_val = search->second;
+#ifdef _LIBERAL_ASM
+                    logger.asmPrintf(PrintType::P_WARNING, statement, *statement.label,
+                        "redefining label \'%s\' from 0x%0.4x to 0x%0.4x", statement.label->str.c_str(),
+                        old_val, statement.pc);
+                    logger.newline();
+#else
+                    logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+                        "attempting to redefine label \'%s\' from 0x%0.4x to 0x%0.4x", statement.label->str.c_str(),
+                        old_val, statement.pc);
+                    logger.newline();
+                    success = false;
+                    continue;
+#endif
+                }
+
+                symbols[statement.label->str] = statement.pc;
+                logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' => 0x%0.4x", statement.label->str.c_str(),
+                    statement.pc);
+            }
+        }
+    }
+
+    if(success) { return symbols; }
+    else { return {}; }
+}
+
+lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(std::vector<lc3::core::asmbl::StatementNew> const & statements,
+    SymbolTable const & symbols)
+{
+}
+
 /*
 std::stringstream Assembler::assemble(std::istream & buffer)
 {
@@ -341,7 +432,7 @@ std::stringstream Assembler::assemble(std::istream & buffer)
         }
 
         if(! tokenizer.isDone()) {
-            statements.push_back(makeStatement(tokens));
+            statements.push_back(buildStatement(tokens));
         }
     }
 
@@ -510,7 +601,7 @@ lc3::optional<std::vector<MemEntry>> lc3::core::Assembler::secondPass(std::vecto
     else { return {}; }
 }
 
-asmbl::Statement Assembler::makeStatement(std::vector<asmbl::Token> const & tokens)
+asmbl::Statement Assembler::buildStatement(std::vector<asmbl::Token> const & tokens)
 {
     using namespace asmbl;
 

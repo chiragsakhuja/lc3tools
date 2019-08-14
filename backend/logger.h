@@ -51,6 +51,9 @@ namespace utils
             std::string const & format, Args ... args) const;
 
         template<typename ... Args>
+        void asmPrintf(PrintType level, lc3::core::asmbl::StatementNew const & statement,
+            lc3::core::asmbl::StatementPiece const & piece, std::string const & format, Args ... args) const;
+        template<typename ... Args>
         void asmPrintf(PrintType level, lc3::core::asmbl::StatementNew const & statement, std::string const & format,
             Args ... args) const;
 
@@ -124,6 +127,14 @@ void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
     lc3::core::asmbl::StatementToken const & token, std::string const & format, Args ... args) const
 {
     asmPrintf(level, token.row, token.col, token.len, token.line, format, args...);
+}
+
+template<typename ... Args>
+void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
+    lc3::core::asmbl::StatementNew const & statement, lc3::core::asmbl::StatementPiece const & piece,
+    std::string const & format, Args ... args) const
+{
+    asmPrintf(level, statement.row, piece.col, piece.len, statement.line, format, args...);
 }
 
 template<typename ... Args>

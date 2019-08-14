@@ -45,6 +45,7 @@ public:
     T const * operator->(void) const { return &value; }
 
     operator bool(void) const { return valid; }
+    bool isValid(void) const { return valid; }
 };
 };
 
