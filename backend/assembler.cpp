@@ -148,9 +148,10 @@ lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::
                                 }
                             } else {
                                 // If the following token is a string that was not identified as a pseudo-op or register,
-                                // compare to see which token has the closer distance to a valid instruction. Even then, only
-                                // mark as an instruction if the distance is close enough to a valid instruction.
-                                uint32_t next_dist_from_inst_name = encoder.getDistanceToNearestInstructionName(tokens[1].str);
+                                // compare to see which token has the closer distance to a valid instruction. Even then,
+                                // only mark as an instruction if the distance is close enough to a valid instruction.
+                                uint32_t next_dist_from_inst_name = encoder.getDistanceToNearestInstructionName(
+                                    tokens[1].str);
                                 if(next_dist_from_inst_name < dist_from_inst_name) {
                                     if(next_dist_from_inst_name < INST_NAME_CLOSENESS) {
                                         ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
@@ -182,8 +183,8 @@ lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::
                             }
                         }
                     } else {
-                        // If there are no more tokens on the line, just assume the user typed in a label rather than a mis-typed
-                        // instruction.
+                        // If there are no more tokens on the line, just assume the user typed in a label rather than a
+                        // mis-typed instruction.
                         ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
                         operand_start_idx = 1;
                     }
@@ -234,9 +235,11 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
                 if(found_orig) {
 #ifndef _LIBERAL_ASM
                     if(! previous_region_ended) {
-                        // If found_orig is set, meaning we've seen at least one valid .orig, and previous_region_ended is not set,
-                        // meaning we haven't seen a .end yet, then the previous .orig was not ended properly.
-                        logger.asmPrintf(PrintType::P_ERROR, statement, "new .orig found, but previous region did not have .end");
+                        // If found_orig is set, meaning we've seen at least one valid .orig, and previous_region_ended
+                        // is not set, meaning we haven't seen a .end yet, then the previous .orig was not ended
+                        // properly.
+                        logger.asmPrintf(PrintType::P_ERROR, statement,
+                            "new .orig found, but previous region did not have .end");
                         logger.newline();
                         throw utils::exception("new .orig fund, but previous region did not have .end");
                     }
@@ -383,6 +386,13 @@ lc3::optional<SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::as
                     success = false;
                     continue;
                 }
+
+                if(encoder.getDistanceToNearestInstructionName(statement.label->str) == 0) {
+                    logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label, "label cannot be an instruction");
+                    logger.newline();
+                    success = false;
+                    continue;
+                }
 #endif
 
                 symbols[statement.label->str] = statement.pc;
@@ -396,8 +406,8 @@ lc3::optional<SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::as
     else { return {}; }
 }
 
-lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(std::vector<lc3::core::asmbl::StatementNew> const & statements,
-    SymbolTable const & symbols)
+lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(
+    std::vector<lc3::core::asmbl::StatementNew> const & statements, SymbolTable const & symbols)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -407,6 +417,8 @@ lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(std::vector<lc3
     std::vector<MemEntry> ret;
 
     for(StatementNew const & statement : statements) {
+        bool converted = true;
+
         if(! statement.valid) {
 #ifdef _LIBERAL_ASM
             logger.asmPrintf(PrintType::P_WARNING, statement, "ignoring statement whose address cannot be determined");
@@ -419,38 +431,59 @@ lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(std::vector<lc3
         }
 
         if(statement.base) {
+            std::stringstream msg;
+            msg << statement << " := ";
+
             if(statement.base->type == StatementPiece::Type::PSEUDO) {
                 bool valid = encoder.validatePseudo(statement, symbols);
                 if(valid) {
                     if(encoder.isValidPseudoOrig(statement)) {
-                        ret.emplace_back(encoder.encodePseudoOrig(statement), true, statement.line);
+                        uint32_t address = encoder.encodePseudoOrig(statement);
+                        ret.emplace_back(address, true, statement.line);
+                        msg << utils::ssprintf("(orig) 0x%0.4x", address);
                     } else if(encoder.isValidPseudoFill(statement, symbols)) {
-                        ret.emplace_back(encoder.getPseudoFill(statement, symbols), false, statement.line);
+                        uint32_t value = encoder.getPseudoFill(statement, symbols);
+                        ret.emplace_back(value, false, statement.line);
+                        msg << utils::ssprintf("0x%0.4x", value);
                     } else if(encoder.isValidPseudoBlock(statement)) {
-                        for(uint32_t i = 0; i < encoder.getPseudoBlockSize(statement); i += 1) {
+                        uint32_t size = encoder.getPseudoBlockSize(statement);
+                        for(uint32_t i = 0; i < size; i += 1) {
                             ret.emplace_back(0, false, statement.line);
                         }
+                        msg << utils::ssprintf("mem[0x%0.4x:0x%04x] = 0", statement.pc, statement.pc + size - 1);
                     } else if(encoder.isValidPseudoString(statement)) {
                         std::string const & value = encoder.getPseudoString(statement);
                         for(char c : value) {
                             ret.emplace_back(c, false, std::string(1, c));
                         }
                         ret.emplace_back(0, false, statement.line);
+                        msg << utils::ssprintf("mem[0x%0.4x:0x%04x] = \'%s\\0\'", statement.pc,
+                            statement.pc + value.size(), value.c_str());
+                    } else if(encoder.isValidPseudoEnd(statement)) {
+                        msg << "(end)";
                     }
                 }
-                success &= valid;
+                converted &= valid;
             } else if(statement.base->type == StatementPiece::Type::INST) {
-                bool valid = encoder.validateInstruction(statement, symbols);
-                if(valid) {
-                    ret.emplace_back(encoder.encodeInstruction(statement, symbols), false, statement.line);
-                }
-                success &= valid;
+                converted = false;
+                /*
+                 *bool valid = encoder.validateInstruction(statement, symbols);
+                 *if(valid) {
+                 *    ret.emplace_back(encoder.encodeInstruction(statement, symbols), false, statement.line);
+                 *}
+                 *success &= valid;
+                 */
             } else {
 #ifdef _ENABLE_DEBUG
                 // buildStatement should never assign the base field anything other than INST or PSEUDO.
                 assert(false);
 #endif
             }
+
+            if(converted) {
+                logger.printf(PrintType::P_EXTRA, true, "%s", msg.str().c_str());
+            }
+            success &= converted;
         }
     }
 

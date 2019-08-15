@@ -22,6 +22,7 @@ namespace asmbl
         bool isStringPseudo(std::string const & search) const;
         bool isStringValidReg(std::string const & search) const;
         bool isPseudo(StatementNew const & statement) const;
+        bool isInst(StatementNew const & statement) const;
         bool isValidPseudoOrig(StatementNew const & statement, bool log_enable = false) const;
         bool isValidPseudoFill(StatementNew const & statement, bool log_enable = false) const;
         bool isValidPseudoFill(StatementNew const & statement, SymbolTable const & symbols, bool log_enable = false) const;
@@ -29,7 +30,9 @@ namespace asmbl
         bool isValidPseudoString(StatementNew const & statement, bool log_enable = false) const;
         bool isValidPseudoEnd(StatementNew const & statement, bool log_enable = false) const;
         bool validatePseudo(StatementNew const & statement, SymbolTable const & symbols) const;
+        bool validateInstruction(StatementNew const & statement, SymbolTable const & symbols) const;
 
+        uint32_t getNum(StatementNew const & statement, StatementPiece const & piece, bool log_enable = false) const;
         uint32_t encodePseudoOrig(StatementNew const & statement) const;
         uint32_t getPseudoFill(StatementNew const & statement, SymbolTable const & symbols) const;
         uint32_t getPseudoBlockSize(StatementNew const & statement) const;

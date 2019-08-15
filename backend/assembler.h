@@ -10,6 +10,8 @@
 #include "printer.h"
 #include "tokenizer.h"
 
+#define _LIBERAL_ASM
+
 namespace lc3
 {
 namespace core

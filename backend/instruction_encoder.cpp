@@ -22,6 +22,11 @@ bool InstructionEncoder::isPseudo(StatementNew const & statement) const
     return statement.base && statement.base->type == StatementPiece::Type::PSEUDO;
 }
 
+bool InstructionEncoder::isInst(StatementNew const & statement) const
+{
+    return statement.base && statement.base->type == StatementPiece::Type::INST;
+}
+
 bool InstructionEncoder::isStringValidReg(std::string const & search) const
 {
     std::string lower_search = search;
@@ -50,7 +55,7 @@ bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, Symbo
     bool log_enable) const
 {
     if(isValidPseudoFill(statement, log_enable)) {
-        if(statement.operands[0].type == StatementPiece::Type::STRING && 
+        if(statement.operands[0].type == StatementPiece::Type::STRING &&
             symbols.find(statement.operands[0].str) == symbols.end())
         {
             if(log_enable) {
@@ -68,7 +73,15 @@ bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, Symbo
 bool InstructionEncoder::isValidPseudoBlock(StatementNew const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".blkw") {
-        return validatePseudoOperands(statement, ".blkw", {StatementPiece::Type::NUM}, 1, log_enable);
+        bool valid = validatePseudoOperands(statement, ".blkw", {StatementPiece::Type::NUM}, 1, log_enable);
+        if(valid) {
+            if(log_enable && statement.operands[0].num == 0) {
+                logger.asmPrintf(utils::PrintType::P_ERROR, statement, statement.operands[0],
+                    "operand to .blkw must be > 0");
+                logger.newline();
+            }
+            return statement.operands[0].num != 0;
+        }
     }
     return false;
 }
@@ -91,29 +104,30 @@ bool InstructionEncoder::isValidPseudoEnd(StatementNew const & statement, bool l
 
 bool InstructionEncoder::validatePseudo(StatementNew const & statement, SymbolTable const & symbols) const
 {
-    if(isPseudo(statement)) {
-        std::string lower_base = utils::toLower(statement.base->str);
-        if(lower_base == ".orig") {
-        } else if(lower_base == ".fill") {
-            return isValidPseudoFill(statement, symbols, true);
-        } else if(lower_base == ".blkw") {
-            return isValidPseudoBlock(statement, true);
-        } else if(lower_base == ".stringz") {
-            return isValidPseudoString(statement, true);
-        } else if(lower_base == ".end") {
-            return isValidPseudoEnd(statement, true);
-        } else {
+    if(! isPseudo(statement)) { return false; }
+
+    std::string lower_base = utils::toLower(statement.base->str);
+    if(lower_base == ".orig") {
+        return isValidPseudoOrig(statement, true);
+    } else if(lower_base == ".fill") {
+        return isValidPseudoFill(statement, symbols, true);
+    } else if(lower_base == ".blkw") {
+        return isValidPseudoBlock(statement, true);
+    } else if(lower_base == ".stringz") {
+        return isValidPseudoString(statement, true);
+    } else if(lower_base == ".end") {
+        return isValidPseudoEnd(statement, true);
+    } else {
 #ifdef _LIBERAL_ASM
-            logger.asmPrintf(lc3::utils::PrintType::P_WARNING, statement, *statement.base, "ignoring invalid pseudo-op");
-            logger.newline();
+        logger.asmPrintf(lc3::utils::PrintType::P_WARNING, statement, *statement.base, "ignoring invalid pseudo-op");
+        logger.newline();
+        return true;
 #else
-            logger.asmPrintf(lc3::utils::PrintType::P_ERROR, statement, *statement.base, "invalid pseudo-op");
-            logger.newline();
-            return false;
+        logger.asmPrintf(lc3::utils::PrintType::P_ERROR, statement, *statement.base, "invalid pseudo-op");
+        logger.newline();
+        return false;
 #endif
-        }
     }
-    return false;
 }
 
 bool InstructionEncoder::validatePseudoOperands(StatementNew const & statement, std::string const & pseudo,
@@ -132,24 +146,15 @@ bool InstructionEncoder::validatePseudoOperands(StatementNew const & statement, 
     } else if(statement.operands.size() > operand_count) {
         // If there are too many operands, print out a warning/error for each extraneous operand.
         if(log_enable) {
-            for(uint32_t i = 1; i < statement.operands.size(); i += 1) {
-#ifdef _LIBERAL_ASM
-                logger.asmPrintf(PrintType::P_WARNING, statement, statement.operands[i],
-                    "ignoring extraneous operand to %s", pseudo.c_str());
-#else
-                logger.asmPrintf(PrintType::P_ERROR, statement, statement.operands[i],
-                    "extraneous operand to %s", pseudo.c_str());
-#endif
+            for(uint32_t i = operand_count; i < statement.operands.size(); i += 1) {
+                logger.asmPrintf(PrintType::P_ERROR, statement, statement.operands[i], "extraneous operand to %s",
+                    pseudo.c_str());
                 logger.newline();
             }
         }
-#ifndef _LIBERAL_ASM
         return false;
-        // This is a nasty little syntax hack: if there are extraneous operands and _LIBERAL_ASM is set,
-        // just merge the else if and else blocks of this if statement. It makes me feel gross, so I may
-        // get rid of it at some point.
     } else {
-#endif
+        // If there are the correct number of operands, confirm that they are of the correct type.
         bool all_valid_types = true;
         for(uint32_t i = 0; i < operand_count; i += 1) {
             bool valid_type = false;
@@ -162,18 +167,20 @@ bool InstructionEncoder::validatePseudoOperands(StatementNew const & statement, 
             if(! valid_type) {
                 all_valid_types = false;
                 if(log_enable) {
+                    // Some nonsense to make pretty messages depending on the expected type.
                     std::stringstream error_msg;
                     error_msg << "operand should be";
                     std::string prefix = "";
                     for(StatementPiece::Type const & type : valid_types) {
                         if(type == StatementPiece::Type::NUM) {
-                            error_msg << " numeric";
+                            error_msg << prefix << " numeric";
                         } else {
-                            error_msg << " a string";
+                            error_msg << prefix << " a string";
                         }
                         prefix = " or";
                     }
-                    logger.asmPrintf(PrintType::P_ERROR, statement, statement.operands[i], "%s", error_msg.str().c_str());
+                    logger.asmPrintf(PrintType::P_ERROR, statement, statement.operands[i], "%s",
+                        error_msg.str().c_str());
                     logger.newline();
                 }
             }
@@ -184,12 +191,32 @@ bool InstructionEncoder::validatePseudoOperands(StatementNew const & statement, 
     return true;
 }
 
+bool InstructionEncoder::validateInstruction(StatementNew const & statement, SymbolTable const & symbols) const
+{
+    if(! isInst(statement)) { return false; }
+
+    using Candidate = std::pair<PIInstruction, uint32_t>;
+    std::vector<Candidate> candidates;
+}
+
+uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPiece const & piece, bool log_enable) const
+{
+    uint32_t value = piece.num;
+
+    if(log_enable && ((value & 0xffff) != value)) {
+        logger.asmPrintf(utils::PrintType::P_WARNING, statement, piece, "truncating operand to 16-bits");
+        logger.newline();
+    }
+
+    return value & 0xffff;
+}
+
 uint32_t InstructionEncoder::encodePseudoOrig(StatementNew const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoOrig(statement));
 #endif
-    return statement.operands[0].num;
+    return getNum(statement, statement.operands[0], true);
 }
 
 uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement, SymbolTable const & symbols) const
@@ -198,7 +225,7 @@ uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement, Symbo
     assert(isValidPseudoFill(statement, symbols));
 #endif
     if(statement.operands[0].type == StatementPiece::Type::NUM) {
-        return statement.operands[0].num;
+        return getNum(statement, statement.operands[0], true);
     } else {
         return symbols.at(statement.operands[0].str);
     }
@@ -209,7 +236,7 @@ uint32_t InstructionEncoder::getPseudoBlockSize(StatementNew const & statement) 
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoBlock(statement));
 #endif
-    return statement.operands[0].num;
+    return getNum(statement, statement.operands[0], true);
 }
 
 uint32_t InstructionEncoder::getPseudoStringSize(StatementNew const & statement) const
@@ -235,12 +262,9 @@ uint32_t InstructionEncoder::getDistanceToNearestInstructionName(std::string con
     bool min_set = false;
     for(auto const & inst : instructions_by_name) {
         uint32_t distance = levDistance(inst.first, lower_search);
-        if(! min_set) {
+        if(! min_set || distance < min_distance) {
             min_distance = distance;
             min_set = true;
-        }
-        if(distance < min_distance) {
-            min_distance = distance;
         }
     }
 
