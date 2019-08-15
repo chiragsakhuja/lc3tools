@@ -38,14 +38,14 @@ std::stringstream Assembler::assemble(std::istream & buffer)
     logger.newline(PrintType::P_EXTRA);
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin building symbol table =====");
-    optional<SymbolTable> symbols = buildSymbolTable(statements);
-    success &= symbols.isValid();
+    std::pair<bool, SymbolTable> symbols = buildSymbolTable(statements);
+    success &= symbols.first;
     logger.printf(PrintType::P_EXTRA, true, "===== end building symbol table =====");
     logger.newline(PrintType::P_EXTRA);
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin assembling =====");
-    optional<std::vector<MemEntry>> machine_code_blob = buildMachineCode(statements, *symbols);
-    success &= machine_code_blob.isValid();
+    std::pair<bool, std::vector<MemEntry>> machine_code_blob = buildMachineCode(statements, symbols.second);
+    success &= machine_code_blob.first;
     logger.printf(PrintType::P_EXTRA, true, "===== end assembling =====");
     logger.newline(PrintType::P_EXTRA);
 
@@ -230,7 +230,7 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
     while(cur_idx < statements.size()) {
         StatementNew & statement = statements[cur_idx];
 
-        if(statement.base && statement.base->type == StatementPiece::Type::PSEUDO) {
+        if(encoder.isPseudo(statement)) {
             if(encoder.isValidPseudoOrig(statement)) {
                 if(found_orig) {
 #ifndef _LIBERAL_ASM
@@ -248,7 +248,7 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
                 }
 
                 found_orig = true;
-                cur_pc = encoder.encodePseudoOrig(statement);
+                cur_pc = encoder.getPseudoOrig(statement);
                 statement.pc = 0;
                 ++cur_idx;
                 logger.printf(PrintType::P_EXTRA, true, "setting current PC to 0x%0.4x", cur_pc);
@@ -309,7 +309,7 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
         }
 
         // Finally, some pseudo-ops need to increment PC by more than 1.
-        if(statement.base && statement.base->type == StatementPiece::Type::PSEUDO) {
+        if(encoder.isPseudo(statement)) {
             if(encoder.isValidPseudoBlock(statement)) {
                 cur_pc += encoder.getPseudoBlockSize(statement) - 1;
             } else if(encoder.isValidPseudoString(statement)) {
@@ -337,7 +337,7 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
 #endif
 }
 
-lc3::optional<SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::asmbl::StatementNew> const & statements)
+std::pair<bool, SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::asmbl::StatementNew> const & statements)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -396,17 +396,16 @@ lc3::optional<SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::as
 #endif
 
                 symbols[statement.label->str] = statement.pc;
-                logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' => 0x%0.4x", statement.label->str.c_str(),
+                logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' := 0x%0.4x", statement.label->str.c_str(),
                     statement.pc);
             }
         }
     }
 
-    if(success) { return symbols; }
-    else { return {}; }
+    return std::make_pair(success, symbols);
 }
 
-lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(
+std::pair<bool, std::vector<MemEntry>> Assembler::buildMachineCode(
     std::vector<lc3::core::asmbl::StatementNew> const & statements, SymbolTable const & symbols)
 {
     using namespace asmbl;
@@ -434,11 +433,11 @@ lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(
             std::stringstream msg;
             msg << statement << " := ";
 
-            if(statement.base->type == StatementPiece::Type::PSEUDO) {
+            if(encoder.isPseudo(statement)) {
                 bool valid = encoder.validatePseudo(statement, symbols);
                 if(valid) {
                     if(encoder.isValidPseudoOrig(statement)) {
-                        uint32_t address = encoder.encodePseudoOrig(statement);
+                        uint32_t address = encoder.getPseudoOrig(statement);
                         ret.emplace_back(address, true, statement.line);
                         msg << utils::ssprintf("(orig) 0x%0.4x", address);
                     } else if(encoder.isValidPseudoFill(statement, symbols)) {
@@ -464,15 +463,12 @@ lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(
                     }
                 }
                 converted &= valid;
-            } else if(statement.base->type == StatementPiece::Type::INST) {
-                converted = false;
-                /*
-                 *bool valid = encoder.validateInstruction(statement, symbols);
-                 *if(valid) {
-                 *    ret.emplace_back(encoder.encodeInstruction(statement, symbols), false, statement.line);
-                 *}
-                 *success &= valid;
-                 */
+            } else if(encoder.isInst(statement)) {
+                optional<PIInstruction> candidate = encoder.validateInstruction(statement, symbols);
+                if(candidate) {
+                    ret.emplace_back(encoder.encodeInstruction(statement, symbols, *candidate), false, statement.line);
+                }
+                converted &= candidate.isValid();
             } else {
 #ifdef _ENABLE_DEBUG
                 // buildStatement should never assign the base field anything other than INST or PSEUDO.
@@ -487,8 +483,7 @@ lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(
         }
     }
 
-    if(success) { return ret; }
-    else { return {}; }
+    return std::make_pair(success, ret);
 
 
     /*

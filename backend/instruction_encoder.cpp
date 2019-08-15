@@ -54,12 +54,14 @@ bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, bool 
 bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, SymbolTable const & symbols,
     bool log_enable) const
 {
+    using namespace lc3::utils;
+
     if(isValidPseudoFill(statement, log_enable)) {
         if(statement.operands[0].type == StatementPiece::Type::STRING &&
             symbols.find(statement.operands[0].str) == symbols.end())
         {
             if(log_enable) {
-                logger.asmPrintf(lc3::utils::PrintType::P_ERROR, statement, statement.operands[0],
+                logger.asmPrintf(PrintType::P_ERROR, statement, statement.operands[0],
                     "could not find label");
                 logger.newline();
             }
@@ -104,6 +106,8 @@ bool InstructionEncoder::isValidPseudoEnd(StatementNew const & statement, bool l
 
 bool InstructionEncoder::validatePseudo(StatementNew const & statement, SymbolTable const & symbols) const
 {
+    using namespace lc3::utils;
+
     if(! isPseudo(statement)) { return false; }
 
     std::string lower_base = utils::toLower(statement.base->str);
@@ -119,11 +123,11 @@ bool InstructionEncoder::validatePseudo(StatementNew const & statement, SymbolTa
         return isValidPseudoEnd(statement, true);
     } else {
 #ifdef _LIBERAL_ASM
-        logger.asmPrintf(lc3::utils::PrintType::P_WARNING, statement, *statement.base, "ignoring invalid pseudo-op");
+        logger.asmPrintf(PrintType::P_WARNING, statement, *statement.base, "ignoring invalid pseudo-op");
         logger.newline();
         return true;
 #else
-        logger.asmPrintf(lc3::utils::PrintType::P_ERROR, statement, *statement.base, "invalid pseudo-op");
+        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.base, "invalid pseudo-op");
         logger.newline();
         return false;
 #endif
@@ -191,12 +195,117 @@ bool InstructionEncoder::validatePseudoOperands(StatementNew const & statement, 
     return true;
 }
 
-bool InstructionEncoder::validateInstruction(StatementNew const & statement, SymbolTable const & symbols) const
+lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(StatementNew const & statement,
+    SymbolTable const & symbols) const
 {
-    if(! isInst(statement)) { return false; }
+    using namespace lc3::utils;
 
-    using Candidate = std::pair<PIInstruction, uint32_t>;
+    if(! isInst(statement)) { return {}; }
+
+    using Candidate = std::tuple<PIInstruction, uint32_t, uint32_t>;
     std::vector<Candidate> candidates;
+
+    std::string statement_op_string = "";
+    for(StatementPiece const & statement_op : statement.operands) {
+        switch(statement_op.type) {
+            case StatementPiece::Type::NUM: statement_op_string += 'n'; break;
+            case StatementPiece::Type::STRING: statement_op_string += 's'; break;
+            case StatementPiece::Type::REG: statement_op_string += 'r'; break;
+            default: break;
+        }
+    }
+
+    for(auto const & candidate_inst_name : instructions_by_name) {
+        uint32_t inst_name_dist = levDistance(statement.base->str, candidate_inst_name.first);
+        if(inst_name_dist < 2) {
+            for(PIInstruction candidate_inst : candidate_inst_name.second) {
+                // Convert the operand types of the candidate and the statement into a string so that Levenshtein
+                // distance can be used on the operands too.
+                std::string candidate_op_string = "";
+                for(PIOperand candidate_op : candidate_inst->operands) {
+                    switch(candidate_op->type) {
+                        case OperType::NUM: candidate_op_string += 'n'; break;
+                        case OperType::LABEL: candidate_op_string += 's'; break;
+                        case OperType::REG: candidate_op_string += 'r'; break;
+                        default: break;
+                    }
+                }
+
+                uint32_t op_dist = levDistance(statement_op_string, candidate_op_string);
+                candidates.emplace_back(std::make_tuple(candidate_inst, inst_name_dist, op_dist));
+            }
+        }
+    }
+
+    std::sort(std::begin(candidates), std::end(candidates), [](Candidate a, Candidate b) {
+        return (std::get<1>(a) + std::get<2>(a)) < (std::get<1>(b) + std::get<2>(b));
+    });
+
+    // If there are no candidates or if the instruction itself was not a perfect match, print out unique candidates.
+    if(candidates.size() == 0 || std::get<1>(candidates[0]) != 0) {
+        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.base, "invalid instruction");
+        std::string prev_candidate_inst_name = "";
+        uint32_t candidate_count = 0;
+        for(Candidate const & candidate : candidates) {
+            std::string const & candidate_inst_name = std::get<0>(candidate)->name;
+            if(candidate_inst_name != prev_candidate_inst_name) {
+                if(candidate_count < 3) {
+                    logger.printf(PrintType::P_NOTE, false, "did you mean \'%s\'?", candidate_inst_name.c_str());
+                    prev_candidate_inst_name = candidate_inst_name;
+                }
+                candidate_count += 1;
+            }
+        }
+        if(candidate_count > 3) {
+            logger.printf(PrintType::P_NOTE, false, "...or %d other candidate(s) (not shown)", candidate_count - 3);
+        }
+        logger.newline();
+        return {};
+    }
+
+    // If the instruction was a match but the operands weren't, print out more detail about candidates for that
+    // instruction.
+    if(std::get<2>(candidates[0]) != 0) {
+        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.base, "invalid usage of \'%s\' instruction",
+            statement.base->str.c_str());
+        uint32_t candidate_count = 0;
+        for(Candidate const & candidate : candidates) {
+            if(statement.base->str == std::get<0>(candidate)->name) {
+                if(candidate_count < 3) {
+                    logger.printf(PrintType::P_NOTE, false, "did you mean \'%s\'?",
+                        std::get<0>(candidate)->toFormatString().c_str());
+                }
+                candidate_count += 1;
+            }
+        }
+        if(candidate_count > 3) {
+            logger.printf(PrintType::P_NOTE, false, "...or %d other candidate(s) (not shown)", candidate_count - 3);
+        }
+        logger.newline();
+        return {};
+    }
+
+    // Finally, confirm that any string operands are actually valid symbols
+    bool valid = true;
+    std::cout << "wat\n";
+    for(auto x : symbols) {
+        std::cout << x.first << ": " << x.second << "\n";
+    }
+    for(StatementPiece const & operand : statement.operands) {
+        if(operand.type == StatementPiece::Type::STRING) {
+            if(symbols.find(operand.str) == symbols.end()) {
+                logger.asmPrintf(PrintType::P_ERROR, statement, operand, "could not find label");
+                logger.newline();
+                valid = false;
+            }
+        }
+    }
+
+    if(valid) {
+        return std::get<0>(candidates[0]);
+    } else {
+        return {};
+    }
 }
 
 uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPiece const & piece, bool log_enable) const
@@ -211,7 +320,7 @@ uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPie
     return value & 0xffff;
 }
 
-uint32_t InstructionEncoder::encodePseudoOrig(StatementNew const & statement) const
+uint32_t InstructionEncoder::getPseudoOrig(StatementNew const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoOrig(statement));
@@ -253,6 +362,12 @@ std::string const & InstructionEncoder::getPseudoString(StatementNew const & sta
     assert(isValidPseudoString(statement));
 #endif
     return statement.operands[0].str;
+}
+
+uint32_t InstructionEncoder::encodeInstruction(StatementNew const & statement, SymbolTable const & symbols,
+    PIInstruction candidate) const
+{
+    return 0;
 }
 
 uint32_t InstructionEncoder::getDistanceToNearestInstructionName(std::string const & search) const
