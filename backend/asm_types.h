@@ -7,6 +7,8 @@
 
 #include "optional.h"
 
+#define _LIBERAL_ASM
+
 namespace lc3
 {
 namespace core
@@ -101,7 +103,9 @@ namespace asmbl
         std::string line;
         uint32_t row;
 
-        StatementNew(void) : pc(0), line(""), row(0) {}
+        bool valid;
+
+        StatementNew(void) : pc(0), line(""), row(0), valid(true) {}
     };
 };
 };

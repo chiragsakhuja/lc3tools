@@ -15,8 +15,6 @@
 #include "optional.h"
 #include "tokenizer.h"
 
-#define _LIBERAL_ASM
-
 using namespace lc3::core;
 
 static constexpr uint32_t INST_NAME_CLOSENESS = 2;
@@ -32,24 +30,24 @@ std::stringstream Assembler::assemble(std::istream & buffer)
     logger.printf(PrintType::P_EXTRA, true, "===== begin identifying tokens =====");
     std::vector<StatementNew> statements = buildStatements(buffer);
     logger.printf(PrintType::P_EXTRA, true, "===== end identifying tokens =====");
-    logger.newline();
+    logger.newline(PrintType::P_EXTRA);
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin marking PCs =====");
     setStatementPCField(statements);
     logger.printf(PrintType::P_EXTRA, true, "===== end marking PCs =====");
-    logger.newline();
+    logger.newline(PrintType::P_EXTRA);
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin building symbol table =====");
     optional<SymbolTable> symbols = buildSymbolTable(statements);
     success &= symbols.isValid();
     logger.printf(PrintType::P_EXTRA, true, "===== end building symbol table =====");
-    logger.newline();
+    logger.newline(PrintType::P_EXTRA);
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin assembling =====");
     optional<std::vector<MemEntry>> machine_code_blob = buildMachineCode(statements, *symbols);
     success &= machine_code_blob.isValid();
     logger.printf(PrintType::P_EXTRA, true, "===== end assembling =====");
-    logger.newline();
+    logger.newline(PrintType::P_EXTRA);
 
     if(! success) {
         logger.printf(PrintType::P_ERROR, true, "assembly failed");
@@ -100,7 +98,7 @@ lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::
 
         if(tokens[0].type == Token::Type::STRING) {
             // If the first token is a string, it could be a label, instruction, or pseudo-op.
-            if(encoder.isPseudo(tokens[0].str)) {
+            if(encoder.isStringPseudo(tokens[0].str)) {
                 // If the token is identified as a pseudo-op, mark it as such.
                 ret.base = StatementPiece{tokens[0], StatementPiece::Type::PSEUDO};
                 operand_start_idx = 1;
@@ -111,7 +109,7 @@ lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::
                     // The token has been identified to match a valid instruction string, but don't be too hasty
                     // in marking it as an instruction yet.
                     if(tokens.size() > 1 && tokens[1].type == Token::Type::STRING) {
-                        if(encoder.isPseudo(tokens[1].str)) {
+                        if(encoder.isStringPseudo(tokens[1].str)) {
                             // If there's a following token that's a pseudo-op, the user probably accidentally used
                             // an instruction name as a label, so mark it as such.
                             ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
@@ -133,12 +131,12 @@ lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::
                     // instruction.
                     if(tokens.size() > 1) {
                         if(tokens[1].type == Token::Type::STRING) {
-                            if(encoder.isPseudo(tokens[1].str)) {
+                            if(encoder.isStringPseudo(tokens[1].str)) {
                                 // If the following token is a pseudo-op, assume the user meant to type a label.
                                 ret.label = StatementPiece{tokens[0], StatementPiece::Type::LABEL};
                                 ret.base = StatementPiece{tokens[1], StatementPiece::Type::PSEUDO};
                                 operand_start_idx = 2;
-                            } else if(encoder.isValidReg(tokens[1].str)) {
+                            } else if(encoder.isStringValidReg(tokens[1].str)) {
                                 // If the following token is a register, assume the user meant to type an instruction...
                                 // unless the distance from any valid instruction is too large.
                                 if(dist_from_inst_name < INST_NAME_CLOSENESS) {
@@ -198,7 +196,7 @@ lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::
 
         for(uint32_t i = operand_start_idx; i < tokens.size(); i += 1) {
             if(tokens[i].type == Token::Type::STRING) {
-                if(encoder.isValidReg(tokens[i].str)) {
+                if(encoder.isStringValidReg(tokens[i].str)) {
                     ret.operands.emplace_back(tokens[i], StatementPiece::Type::REG);
                 } else {
                     ret.operands.emplace_back(tokens[i], StatementPiece::Type::STRING);
@@ -211,7 +209,7 @@ lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::
 
     std::stringstream statement_str;
     statement_str << ret;
-    logger.printf(PrintType::P_EXTRA, true, "\'%s\' ===> \'%s\'", ret.line.c_str(), statement_str.str().c_str());
+    logger.printf(PrintType::P_EXTRA, true, "%s", statement_str.str().c_str());
 
     return ret;
 }
@@ -226,7 +224,6 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
     bool found_orig = false;
     bool previous_region_ended = false;
     uint32_t cur_pc = 0;
-    uint32_t skipped_before_orig = 0, skipped_after_end = 0;
 
     // Iterate over the statements, setting the current PC every time a new .orig is found.
     while(cur_idx < statements.size()) {
@@ -252,10 +249,21 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
                 statement.pc = 0;
                 ++cur_idx;
                 logger.printf(PrintType::P_EXTRA, true, "setting current PC to 0x%0.4x", cur_pc);
+                if((cur_pc & 0xffff) != cur_pc) {
+#ifdef _LIBERAL_ASM
+                    logger.printf(PrintType::P_WARNING, true, "truncating .orig from 0x%0.4x to 0x%0.4x", cur_pc, cur_pc & 0xffff);
+                    logger.newline();
+#else
+                    logger.printf(PrintType::P_ERROR, true, ".orig 0x%0.4x is out of range", cur_pc);
+                    logger.newline();
+                    throw utils::exception(".orig is out of range");
+#endif
+                }
+                cur_pc &= 0xffff;
                 continue;
             } else if(encoder.isValidPseudoEnd(statement)) {
                 // If we see a .end, make sure we've seen at least one .orig already (indicated by found_orig being set).
-                if(! found_orig) { ++skipped_before_orig; }
+                if(! found_orig) { statement.valid = false; }
                 previous_region_ended = true;
                 statement.pc = 0;
                 ++cur_idx;
@@ -265,7 +273,7 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
 
         if(statement.label && ! statement.base) {
             // If the line is only a label, give it the same PC as the line it is pointing to.
-            if(! found_orig) { ++skipped_before_orig; }
+            if(! found_orig) { statement.valid = false; }
             statement.pc = cur_pc;
             ++cur_idx;
             continue;
@@ -283,8 +291,7 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
                 // If found_orig and previous_region_ended are both set, that means we have not set
                 // previous_region_ended to false yet, which happens when we find a new .orig. In other
                 // words, this means there is a line between a .end and a .orig that should be ignored.
-                statement.pc = 0;
-                ++skipped_after_end;
+                statement.valid = false;
                 ++cur_idx;
                 continue;
             }
@@ -295,8 +302,7 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
         } else {
             // If we make it here and haven't found a .orig yet, then there are extraneous lines at the beginning
             // of the file.
-            statement.pc = 0;
-            ++skipped_before_orig;
+            statement.valid = false;
         }
 
         // Finally, some pseudo-ops need to increment PC by more than 1.
@@ -311,17 +317,11 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
         ++cur_idx;
     }
 
-    // Trigger aggregate error/warning if there were extraneous lines at the beginning of the file.
-    if(found_orig && skipped_before_orig > 0) {
-#ifdef _LIBERAL_ASM
-        logger.printf(PrintType::P_WARNING, true, "ignoring %d invalid line(s) before .orig", skipped_before_orig);
-#else
-        logger.printf(PrintType::P_ERROR, true, "%d invalid line(s) before .orig", skipped_before_orig);
-#endif
+    // Trigger an error if there was no valid .orig in the file.
+    if(! found_orig) {
+        logger.printf(PrintType::P_ERROR, true, "could not find valid .orig");
         logger.newline();
-#ifndef _LIBERAL_ASM
-        throw utils::exception("invalid line(s) before .orig");
-#endif
+        throw utils::exception("could not find valid .orig");
     }
 
 #ifndef _LIBERAL_ASM
@@ -332,27 +332,6 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
         throw utils::exception("no .end at end of file");
     }
 #endif
-
-    // Trigger aggregate error/warning if there were extraneous lines whose PC could not be determined (i.e. in between
-    // a .end and a .orig.
-    if(skipped_after_end > 0) {
-#ifdef _LIBERAL_ASM
-        logger.printf(PrintType::P_WARNING, true, "ignoring %d invalid line(s) after .end", skipped_after_end);
-#else
-        logger.printf(PrintType::P_ERROR, true, "%d invalid line(s) after .end", skipped_after_end);
-#endif
-        logger.newline();
-#ifndef _LIBERAL_ASM
-        throw utils::exception("invalid line(s) after .end");
-#endif
-    }
-
-    // Trigger an error if there was no valid .orig in the file.
-    if(! found_orig) {
-        logger.printf(PrintType::P_ERROR, true, "could not find valid .orig");
-        logger.newline();
-        throw utils::exception("could not find valid .orig");
-    }
 }
 
 lc3::optional<SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::asmbl::StatementNew> const & statements)
@@ -397,6 +376,15 @@ lc3::optional<SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::as
 #endif
                 }
 
+#ifndef _LIBERAL_ASM
+                if('0' <= statement.label->str[0] && statement.label->str[0] <= '9') {
+                    logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label, "label cannot begin with number");
+                    logger.newline();
+                    success = false;
+                    continue;
+                }
+#endif
+
                 symbols[statement.label->str] = statement.pc;
                 logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' => 0x%0.4x", statement.label->str.c_str(),
                     statement.pc);
@@ -411,6 +399,164 @@ lc3::optional<SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::as
 lc3::optional<std::vector<MemEntry>> Assembler::buildMachineCode(std::vector<lc3::core::asmbl::StatementNew> const & statements,
     SymbolTable const & symbols)
 {
+    using namespace asmbl;
+    using namespace lc3::utils;
+
+    bool success = true;
+
+    std::vector<MemEntry> ret;
+
+    for(StatementNew const & statement : statements) {
+        if(! statement.valid) {
+#ifdef _LIBERAL_ASM
+            logger.asmPrintf(PrintType::P_WARNING, statement, "ignoring statement whose address cannot be determined");
+#else
+            logger.asmPrintf(PrintType::P_ERROR, statement, "cannot determine address for statement");
+            success = false;
+#endif
+            logger.newline();
+            continue;
+        }
+
+        if(statement.base) {
+            if(statement.base->type == StatementPiece::Type::PSEUDO) {
+                bool valid = encoder.validatePseudo(statement, symbols);
+                if(valid) {
+                    if(encoder.isValidPseudoOrig(statement)) {
+                        ret.emplace_back(encoder.encodePseudoOrig(statement), true, statement.line);
+                    } else if(encoder.isValidPseudoFill(statement, symbols)) {
+                        ret.emplace_back(encoder.getPseudoFill(statement, symbols), false, statement.line);
+                    } else if(encoder.isValidPseudoBlock(statement)) {
+                        for(uint32_t i = 0; i < encoder.getPseudoBlockSize(statement); i += 1) {
+                            ret.emplace_back(0, false, statement.line);
+                        }
+                    } else if(encoder.isValidPseudoString(statement)) {
+                        std::string const & value = encoder.getPseudoString(statement);
+                        for(char c : value) {
+                            ret.emplace_back(c, false, std::string(1, c));
+                        }
+                        ret.emplace_back(0, false, statement.line);
+                    }
+                }
+                success &= valid;
+            } else if(statement.base->type == StatementPiece::Type::INST) {
+                bool valid = encoder.validateInstruction(statement, symbols);
+                if(valid) {
+                    ret.emplace_back(encoder.encodeInstruction(statement, symbols), false, statement.line);
+                }
+                success &= valid;
+            } else {
+#ifdef _ENABLE_DEBUG
+                // buildStatement should never assign the base field anything other than INST or PSEUDO.
+                assert(false);
+#endif
+            }
+        }
+    }
+
+    if(success) { return ret; }
+    else { return {}; }
+
+
+    /*
+    uint32_t lines_after_end = 0;
+    bool found_end = false;
+    for(Statement const & state : statements) {
+        if(found_end) {
+            lines_after_end += 1;
+        }
+        for(StatementToken const & tok : state.invalid_operands) {
+#ifdef _LIBERAL_ASM
+            logger.asmPrintf(PrintType::P_WARNING, tok, "ignoring unexpected token");
+#else
+            logger.asmPrintf(PrintType::P_ERROR, tok, "unexpected token");
+            success = false;
+#endif
+            // TODO: I think the only time there will be an invalid operand is if there is a number at the beginning
+            // of the line (or multiple times before an instruction)
+            logger.printf(PrintType::P_NOTE, false, "labels cannot look like numbers");
+            logger.newline();
+        }
+
+        if(state.isInst()) {
+            optional<uint32_t> encoding = encodeInstruction(state, symbol_table);
+            if(encoding) {
+                ret.emplace_back(*encoding, false, state.line);
+            } else {
+                success = false;
+            }
+        } else if(checkIfValidPseudoStatement(state, ".orig", false)) {
+            lines_after_end = 0;
+            found_end = false;
+            ret.emplace_back(state.operands[0].num & 0xffff, true, state.line);
+        } else if(checkIfValidPseudoStatement(state, ".stringz", false)) {
+            std::string const & value = state.operands[0].str;
+            for(char c : value) {
+                ret.emplace_back(c, false, std::string(1, c));
+            }
+            ret.emplace_back((uint16_t) 0, false, state.line);
+        } else if(checkIfValidPseudoStatement(state, ".blkw", false)) {
+            for(uint32_t i = 0; i < (uint32_t) state.operands[0].num; i += 1) {
+                ret.emplace_back(0, false, state.line);
+            }
+        } else if(checkIfValidPseudoStatement(state, ".fill", false)) {
+            if(state.operands[0].type == TokenType::NUM) {
+                ret.emplace_back(state.operands[0].num, false, state.line);
+            } else if(state.operands[0].type == TokenType::LABEL) {
+                // TODO: this is a duplicate of the code in LabelOperand::encode
+                // eventually create a class for pseudo-ops that's similar to the instructions
+                StatementToken const & oper = state.operands[0];
+                auto search = symbol_table.find(oper.str);
+                if(search == symbol_table.end()) {
+                    logger.asmPrintf(PrintType::P_ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
+                    logger.newline();
+                    success = false;
+                    continue;
+                }
+
+                ret.emplace_back(search->second, false, state.line);
+            }
+        } else if(checkIfValidPseudoStatement(state, ".end", false)) {
+            found_end = true;
+        } else {
+            if(!state.hasLabel() && state.invalid_operands.size() == 0) {
+                StatementToken state_tok;
+                state_tok.line = state.line;
+#ifdef _LIBERAL_ASM
+                logger.asmPrintf(PrintType::P_WARNING, 0, state_tok.line.size(), state_tok, "ignoring invalid line");
+#else
+                logger.asmPrintf(PrintType::P_ERROR, 0, state_tok.line.size(), state_tok, "invalid line");
+                success = false;
+#endif
+                logger.newline();
+            }
+        }
+    }
+
+    if(!found_end) {
+#ifdef _LIBERAL_ASM
+        logger.printf(PrintType::P_WARNING, true, "assembly did not end in .end", lines_after_end);
+#else
+        logger.printf(PrintType::P_ERROR, true, "assembly did not end in .end", lines_after_end);
+#endif
+        logger.newline();
+#ifndef _LIBERAL_ASM
+        throw utils::exception("assembly did not end in .end");
+#endif
+    }
+
+    if(lines_after_end > 0) {
+#ifdef _LIBERAL_ASM
+        logger.printf(PrintType::P_WARNING, true, "ignoring %d lines after final .end", lines_after_end);
+#else
+        logger.printf(PrintType::P_ERROR, true, "%d invalid lines after final .end", lines_after_end);
+#endif
+        logger.newline();
+#ifndef _LIBERAL_ASM
+        throw utils::exception("assembly did not end in .end");
+#endif
+    }*/
+
 }
 
 /*
@@ -631,7 +777,7 @@ void Assembler::markRegAndPseudoTokens(std::vector<asmbl::StatementToken> & toke
         if(token.type == TokenType::STRING) {
             if(token.str.size() > 0 && token.str[0] == '.') {
                 token.type = TokenType::PSEUDO;
-            } else if(encoder.isValidReg(token.str)) {
+            } else if(encoder.isStringValidReg(token.str)) {
                 token.type = TokenType::REG;
             }
         }

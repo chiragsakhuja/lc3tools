@@ -17,7 +17,7 @@ namespace core
     class Assembler
     {
     public:
-        Assembler(lc3::utils::IPrinter & printer, uint32_t print_level) : logger(printer, print_level) {}
+        Assembler(lc3::utils::IPrinter & printer, uint32_t print_level) : logger(printer, print_level), encoder(logger) {}
         Assembler(Assembler const &) = default;
         Assembler & operator=(Assembler const &) = delete;
         ~Assembler(void) = default;
