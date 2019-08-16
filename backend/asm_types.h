@@ -7,7 +7,7 @@
 
 #include "optional.h"
 
-#define _LIBERAL_ASM
+//#define _LIBERAL_ASM
 
 namespace lc3
 {

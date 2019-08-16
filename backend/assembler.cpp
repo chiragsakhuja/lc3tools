@@ -416,8 +416,6 @@ std::pair<bool, std::vector<MemEntry>> Assembler::buildMachineCode(
     std::vector<MemEntry> ret;
 
     for(StatementNew const & statement : statements) {
-        bool assembled = true;
-
         if(! statement.valid) {
 #ifdef _LIBERAL_ASM
             logger.asmPrintf(PrintType::P_WARNING, statement, "ignoring statement whose address cannot be determined");
@@ -475,10 +473,10 @@ std::pair<bool, std::vector<MemEntry>> Assembler::buildMachineCode(
                     success &= valid;
                 }
             } else if(encoder.isInst(statement)) {
+                logger.printf(PrintType::P_EXTRA, true, "%s", msg.str().c_str());
                 bool valid = false;
                 optional<PIInstruction> candidate = encoder.validateInstruction(statement);
                 if(candidate) {
-                    logger.printf(PrintType::P_EXTRA, true, "%s", msg.str().c_str());
                     optional<uint32_t> value = encoder.encodeInstruction(statement, symbols, *candidate);
                     if(value) {
                         ret.emplace_back(value, false, statement.line);

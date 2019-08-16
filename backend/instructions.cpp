@@ -407,7 +407,7 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement
                 token_val);
             logger.newline();
 #else
-            logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large")
+            logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large");
             logger.newline();
             throw lc3::utils::exception("invalid immediate");
 #endif
