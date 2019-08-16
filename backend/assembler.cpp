@@ -16,7 +16,6 @@ using namespace lc3::core;
 static constexpr uint32_t INST_NAME_CLOSENESS = 2;
 
 std::stringstream Assembler::assemble(std::istream & buffer)
-//std::vector<uint8_t> Assembler::assemble(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -50,7 +49,11 @@ std::stringstream Assembler::assemble(std::istream & buffer)
         throw lc3::utils::exception("assembly failed");
     }
 
-    return std::stringstream();
+    std::stringstream ret;
+    for(MemEntry const & entry : machine_code_blob.second) {
+        ret << entry;
+    }
+    return ret;
 }
 
 std::vector<lc3::core::asmbl::StatementNew> Assembler::buildStatements(std::istream & buffer)

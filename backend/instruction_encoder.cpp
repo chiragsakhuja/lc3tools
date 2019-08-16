@@ -315,7 +315,7 @@ uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement, Symbo
     if(statement.operands[0].type == StatementPiece::Type::NUM) {
         return getNum(statement, statement.operands[0], true);
     } else {
-        return symbols.at(statement.operands[0].str);
+        return symbols.at(utils::toLower(statement.operands[0].str));
     }
 }
 
