@@ -478,7 +478,7 @@ std::pair<bool, std::vector<MemEntry>> Assembler::buildMachineCode(
                 if(candidate) {
                     optional<uint32_t> value = encoder.encodeInstruction(statement, symbols, *candidate);
                     if(value) {
-                        ret.emplace_back(value, false, statement.line);
+                        ret.emplace_back(*value, false, statement.line);
                         msg << utils::ssprintf("0x%0.4x", *value);
                         valid = true;
                         logger.printf(PrintType::P_EXTRA, true, "  0x%0.4x", *value);
