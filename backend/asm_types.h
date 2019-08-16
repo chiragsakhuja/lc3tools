@@ -26,41 +26,14 @@ namespace asmbl
             , INVALID
         } type;
 
-        Token(void);
-
         std::string str;
         int32_t num;
 
         uint32_t row, col, len;
         std::string line;
-    };
 
-    struct StatementToken : public Token
-    {
-        using Token::Token;
+        Token(void) : type(Token::Type::INVALID) {}
 
-        StatementToken(void);
-        StatementToken(Token const & that);
-
-        uint32_t lev_dist;
-        uint32_t pc;
-    };
-
-    struct Statement
-    {
-        bool isPseudo(void) const;
-        bool isInst(void) const;
-        bool hasLabel(void) const;
-        bool isLabel(void) const;
-
-        StatementToken label;
-        StatementToken inst_or_pseudo;
-        uint32_t pc;
-
-        std::vector<StatementToken> operands;
-        std::vector<StatementToken> invalid_operands;
-
-        std::string line;
     };
 
     struct StatementPiece
@@ -111,8 +84,6 @@ namespace asmbl
 };
 };
 
-std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementToken const & x);
-std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Statement const & x);
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementPiece const & piece);
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementNew const & statement);
 

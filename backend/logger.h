@@ -46,18 +46,14 @@ namespace utils
         void setFilename(std::string const & filename) { this->filename = filename; }
 
         template<typename ... Args>
-        void asmPrintf(PrintType level, lc3::core::asmbl::StatementToken const & token, std::string const & format,
-            Args ... args) const;
-        template<typename ... Args>
-        void asmPrintf(PrintType level, uint32_t row_num, uint32_t col_num, uint32_t len, std::string const & line,
-            std::string const & format, Args ... args) const;
-
-        template<typename ... Args>
         void asmPrintf(PrintType level, lc3::core::asmbl::StatementNew const & statement,
             lc3::core::asmbl::StatementPiece const & piece, std::string const & format, Args ... args) const;
         template<typename ... Args>
         void asmPrintf(PrintType level, lc3::core::asmbl::StatementNew const & statement, std::string const & format,
             Args ... args) const;
+        template<typename ... Args>
+        void asmPrintf(PrintType level, uint32_t row_num, uint32_t col_num, uint32_t len, std::string const & line,
+            std::string const & format, Args ... args) const;
 
         std::string filename;
     };
@@ -122,13 +118,6 @@ void lc3::utils::Logger::printf(lc3::utils::PrintType type, bool bold, std::stri
 
         printer.newline();
     }
-}
-
-template<typename ... Args>
-void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
-    lc3::core::asmbl::StatementToken const & token, std::string const & format, Args ... args) const
-{
-    asmPrintf(level, token.row, token.col, token.len, token.line, format, args...);
 }
 
 template<typename ... Args>

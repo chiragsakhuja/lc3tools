@@ -44,10 +44,6 @@ namespace asmbl
         optional<uint32_t> encodeInstruction(StatementNew const & statement, SymbolTable const & symbols,
             PIInstruction pattern) const;
 
-        std::vector<std::pair<PIInstruction, uint32_t>> getInstructionCandidates(Statement const & state) const;
-        optional<uint32_t> encodeInstruction(Statement const & state, PIInstruction pattern, SymbolTable const & symbols,
-            lc3::utils::AssemblerLogger & logger) const;
-
     private:
         lc3::utils::AssemblerLogger & logger;
 
@@ -58,7 +54,6 @@ namespace asmbl
 
         uint32_t levDistance(std::string const & a, std::string const & b) const;
         uint32_t levDistanceHelper(std::string const & a, uint32_t a_len, std::string const & b, uint32_t b_len) const;
-        OperType tokenTypeToOperType(Token::Type type) const;
     };
 };
 };

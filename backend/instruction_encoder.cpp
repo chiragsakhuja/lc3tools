@@ -284,29 +284,7 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
         return {};
     }
 
-    // Finally, confirm that any string operands are actually valid symbols
-    /*
-     *bool valid = true;
-     *for(StatementPiece const & operand : statement.operands) {
-     *    if(operand.type == StatementPiece::Type::STRING) {
-     *        if(symbols.find(operand.str) == symbols.end()) {
-     *            logger.asmPrintf(PrintType::P_ERROR, statement, operand, "could not find label");
-     *            logger.newline();
-     *            valid = false;
-     *        }
-     *    }
-     *}
-     */
-
-    /*
-     *if(valid) {
-     */
-        return std::get<0>(candidates[0]);
-    /*
-     *} else {
-     *    return {};
-     *}
-     */
+    return std::get<0>(candidates[0]);
 }
 
 uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPiece const & piece, bool log_enable) const
@@ -419,62 +397,6 @@ uint32_t InstructionEncoder::getDistanceToNearestInstructionName(std::string con
     return min_distance;
 }
 
-std::vector<std::pair<lc3::core::PIInstruction, uint32_t>> InstructionEncoder::getInstructionCandidates(
-    Statement const & state) const
-{
-    std::vector<std::pair<PIInstruction, uint32_t>> ret;
-    StatementToken const & search = state.inst_or_pseudo;
-
-/*
- *    if(search.type == Token::Type::INST) {
- *        for(auto const & inst : instructions_by_name) {
- *            uint32_t inst_dist = levDistance(inst.first, search.str);
- *            if(inst_dist <= search.lev_dist) {
- *                for(PIInstruction inst_pattern : inst.second) {
- *                    std::string op_string, search_string;
- *                    for(PIOperand op : inst_pattern->operands) {
- *                        if(op->type != OperType::FIXED) {
- *                            op_string += '0' + static_cast<char>(op->type);
- *                        }
- *                    }
- *                    for(StatementToken const & op : state.operands) {
- *                        search_string += '0' + static_cast<char>(tokenTypeToOperType(op.type));
- *                    }
- *
- *                    uint32_t op_dist = levDistance(op_string, search_string);
- *                    if(op_dist < 3) {
- *                        if(inst_dist + op_dist == 0) {
- *                            ret.clear();
- *                            ret.push_back(std::make_pair(inst_pattern, inst_dist + op_dist));
- *                            break;
- *                        }
- *
- *                        ret.push_back(std::make_pair(inst_pattern, inst_dist + op_dist));
- *                    }
- *                }
- *            }
- *        }
- *    }
- */
-
-    return ret;
-}
-
-lc3::core::OperType InstructionEncoder::tokenTypeToOperType(Token::Type type) const
-{
-    if(type == Token::Type::NUM) {
-        return OperType::NUM;
-    /*
-     *} else if(type == Token::Type::REG) {
-     *    return OperType::REG;
-     *} else if(type == Token::Type::LABEL) {
-     *    return OperType::LABEL;
-     */
-    } else {
-        return OperType::INVALID;
-    }
-}
-
 uint32_t InstructionEncoder::levDistance(std::string const & a, std::string const & b) const
 {
     return levDistanceHelper(a, a.size(), b, b.size());
@@ -495,42 +417,4 @@ uint32_t InstructionEncoder::levDistanceHelper(std::string const & a, uint32_t a
     costs[2] = levDistanceHelper(a, a_len - 1, b, b_len - 1) + cost;
 
     return *std::min_element(std::begin(costs), std::end(costs));
-}
-
-lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(Statement const & state, lc3::core::PIInstruction pattern,
-    lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) const
-{
-    uint32_t encoding = 0;
-    uint32_t oper_count = 0;
-    bool first = true;
-
-    for(PIOperand op : pattern->operands) {
-        StatementToken tok;
-        if(op->type == OperType::FIXED) {
-            if(first) {
-                first = false;
-                tok = state.inst_or_pseudo;
-            }
-        } else {
-            tok = state.operands[oper_count];
-        }
-
-        encoding <<= op->width;
-        try {
-            optional<uint32_t> op_encoding = op->encode(tok, oper_count, regs, symbols, logger);
-            if(op_encoding) {
-                encoding |= *op_encoding;
-            } else {
-                return {};
-            }
-        } catch(lc3::utils::exception const & e) {
-            return {};
-        }
-
-        if(op->type != OperType::FIXED) {
-            oper_count += 1;
-        }
-    }
-
-    return encoding;
 }

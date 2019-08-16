@@ -280,19 +280,6 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(std::make_shared<HALTInstruction>());
 }
 
-lc3::optional<uint32_t> FixedOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
-    std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
-    lc3::utils::AssemblerLogger & logger)
-{
-    (void) oper;
-    (void) oper_count;
-    (void) regs;
-    (void) symbols;
-    (void) logger;
-
-    return value & ((1 << width) - 1);
-}
-
 lc3::optional<uint32_t> FixedOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
     SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
@@ -305,75 +292,16 @@ lc3::optional<uint32_t> FixedOperand::encode(asmbl::StatementNew const & stateme
     return value & ((1 << width) - 1);
 }
 
-
-lc3::optional<uint32_t> RegOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
-    std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
-    lc3::utils::AssemblerLogger & logger)
-{
-    (void) symbols;
-
-    uint32_t token_val = regs.at(oper.str) & ((1 << width) - 1);
-
-    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d.%d: reg %s => %s", oper.row + 1, oper_count, oper.str.c_str(),
-        lc3::utils::udecToBin(token_val, width).c_str());
-
-    return token_val;
-}
-
 lc3::optional<uint32_t> RegOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
     SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
     (void) statement;
     (void) symbols;
 
-    uint32_t token_val = regs.at(piece.str) & ((1 << width) - 1);
+    uint32_t token_val = regs.at(utils::toLower(piece.str)) & ((1 << width) - 1);
 
-    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  reg %s => %s",
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  reg %s := %s",
         piece.str.c_str(), lc3::utils::udecToBin(token_val, width).c_str());
-
-    return token_val;
-}
-
-lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
-    std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
-    lc3::utils::AssemblerLogger & logger)
-{
-    (void) regs;
-    (void) symbols;
-
-    uint32_t token_val = oper.num & ((1 << width) - 1);
-
-    if(sext) {
-        if((int32_t) oper.num < -(1 << (width - 1)) || (int32_t) oper.num > ((1 << (width - 1)) - 1)) {
-#ifdef _LIBERAL_ASM
-            lc3::utils::PrintType p_type = lc3::utils::PrintType::P_WARNING;
-#else
-            lc3::utils::PrintType p_type = lc3::utils::PrintType::P_ERROR;
-#endif
-            logger.asmPrintf(p_type, oper, "immediate %d truncated to %d", oper.num,
-                lc3::utils::sextTo32(token_val, width));
-            logger.newline();
-#ifndef _LIBERAL_ASM
-            throw lc3::utils::exception("invalid immediate");
-#endif
-        }
-    } else {
-        if(oper.num > ((1 << width) - 1)) {
-#ifdef _LIBERAL_ASM
-            lc3::utils::PrintType p_type = lc3::utils::PrintType::P_WARNING;
-#else
-            lc3::utils::PrintType p_type = lc3::utils::PrintType::P_ERROR;
-#endif
-            logger.asmPrintf(p_type, oper, "immediate %d truncated to %u", oper.num, token_val);
-            logger.newline();
-#ifndef _LIBERAL_ASM
-            throw lc3::utils::exception("invalid immediate");
-#endif
-        }
-    }
-
-    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d.%d: imm %d => %s", oper.row + 1, oper_count, oper.num,
-        lc3::utils::udecToBin(token_val, width).c_str());
 
     return token_val;
 }
