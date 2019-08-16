@@ -61,7 +61,7 @@ std::vector<lc3::core::asmbl::StatementNew> Assembler::buildStatements(std::istr
 {
     using namespace asmbl;
 
-    Tokenizer tokenizer(buffer);
+    Tokenizer tokenizer{buffer};
     std::vector<StatementNew> statements;
 
     while(! tokenizer.isDone()) {
@@ -416,7 +416,7 @@ std::pair<bool, std::vector<MemEntry>> Assembler::buildMachineCode(
     std::vector<MemEntry> ret;
 
     for(StatementNew const & statement : statements) {
-        bool converted = true;
+        bool assembled = true;
 
         if(! statement.valid) {
 #ifdef _LIBERAL_ASM
@@ -460,26 +460,44 @@ std::pair<bool, std::vector<MemEntry>> Assembler::buildMachineCode(
                             statement.pc + value.size(), value.c_str());
                     } else if(encoder.isValidPseudoEnd(statement)) {
                         msg << "(end)";
+                    } else {
+#ifdef _ENABLE_DEBUG
+                        // This should never happen because we already validated the pseudo-op.
+                        assert(false);
+#endif
+                    }
+
+                    if(valid) {
+                        logger.printf(PrintType::P_EXTRA, true, "%s", msg.str().c_str());
+                    } else {
+                        logger.printf(PrintType::P_EXTRA, true, "%s not assembled", msg.str().c_str());
+                    }
+                    success &= valid;
+                }
+            } else if(encoder.isInst(statement)) {
+                bool valid = false;
+                optional<PIInstruction> candidate = encoder.validateInstruction(statement);
+                if(candidate) {
+                    logger.printf(PrintType::P_EXTRA, true, "%s", msg.str().c_str());
+                    optional<uint32_t> value = encoder.encodeInstruction(statement, symbols, *candidate);
+                    if(value) {
+                        ret.emplace_back(value, false, statement.line);
+                        msg << utils::ssprintf("0x%0.4x", *value);
+                        valid = true;
+                        logger.printf(PrintType::P_EXTRA, true, "  0x%0.4x", *value);
                     }
                 }
-                converted &= valid;
-            } else if(encoder.isInst(statement)) {
-                optional<PIInstruction> candidate = encoder.validateInstruction(statement, symbols);
-                if(candidate) {
-                    ret.emplace_back(encoder.encodeInstruction(statement, symbols, *candidate), false, statement.line);
+
+                if(! valid) {
+                    logger.printf(PrintType::P_EXTRA, true, "  not assembled");
                 }
-                converted &= candidate.isValid();
+                success &= valid;
             } else {
 #ifdef _ENABLE_DEBUG
                 // buildStatement should never assign the base field anything other than INST or PSEUDO.
                 assert(false);
 #endif
             }
-
-            if(converted) {
-                logger.printf(PrintType::P_EXTRA, true, "%s", msg.str().c_str());
-            }
-            success &= converted;
         }
     }
 

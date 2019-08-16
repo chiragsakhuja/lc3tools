@@ -195,8 +195,7 @@ bool InstructionEncoder::validatePseudoOperands(StatementNew const & statement, 
     return true;
 }
 
-lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(StatementNew const & statement,
-    SymbolTable const & symbols) const
+lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(StatementNew const & statement) const
 {
     using namespace lc3::utils;
 
@@ -286,26 +285,28 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
     }
 
     // Finally, confirm that any string operands are actually valid symbols
-    bool valid = true;
-    std::cout << "wat\n";
-    for(auto x : symbols) {
-        std::cout << x.first << ": " << x.second << "\n";
-    }
-    for(StatementPiece const & operand : statement.operands) {
-        if(operand.type == StatementPiece::Type::STRING) {
-            if(symbols.find(operand.str) == symbols.end()) {
-                logger.asmPrintf(PrintType::P_ERROR, statement, operand, "could not find label");
-                logger.newline();
-                valid = false;
-            }
-        }
-    }
+    /*
+     *bool valid = true;
+     *for(StatementPiece const & operand : statement.operands) {
+     *    if(operand.type == StatementPiece::Type::STRING) {
+     *        if(symbols.find(operand.str) == symbols.end()) {
+     *            logger.asmPrintf(PrintType::P_ERROR, statement, operand, "could not find label");
+     *            logger.newline();
+     *            valid = false;
+     *        }
+     *    }
+     *}
+     */
 
-    if(valid) {
+    /*
+     *if(valid) {
+     */
         return std::get<0>(candidates[0]);
-    } else {
-        return {};
-    }
+    /*
+     *} else {
+     *    return {};
+     *}
+     */
 }
 
 uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPiece const & piece, bool log_enable) const
@@ -364,10 +365,42 @@ std::string const & InstructionEncoder::getPseudoString(StatementNew const & sta
     return statement.operands[0].str;
 }
 
-uint32_t InstructionEncoder::encodeInstruction(StatementNew const & statement, SymbolTable const & symbols,
-    PIInstruction candidate) const
+lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(StatementNew const & statement,
+    SymbolTable const & symbols, PIInstruction pattern) const
 {
-    return 0;
+    // The first "operand" of an instruction encoding is the op-code.
+    optional<uint32_t> inst_encoding = pattern->operands[0]->encode(statement, *statement.base, regs, symbols, logger);
+    uint32_t encoding;
+    if(inst_encoding) {
+        encoding = *inst_encoding;
+    } else {
+        return {};
+    }
+
+    // Iterate over the remaining "operands" of the instruction encoding.
+    uint32_t operand_idx = 0;
+    for(uint32_t i = 1; i < pattern->operands.size(); i += 1) {
+        PIOperand operand = pattern->operands[i];
+
+        encoding <<= operand->width;
+        try {
+            optional<uint32_t> operand_encoding = operand->encode(statement, statement.operands[operand_idx], regs,
+                symbols, logger);
+            if(operand_encoding) {
+                encoding |= *operand_encoding;
+            } else {
+                return {};
+            }
+        } catch(lc3::utils::exception const & e) {
+            return {};
+        }
+
+        if(operand->type != OperType::FIXED) {
+            operand_idx += 1;
+        }
+    }
+
+    return encoding;
 }
 
 uint32_t InstructionEncoder::getDistanceToNearestInstructionName(std::string const & search) const
@@ -468,7 +501,6 @@ lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(Statement const & 
     lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) const
 {
     uint32_t encoding = 0;
-
     uint32_t oper_count = 0;
     bool first = true;
 

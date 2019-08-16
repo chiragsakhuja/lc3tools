@@ -33,7 +33,7 @@ namespace asmbl
         uint32_t getDistanceToNearestInstructionName(std::string const & search) const;
 
         bool validatePseudo(StatementNew const & statement, SymbolTable const & symbols) const;
-        optional<PIInstruction> validateInstruction(StatementNew const & statement, SymbolTable const & symbols) const;
+        optional<PIInstruction> validateInstruction(StatementNew const & statement) const;
 
         uint32_t getNum(StatementNew const & statement, StatementPiece const & piece, bool log_enable = false) const;
         uint32_t getPseudoOrig(StatementNew const & statement) const;
@@ -41,8 +41,8 @@ namespace asmbl
         uint32_t getPseudoBlockSize(StatementNew const & statement) const;
         uint32_t getPseudoStringSize(StatementNew const & statement) const;
         std::string const & getPseudoString(StatementNew const & statement) const;
-        uint32_t encodeInstruction(StatementNew const & statement, SymbolTable const & symbols,
-            PIInstruction candidate) const;
+        optional<uint32_t> encodeInstruction(StatementNew const & statement, SymbolTable const & symbols,
+            PIInstruction pattern) const;
 
         std::vector<std::pair<PIInstruction, uint32_t>> getInstructionCandidates(Statement const & state) const;
         optional<uint32_t> encodeInstruction(Statement const & state, PIInstruction pattern, SymbolTable const & symbols,

@@ -43,6 +43,8 @@ namespace core
         virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
             lc3::utils::AssemblerLogger & logger) = 0;
+        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) = 0;
         bool isEqualType(OperType other) const;
     };
 
@@ -78,10 +80,10 @@ namespace core
         InstructionHandler(void);
         virtual ~InstructionHandler(void) = default;
 
-        std::map<std::string, uint32_t> const & getRegs(void) { return regs; }
+        SymbolTable const & getRegs(void) { return regs; }
     protected:
         std::vector<PIInstruction> instructions;
-        std::map<std::string, uint32_t> regs;
+        SymbolTable regs;
     };
 
     class FixedOperand : public IOperand
@@ -92,6 +94,8 @@ namespace core
         virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
             lc3::utils::AssemblerLogger & logger) override;
+        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
     class RegOperand : public IOperand
@@ -101,6 +105,8 @@ namespace core
         virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
             lc3::utils::AssemblerLogger & logger) override;
+        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
     class NumOperand : public IOperand
@@ -112,6 +118,8 @@ namespace core
         virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
             lc3::utils::AssemblerLogger & logger) override;
+        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
     class LabelOperand : public IOperand
@@ -121,6 +129,8 @@ namespace core
         virtual optional<uint32_t> encode(asmbl::StatementToken const & oper, uint32_t oper_count,
             std::map<std::string, uint32_t> const & registers, SymbolTable const & labels,
             lc3::utils::AssemblerLogger & logger) override;
+        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
     class ADDRInstruction : public IInstruction

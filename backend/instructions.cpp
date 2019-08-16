@@ -293,6 +293,19 @@ lc3::optional<uint32_t> FixedOperand::encode(asmbl::StatementToken const & oper,
     return value & ((1 << width) - 1);
 }
 
+lc3::optional<uint32_t> FixedOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
+{
+    (void) statement;
+    (void) piece;
+    (void) regs;
+    (void) symbols;
+    (void) logger;
+
+    return value & ((1 << width) - 1);
+}
+
+
 lc3::optional<uint32_t> RegOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
     std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
     lc3::utils::AssemblerLogger & logger)
@@ -303,6 +316,20 @@ lc3::optional<uint32_t> RegOperand::encode(asmbl::StatementToken const & oper, u
 
     logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d.%d: reg %s => %s", oper.row + 1, oper_count, oper.str.c_str(),
         lc3::utils::udecToBin(token_val, width).c_str());
+
+    return token_val;
+}
+
+lc3::optional<uint32_t> RegOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
+{
+    (void) statement;
+    (void) symbols;
+
+    uint32_t token_val = regs.at(piece.str) & ((1 << width) - 1);
+
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  reg %s => %s",
+        piece.str.c_str(), lc3::utils::udecToBin(token_val, width).c_str());
 
     return token_val;
 }
@@ -351,6 +378,48 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementToken const & oper, u
     return token_val;
 }
 
+lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
+{
+    using namespace lc3::utils;
+
+    (void) regs;
+    (void) symbols;
+
+    uint32_t token_val = piece.num & ((1 << width) - 1);
+
+    if(sext) {
+        if((int32_t) piece.num < -(1 << (width - 1)) || (int32_t) piece.num > ((1 << (width - 1)) - 1)) {
+#ifdef _LIBERAL_ASM
+            logger.asmPrintf(PrintType::P_WARNING, statement, piece, "immediate %d truncated to %d", piece.num,
+                lc3::utils::sextTo32(token_val, width));
+            logger.newline();
+#else
+            logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large");
+            logger.newline();
+            throw lc3::utils::exception("invalid immediate");
+#endif
+        }
+    } else {
+        if(piece.num > ((1 << width) - 1)) {
+#ifdef _LIBERAL_ASM
+            logger.asmPrintf(PrintType::P_WARNING, statement, piece, "immediate %u truncated to %u", piece.num,
+                token_val);
+            logger.newline();
+#else
+            logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large")
+            logger.newline();
+            throw lc3::utils::exception("invalid immediate");
+#endif
+        }
+    }
+
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  imm %d => %s", piece.num,
+        lc3::utils::udecToBin(token_val, width).c_str());
+
+    return token_val;
+}
+
 lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
     std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
     lc3::utils::AssemblerLogger & logger)
@@ -368,6 +437,26 @@ lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementToken const & oper,
 
     logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper.row + 1, oper_count,
         oper.str.c_str(), search->second, lc3::utils::udecToBin((uint32_t) token_val, width).c_str());
+
+    return token_val;
+}
+
+lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
+{
+    (void) regs;
+
+    auto search = symbols.find(piece.str);
+    if(search == symbols.end()) {
+        logger.asmPrintf(lc3::utils::PrintType::P_ERROR, statement, piece, "could not find label");
+        logger.newline();
+        return {};
+    }
+
+    uint32_t token_val = (((int32_t) search->second) - (statement.pc + 1)) & ((1 << width) - 1);
+
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  label %s (0x%0.4x) => %s", piece.str.c_str(), search->second,
+        lc3::utils::udecToBin((uint32_t) token_val, width).c_str());
 
     return token_val;
 }
