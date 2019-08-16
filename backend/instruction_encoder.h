@@ -40,7 +40,7 @@ namespace asmbl
         uint32_t getPseudoFill(StatementNew const & statement, SymbolTable const & symbols) const;
         uint32_t getPseudoBlockSize(StatementNew const & statement) const;
         uint32_t getPseudoStringSize(StatementNew const & statement) const;
-        std::string const & getPseudoString(StatementNew const & statement) const;
+        std::string getPseudoString(StatementNew const & statement) const;
         optional<uint32_t> encodeInstruction(StatementNew const & statement, SymbolTable const & symbols,
             PIInstruction pattern) const;
 

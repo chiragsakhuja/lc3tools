@@ -335,12 +335,27 @@ uint32_t InstructionEncoder::getPseudoStringSize(StatementNew const & statement)
     return statement.operands[0].str.size() + 1;
 }
 
-std::string const & InstructionEncoder::getPseudoString(StatementNew const & statement) const
+std::string InstructionEncoder::getPseudoString(StatementNew const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoString(statement));
 #endif
-    return statement.operands[0].str;
+    std::string const & str = statement.operands[0].str;
+    std::string ret;
+    for(uint32_t i = 0; i < str.size(); i += 1) {
+        if(str[i] == '\\' && i + 1 < str.size()) {
+            switch(str[i + 1]) {
+                case '\\': ret += '\\'; i += 1; break;
+                case 'n': ret += '\n'; i += 1; break;
+                case 'r': ret += '\r'; i += 1; break;
+                case 't': ret += '\t'; i += 1; break;
+                default: ret += '\\';
+            }
+        } else {
+            ret += str[i];
+        }
+    }
+    return ret;
 }
 
 lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(StatementNew const & statement,
