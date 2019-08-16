@@ -342,29 +342,8 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement
         }
     }
 
-    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  imm %d => %s", piece.num,
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  imm %d := %s", piece.num,
         lc3::utils::udecToBin(token_val, width).c_str());
-
-    return token_val;
-}
-
-lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementToken const & oper, uint32_t oper_count,
-    std::map<std::string, uint32_t> const & regs, SymbolTable const & symbols,
-    lc3::utils::AssemblerLogger & logger)
-{
-    (void) regs;
-
-    auto search = symbols.find(oper.str);
-    if(search == symbols.end()) {
-        logger.asmPrintf(lc3::utils::PrintType::P_ERROR, oper, "unknown label \'%s\'", oper.str.c_str());
-        logger.newline();
-        return {};
-    }
-
-    uint32_t token_val = (((int32_t) search->second) - (oper.pc + 1)) & ((1 << width) - 1);
-
-    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d.%d: label %s (0x%0.4x) => %s", oper.row + 1, oper_count,
-        oper.str.c_str(), search->second, lc3::utils::udecToBin((uint32_t) token_val, width).c_str());
 
     return token_val;
 }
@@ -374,7 +353,7 @@ lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementNew const & stateme
 {
     (void) regs;
 
-    auto search = symbols.find(piece.str);
+    auto search = symbols.find(utils::toLower(piece.str));
     if(search == symbols.end()) {
         logger.asmPrintf(lc3::utils::PrintType::P_ERROR, statement, piece, "could not find label");
         logger.newline();
@@ -383,7 +362,7 @@ lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementNew const & stateme
 
     uint32_t token_val = (((int32_t) search->second) - (statement.pc + 1)) & ((1 << width) - 1);
 
-    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  label %s (0x%0.4x) => %s", piece.str.c_str(), search->second,
+    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  label %s (0x%0.4x) := %s", piece.str.c_str(), search->second,
         lc3::utils::udecToBin((uint32_t) token_val, width).c_str());
 
     return token_val;

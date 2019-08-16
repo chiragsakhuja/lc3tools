@@ -58,7 +58,7 @@ bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, Symbo
 
     if(isValidPseudoFill(statement, log_enable)) {
         if(statement.operands[0].type == StatementPiece::Type::STRING &&
-            symbols.find(statement.operands[0].str) == symbols.end())
+            symbols.find(utils::toLower(statement.operands[0].str)) == symbols.end())
         {
             if(log_enable) {
                 logger.asmPrintf(PrintType::P_ERROR, statement, statement.operands[0],
@@ -215,7 +215,7 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
     }
 
     for(auto const & candidate_inst_name : instructions_by_name) {
-        uint32_t inst_name_dist = levDistance(statement.base->str, candidate_inst_name.first);
+        uint32_t inst_name_dist = levDistance(utils::toLower(statement.base->str), candidate_inst_name.first);
         if(inst_name_dist < 2) {
             for(PIInstruction candidate_inst : candidate_inst_name.second) {
                 // Convert the operand types of the candidate and the statement into a string so that Levenshtein
@@ -269,7 +269,7 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
             statement.base->str.c_str());
         uint32_t candidate_count = 0;
         for(Candidate const & candidate : candidates) {
-            if(statement.base->str == std::get<0>(candidate)->name) {
+            if(utils::toLower(statement.base->str) == std::get<0>(candidate)->name) {
                 if(candidate_count < 3) {
                     logger.printf(PrintType::P_NOTE, false, "did you mean \'%s\'?",
                         std::get<0>(candidate)->toFormatString().c_str());

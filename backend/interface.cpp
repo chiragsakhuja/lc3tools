@@ -571,6 +571,7 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
     std::chrono::duration<double> elapsed = end - start;
 
     printer.print("elapsed time: " + std::to_string(elapsed.count() * 1000) + " ms");
+    printer.newline();
 #endif
 
     printer.print("assembly successful\n");
@@ -631,6 +632,7 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
     std::chrono::duration<double> elapsed = end - start;
 
     printer.print("elapsed time: " + std::to_string(elapsed.count() * 1000) + " ms");
+    printer.newline();
 #endif
 
     printer.print("conversion successful\n");

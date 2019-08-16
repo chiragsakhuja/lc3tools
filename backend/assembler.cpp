@@ -357,7 +357,7 @@ std::pair<bool, SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::
                     continue;
                 }
 
-                auto search = symbols.find(statement.label->str);
+                auto search = symbols.find(utils::toLower(statement.label->str));
                 if(search != symbols.end()) {
                     uint32_t old_val = search->second;
 #ifdef _LIBERAL_ASM
@@ -391,7 +391,7 @@ std::pair<bool, SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::
                 }
 #endif
 
-                symbols[statement.label->str] = statement.pc;
+                symbols[utils::toLower(statement.label->str)] = statement.pc;
                 logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' := 0x%0.4x", statement.label->str.c_str(),
                     statement.pc);
             }
