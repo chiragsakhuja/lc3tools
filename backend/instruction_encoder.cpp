@@ -332,7 +332,7 @@ uint32_t InstructionEncoder::getPseudoStringSize(StatementNew const & statement)
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoString(statement));
 #endif
-    return statement.operands[0].str.size() + 1;
+    return getPseudoString(statement).size() + 1;
 }
 
 std::string InstructionEncoder::getPseudoString(StatementNew const & statement) const
@@ -349,6 +349,7 @@ std::string InstructionEncoder::getPseudoString(StatementNew const & statement) 
                 case 'n': ret += '\n'; i += 1; break;
                 case 'r': ret += '\r'; i += 1; break;
                 case 't': ret += '\t'; i += 1; break;
+                case '"': ret += '"'; i += 1; break;
                 default: ret += '\\';
             }
         } else {

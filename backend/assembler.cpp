@@ -59,6 +59,7 @@ std::stringstream Assembler::assemble(std::istream & buffer)
 std::vector<lc3::core::asmbl::StatementNew> Assembler::buildStatements(std::istream & buffer)
 {
     using namespace asmbl;
+    using namespace lc3::utils;
 
     Tokenizer tokenizer{buffer};
     std::vector<StatementNew> statements;
@@ -68,6 +69,11 @@ std::vector<lc3::core::asmbl::StatementNew> Assembler::buildStatements(std::istr
         Token cur_token;
         while(! (tokenizer >> cur_token) && cur_token.type != Token::Type::EOL) {
             tokens.push_back(cur_token);
+#ifdef _ENABLE_DEBUG
+            std::stringstream token_str;
+            token_str << cur_token;
+            logger.printf(PrintType::P_EXTRA, true, " (token) %s", token_str.str().c_str());
+#endif
         }
 
         if(! tokenizer.isDone()) {

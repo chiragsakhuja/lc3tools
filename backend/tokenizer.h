@@ -33,6 +33,7 @@ namespace asmbl
         bool done;
 
         bool convertStringToNum(std::string const & str, int32_t & val) const;
+        std::istream & getline(std::istream & is, std::string & t) const;
     };
 };
 };

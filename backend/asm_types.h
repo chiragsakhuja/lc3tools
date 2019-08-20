@@ -84,6 +84,7 @@ namespace asmbl
 };
 };
 
+std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Token const & token);
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementPiece const & piece);
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementNew const & statement);
 

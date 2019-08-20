@@ -1,6 +1,25 @@
 #include "asm_types.h"
 #include "utils.h"
 
+std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Token const & token)
+{
+    using namespace lc3::core::asmbl;
+
+    out << token.row << ":" << token.col << ".." << (token.col + token.len - 1) << ": ";
+    if(token.type == Token::Type::STRING) {
+        out << token.str << " (str)";
+    } else if(token.type == Token::Type::EOL) {
+        out << "(EOL)";
+    } else if(token.type == Token::Type::NUM) {
+        out << token.num << " (num)";
+    } else {
+        out << "(invalid)";
+    }
+
+    //out << " [" << token.line << "]";
+    return out;
+}
+
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementPiece const & piece)
 {
     using namespace lc3::core::asmbl;

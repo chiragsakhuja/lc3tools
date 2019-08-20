@@ -6,16 +6,42 @@ lc3::core::asmbl::Tokenizer::Tokenizer(std::istream & buffer) : buffer(buffer), 
     return_new_line(false), row(-1), col(0), done(false)
 { }
 
+std::istream & lc3::core::asmbl::Tokenizer::getline(std::istream & is, std::string & t) const
+{
+    t.clear();
+
+    std::istream::sentry se(is, true);
+    std::streambuf * sb = is.rdbuf();
+
+    while(true) {
+        int c = sb->sbumpc();
+        switch(c) {
+            case '\n': return is;
+            case '\r':
+                if(sb->sgetc() == '\n') {
+                    sb->sbumpc();
+                }
+                return is;
+            case std::streambuf::traits_type::eof():
+                if(t.empty()) {
+                    is.setstate(std::ios::eofbit);
+                }
+                return is;
+            default:
+                t += (char) c;
+        }
+    }
+
+    return is;
+}
+
 lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & token)
 {
-    // if the buffer is empty, just return
     if(done) {
         return *this;
     }
 
-    // check if we need to fetch a new line i.e. previous line is done being tokenized
     if(get_new_line) {
-        // check if an end-of-statement token should be returned
         if(return_new_line) {
             return_new_line = false;
             token.type = Token::Type::EOL;
@@ -25,58 +51,61 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
         col = 0;
         row += 1;
 
-        // get another line and check if we've reached the end of the file
-        if(! std::getline(buffer, line)) {
+        // Mark as done if we've reached EOF.
+        if(getline(buffer, line).eof()) {
             done = true;
             return *this;
         }
 
-        // remove everything following a comment and any remaining trailing whitespace
-        size_t search_pos = line.find(';');
-        if(search_pos != std::string::npos) {
-            line = line.substr(0, search_pos);
+        // Ignore comments directly in tokenizer.
+        size_t search = line.find(';');
+        if(search != std::string::npos) {
+            line = line.substr(0, search);
         }
-        search_pos = line.find_last_not_of(" \t");
-        if(search_pos != std::string::npos) {
-            line = line.substr(0, search_pos + 1);
+
+        search = line.find_last_not_of(" \t");
+        if(search != std::string::npos) {
+            // Ignore trailing whitespace.
+            line = line.substr(0, search + 1);
         } else {
-            // if this line had nothing on it after trimming, get a new line
+            // If here, that means the line had nothing but ' ' or '\t' on it (i.e. empty line), so ignore.
             get_new_line = true;
             return_new_line = false;
-            operator>>(token);
-            return *this;
+            return operator>>(token);
         }
 
         get_new_line = false;
     }
 
-    // move until we're past delimiters
-    std::string delims =  ",: \t";
+    // Ignore delimeters entirely.
+    std::string delims = ",: \t";
     while(col < line.size() && delims.find(line[col]) != std::string::npos) {
         col += 1;
     }
 
-    // check if we reached the end of the line (meaning the previous token we returned was the last one on the line)
-    // note that this ignores trailing delimiters
+    // If there's nothing left on this line, get a new line (but first return EOL).
     if(col >= line.size()) {
         get_new_line = true;
         return_new_line = true;
-        operator>>(token);
-        return *this;
+        return operator>>(token);
     }
 
-    // get the length of the token
+    // If we've made it here, we have a valid token. First find the length.
     uint32_t len = 0;
-    // if we see a token starting with a ", then continue until the closing " or the end of the line
-    if(line[col] == '"') {
-        delims = '"';
-        col += 1;
+    if(line[col] == '"' && (col == 0 || line[col - 1] != '\\')) {
+        // If token begins with an non-escaped quotation mark, the length goes on until the matching non-escaped
+        // quotation mark (or EOL if non exists).
+        col += 1;    // Consume first non-escaped quotation mark.
+        while(col + len < line.size() && ! (line[col + len] == '"' && line[col + len - 1] != '\\')) {
+            len += 1;
+        }
+    } else {
+        while(col + len < line.size() && delims.find(line[col + len]) == std::string::npos) {
+            len += 1;
+        }
     }
 
-    while(col + len < line.size() && delims.find(line[col + len]) == std::string::npos) {
-        len += 1;
-    }
-
+    // Attempt to convert token into numeric value. If possible, mark as NUM. Otherwise, mark as STRING.
     int32_t token_num_val = 0;
     if(convertStringToNum(line.substr(col, len), token_num_val)) {
         token.type = Token::Type::NUM;
@@ -85,10 +114,12 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
         token.type = Token::Type::STRING;
         token.str = line.substr(col, len);
     }
+
     token.col = col;
     token.row = row;
     token.len = len;
     token.line = line;
+
     col += len + 1;
 
     return *this;
