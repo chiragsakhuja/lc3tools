@@ -11,7 +11,7 @@ std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Token const & to
     } else if(token.type == Token::Type::EOL) {
         out << "(EOL)";
     } else if(token.type == Token::Type::NUM) {
-        out << token.num << " (num)";
+        out << static_cast<uint16_t>(token.num) << " (num)";
     } else {
         out << "(invalid)";
     }
@@ -35,7 +35,7 @@ std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementPiece c
     } else if(piece.type == StatementPiece::Type::STRING) {
         out << piece.str << " (string)";
     } else if(piece.type == StatementPiece::Type::NUM) {
-        out << piece.num << " (num)";
+        out << static_cast<uint16_t>(piece.num) << " (num)";
     } else {
         out << "(invalid)";
     }

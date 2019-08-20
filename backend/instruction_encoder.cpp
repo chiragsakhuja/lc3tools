@@ -289,12 +289,17 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
 
 uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPiece const & piece, bool log_enable) const
 {
+    (void) statement;
+    (void) log_enable;
+
     uint32_t value = piece.num;
 
-    if(log_enable && ((value & 0xffff) != value)) {
-        logger.asmPrintf(utils::PrintType::P_WARNING, statement, piece, "truncating operand to 16-bits");
-        logger.newline(utils::PrintType::P_WARNING);
-    }
+    /*
+     *if(log_enable && ((value & 0xffff) != value)) {
+     *    logger.asmPrintf(utils::PrintType::P_WARNING, statement, piece, "truncating operand to 16-bits");
+     *    logger.newline(utils::PrintType::P_WARNING);
+     *}
+     */
 
     return value & 0xffff;
 }
