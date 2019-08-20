@@ -5,6 +5,9 @@
 
 #include "utils.h"
 
+std::string lc3::utils::getMagicHeader(void) { return "\x1c\x30\x15\xc0\x01"; }
+std::string lc3::utils::getVersionString(void) { return "\x01\x01"; }
+
 std::string lc3::utils::udecToBin(uint32_t value, uint32_t num_bits)
 {
     char * bits = new char[num_bits + 1];

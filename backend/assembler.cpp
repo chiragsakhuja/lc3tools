@@ -50,6 +50,8 @@ std::stringstream Assembler::assemble(std::istream & buffer)
     }
 
     std::stringstream ret;
+    ret << getMagicHeader();
+    ret << getVersionString();
     for(MemEntry const & entry : machine_code_blob.second) {
         ret << entry;
     }

@@ -9,6 +9,9 @@ namespace lc3
 {
 namespace utils
 {
+    std::string getMagicHeader(void);
+    std::string getVersionString(void);
+
     std::string udecToBin(uint32_t value, uint32_t num_bits);
     uint32_t sextTo32(uint32_t value, uint32_t num_bits);
     uint32_t getBit(uint32_t value, uint32_t pos);
