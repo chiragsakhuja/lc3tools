@@ -101,7 +101,7 @@ void lc3::core::MemWriteEvent::updateState(MachineState & state) const
     if(addr == DDR) {
         char char_value = (char) (value & 0xFF);
         if(char_value == 10 || char_value == 13) {
-            state.logger.newline();
+            state.logger.newline(utils::PrintType::P_NONE);
         } else {
             state.logger.print(std::string(1, char_value));
         }

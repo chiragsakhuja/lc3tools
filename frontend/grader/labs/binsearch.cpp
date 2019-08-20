@@ -48,19 +48,19 @@ void OneTest(lc3::sim & sim, StringInputter & inputter)
 
     inputter.setString("Dan\n");
     sim.runUntilInputPoll();
-    VERIFY_OUTPUT_HAD("16000");
+    VERIFY_OUTPUT_HAD_NAMED("Dan", "16000");
 
     inputter.setString("Dani\n");
     sim.runUntilInputPoll();
-    VERIFY_OUTPUT_HAD("No Entry");
+    VERIFY_OUTPUT_HAD_NAMED("Dani", "No Entry");
 
-    inputter.setString("Daniel");
+    inputter.setString("Daniel\n");
     sim.runUntilInputPoll();
-    VERIFY_OUTPUT_HAD("24000");
+    VERIFY_OUTPUT_HAD_NAMED("Daniel", "24000");
 
-    inputter.setString("dan");
+    inputter.setString("dan\n");
     sim.runUntilInputPoll();
-    VERIFY_OUTPUT_HAD("No Entry");
+    VERIFY_OUTPUT_HAD_NAMED("dan", "No Entry");
 
     inputter.setString("d\n");
     bool success = sim.runUntilHalt();
@@ -81,6 +81,7 @@ void testTeardown(lc3::sim & sim)
 void setup(void)
 {
     REGISTER_TEST(One, OneTest, 60);
+    REGISTER_RANDOM_TEST(One, OneTest, 40);
 }
 
 void shutdown(void) {}

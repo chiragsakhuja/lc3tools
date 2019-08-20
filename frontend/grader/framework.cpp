@@ -182,7 +182,7 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool
 {
     BufferedPrinter const & buffered_printer = static_cast<BufferedPrinter const &>(printer);
 
-    std::cout << check << (substr ? " sub? " : " ?= ");
+    std::cout << "is '" << check << "' " << (substr ? "substring of" : "==") << " '";
     for(uint32_t i = 0; i < buffered_printer.display_buffer.size(); i += 1) {
         if(buffered_printer.display_buffer[i] == '\n') {
             std::cout << "\\n";
@@ -190,7 +190,7 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool
             std::cout << buffered_printer.display_buffer[i];
         }
     }
-    std::cout << '\n';
+    std::cout << "'\n";
 
     if(substr) {
         uint64_t buffer_pos = 0;

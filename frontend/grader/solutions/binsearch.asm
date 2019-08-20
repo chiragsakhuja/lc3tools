@@ -34,7 +34,7 @@ root   .fill x4000
 name   .blkw #21
 enter  .fill #10
 endstr .stringz "d"
-nfound .stringz "No entry\n"
+nfound .stringz "No Entry\n"
 
 ; gets a name as input and places it in the "global variable" name
 GetName
