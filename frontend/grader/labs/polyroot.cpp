@@ -16,7 +16,7 @@ void LinearTest(lc3::sim & sim, StringInputter & inputter)
     bool success = sim.runUntilHalt();
 
     // Verify
-    VERIFY((sim.getMem(0x4000) & 0xffff) == (-3 & 0xffff));
+    VERIFY(sim.getMem(0x4000) == static_cast<uint16_t>(-3));
     VERIFY(sub_count == 24);
     VERIFY(success && ! sim.didExceedInstLimit());
 }
@@ -36,7 +36,7 @@ void QuadraticTest1(lc3::sim & sim, StringInputter & inputter)
     bool success = sim.runUntilHalt();
 
     // Verify
-    VERIFY((sim.getMem(0x4000) & 0xffff) == (4 & 0xffff));
+    VERIFY(sim.getMem(0x4000) == 4);
     VERIFY(sub_count == 21);
     VERIFY(success && ! sim.didExceedInstLimit());
 }
@@ -56,7 +56,7 @@ void QuadraticTest2(lc3::sim & sim, StringInputter & inputter)
     bool success = sim.runUntilHalt();
 
     // Verify
-    VERIFY((sim.getMem(0x4000) & 0xffff) == (0 & 0xffff));
+    VERIFY(sim.getMem(0x4000) == 0);
     VERIFY(sub_count == 18);
     VERIFY(success && ! sim.didExceedInstLimit());
 }

@@ -45,14 +45,20 @@ void BufferedPrinter::newline(void)
     }
 }
 
-void StringInputter::setString(std::string const & source)
+void StringInputter::setStringAfter(std::string const & source, uint32_t inst_count)
 {
+    this->inst_delay = inst_count;
     this->source = source;
     this->pos = 0;
 }
 
 bool StringInputter::getChar(char & c)
 {
+    if(inst_delay > 0) {
+        inst_delay -= 1;
+        return false;
+    }
+
     if(pos == source.size()) {
         return false;
     }

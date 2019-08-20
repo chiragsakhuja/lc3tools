@@ -304,12 +304,15 @@ Thus, the following simple check can be added at the end of each test case to
 verify the program behaved correctly.
 
 ```
-VERIFY(sim.runUntilHalt() && ! sim.didExceedInstLimit());
+bool success = sim.runUntilHalt();
+...
+VERIFY(success && ! sim.didExceedInstLimit());
 ```
 
-### I/O Paradigm
+### I/O Paradigm (Polling)
 Assume you would like to grade an assignment that prints a prompt, requests
-input, does something with the input, then prints the prompt again. This process repeats until the user types in a reponse that quits the program. For example,
+input, does something with the input, then prints the prompt again. This process
+repeats until the user types in a response that quits the program. For example,
 take a program that repeats the inputted character 5 times:
 
 ```
@@ -333,14 +336,49 @@ inputter.setString("b");
 sim.runUntilInputPoll();
 VERIFY_OUTPUT_HAD("bbbbb");
 inputter.setString("q");
-VERIFY(sim.runUntilHalt() && ! sim.didExceedInstLimit());
+bool success = sim.runUntilHalt();
+VERIFY(success && ! sim.didExceedInstLimit());
 ```
 
-To verify the prompt is correct, run the program until input is requested. Then
-verify that the output is exactly the prompt. Set the input string and run again
-until input is requested. This time, the run will cover the part of the program
-that is supposed to print the input 5 times. Therefore, we can check that the
-correct string was present in the output. We continue this pattern until we
-set the input to be our quit command. At this point, we simply run to completion
-and then verify the program halted successfully as described in the [Successful
+The first two lines verify that the prompt is correct, before sending any input.
+`runUntilInputPoll` will allow the entire prompt to print and then will pause
+simulation as soon as any input is requested. Thus, the only output that has
+been generated so far will be the prompt.
+
+After the prompt has been verified, we can send in actual input. Once the input
+is set, we can run until the next input character is requested. The `setString`
+following by `runUntilInputPoll` will 1) consume any input, 2) generate the
+output as specified by the program, 3) repeat the prompt, if this behavior is
+expected, and 4) pause when input is requested again. Thus, we use the
+`VERIFY_OUTPUT_HAD` macro, since there will likely be more output generated.
+
+We simply repeat this pattern until we input the exit command, and then we can
+verify that the program exited correctly as described in the [Successful
 Exit Paradigm](GRADE.md#successful-exit-paradigm).
+
+
+**Important Note about I/O**
+
+Remember that the newline character is considered input like any other keys. As
+such, you must add a `\n` to the end of the `setString` function to properly
+send a newline character.
+
+### I/O Paradigm (Interrupt)
+The I/O Paradigm for interrupt-driven input is similar to the paradigm for
+polling, so please read [that section](GRADE.md#io-paradigm-polling) before.
+
+The main difference between interrupt-driven and polling-driven paradigms, from
+the perspective of a grader, is that the we can no longer reliably use
+`runUntilInputPoll`, since the program won't be polling. Furthermore, it takes a
+few instructions to enable interrupts, so we cannot set the input string before
+running the program. Instead, we can use a different approach -  we can delay
+the input by some instructions to guarantee that interrupts are enabled when the
+key press is emulated. Given this new paradigm, we can modify the grader from
+the previous section to use interrupts instead as follows:
+
+```
+inputter.setStringAfter("a", 50);
+bool success = sim.run();
+VERIFY_OUTPUT_HAD("aaaaa");
+VERIFY(success);
+```

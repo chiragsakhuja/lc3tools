@@ -36,7 +36,8 @@ Return Value:
 ### `bool runUntilInputPoll(void)`
 Run the machine from the location of the PC until any keyboard input is
 requested. This is useful when verifying I/O.  See the [I/O
-Paradigm](GRADE.md#io-paradigm) for more details on usage.
+Paradigm (Polling)](GRADE.md#io-paradigm-polling) and [I/O Paradigm
+(Interrupt)](GRADE.md#io-paradigm-interrupt) for more details on usage.
 
 Return Value:
 
@@ -54,7 +55,7 @@ Arguments:
 
 ## Getting/Setting Machine State
 
-### `uint32_t getReg(uint32_t id) const`
+### `uint16_t getReg(uint16_t id) const`
 Get the value of a register.
 
 Arguments:
@@ -65,7 +66,7 @@ Return Value:
 
 * Value in the register.
 
-### `void setReg(uint32_t id, uint32_t value)`
+### `void setReg(uint16_t id, uint16_t value)`
 Set a register to a value.
 
 Arguments:
@@ -73,7 +74,7 @@ Arguments:
 * `id`: ID of register to write to.
 * `value`: New register value.
 
-### `uint32_t getMem(uint32_t addr) const`
+### `uint16_t getMem(uint16_t addr) const`
 Get the value of a memory location.
 
 Arguments:
@@ -84,7 +85,7 @@ Return Value:
 
 * Value in the memory location.
 
-### `void setMem(uint32_t id, uint32_t value)`
+### `void setMem(uint16_t id, uint16_t value)`
 Set a memory location to a value.
 
 Arguments:
@@ -92,42 +93,42 @@ Arguments:
 * `id`: Memory address to write to.
 * `value`: New memory location value.
 
-### `uint32_t getPC(void) const`
+### `uint16_t getPC(void) const`
 Get the value of the Program Counter (PC).
 
 Return Value:
 
 * Value of the PC.
 
-### `void setPC(uint32_t value)`
+### `void setPC(uint16_t value)`
 Set the value of the Program Counter (PC).
 
 Arguments:
 
 * `value`: New PC value.
 
-### `uint32_t getPSR(void) const`
+### `uint16_t getPSR(void) const`
 Get the value of the Processor Status Register (PSR).
 
 Return Value:
 
 * Value of the PSR.
 
-### `void setPSR(uint32_t value)`
+### `void setPSR(uint16_t value)`
 Set the value of the Processor Status Register (PSR).
 
 Arguments:
 
 * `value`: New PSR value.
 
-### `uint32_t getMCR(void) const`
+### `uint16_t getMCR(void) const`
 Get the value of the Memory Control Register (MCR).
 
 Return Value:
 
 * Value of the MCR.
 
-### `void setMCR(uint32_t value)`
+### `void setMCR(uint16_t value)`
 Set the value of the Memory Control Register (MCR).
 
 Arguments:
@@ -141,14 +142,14 @@ Return Value:
 
 * Value of the CC as 'N', 'Z', or 'P'.
 
-### `void setCC(uint32_t value)`
+### `void setCC(uint16_t value)`
 Set the value of the Condition Codes (CC) as a character.
 
 Arguments:
 
 * `value`: New MCR value as 'N', 'Z', or 'P'.
 
-### `void setMemString(uint32_t addr, std::string const & value)`
+### `void setMemString(uint16_t addr, std::string const & value)`
 Set a series of memory locations to a null-terminated string.
 
 Arguments:
@@ -230,6 +231,19 @@ Arguments:
 
 * `source`: The string that the simulator will consume through the keyboard
 emulator.
+
+### `void setStringAfter(std::string const & source, uint32_t inst_count)`
+Set the string that the simulator will consume through the keyboard emulator,
+but only after `inst_count` instructions have been executed. This is useful for
+verifying interrupts, as it takes some initial instructions to set up
+interrupts.
+
+Arguments:
+
+* `source`: The string that the simulator will consume through the keyboard
+emulator.
+* `inst_count`: The number of instructions that execute before the keyboard
+press is emulated.
 
 # Grading Framework
 Additionally, the grading framework provides a set of macros that should be used

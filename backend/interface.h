@@ -60,25 +60,25 @@ namespace lc3
         bool didExceedInstLimit(void) const;
         std::vector<Breakpoint> const & getBreakpoints() const;
 
-        uint32_t getReg(uint32_t id) const;
-        uint32_t getMem(uint32_t addr) const;
-        std::string getMemLine(uint32_t addr) const;
-        uint32_t getPC(void) const;
-        uint32_t getPSR(void) const;
-        uint32_t getMCR(void) const;
+        uint16_t getReg(uint16_t id) const;
+        uint16_t getMem(uint16_t addr) const;
+        std::string getMemLine(uint16_t addr) const;
+        uint16_t getPC(void) const;
+        uint16_t getPSR(void) const;
+        uint16_t getMCR(void) const;
         char getCC(void) const;
-        void setReg(uint32_t id, uint32_t value);
-        void setMem(uint32_t addr, uint32_t value);
-        void setMemString(uint32_t addr, std::string const & value);
-        void setMemLine(uint32_t addr, std::string const & value);
-        void setPC(uint32_t value);
-        void setPSR(uint32_t value);
-        void setMCR(uint32_t value);
+        void setReg(uint16_t id, uint16_t value);
+        void setMem(uint16_t addr, uint16_t value);
+        void setMemString(uint16_t addr, std::string const & value);
+        void setMemLine(uint16_t addr, std::string const & value);
+        void setPC(uint16_t value);
+        void setPSR(uint16_t value);
+        void setMCR(uint16_t value);
         void setCC(char value);
 
-        Breakpoint setBreakpoint(uint32_t addr);
+        Breakpoint setBreakpoint(uint16_t addr);
         bool removeBreakpointByID(uint32_t id);
-        bool removeBreakpointByAddr(uint32_t addr);
+        bool removeBreakpointByAddr(uint16_t addr);
 
         void registerPreInstructionCallback(callback_func_t func);
         void registerPostInstructionCallback(callback_func_t func);

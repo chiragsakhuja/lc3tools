@@ -3,19 +3,19 @@
 void UpperCaseTest(lc3::sim & sim, StringInputter & inputter)
 {
     // This is a hack that will need to be replaced by adding an inputter.setStringAfter(str, inst_count) function
-    inputter.setString("aa");
+    inputter.setStringAfter("a", 50);
     bool success = sim.run();
-    VERIFY_OUTPUT_HAD("a is not a capital letter of the English alphabet");
-    VERIFY(success && ! sim.didExceedInstLimit());
+    VERIFY_OUTPUT_HAD_NAMED("a", "a is not a capital letter of the English alphabet");
+    VERIFY(success);
 }
 
 void LowerCaseTest(lc3::sim & sim, StringInputter & inputter)
 {
     // This is a hack that will need to be replaced by adding an inputter.setStringAfter(str, inst_count) function
-    inputter.setString("AA");
+    inputter.setStringAfter("A", 50);
     bool success = sim.run();
-    VERIFY_OUTPUT_HAD("The lower case of A is a");
-    VERIFY(success && ! sim.didExceedInstLimit());
+    VERIFY_OUTPUT_HAD_NAMED("A", "The lower case of A is a");
+    VERIFY(success);
 }
 
 void testBringup(lc3::sim & sim)

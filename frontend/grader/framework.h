@@ -38,7 +38,8 @@ public:
     StringInputter(void) { setString(""); }
     StringInputter(std::string const & source) { setString(source); }
 
-    void setString(std::string const & source);
+    void setString(std::string const & source) { setStringAfter(source, 0); }
+    void setStringAfter(std::string const & source, uint32_t inst_count);
     void beginInput(void) {}
     bool getChar(char & c);
     void endInput(void) {}
@@ -46,6 +47,7 @@ public:
 private:
     std::string source;
     uint32_t pos;
+    uint32_t inst_delay;
 };
 
 struct TestCase

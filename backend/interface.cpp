@@ -176,11 +176,11 @@ lc3::core::MachineState const & lc3::sim::getMachineState(void) const { return s
 
 uint64_t lc3::sim::getInstExecCount(void) const { return inst_exec_count; }
 
-bool lc3::sim::didExceedInstLimit(void) const { return inst_exec_count > total_inst_limit; }
+bool lc3::sim::didExceedInstLimit(void) const { return inst_exec_count >= total_inst_limit; }
 
 std::vector<lc3::Breakpoint> const & lc3::sim::getBreakpoints(void) const { return breakpoints; }
 
-uint32_t lc3::sim::getReg(uint32_t id) const
+uint16_t lc3::sim::getReg(uint16_t id) const
 {
 #ifdef _ENABLE_DEBUG
     assert(id <= 7);
@@ -190,31 +190,21 @@ uint32_t lc3::sim::getReg(uint32_t id) const
     return getMachineState().regs[id];
 }
 
-uint32_t lc3::sim::getMem(uint32_t addr) const
+uint16_t lc3::sim::getMem(uint16_t addr) const
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xffff);
-#else
-    addr &= 0xffff;
-#endif
     return getMachineState().readMemRaw(addr);
 }
 
-std::string lc3::sim::getMemLine(uint32_t addr) const
+std::string lc3::sim::getMemLine(uint16_t addr) const
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xffff);
-#else
-    addr &= 0xffff;
-#endif
     return getMachineState().mem[addr].getLine();
 }
 
-uint32_t lc3::sim::getPC(void) const { return getMachineState().pc; }
+uint16_t lc3::sim::getPC(void) const { return getMachineState().pc; }
 
-uint32_t lc3::sim::getPSR(void) const { return getMem(PSR); }
+uint16_t lc3::sim::getPSR(void) const { return getMem(PSR); }
 
-uint32_t lc3::sim::getMCR(void) const { return getMem(MCR); }
+uint16_t lc3::sim::getMCR(void) const { return getMem(MCR); }
 
 char lc3::sim::getCC(void) const
 {
@@ -231,38 +221,19 @@ char lc3::sim::getCC(void) const
     else { return 'P'; }
 }
 
-void lc3::sim::setReg(uint32_t id, uint32_t value)
+void lc3::sim::setReg(uint16_t id, uint16_t value)
 {
-#ifdef _ENABLE_DEBUG
-    assert(id <= 7);
-    assert(value <= 0xffff);
-#else
-    id &= 0x7;
-    value &= 0xffff;
-#endif
     getMachineState().regs[id] = value;
 }
 
-void lc3::sim::setMem(uint32_t addr, uint32_t value)
+void lc3::sim::setMem(uint16_t addr, uint16_t value)
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xffff);
-    assert(value <= 0xffff);
-#else
-    addr &= 0xffff;
-    value &= 0xffff;
-#endif
     getMachineState().writeMemSafe(addr, value);
     getMachineState().mem[addr].setLine("");
 }
 
-void lc3::sim::setMemString(uint32_t addr, std::string const & value)
+void lc3::sim::setMemString(uint16_t addr, std::string const & value)
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xffff);
-#else
-    addr &= 0xffff;
-#endif
     for(uint32_t i = 0; i < value.size(); i += 1) {
         getMachineState().writeMemRaw(addr + i, static_cast<uint32_t>(value[i]));
         getMachineState().mem[addr + i].setLine(std::string(1, value[i]));
@@ -271,22 +242,17 @@ void lc3::sim::setMemString(uint32_t addr, std::string const & value)
     getMachineState().mem[addr + value.size()].setLine(value);
 }
 
-void lc3::sim::setMemLine(uint32_t addr, std::string const & value)
+void lc3::sim::setMemLine(uint16_t addr, std::string const & value)
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xffff);
-#else
-    addr &= 0xffff;
-#endif
     getMachineState().mem[addr].setLine(value);
 }
 
-void lc3::sim::setPC(uint32_t value)
+void lc3::sim::setPC(uint16_t value)
 {
 #ifdef _ENABLE_DEBUG
     assert(value <= 0xfe00u);
 #else
-    value = std::min(value & 0xffff, 0xfe00u);
+    value = std::min<uint16_t>(value, 0xfe00);
 #endif
     getMachineState().pc = value;
     while(! getMachineState().sys_call_types.empty()) {
@@ -298,22 +264,18 @@ void lc3::sim::setPC(uint32_t value)
     restart();
 }
 
-void lc3::sim::setPSR(uint32_t value)
+void lc3::sim::setPSR(uint16_t value)
 {
 #ifdef _ENABLE_DEBUG
     assert((value & ((~0x8707) & 0xffff)) == 0x0000);
-#else
-    value &= 0xffff;
 #endif
     setMem(PSR, value);
 }
 
-void lc3::sim::setMCR(uint32_t value)
+void lc3::sim::setMCR(uint16_t value)
 {
 #ifdef _ENABLE_DEBUG
     assert((value & ((~0x8000) & 0xffff)) == 0x0000);
-#else
-    value &= 0xffff;
 #endif
     setMem(MCR, value);
 }
@@ -334,13 +296,8 @@ void lc3::sim::setCC(char value)
     setPSR((psr & 0xfff8) | new_value);
 }
 
-lc3::Breakpoint lc3::sim::setBreakpoint(uint32_t addr)
+lc3::Breakpoint lc3::sim::setBreakpoint(uint16_t addr)
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xffff);
-#else
-    addr &= 0xffff;
-#endif
     Breakpoint bp(breakpoint_id, addr, this);
     breakpoints.push_back(bp);
     breakpoint_id += 1;
@@ -365,13 +322,8 @@ bool lc3::sim::removeBreakpointByID(uint32_t id)
     return found;
 }
 
-bool lc3::sim::removeBreakpointByAddr(uint32_t addr)
+bool lc3::sim::removeBreakpointByAddr(uint16_t addr)
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xffff);
-#else
-    addr &= 0xffff;
-#endif
     auto it = breakpoints.begin();
     bool found = false;
     for(; it != breakpoints.end(); ++it) {
