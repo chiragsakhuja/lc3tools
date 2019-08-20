@@ -124,7 +124,7 @@ bool InstructionEncoder::validatePseudo(StatementNew const & statement, SymbolTa
     } else {
 #ifdef _LIBERAL_ASM
         logger.asmPrintf(PrintType::P_WARNING, statement, *statement.base, "ignoring invalid pseudo-op");
-        logger.newline();
+        logger.newline(PrintType::P_WARNING);
         return true;
 #else
         logger.asmPrintf(PrintType::P_ERROR, statement, *statement.base, "invalid pseudo-op");
@@ -293,7 +293,7 @@ uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPie
 
     if(log_enable && ((value & 0xffff) != value)) {
         logger.asmPrintf(utils::PrintType::P_WARNING, statement, piece, "truncating operand to 16-bits");
-        logger.newline();
+        logger.newline(utils::PrintType::P_WARNING);
     }
 
     return value & 0xffff;

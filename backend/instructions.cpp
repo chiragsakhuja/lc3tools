@@ -321,7 +321,7 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement
 #ifdef _LIBERAL_ASM
             logger.asmPrintf(PrintType::P_WARNING, statement, piece, "immediate %d truncated to %d", piece.num,
                 lc3::utils::sextTo32(token_val, width));
-            logger.newline();
+            logger.newline(PrintType::P_WARNING);
 #else
             logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large");
             logger.newline();
@@ -333,7 +333,7 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement
 #ifdef _LIBERAL_ASM
             logger.asmPrintf(PrintType::P_WARNING, statement, piece, "immediate %u truncated to %u", piece.num,
                 token_val);
-            logger.newline();
+            logger.newline(PrintType::P_WARNING);
 #else
             logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large");
             logger.newline();

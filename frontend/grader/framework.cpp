@@ -8,8 +8,10 @@
 struct CLIArgs
 {
     uint32_t print_output = false;
-    uint32_t print_level = 0;
-    uint32_t print_level_override = false;
+    uint32_t asm_print_level = 0;
+    uint32_t asm_print_level_override = false;
+    uint32_t sim_print_level = 0;
+    uint32_t sim_print_level_override = false;
 };
 
 void setup(void);
@@ -67,16 +69,27 @@ int main(int argc, char * argv[])
     for(auto const & arg : parsed_args) {
         if(std::get<0>(arg) == "print-output") {
             args.print_output = true;
-        } else if(std::get<0>(arg) == "print-level") {
-            args.print_level = std::stoi(std::get<1>(arg));
-            args.print_level_override = true;
+        } else if(std::get<0>(arg) == "asm-print-level") {
+            args.asm_print_level = std::stoi(std::get<1>(arg));
+            args.asm_print_level_override = true;
+        } else if(std::get<0>(arg) == "sim-print-level") {
+            args.sim_print_level = std::stoi(std::get<1>(arg));
+            args.sim_print_level_override = true;
             args.print_output = true;
+        } else if(std::get<0>(arg) == "h" || std::get<0>(arg) == "help") {
+            std::cout << "usage: " << argv[0] << " [OPTIONS]\n";
+            std::cout << "\n";
+            std::cout << "  -h,--help              Print this message\n";
+            std::cout << "  --print-output         Print program output\n";
+            std::cout << "  --asm-print-level=N    Assembler output verbosity [0-9]\n";
+            std::cout << "  --sim-print-level=N    Simulator output verbosity [0-9]\n";
+            return 0;
         }
     }
 
     lc3::ConsolePrinter asm_printer;
-    lc3::as assembler(asm_printer, args.print_level_override ? args.print_level : 0);
-    lc3::conv converter(asm_printer, args.print_level_override ? args.print_level : 0);
+    lc3::as assembler(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0);
+    lc3::conv converter(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0);
 
     std::vector<std::string> obj_filenames;
     bool valid_program = true;
@@ -109,7 +122,7 @@ int main(int argc, char * argv[])
             BufferedPrinter sim_printer(args.print_output);
             StringInputter sim_inputter;
             lc3::sim simulator(sim_printer, sim_inputter, false,
-                args.print_level_override ? args.print_level : 1, true);
+                args.sim_print_level_override ? args.sim_print_level : 1, true);
 
             testBringup(simulator);
 

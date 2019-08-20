@@ -262,7 +262,7 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
                 if((cur_pc & 0xffff) != cur_pc) {
 #ifdef _LIBERAL_ASM
                     logger.printf(PrintType::P_WARNING, true, "truncating .orig from 0x%0.4x to 0x%0.4x", cur_pc, cur_pc & 0xffff);
-                    logger.newline();
+                    logger.newline(PrintType::P_WARNING);
 #else
                     logger.printf(PrintType::P_ERROR, true, ".orig 0x%0.4x is out of range", cur_pc);
                     logger.newline();
@@ -375,7 +375,7 @@ std::pair<bool, SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::
                     logger.asmPrintf(PrintType::P_WARNING, statement, *statement.label,
                         "redefining label \'%s\' from 0x%0.4x to 0x%0.4x", statement.label->str.c_str(),
                         old_val, statement.pc);
-                    logger.newline();
+                    logger.newline(PrintType::P_WARNING);
 #else
                     logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
                         "attempting to redefine label \'%s\' from 0x%0.4x to 0x%0.4x", statement.label->str.c_str(),
@@ -426,11 +426,12 @@ std::pair<bool, std::vector<MemEntry>> Assembler::buildMachineCode(
         if(! statement.valid) {
 #ifdef _LIBERAL_ASM
             logger.asmPrintf(PrintType::P_WARNING, statement, "ignoring statement whose address cannot be determined");
+            logger.newline(PrintType::P_WARNING);
 #else
             logger.asmPrintf(PrintType::P_ERROR, statement, "cannot determine address for statement");
+            logger.newline();
             success = false;
 #endif
-            logger.newline();
             continue;
         }
 

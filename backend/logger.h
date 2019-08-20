@@ -139,6 +139,8 @@ template<typename ... Args>
 void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level, uint32_t row_num, uint32_t col_num,
     uint32_t len, std::string const & line, std::string const & format, Args ... args) const
 {
+    if(static_cast<uint32_t>(level) > print_level) { return; }
+
     printer.setColor(lc3::utils::PrintColor::BOLD);
     printer.print(lc3::utils::ssprintf("%s:%d:%d: ", filename.c_str(), row_num + 1, col_num + 1));
 
