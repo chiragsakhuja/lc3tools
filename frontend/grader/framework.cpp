@@ -193,7 +193,6 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool
     std::cout << '\n';
 
     if(substr) {
-        bool match = false;
         uint64_t buffer_pos = 0;
         while(buffer_pos + check.size() < buffered_printer.display_buffer.size()) {
             uint64_t check_pos;

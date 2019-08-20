@@ -4,6 +4,8 @@ uint32_t sub_count;
 
 void LinearTest(lc3::sim & sim, StringInputter & inputter)
 {
+    (void) inputter;
+
     sim.setMem(0x4001, -100);
     sim.setMem(0x4002, 100);
     sim.setMem(0x4003, 1);
@@ -21,6 +23,8 @@ void LinearTest(lc3::sim & sim, StringInputter & inputter)
 
 void QuadraticTest1(lc3::sim & sim, StringInputter & inputter)
 {
+    (void) inputter;
+
     sim.setMem(0x4001, 2);
     sim.setMem(0x4002, 100);
     sim.setMem(0x4003, 2);
@@ -39,6 +43,8 @@ void QuadraticTest1(lc3::sim & sim, StringInputter & inputter)
 
 void QuadraticTest2(lc3::sim & sim, StringInputter & inputter)
 {
+    (void) inputter;
+
     sim.setMem(0x4001, -100);
     sim.setMem(0x4002, 2);
     sim.setMem(0x4003, 2);
