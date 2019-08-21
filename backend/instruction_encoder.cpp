@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <sstream>
 
 #include "instruction_encoder.h"
@@ -51,7 +52,7 @@ bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, bool 
     return false;
 }
 
-bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, SymbolTable const & symbols,
+bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, lc3::core::SymbolTable const & symbols,
     bool log_enable) const
 {
     using namespace lc3::utils;
@@ -104,7 +105,7 @@ bool InstructionEncoder::isValidPseudoEnd(StatementNew const & statement, bool l
     return false;
 }
 
-bool InstructionEncoder::validatePseudo(StatementNew const & statement, SymbolTable const & symbols) const
+bool InstructionEncoder::validatePseudo(StatementNew const & statement, lc3::core::SymbolTable const & symbols) const
 {
     using namespace lc3::utils;
 
@@ -312,7 +313,8 @@ uint32_t InstructionEncoder::getPseudoOrig(StatementNew const & statement) const
     return getNum(statement, statement.operands[0], true);
 }
 
-uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement, SymbolTable const & symbols) const
+uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement,
+    lc3::core::SymbolTable const & symbols) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoFill(statement, symbols));
@@ -365,7 +367,7 @@ std::string InstructionEncoder::getPseudoString(StatementNew const & statement) 
 }
 
 lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(StatementNew const & statement,
-    SymbolTable const & symbols, PIInstruction pattern) const
+    lc3::core::SymbolTable const & symbols, lc3::core::PIInstruction pattern) const
 {
     // The first "operand" of an instruction encoding is the op-code.
     optional<uint32_t> inst_encoding = pattern->operands[0]->encode(statement, *statement.base, regs, symbols, logger);
@@ -391,6 +393,7 @@ lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(StatementNew const
                 return {};
             }
         } catch(lc3::utils::exception const & e) {
+			(void) e;
             return {};
         }
 

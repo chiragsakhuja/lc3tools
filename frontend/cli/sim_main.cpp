@@ -153,6 +153,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
             start = std::stoi(start_s, 0, 0);
             end = std::stoi(end_s, 0, 0);
         } catch(std::exception const & e) {
+			(void) e;
             std::cout << "invalid address\n";
             return true;
         }
@@ -196,7 +197,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
         uint32_t inst_limit;
         command_tokens >> inst_limit;
 #ifdef _ENABLE_DEBUG
-        uint32_t start_count = simulator.getInstExecCount();
+        uint64_t start_count = simulator.getInstExecCount();
         auto start_time = std::chrono::steady_clock::now();
 #endif
         if(! command_tokens.fail()) {
@@ -205,7 +206,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
         simulator.run();
 #ifdef _ENABLE_DEBUG
         auto end_time = std::chrono::steady_clock::now();
-        uint32_t end_count = simulator.getInstExecCount();
+        uint64_t end_count = simulator.getInstExecCount();
         std::cout << "executed " << (end_count - start_count) << " instructions in "
                   << std::chrono::duration<double, std::milli>(end_time - start_time).count() << " ms\n";
 #endif
@@ -221,6 +222,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
         try {
             val = std::stoi(val_s, 0, 0);
         } catch(std::exception const & e) {
+			(void) e;
             std::cout << "invalid value\n";
             return true;
         }
@@ -244,6 +246,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
             try {
                 addr = std::stoi(loc_s, 0, 0);
             } catch(std::exception const & e) {
+				(void) e;
                 std::cout << "invalid address\n";
                 return true;
             }
@@ -317,6 +320,7 @@ void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens)
         try {
             loc = std::stoi(loc_s, 0, 0);
         } catch(std::exception const & e) {
+			(void) e;
             std::cout << "invalid value\n";
             return;
         }

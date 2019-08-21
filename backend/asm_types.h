@@ -71,7 +71,7 @@ namespace asmbl
         optional<StatementPiece> base;
         std::vector<StatementPiece> operands;
 
-        uint64_t pc;
+        uint32_t pc;
 
         std::string line;
         uint32_t row;

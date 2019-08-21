@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <fstream>
 #include <sstream>
@@ -11,11 +12,9 @@
 #include "optional.h"
 #include "tokenizer.h"
 
-using namespace lc3::core;
-
 static constexpr uint32_t INST_NAME_CLOSENESS = 2;
 
-std::stringstream Assembler::assemble(std::istream & buffer)
+std::stringstream lc3::core::Assembler::assemble(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -58,7 +57,7 @@ std::stringstream Assembler::assemble(std::istream & buffer)
     return ret;
 }
 
-std::vector<lc3::core::asmbl::StatementNew> Assembler::buildStatements(std::istream & buffer)
+std::vector<lc3::core::asmbl::StatementNew> lc3::core::Assembler::buildStatements(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -73,7 +72,7 @@ std::vector<lc3::core::asmbl::StatementNew> Assembler::buildStatements(std::istr
             tokens.push_back(cur_token);
 #ifdef _ENABLE_DEBUG
             std::stringstream token_str;
-            token_str << cur_token;
+            ::operator<<(token_str, cur_token);
             logger.printf(PrintType::P_EXTRA, true, " (token) %s", token_str.str().c_str());
 #endif
         }
@@ -86,7 +85,8 @@ std::vector<lc3::core::asmbl::StatementNew> Assembler::buildStatements(std::istr
     return statements;
 }
 
-lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::asmbl::Token> const & tokens)
+lc3::core::asmbl::StatementNew lc3::core::Assembler::buildStatement(
+	std::vector<lc3::core::asmbl::Token> const & tokens)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -216,13 +216,13 @@ lc3::core::asmbl::StatementNew Assembler::buildStatement(std::vector<lc3::core::
     }
 
     std::stringstream statement_str;
-    statement_str << ret;
+    ::operator<<(statement_str, ret);
     logger.printf(PrintType::P_EXTRA, true, "%s", statement_str.str().c_str());
 
     return ret;
 }
 
-void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> & statements)
+void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> & statements)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -344,7 +344,8 @@ void Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> 
 #endif
 }
 
-std::pair<bool, SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::asmbl::StatementNew> const & statements)
+std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
+	std::vector<lc3::core::asmbl::StatementNew> const & statements)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -412,8 +413,8 @@ std::pair<bool, SymbolTable> Assembler::buildSymbolTable(std::vector<lc3::core::
     return std::make_pair(success, symbols);
 }
 
-std::pair<bool, std::vector<MemEntry>> Assembler::buildMachineCode(
-    std::vector<lc3::core::asmbl::StatementNew> const & statements, SymbolTable const & symbols)
+std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMachineCode(
+    std::vector<lc3::core::asmbl::StatementNew> const & statements, lc3::core::SymbolTable const & symbols)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -437,7 +438,7 @@ std::pair<bool, std::vector<MemEntry>> Assembler::buildMachineCode(
 
         if(statement.base) {
             std::stringstream msg;
-            msg << statement << " := ";
+            ::operator<<(msg, statement) << " := ";
 
             if(encoder.isPseudo(statement)) {
                 bool valid = encoder.validatePseudo(statement, symbols);

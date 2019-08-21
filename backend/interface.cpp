@@ -1,11 +1,12 @@
 #include <cassert>
+#include <chrono>
 #include <string>
 #include <random>
 
 #include "device_regs.h"
 #include "interface.h"
 
-char const * getOSStr(void);
+std::string getOSStr(void);
 
 lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threaded_input, uint32_t print_level,
     bool propagate_exceptions) :
@@ -25,6 +26,7 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threa
         try {
             loadOS();
         } catch(utils::exception const & e) {
+			(void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
@@ -52,6 +54,7 @@ bool lc3::sim::loadObjFile(std::string const & obj_filename)
         try {
             simulator.loadObj(obj_file);
         } catch(utils::exception const & e) {
+			(void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
@@ -156,6 +159,7 @@ bool lc3::sim::run(lc3::sim::RunType cur_run_type)
         try {
             simulator.simulate();
         } catch(utils::exception const & e) {
+			(void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
@@ -511,6 +515,7 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
         try {
             out_stream = assembler.assemble(in_file);
         } catch(utils::exception const & e) {
+			(void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
@@ -572,6 +577,7 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
         try {
             out_stream = converter.convertBin(in_file);
         } catch(utils::exception const & e) {
+			(void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()) + "\n");
 #endif
@@ -610,9 +616,9 @@ void lc3::as::setPropagateExceptions(void) { propagate_exceptions = true; }
 void lc3::as::clearPropagateExceptions(void) { propagate_exceptions = false; }
 
 
-char const * getOSStr(void)
+std::string getOSStr(void)
 {
-    char const * lc3os_src = R"LC3OS(
+    char const * lc3os_src_1 = R"LC3OS1(
         .ORIG x0000
 
     ; the TRAP vector table
@@ -1129,10 +1135,10 @@ char const * getOSStr(void)
         .FILL BAD_INT    ; xFC
         .FILL BAD_INT    ; xFD
         .FILL BAD_INT    ; xFE
-        .FILL BAD_INT    ; xFF
+        .FILL BAD_INT    ; xFF)LC3OS1";
 
 
-    OS_START    ; machine starts executing at x0200
+		char const* lc3os_src_2 = R"LC3OS2(OS_START    ; machine starts executing at x0200
         LD R6,OS_SP            ; set system stack pointer
         LEA R0,OS_START_MSG    ; print a welcome message
         PUTS
@@ -1291,7 +1297,10 @@ char const * getOSStr(void)
     BAD_TRAP_MSG   .STRINGZ "\n\n--- Undefined trap executed ---\n\n"
 
         .END
-    )LC3OS";
+    )LC3OS2";
 
-    return lc3os_src;
+	std::string ret{lc3os_src_1};
+	ret.append(lc3os_src_2);
+
+    return ret;
 };

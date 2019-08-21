@@ -129,7 +129,7 @@ void Simulator::simulate(void)
     } catch(utils::exception & e) {
         exception = e;
         exception_valid = true;
-    } catch(std::exception & e) { }
+    } catch(std::exception & e) { (void) e; }
 
     disableClock();
     collecting_input = false;
