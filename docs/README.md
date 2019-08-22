@@ -45,3 +45,8 @@ installed. Directions on how to build the GUI can also be found in the
 ## Additional Information
 More details on how to use the individual components can be found in the
 [command line tools](CLI.md), [GUI](GUI.md), and [graders](GRADE.md) documents.
+
+# Copyright Notice
+Copyright 2020 &copy; McGraw-Hill Education. All rights reserved. No
+reproduction or distribution without the prior written consent of McGraw-Hill
+Education.

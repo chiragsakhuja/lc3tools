@@ -55,3 +55,8 @@ static library to perform all tasks, thus guaranteeing consistent behavior.
 These components are all referred to as "frontends" for this project. Other
 frontends can also be created by utilizing the API provided by the static
 library. For more details on the API, see the [API document](API.md).
+
+# Copyright Notice
+Copyright 2020 &copy; McGraw-Hill Education. All rights reserved. No
+reproduction or distribution without the prior written consent of McGraw-Hill
+Education.

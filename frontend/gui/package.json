@@ -1,8 +1,8 @@
 {
-  "name": "lc3tools",
+  "name": "LC3Tools",
   "version": "1.0.2",
   "author": "Chirag Sakhuja <chirag.sakhuja@utexas.edu>",
-  "description": "LC3 tools frontend",
+  "description": "LC3Tools frontend",
   "license": "MIT",
   "main": "./dist/electron/main.js",
   "repository": {
@@ -22,7 +22,7 @@
     "lc3": "yarn add file:./local_modules/lc3interface",
     "release": "build"
   },
-  "extraResources": "static/lc3os.obj",
+  "extraResources": "",
   "buildResources": "static",
   "build": {
     "productName": "LC3Tools",

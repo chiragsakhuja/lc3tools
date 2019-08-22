@@ -1,3 +1,6 @@
+;
+; Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
+;
 0011 0000 0000 0000   ; start at location x3000
 0101 010 010 1 00000  ; clear R2, used to store result into x3050
 1010 000 000000111    ; load data (LDI) into R0

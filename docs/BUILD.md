@@ -107,3 +107,8 @@ yarn build
 
 The standalone executable will be produced in `frontend/gui/build/` and its
 format will depend on the platform it is being built on (`.exe`, `.app.`, etc.).
+
+# Copyright Notice
+Copyright 2020 &copy; McGraw-Hill Education. All rights reserved. No
+reproduction or distribution without the prior written consent of McGraw-Hill
+Education.
