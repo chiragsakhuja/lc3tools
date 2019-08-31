@@ -56,13 +56,6 @@ public:
 
 NAN_METHOD(Init)
 {
-    if(!info[0]->IsString()) {
-        Nan::ThrowError("First argument must be OS path as a string");
-        return;
-    }
-
-    v8::String::Utf8Value str(info[0].As<v8::String>());
-
     try {
         printer = new utils::UIPrinter();
         inputter = new utils::UIInputter();
