@@ -39,12 +39,20 @@ std::stringstream lc3::core::Assembler::assemble(std::istream & buffer)
     success &= symbols.first;
     logger.printf(PrintType::P_EXTRA, true, "===== end building symbol table =====");
     logger.newline(PrintType::P_EXTRA);
+    if(! success) {
+        logger.printf(PrintType::P_ERROR, true, "assembly pass 1 failed");
+        logger.newline();
+    }
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin assembling =====");
     std::pair<bool, std::vector<MemEntry>> machine_code_blob = buildMachineCode(statements, symbols.second);
     success &= machine_code_blob.first;
     logger.printf(PrintType::P_EXTRA, true, "===== end assembling =====");
     logger.newline(PrintType::P_EXTRA);
+    if(! success) {
+        logger.printf(PrintType::P_ERROR, true, "assembly pass 2 failed");
+        logger.newline();
+    }
 
     if(! success) {
         logger.printf(PrintType::P_ERROR, true, "assembly failed");
