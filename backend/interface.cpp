@@ -401,6 +401,7 @@ lc3::utils::IPrinter const & lc3::sim::getPrinter(void) const { return printer; 
 void lc3::sim::setPrintLevel(uint32_t print_level) { simulator.setPrintLevel(print_level); }
 void lc3::sim::setPropagateExceptions(void) { propagate_exceptions = true; }
 void lc3::sim::clearPropagateExceptions(void) { propagate_exceptions = false; }
+void lc3::sim::setIgnorePrivilege(bool ignore) { simulator.setIgnorePrivilege(ignore); }
 
 void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineState & state)
 {

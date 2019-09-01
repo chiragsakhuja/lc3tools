@@ -48,6 +48,8 @@ namespace core
         void setPrintLevel(uint32_t print_level) { logger.setPrintLevel(print_level); }
         uint32_t getPrintLevel(void) const { return logger.getPrintLevel(); }
 
+		void setIgnorePrivilege(bool ignore);
+
     private:
         sim::InstructionDecoder decoder;
 
@@ -58,6 +60,8 @@ namespace core
 
         bool threaded_input;
         std::atomic<bool> collecting_input;
+
+		bool ignore_privilege;
 
         std::vector<PIEvent> executeInstruction(void);
         void checkAndSetupInterrupts();

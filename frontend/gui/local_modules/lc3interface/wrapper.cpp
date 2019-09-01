@@ -83,7 +83,7 @@ NAN_METHOD(ConvertBin)
         return;
     }
 
-    v8::String::Utf8Value str(info[0].As<v8::String>());
+    Nan::Utf8String str(info[0].As<v8::String>());
 
     std::string bin_filename((char const *) (*str));
 
@@ -101,7 +101,7 @@ NAN_METHOD(Assemble)
         return;
     }
 
-    v8::String::Utf8Value str(info[0].As<v8::String>());
+    Nan::Utf8String str(info[0].As<v8::String>());
 
     std::string asm_filename((char const *) (*str));
 
@@ -119,7 +119,7 @@ NAN_METHOD(LoadObjectFile)
         return;
     }
 
-    v8::String::Utf8Value str(info[0].As<v8::String>());
+    Nan::Utf8String str(info[0].As<v8::String>());
     std::string filename((char const *) *str);
 
     try {
@@ -226,7 +226,7 @@ NAN_METHOD(GetRegValue)
         return;
     }
 
-    v8::String::Utf8Value str(info[0].As<v8::String>());
+    Nan::Utf8String str(info[0].As<v8::String>());
     std::string reg_name((char const *) *str);
     std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
 
@@ -268,10 +268,10 @@ NAN_METHOD(SetRegValue)
         return;
     }
 
-    v8::String::Utf8Value str(info[0].As<v8::String>());
+    Nan::Utf8String str(info[0].As<v8::String>());
     std::string reg_name((char const *) *str);
     std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
-    uint32_t value = (uint32_t) info[1]->NumberValue();
+    uint32_t value = info[1]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
 
     try {
         lc3::core::MachineState & state = sim->getMachineState();
@@ -301,7 +301,7 @@ NAN_METHOD(GetMemValue)
         return;
     }
 
-    uint32_t addr = (uint32_t) info[0]->NumberValue();
+	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         lc3::core::MachineState const & state = sim->getMachineState();
         auto ret = Nan::New<v8::Number>(state.readMemRaw(addr));
@@ -323,8 +323,8 @@ NAN_METHOD(SetMemValue)
         return;
     }
 
-    uint32_t addr = (uint32_t) info[0]->NumberValue();
-    uint32_t value = (uint32_t) info[1]->NumberValue();
+	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t value = info[1]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         lc3::core::MachineState & state = sim->getMachineState();
         state.writeMemSafe(addr, value);
@@ -342,7 +342,7 @@ NAN_METHOD(GetMemLine)
         return;
     }
 
-    uint32_t addr = (uint32_t) info[0]->NumberValue();
+	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         lc3::core::MachineState const & state = sim->getMachineState();
         auto ret = Nan::New<v8::String>(state.mem[addr].getLine()).ToLocalChecked();
@@ -364,8 +364,8 @@ NAN_METHOD(SetMemLine)
         return;
     }
 
-    uint32_t addr = (uint32_t) info[0]->NumberValue();
-    v8::String::Utf8Value str(info[1].As<v8::String>());
+	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    Nan::Utf8String str(info[1].As<v8::String>());
     std::string line((char const *) *str);
 
     try {
@@ -383,7 +383,7 @@ NAN_METHOD(SetIgnorePrivilege)
     }
 
     try {
-        sim->setIgnorePrivilege((bool) info[0]->BooleanValue());
+        sim->setIgnorePrivilege((bool) info[0]->BooleanValue(Nan::GetCurrentContext()).ToChecked());
     } catch(lc3::utils::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -401,7 +401,7 @@ NAN_METHOD(AddInput)
         return;
     }
 
-    v8::String::Utf8Value str(info[0].As<v8::String>());
+    Nan::Utf8String str(info[0].As<v8::String>());
     std::string c((char const *) *str);
     if(c.size() != 1) {
         Nan::ThrowError("String must be a single character");
@@ -440,7 +440,7 @@ NAN_METHOD(SetBreakpoint)
         return;
     }
 
-    uint32_t addr = (uint32_t) info[0]->NumberValue();
+	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         sim->setBreakpoint(addr);
     } catch(lc3::utils::exception const & e) {
@@ -455,7 +455,7 @@ NAN_METHOD(RemoveBreakpoint)
         return;
     }
 
-    uint32_t addr = (uint32_t) info[0]->NumberValue();
+	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         sim->removeBreakpointByAddr(addr);
     } catch(lc3::utils::exception const & e) {

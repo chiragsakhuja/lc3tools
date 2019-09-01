@@ -23,7 +23,7 @@ namespace core
 
 Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter,
     uint32_t print_level, bool threaded_input) : state(simulator, logger), logger(printer, print_level),
-    inputter(inputter), threaded_input(threaded_input), collecting_input(false)
+    inputter(inputter), threaded_input(threaded_input), collecting_input(false), ignore_privilege(false)
 {
     state.mem.resize(1 << 16);
     reinitialize();
@@ -281,6 +281,11 @@ void Simulator::registerWaitForInputCallback(callback_func_t func)
 {
     state.wait_for_input_callback_v = true;
     state.wait_for_input_callback = func;
+}
+
+void lc3::core::Simulator::setIgnorePrivilege(bool ignore)
+{
+	ignore_privilege = ignore;
 }
 
 void Simulator::collectInput(void)
