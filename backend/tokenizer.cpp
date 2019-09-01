@@ -155,7 +155,7 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
         }
         return false;
     } catch(std::invalid_argument const & e) {
-		(void) e;
+        (void) e;
         return false;
     }
 }

@@ -48,7 +48,7 @@ namespace core
         void setPrintLevel(uint32_t print_level) { logger.setPrintLevel(print_level); }
         uint32_t getPrintLevel(void) const { return logger.getPrintLevel(); }
 
-		void setIgnorePrivilege(bool ignore);
+        void setIgnorePrivilege(bool ignore);
 
     private:
         sim::InstructionDecoder decoder;

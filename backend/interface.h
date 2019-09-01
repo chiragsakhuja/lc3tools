@@ -97,7 +97,7 @@ namespace lc3
         void setPrintLevel(uint32_t print_level);
         void setPropagateExceptions(void);
         void clearPropagateExceptions(void);
-		void setIgnorePrivilege(bool ignore);
+        void setIgnorePrivilege(bool ignore);
 
     private:
         utils::IPrinter & printer;

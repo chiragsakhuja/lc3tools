@@ -156,7 +156,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
             start = std::stoi(start_s, 0, 0);
             end = std::stoi(end_s, 0, 0);
         } catch(std::exception const & e) {
-			(void) e;
+            (void) e;
             std::cout << "invalid address\n";
             return true;
         }
@@ -225,7 +225,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
         try {
             val = std::stoi(val_s, 0, 0);
         } catch(std::exception const & e) {
-			(void) e;
+            (void) e;
             std::cout << "invalid value\n";
             return true;
         }
@@ -249,7 +249,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
             try {
                 addr = std::stoi(loc_s, 0, 0);
             } catch(std::exception const & e) {
-				(void) e;
+                (void) e;
                 std::cout << "invalid address\n";
                 return true;
             }
@@ -323,7 +323,7 @@ void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens)
         try {
             loc = std::stoi(loc_s, 0, 0);
         } catch(std::exception const & e) {
-			(void) e;
+            (void) e;
             std::cout << "invalid value\n";
             return;
         }

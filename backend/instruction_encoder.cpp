@@ -405,7 +405,7 @@ lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(StatementNew const
                 return {};
             }
         } catch(lc3::utils::exception const & e) {
-			(void) e;
+            (void) e;
             return {};
         }
 

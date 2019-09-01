@@ -301,7 +301,7 @@ NAN_METHOD(GetMemValue)
         return;
     }
 
-	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         lc3::core::MachineState const & state = sim->getMachineState();
         auto ret = Nan::New<v8::Number>(state.readMemRaw(addr));
@@ -323,7 +323,7 @@ NAN_METHOD(SetMemValue)
         return;
     }
 
-	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     uint32_t value = info[1]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         lc3::core::MachineState & state = sim->getMachineState();
@@ -342,7 +342,7 @@ NAN_METHOD(GetMemLine)
         return;
     }
 
-	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         lc3::core::MachineState const & state = sim->getMachineState();
         auto ret = Nan::New<v8::String>(state.mem[addr].getLine()).ToLocalChecked();
@@ -364,7 +364,7 @@ NAN_METHOD(SetMemLine)
         return;
     }
 
-	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     Nan::Utf8String str(info[1].As<v8::String>());
     std::string line((char const *) *str);
 
@@ -440,7 +440,7 @@ NAN_METHOD(SetBreakpoint)
         return;
     }
 
-	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         sim->setBreakpoint(addr);
     } catch(lc3::utils::exception const & e) {
@@ -455,7 +455,7 @@ NAN_METHOD(RemoveBreakpoint)
         return;
     }
 
-	uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         sim->removeBreakpointByAddr(addr);
     } catch(lc3::utils::exception const & e) {

@@ -97,7 +97,7 @@ std::vector<lc3::core::asmbl::StatementNew> lc3::core::Assembler::buildStatement
 }
 
 lc3::core::asmbl::StatementNew lc3::core::Assembler::buildStatement(
-	std::vector<lc3::core::asmbl::Token> const & tokens)
+    std::vector<lc3::core::asmbl::Token> const & tokens)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -356,7 +356,7 @@ void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::Sta
 }
 
 std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
-	std::vector<lc3::core::asmbl::StatementNew> const & statements)
+    std::vector<lc3::core::asmbl::StatementNew> const & statements)
 {
     using namespace asmbl;
     using namespace lc3::utils;

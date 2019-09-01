@@ -74,7 +74,7 @@ namespace core
         callback_func_t wait_for_input_callback;
 
         sim & simulator;
-		bool ignore_privilege;
+        bool ignore_privilege;
     };
 
     enum class EventType {
