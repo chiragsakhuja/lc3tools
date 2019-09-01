@@ -291,19 +291,28 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
     return std::get<0>(candidates[0]);
 }
 
-uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPiece const & piece, bool log_enable) const
+uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPiece const & piece, bool sext,
+    bool log_enable) const
 {
     (void) statement;
     (void) log_enable;
 
     uint32_t value = piece.num;
 
-    /*
-     *if(log_enable && ((value & 0xffff) != value)) {
-     *    logger.asmPrintf(utils::PrintType::P_WARNING, statement, piece, "truncating operand to 16-bits");
-     *    logger.newline(utils::PrintType::P_WARNING);
-     *}
-     */
+    if(log_enable) {
+        if(sext) {
+            int32_t signed_value = static_cast<int32_t>(value);
+            if(signed_value < -(1 << 16) || signed_value > ((1 << 16) - 1)) {
+                logger.asmPrintf(utils::PrintType::P_WARNING, statement, piece, "truncating operand to 16-bits");
+                logger.newline(utils::PrintType::P_WARNING);
+            }
+        } else {
+            if(value != (value & 0xffff)) {
+                logger.asmPrintf(utils::PrintType::P_WARNING, statement, piece, "truncating operand to 16-bits");
+                logger.newline(utils::PrintType::P_WARNING);
+            }
+        }
+    }
 
     return value & 0xffff;
 }
@@ -313,7 +322,7 @@ uint32_t InstructionEncoder::getPseudoOrig(StatementNew const & statement) const
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoOrig(statement));
 #endif
-    return getNum(statement, statement.operands[0], true);
+    return getNum(statement, statement.operands[0], false, true);
 }
 
 uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement,
@@ -323,7 +332,7 @@ uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement,
     assert(isValidPseudoFill(statement, symbols));
 #endif
     if(statement.operands[0].type == StatementPiece::Type::NUM) {
-        return getNum(statement, statement.operands[0], true);
+        return getNum(statement, statement.operands[0], true, true);
     } else {
         return symbols.at(utils::toLower(statement.operands[0].str));
     }
@@ -334,7 +343,7 @@ uint32_t InstructionEncoder::getPseudoBlockSize(StatementNew const & statement) 
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoBlock(statement));
 #endif
-    return getNum(statement, statement.operands[0], true);
+    return getNum(statement, statement.operands[0], false, true);
 }
 
 uint32_t InstructionEncoder::getPseudoStringSize(StatementNew const & statement) const
