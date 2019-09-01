@@ -8,7 +8,7 @@
     #ifdef _ENABLE_DEBUG
         #define DEFAULT_PRINT_LEVEL 9
     #else
-        #define DEFAULT_PRINT_LEVEL 6
+        #define DEFAULT_PRINT_LEVEL 4
     #endif
 #endif
 
