@@ -23,6 +23,7 @@ std::stringstream lc3::core::Assembler::assemble(std::istream & buffer)
     using namespace lc3::utils;
 
     bool success = true;
+    uint32_t fail_pass = 0;
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin identifying tokens =====");
     std::vector<StatementNew> statements = buildStatements(buffer);
@@ -40,8 +41,7 @@ std::stringstream lc3::core::Assembler::assemble(std::istream & buffer)
     logger.printf(PrintType::P_EXTRA, true, "===== end building symbol table =====");
     logger.newline(PrintType::P_EXTRA);
     if(! success) {
-        logger.printf(PrintType::P_ERROR, true, "assembly pass 1 failed");
-        logger.newline();
+        fail_pass = 1;
     }
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin assembling =====");
@@ -49,13 +49,16 @@ std::stringstream lc3::core::Assembler::assemble(std::istream & buffer)
     success &= machine_code_blob.first;
     logger.printf(PrintType::P_EXTRA, true, "===== end assembling =====");
     logger.newline(PrintType::P_EXTRA);
-    if(! success) {
-        logger.printf(PrintType::P_ERROR, true, "assembly pass 2 failed");
-        logger.newline();
+    if(! success && fail_pass == 0) {
+        fail_pass = 2;
     }
 
     if(! success) {
-        logger.printf(PrintType::P_ERROR, true, "assembly failed");
+        if(fail_pass == 0) {
+            logger.printf(PrintType::P_ERROR, true, "assembly failed");
+        } else {
+            logger.printf(PrintType::P_ERROR, true, "assembly failed (pass %d)", fail_pass);
+        }
         throw lc3::utils::exception("assembly failed");
     }
 
@@ -371,13 +374,23 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
                 logger.newline();
                 success = false;
             } else {
-                if(! statement.base && statement.operands.size() > 0) {
-                    for(StatementPiece const & operand : statement.operands) {
-                        logger.asmPrintf(PrintType::P_ERROR, statement, operand, "illegal operand to a label");
+                if(! statement.base) {
+                    if(statement.operands.size() > 0) {
+                        for(StatementPiece const & operand : statement.operands) {
+                            logger.asmPrintf(PrintType::P_ERROR, statement, operand, "illegal operand to a label");
+                            logger.newline();
+                        }
+                        success = false;
+                        continue;
+                    } else {
+#ifndef _LIBERAL_ASM
+                        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+                            "cannot have label on its own line");
                         logger.newline();
+                        success = false;
+                        continue;
+#endif
                     }
-                    success = false;
-                    continue;
                 }
 
                 auto search = symbols.find(utils::toLower(statement.label->str));
@@ -490,8 +503,8 @@ std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMac
                     } else {
                         logger.printf(PrintType::P_EXTRA, true, "%s not assembled", msg.str().c_str());
                     }
-                    success &= valid;
                 }
+                success &= valid;
             } else if(encoder.isInst(statement)) {
                 logger.printf(PrintType::P_EXTRA, true, "%s", msg.str().c_str());
                 bool valid = false;

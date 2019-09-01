@@ -529,8 +529,7 @@ namespace core
     .FILL BAD_INT    ; xFF)LC3OS1";
 
         char const * lc3os_src_2 = R"LC3OS2(
-    OS_START    ; machine starts executing at x0200
-    LD R6,OS_SP            ; set system stack pointer
+OS_START LD R6,OS_SP            ; set system stack pointer
     LEA R0,OS_START_MSG    ; print a welcome message
     PUTS
     LDI R0,OS_PSR          ; go to user mode
@@ -563,40 +562,33 @@ OS_R3      .BLKW #1
 OS_R7      .BLKW #1
 
 
-TRAP_GETC
-    LDI R0,OS_KBSR        ; wait for a keystroke
+TRAP_GETC LDI R0,OS_KBSR        ; wait for a keystroke
     BRzp TRAP_GETC
     LDI R0,OS_KBDR        ; read it and return
     RTI
 
-TRAP_OUT
-    ST R1,TOUT_R1        ; save R1
-TRAP_OUT_WAIT
-    LDI R1,OS_DSR        ; wait for the display to be ready
+TRAP_OUT      ST R1,TOUT_R1  ; save R1
+TRAP_OUT_WAIT LDI R1,OS_DSR  ; wait for the display to be ready
     BRzp TRAP_OUT_WAIT
-    STI R0,OS_DDR        ; write the character and return
-    LD R1,TOUT_R1        ; restore R1
+    STI R0,OS_DDR            ; write the character and return
+    LD R1,TOUT_R1            ; restore R1
     RTI
 
-TRAP_PUTS
-    ST R0,OS_R0          ; save R0, R1, and R7
+TRAP_PUTS ST R0,OS_R0        ; save R0, R1, and R7
     ST R1,OS_R1
     ST R7,OS_R7
-    ADD R1,R0,#0         ; move string pointer (R0) into R1
-TRAP_PUTS_LOOP
-    LDR R0,R1,#0         ; write characters in string using OUT
+    ADD R1,R0,#0             ; move string pointer (R0) into R1
+TRAP_PUTS_LOOP LDR R0,R1,#0  ; write characters in string using OUT
     BRz TRAP_PUTS_DONE
     OUT
     ADD R1,R1,#1
     BRnzp TRAP_PUTS_LOOP
-TRAP_PUTS_DONE
-    LD R0,OS_R0          ; restore R0, R1, and R7
+TRAP_PUTS_DONE LD R0,OS_R0   ; restore R0, R1, and R7
     LD R1,OS_R1
     LD R7,OS_R7
     RTI
 
-TRAP_IN
-    ST R7,TIN_R7       ; save R7 (no need to save R0, since we
+TRAP_IN ST R7,TIN_R7   ; save R7 (no need to save R0, since we
                        ; overwrite later
     LEA R0,TRAP_IN_MSG ; prompt for input
     PUTS
@@ -610,74 +602,64 @@ TRAP_IN
     LD R7,TIN_R7       ; restore R7
     RTI
 
-TRAP_PUTSP
     ; NOTE: This trap will end when it sees any NUL, even in
     ; packed form, despite the P&P second edition's requirement
     ; of a double NUL.
-
-    ST R0,OS_R0         ; save R0, R1, R2, R3, and R7
+TRAP_PUTSP ST R0,OS_R0  ; save R0, R1, R2, R3, and R7
     ST R1,OS_R1
     ST R2,OS_R2
     ST R3,OS_R3
     ST R7,OS_R7
-    ADD R1,R0,#0        ; move string pointer (R0) into R1
-TRAP_PUTSP_LOOP
-    LDR R2,R1,#0        ; read the next two characters
-    LD R0,LOW_8_BITS    ; use mask to get low byte
-    AND R0,R0,R2        ; if low byte is NUL, quit printing
+    ADD R1,R0,#0                ; move string pointer (R0) into R1
+TRAP_PUTSP_LOOP LDR R2,R1,#0    ; read the next two characters
+    LD R0,LOW_8_BITS            ; use mask to get low byte
+    AND R0,R0,R2                ; if low byte is NUL, quit printing
     BRz TRAP_PUTSP_DONE
-    OUT                 ; otherwise print the low byte
-    AND R0,R0,#0        ; shift high byte into R0
+    OUT                         ; otherwise print the low byte
+    AND R0,R0,#0                ; shift high byte into R0
     ADD R3,R0,#8
-TRAP_PUTSP_S_LOOP
-    ADD R0,R0,R0        ; shift R0 left
-    ADD R2,R2,#0        ; move MSB from R2 into R0
+TRAP_PUTSP_S_LOOP ADD R0,R0,R0  ; shift R0 left
+    ADD R2,R2,#0                ; move MSB from R2 into R0
     BRzp TRAP_PUTSP_MSB_0
     ADD R0,R0,#1
-TRAP_PUTSP_MSB_0
-    ADD R2,R2,R2        ; shift R2 left
+TRAP_PUTSP_MSB_0 ADD R2,R2,R2   ; shift R2 left
     ADD R3,R3,#-1
     BRp TRAP_PUTSP_S_LOOP
-    ADD R0,R0,#0        ; if high byte is NUL, quit printing
+    ADD R0,R0,#0                ; if high byte is NUL, quit printing
     BRz TRAP_PUTSP_DONE
-    OUT                 ; otherwise print the low byte
-    ADD R1,R1,#1        ; and keep going
+    OUT                         ; otherwise print the low byte
+    ADD R1,R1,#1                ; and keep going
     BRnzp TRAP_PUTSP_LOOP
-TRAP_PUTSP_DONE
-    LD R0,OS_R0         ; restore R0, R1, R2, R3, and R7
+TRAP_PUTSP_DONE LD R0,OS_R0     ; restore R0, R1, R2, R3, and R7
     LD R1,OS_R1
     LD R2,OS_R2
     LD R3,OS_R3
     LD R7,OS_R7
     RTI
 
-TRAP_HALT
     ; an infinite loop of lowering OS_MCR's MSB
-    LEA R0,TRAP_HALT_MSG ; give a warning
+TRAP_HALT LEA R0,TRAP_HALT_MSG  ; give a warning
     PUTS
-    LDI R0,OS_MCR        ; halt the machine
+    LDI R0,OS_MCR               ; halt the machine
     LD R1,MASK_HI
     AND R0,R0,R1
     STI R0,OS_MCR
-    BRnzp TRAP_HALT      ; HALT again...
+    BRnzp TRAP_HALT             ; HALT again...
 
-BAD_TRAP
     ; print an error message, then HALT
-    LEA R0,BAD_TRAP_MSG    ; give an error message
+BAD_TRAP LEA R0,BAD_TRAP_MSG    ; give an error message
     PUTS
-    HALT                   ; execute HALT
+    HALT                        ; execute HALT
 
-EX_PRIV
     ; print an error message, then HALT
-    LEA R0,EX_PRIV_MSG     ; give an error message
+EX_PRIV LEA R0,EX_PRIV_MSG      ; give an error message
     PUTS
-    HALT                   ; execute HALT
+    HALT                        ; execute HALT
 
-EX_ILL
     ; print an error message, then HALT
-    LEA R0,EX_ILL_MSG      ; give an error message
+EX_ILL LEA R0,EX_ILL_MSG        ; give an error message
     PUTS
-    HALT                   ; execute HALT
+    HALT                        ; execute HALT
 
 BAD_INT        RTI
 
