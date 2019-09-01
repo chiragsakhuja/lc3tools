@@ -210,7 +210,11 @@ NAN_METHOD(StepOver)
 
 NAN_METHOD(Pause)
 {
-    sim->pause();
+    try {
+        sim->pause();
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_METHOD(GetRegValue)
@@ -226,22 +230,26 @@ NAN_METHOD(GetRegValue)
     std::string reg_name((char const *) *str);
     std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
 
-    lc3::core::MachineState const & state = sim->getMachineState();
-    if(reg_name[0] == 'r') {
-        uint32_t reg_num = reg_name[1] - '0';
-        if(reg_num > 7) {
-            Nan::ThrowError("GPR must be R0 through R7");
-            return;
+    try {
+        lc3::core::MachineState const & state = sim->getMachineState();
+        if(reg_name[0] == 'r') {
+            uint32_t reg_num = reg_name[1] - '0';
+            if(reg_num > 7) {
+                Nan::ThrowError("GPR must be R0 through R7");
+                return;
+            }
+            ret_val = state.regs[reg_num];
+        } else if(reg_name == "ir") {
+            ret_val = state.readMemRaw(state.pc);
+        } else if(reg_name == "psr") {
+            ret_val = sim->getPSR();
+        } else if(reg_name == "pc") {
+            ret_val =  sim->getPC();
+        } else if(reg_name == "mcr") {
+            ret_val = sim->getMCR();
         }
-        ret_val = state.regs[reg_num];
-    } else if(reg_name == "ir") {
-        ret_val = state.readMemRaw(state.pc);
-    } else if(reg_name == "psr") {
-        ret_val = sim->getPSR();
-    } else if(reg_name == "pc") {
-        ret_val =  sim->getPC();
-    } else if(reg_name == "mcr") {
-        ret_val = sim->getMCR();
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
     }
 
     auto ret = Nan::New<v8::Number>(ret_val);
@@ -265,20 +273,24 @@ NAN_METHOD(SetRegValue)
     std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
     uint32_t value = (uint32_t) info[1]->NumberValue();
 
-    lc3::core::MachineState & state = sim->getMachineState();
-    if(reg_name[0] == 'r') {
-        uint32_t reg_num = reg_name[1] - '0';
-        if(reg_num > 7) {
-            Nan::ThrowError("GPR must be R0 through R7");
-            return;
+    try {
+        lc3::core::MachineState & state = sim->getMachineState();
+        if(reg_name[0] == 'r') {
+            uint32_t reg_num = reg_name[1] - '0';
+            if(reg_num > 7) {
+                Nan::ThrowError("GPR must be R0 through R7");
+                return;
+            }
+            state.regs[reg_num] = value;
+        } else if(reg_name == "psr") {
+            sim->setPSR(value);
+        } else if(reg_name == "pc") {
+            sim->setPC(value);
+        } else if(reg_name == "mcr") {
+            sim->setMCR(value);
         }
-        state.regs[reg_num] = value;
-    } else if(reg_name == "psr") {
-        sim->setPSR(value);
-    } else if(reg_name == "pc") {
-        sim->setPC(value);
-    } else if(reg_name == "mcr") {
-        sim->setMCR(value);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
     }
 }
 
@@ -290,9 +302,13 @@ NAN_METHOD(GetMemValue)
     }
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
-    lc3::core::MachineState const & state = sim->getMachineState();
-    auto ret = Nan::New<v8::Number>(state.readMemRaw(addr));
-    info.GetReturnValue().Set(ret);
+    try {
+        lc3::core::MachineState const & state = sim->getMachineState();
+        auto ret = Nan::New<v8::Number>(state.readMemRaw(addr));
+        info.GetReturnValue().Set(ret);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_METHOD(SetMemValue)
@@ -309,9 +325,14 @@ NAN_METHOD(SetMemValue)
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
     uint32_t value = (uint32_t) info[1]->NumberValue();
-    lc3::core::MachineState & state = sim->getMachineState();
-    state.writeMemSafe(addr, value);
-    state.mem[addr].setLine("");
+    try {
+        lc3::core::MachineState & state = sim->getMachineState();
+        state.writeMemSafe(addr, value);
+        state.mem[addr].setLine("");
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+
 }
 
 NAN_METHOD(GetMemLine)
@@ -322,9 +343,13 @@ NAN_METHOD(GetMemLine)
     }
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
-    lc3::core::MachineState const & state = sim->getMachineState();
-    auto ret = Nan::New<v8::String>(state.mem[addr].getLine()).ToLocalChecked();
-    info.GetReturnValue().Set(ret);
+    try {
+        lc3::core::MachineState const & state = sim->getMachineState();
+        auto ret = Nan::New<v8::String>(state.mem[addr].getLine()).ToLocalChecked();
+        info.GetReturnValue().Set(ret);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_METHOD(SetMemLine)
@@ -343,14 +368,25 @@ NAN_METHOD(SetMemLine)
     v8::String::Utf8Value str(info[1].As<v8::String>());
     std::string line((char const *) *str);
 
-    sim->setMemLine(addr, line);
+    try {
+        sim->setMemLine(addr, line);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
-NAN_METHOD(SetPrivilegedMode)
+NAN_METHOD(SetIgnorePrivilege)
 {
-    uint32_t mcr = sim->getMCR();
-    mcr &= 0x7FFF;
-    sim->setMCR(mcr);
+    if(!info[0]->IsBoolean()) {
+        Nan::ThrowError("Must provide setting as a bool argument");
+        return;
+    }
+
+    try {
+        sim->setIgnorePrivilege((bool) info[0]->BooleanValue());
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_METHOD(ClearInput)
@@ -372,16 +408,24 @@ NAN_METHOD(AddInput)
         return;
     }
 
-    inputter->addInput(c[0]);
+    try {
+        inputter->addInput(c[0]);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_METHOD(GetOutput)
 {
-    std::vector<std::string> const & output = printer->getOutputBuffer();
-    std::string joined = "";
-    for(std::string const & str : output) { joined += str; }
-    auto ret = Nan::New<v8::String>(joined).ToLocalChecked();
-    info.GetReturnValue().Set(ret);
+    try {
+        std::vector<std::string> const & output = printer->getOutputBuffer();
+        std::string joined = "";
+        for(std::string const & str : output) { joined += str; }
+        auto ret = Nan::New<v8::String>(joined).ToLocalChecked();
+        info.GetReturnValue().Set(ret);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_METHOD(ClearOutput)
@@ -397,7 +441,11 @@ NAN_METHOD(SetBreakpoint)
     }
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
-    sim->setBreakpoint(addr);
+    try {
+        sim->setBreakpoint(addr);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_METHOD(RemoveBreakpoint)
@@ -408,13 +456,21 @@ NAN_METHOD(RemoveBreakpoint)
     }
 
     uint32_t addr = (uint32_t) info[0]->NumberValue();
-    sim->removeBreakpointByAddr(addr);
+    try {
+        sim->removeBreakpointByAddr(addr);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_METHOD(GetInstExecCount)
 {
-    auto ret = Nan::New<v8::Number>(sim->getInstExecCount());
-    info.GetReturnValue().Set(ret);
+    try {
+        auto ret = Nan::New<v8::Number>(sim->getInstExecCount());
+        info.GetReturnValue().Set(ret);
+    } catch(lc3::utils::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
 }
 
 NAN_MODULE_INIT(Initialize)
@@ -442,7 +498,7 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, SetMemValue);
     NAN_EXPORT(target, GetMemLine);
     NAN_EXPORT(target, SetMemLine);
-    NAN_EXPORT(target, SetPrivilegedMode);
+    NAN_EXPORT(target, SetIgnorePrivilege);
 
     NAN_EXPORT(target, ClearInput);
     NAN_EXPORT(target, AddInput);
