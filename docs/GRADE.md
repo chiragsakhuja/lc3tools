@@ -383,6 +383,37 @@ VERIFY_OUTPUT_HAD("aaaaa");
 VERIFY(success);
 ```
 
+# Additional Graders
+Four graders are also provided in the `frontend/grader/labs` directory to aid in
+writing graders. They encompass the following practical applications:
+
+1. `pow2`: Check if a memory location contains a power of 2. Exemplifies basic
+   memory value verification.
+2. `polyroot`: Perform a binary search to find the roots of a polynomial.
+   Exemplifies basic memory value verification as well as how to use hooks
+   (subroutine-enter hooks in this case) to guarantee search is O(log n).
+3. `binsearch`: Request name as input and search through binary tree database to
+   return data. Exemplifies polling-base I/O verification and how to build
+   infrastructure on top of the LC3Tools API to load the database into LC-3
+   memory for each test case.
+4. `interrupt`: Endlessly print out prompt and perform basic lower-case
+   operation when a button is pressed. Exemplifies interrupt-based I/O
+   verification.
+
+A more in-depth description of each application can be found in the [Sample
+Assignments document](SampleAssignments.pdf).
+
+Assembly/binary solutions for each application are also provided in
+`frontend/grader/solutions`. To verify the grader's functionality, you may run
+the following from the root directory after [compiling the project](BUILD.md).
+
+```
+build/bin/pow2 frontend/grader/solutions/pow2.bin
+build/bin/polyroot frontend/grader/solutions/polyroot.asm
+build/bin/binsearch frontend/grader/solutions/binsearch.asm
+build/bin/interrupt frontend/grader/solutions/interrupt.asm
+```
+
 # Copyright Notice
 Copyright 2020 &copy; McGraw-Hill Education. All rights reserved. No
 reproduction or distribution without the prior written consent of McGraw-Hill

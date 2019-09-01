@@ -22,7 +22,8 @@ Students trying to use LC3Tools can refer to the
 
 Instructors trying to use the grading infrastructure will need to [build from
 source](README.md#building-from-source) and use the [command line
-utilities](README.md#additional-information).
+utilities](README.md#additional-information). The [grader document](GRADE.md)
+will also be useful.
 
 ## Downloading Releases
 Pre-built GUI packages for Windows, macOS, and Linux can be found in the
