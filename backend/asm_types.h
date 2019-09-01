@@ -35,7 +35,7 @@ namespace asmbl
         uint32_t row, col, len;
         std::string line;
 
-        Token(void) : row(0), col(0), len(0), line(""), type(Token::Type::INVALID) {}
+        Token(void) : type(Token::Type::INVALID), row(0), col(0), len(0) {}
 
     };
 
@@ -57,7 +57,7 @@ namespace asmbl
 
         uint32_t col, len;
 
-        StatementPiece(void) : col(0), len(0), str(""), num(0), type(Type::INVALID) {}
+        StatementPiece(void) : type(Type::INVALID), num(0), col(0), len(0) {}
         StatementPiece(Token const & token, Type type) : type(type), col(token.col), len(token.len)
         {
             if(type == Type::NUM) {

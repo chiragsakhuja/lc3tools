@@ -28,14 +28,17 @@ void lc3::ConsoleInputter::beginInput(void)
 
 bool lc3::ConsoleInputter::getChar(char & c)
 {
-    if(_kbhit() != 0) {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
+    if(_kbhit() != 0) {
         c = _getch();
-#else
-        c = fgetc(stdin);
-#endif
         return true;
     }
+#else
+    if(kbhit() != 0) {
+        c = fgetc(stdin);
+        return true;
+    }
+#endif
 
     return false;
 }
