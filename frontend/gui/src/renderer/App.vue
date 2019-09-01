@@ -159,7 +159,7 @@ export default {
     },
     saveSettings: function(setting) {
       if(setting == 'privilege') {
-        this.SetIgnorePrivilege(this.settings.ignore_privilege);
+        lc3.SetIgnorePrivilege(this.settings.ignore_privilege);
       }
 
       this.$storage.set("settings.json", this.settings, (err) => {
