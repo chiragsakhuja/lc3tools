@@ -37,7 +37,11 @@ namespace core
             , USP
         };
 
-        MachineState(sim & simulator, lc3::utils::Logger & logger) : logger(logger), simulator(simulator) {}
+        MachineState(sim & simulator, lc3::utils::Logger & logger) : pc(0), pre_instruction_callback_v(false),
+			post_instruction_callback_v(false), interrupt_enter_callback_v(false),
+			interrupt_exit_callback_v(false), sub_enter_callback_v(false),
+			sub_exit_callback_v(false), wait_for_input_callback_v(false),
+			logger(logger), simulator(simulator) {}
 
         std::vector<MemEntry> mem;
         std::array<uint32_t, 8> regs;

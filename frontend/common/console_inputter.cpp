@@ -28,9 +28,9 @@ void lc3::ConsoleInputter::beginInput(void)
 
 bool lc3::ConsoleInputter::getChar(char & c)
 {
-    if(kbhit() != 0) {
+    if(_kbhit() != 0) {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32)
-        c = getch();
+        c = _getch();
 #else
         c = fgetc(stdin);
 #endif

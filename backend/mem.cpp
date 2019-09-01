@@ -24,11 +24,11 @@ namespace core
         // TODO: this is extrememly unportable, namely because it relies on the endianness not changing
         // encoding (2 bytes), then orig bool (1 byte), then number of characters (4 bytes), then actual line (N bytes,
         // not null terminated)
-        uint32_t num_bytes = 2 + 1 + 4 + in.line.size();
+        uint32_t num_bytes = (uint32_t) (2 + 1 + 4 + in.line.size());
         char * bytes = new char[num_bytes];
         std::memcpy(bytes, (char *) (&in.value), 2);
         std::memcpy(bytes + 2, (char *) (&in.orig), 1);
-        uint32_t num_chars = in.line.size();
+        uint32_t num_chars = (uint32_t) in.line.size();
         std::memcpy(bytes + 3, (char *) (&num_chars), 4);
         char const * data = in.line.data();
         std::memcpy(bytes + 7, data, num_chars);

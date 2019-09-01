@@ -9,7 +9,7 @@ std::vector<std::pair<std::string, std::string>> parseCLIArgs(int argc, char * a
 {
     std::vector<std::pair<std::string, std::string>> parsed_args;
     for(uint32_t i = 1; i < (uint32_t) argc; i += 1) {
-        uint32_t len = std::strlen(argv[0]);
+        uint32_t len = (uint32_t) (std::strlen(argv[0]));
         if(len > 0 && argv[i][0] == '-') {
             uint32_t start_index = 1;
             if(len > 1 && argv[i][1] == '-') {

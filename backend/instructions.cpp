@@ -332,7 +332,7 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement
 #endif
         }
     } else {
-        if(piece.num > ((1 << width) - 1)) {
+        if(piece.num > ((1u << width) - 1)) {
 #ifdef _LIBERAL_ASM
             logger.asmPrintf(PrintType::P_WARNING, statement, piece, "immediate %u truncated to %u", piece.num,
                 token_val);

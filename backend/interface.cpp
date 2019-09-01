@@ -245,7 +245,7 @@ void lc3::sim::setMemString(uint16_t addr, std::string const & value)
         getMachineState().writeMemRaw(addr + i, static_cast<uint32_t>(value[i]));
         getMachineState().mem[addr + i].setLine(std::string(1, value[i]));
     }
-    getMachineState().writeMemRaw(addr + value.size(), 0);
+    getMachineState().writeMemRaw((uint32_t) (addr + value.size()), 0);
     getMachineState().mem[addr + value.size()].setLine(value);
 }
 

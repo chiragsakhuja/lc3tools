@@ -351,7 +351,7 @@ uint32_t InstructionEncoder::getPseudoStringSize(StatementNew const & statement)
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoString(statement));
 #endif
-    return getPseudoString(statement).size() + 1;
+    return (uint32_t) (getPseudoString(statement).size() + 1);
 }
 
 std::string InstructionEncoder::getPseudoString(StatementNew const & statement) const
@@ -435,7 +435,7 @@ uint32_t InstructionEncoder::getDistanceToNearestInstructionName(std::string con
 
 uint32_t InstructionEncoder::levDistance(std::string const & a, std::string const & b) const
 {
-    return levDistanceHelper(a, a.size(), b, b.size());
+    return levDistanceHelper(a, (uint32_t) a.size(), b, (uint32_t) b.size());
 }
 
 uint32_t InstructionEncoder::levDistanceHelper(std::string const & a, uint32_t a_len, std::string const & b,

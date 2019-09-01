@@ -135,7 +135,7 @@ template<typename ... Args>
 void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
     lc3::core::asmbl::StatementNew const & statement, std::string const & format, Args ... args) const
 {
-    asmPrintf(level, statement.row, 0, statement.line.size(), statement.line, format, args...);
+    asmPrintf(level, statement.row, 0, (uint32_t) statement.line.size(), statement.line, format, args...);
 }
 
 template<typename ... Args>
