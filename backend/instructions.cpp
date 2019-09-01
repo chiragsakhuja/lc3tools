@@ -124,7 +124,7 @@ std::vector<PIEvent> IInstruction::buildSysCallEnterHelper(MachineState const & 
     }
 
     std::vector<PIEvent> ret;
-    if(! state.ignore_privilege && ((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
+    if(((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
         ret.emplace_back(std::make_shared<SwapSPEvent>());
     }
 
@@ -186,7 +186,7 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
         throw utils::exception("triple fault: invalid bottom of stack address");
     }
 
-    if(! state.ignore_privilege && (current_psr_value & 0x8000) == 0x8000) {
+    if((current_psr_value & 0x8000) == 0x8000) {
         // if an RTI is encountered in user mode, trigger an access violation exception
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
@@ -198,7 +198,7 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
         std::make_shared<RegEvent>(6, sp + 2),
     };
 
-    if(! state.ignore_privilege && ((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
+    if(((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
         ret.emplace_back(std::make_shared<SwapSPEvent>());
     }
 
