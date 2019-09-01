@@ -41,7 +41,7 @@ namespace core
             pre_instruction_callback_v(false),post_instruction_callback_v(false),
             interrupt_enter_callback_v(false), interrupt_exit_callback_v(false),
             sub_enter_callback_v(false), sub_exit_callback_v(false),
-            wait_for_input_callback_v(false), simulator(simulator) {}
+            wait_for_input_callback_v(false), simulator(simulator), ignore_privilege(false) {}
 
         std::vector<MemEntry> mem;
         std::array<uint32_t, 8> regs;
@@ -74,6 +74,7 @@ namespace core
         callback_func_t wait_for_input_callback;
 
         sim & simulator;
+		bool ignore_privilege;
     };
 
     enum class EventType {
@@ -152,7 +153,7 @@ namespace core
     class SwapSPEvent : public IEvent
     {
     public:
-        SwapSPEvent() : IEvent(EventType::EVENT_SWAP_SP) {}
+        SwapSPEvent(void) : IEvent(EventType::EVENT_SWAP_SP) {}
 
         virtual void updateState(MachineState & state) const override;
         virtual std::string getOutputString(MachineState const & state) const override {

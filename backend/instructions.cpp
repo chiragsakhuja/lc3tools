@@ -124,7 +124,7 @@ std::vector<PIEvent> IInstruction::buildSysCallEnterHelper(MachineState const & 
     }
 
     std::vector<PIEvent> ret;
-    if(((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
+    if(! state.ignore_privilege && ((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
         ret.emplace_back(std::make_shared<SwapSPEvent>());
     }
 
@@ -186,7 +186,7 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
         throw utils::exception("triple fault: invalid bottom of stack address");
     }
 
-    if((current_psr_value & 0x8000) == 0x8000) {
+    if(! state.ignore_privilege && (current_psr_value & 0x8000) == 0x8000) {
         // if an RTI is encountered in user mode, trigger an access violation exception
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
@@ -198,7 +198,7 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
         std::make_shared<RegEvent>(6, sp + 2),
     };
 
-    if(((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
+    if(! state.ignore_privilege && ((current_psr_value & 0x8000) ^ (new_psr_value & 0x8000)) == 0x8000) {
         ret.emplace_back(std::make_shared<SwapSPEvent>());
     }
 
@@ -530,7 +530,7 @@ std::vector<PIEvent> LDInstruction::execute(MachineState const & state)
     PIEvent psr_change;
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
-    if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
+    if(! state.ignore_privilege && ((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000)) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
 
@@ -572,8 +572,8 @@ std::vector<PIEvent> LDIInstruction::execute(MachineState const & state)
     PIEvent psr_change;
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
-    if(((addr1 <= SYSTEM_END || addr1 >= MMIO_START) || (addr2 <= SYSTEM_END || addr2 >= MMIO_START))
-        && (psr_value & 0x8000) != 0x0000)
+    if(! state.ignore_privilege && (((addr1 <= SYSTEM_END || addr1 >= MMIO_START)
+	    || (addr2 <= SYSTEM_END || addr2 >= MMIO_START)) && (psr_value & 0x8000) != 0x0000))
     {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
@@ -609,7 +609,7 @@ std::vector<PIEvent> LDRInstruction::execute(MachineState const & state)
     PIEvent psr_change;
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
-    if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
+    if(! state.ignore_privilege && ((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000)) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
 
@@ -693,7 +693,7 @@ std::vector<PIEvent> STInstruction::execute(MachineState const & state)
     PIEvent psr_change;
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
-    if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
+    if(! state.ignore_privilege && ((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000)) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
 
@@ -720,8 +720,8 @@ std::vector<PIEvent> STIInstruction::execute(MachineState const & state)
     PIEvent psr_change;
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
-    if(((addr1 <= SYSTEM_END || addr1 >= MMIO_START) || (addr2 <= SYSTEM_END || addr2 >= MMIO_START))
-        && (psr_value & 0x8000) != 0x0000)
+    if(! state.ignore_privilege && (((addr1 <= SYSTEM_END || addr1 >= MMIO_START)
+	    || (addr2 <= SYSTEM_END || addr2 >= MMIO_START)) && (psr_value & 0x8000) != 0x0000))
     {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
@@ -753,7 +753,7 @@ std::vector<PIEvent> STRInstruction::execute(MachineState const & state)
     PIEvent psr_change;
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
-    if((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000) {
+    if(! state.ignore_privilege && ((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000)) {
         return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
     }
 

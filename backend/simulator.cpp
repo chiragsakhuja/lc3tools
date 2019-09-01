@@ -23,7 +23,7 @@ namespace core
 
 Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter,
     uint32_t print_level, bool threaded_input) : state(simulator, logger), logger(printer, print_level),
-    inputter(inputter), threaded_input(threaded_input), collecting_input(false), ignore_privilege(false)
+    inputter(inputter), threaded_input(threaded_input), collecting_input(false)
 {
     state.mem.resize(1 << 16);
     reinitialize();
@@ -165,7 +165,9 @@ bool Simulator::isClockEnabled(void) const
 
 std::vector<PIEvent> Simulator::executeInstruction(void)
 {
-    if((state.pc <= SYSTEM_END || state.pc >= MMIO_START) && (state.readMemRaw(PSR) & 0x8000) == 0x8000) {
+    if(! state.ignore_privilege && ((state.pc <= SYSTEM_END || state.pc >= MMIO_START)
+	    && (state.readMemRaw(PSR) & 0x8000) == 0x8000))
+	{
         logger.printf(lc3::utils::PrintType::P_EXTRA, true, "illegal PC 0x%0.4x accessed", state.pc);
         return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x0, MachineState::SysCallType::INT);
     }
@@ -285,7 +287,7 @@ void Simulator::registerWaitForInputCallback(callback_func_t func)
 
 void lc3::core::Simulator::setIgnorePrivilege(bool ignore)
 {
-	ignore_privilege = ignore;
+	state.ignore_privilege = ignore;
 }
 
 void Simulator::collectInput(void)

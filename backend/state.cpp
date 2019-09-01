@@ -69,7 +69,7 @@ void lc3::core::MachineState::writeMemEvent(uint32_t addr, uint16_t value, bool 
 
     if(addr == PSR) {
         uint32_t current_psr = readMemRaw(PSR);
-        if(((current_psr & 0x8000) ^ (value & 0x8000)) == 0x8000) {
+        if(! ignore_privilege && (((current_psr & 0x8000) ^ (value & 0x8000)) == 0x8000)) {
             change_mem = true;
             change = std::make_shared<SwapSPEvent>();
         }

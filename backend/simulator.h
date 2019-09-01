@@ -61,8 +61,6 @@ namespace core
         bool threaded_input;
         std::atomic<bool> collecting_input;
 
-		bool ignore_privilege;
-
         std::vector<PIEvent> executeInstruction(void);
         void checkAndSetupInterrupts();
         void executeEventChain(std::vector<PIEvent> & events);
