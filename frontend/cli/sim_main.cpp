@@ -15,6 +15,7 @@
 #include "interface.h"
 
 std::string previous_command = "";
+uint32_t init_pc = RESET_PC;
 
 void help(void);
 bool prompt(lc3::sim & simulator);
@@ -61,6 +62,8 @@ int main(int argc, char * argv[])
         }
     }
 
+    init_pc = simulator.getPC();
+
     while(prompt(simulator)) {}
 
     return 0;
@@ -73,12 +76,13 @@ void help(void)
               << "list [N]                 - display the next instruction to be executed with N rows of context\n"
               << "load <filename>          - loads an object file\n"
               << "mem <start> [<end>]      - display values in memory addresses start to end\n"
-#ifdef _DEBUG
+#ifdef _ENABLE_DEBUG
               << "printlevel N             - sets the print level to N\n"
 #endif
               << "quit                     - exit the simulator\n"
               << "randomize                - randomize the memory and general purpose registers\n"
               << "regs                     - display register values\n"
+              << "restart                  - restart program (and go to user mode)\n"
               << "run [<instructions>]     - runs to end of program or, if specified, the number of instructions\n"
               << "set <loc> <value>        - sets loc (either register name or memory address) to value\n"
               << "step in                  - executes a single instruction\n"
@@ -166,7 +170,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
                 std::cout << formatMem(simulator, addr) << "\n";
             }
         }
-#ifdef _DEBUG
+#ifdef _ENABLE_DEBUG
     } else if(command == "printlevel") {
         uint32_t print_level;
         command_tokens >> print_level;
@@ -180,6 +184,9 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
         return false;
     } else if(command == "randomize") {
         simulator.randomize();
+    } else if(command == "restart") {
+        simulator.setPC(init_pc);
+        simulator.setPSR(simulator.getPSR() | 0x8000);
     } else if(command == "regs") {
         for(uint32_t i = 0; i < 2; i += 1) {
             for(uint32_t j = 0; j < 4; j += 1) {
