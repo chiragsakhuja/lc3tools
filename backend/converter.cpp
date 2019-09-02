@@ -63,7 +63,7 @@ std::stringstream lc3::core::Converter::convertBin(std::istream & buffer)
 
     logger.printf(PrintType::P_INFO, true, "conversion successful");
 
-    std::stringstream ret;
+    std::stringstream ret(std::ios_base::in | std::ios_base::out | std::ios_base::binary);
     ret << getMagicHeader();
     ret << getVersionString();
     for(MemEntry entry : obj_blob) {

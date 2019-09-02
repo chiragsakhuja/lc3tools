@@ -33,6 +33,13 @@ namespace core
         char const * data = in.line.data();
         std::memcpy(bytes + 7, data, num_chars);
         out.write(bytes, num_bytes);
+#ifdef _ENABLE_DEBUG_ASM
+        std::cout << in.line << ": ";
+        for (uint32_t i = 0; i < num_bytes; i += 1) {
+            std::cout << lc3::utils::ssprintf("0x%02x ", bytes[i]);
+        }
+		std::cout << "\n";
+#endif
         delete[] bytes;
         return out;
 #endif
@@ -41,18 +48,22 @@ namespace core
     std::istream & operator>>(std::istream & in, lc3::core::MemEntry & out)
     {
         in.read((char *) (&out.value), 2);
-        //std::cout << "value: " << lc3::utils::ssprintf("0x%04x", out.value) << "\n";
         in.read((char *) (&out.orig), 1);
-        //std::cout << "orig: " << out.orig << "\n";
         uint32_t num_chars;
         in.read((char *) (&num_chars), 4);
-        //std::cout << "num_chars: " << num_chars << "\n";
+#ifdef _ENABLE_DEBUG_ASM
+		std::cout << "value: " << lc3::utils::ssprintf("0x%04x", out.value) << "\n";
+		std::cout << "orig: " << out.orig << "\n";
+        std::cout << "num_chars: " << num_chars << "\n";
+#endif
         if(num_chars > 0) {
             char * chars = new char[num_chars + 1];
             in.read(chars, num_chars);
             chars[num_chars] = 0;
             out.line = std::string(chars);
-            //std::cout << "line: " << out.line << "\n";
+#ifdef _ENABLE_DEBUG_ASM
+			std::cout << "line: " << out.line << "\n";
+#endif
         }
         return in;
     }

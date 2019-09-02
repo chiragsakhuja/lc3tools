@@ -62,7 +62,7 @@ std::stringstream lc3::core::Assembler::assemble(std::istream & buffer)
         throw lc3::utils::exception("assembly failed");
     }
 
-    std::stringstream ret;
+    std::stringstream ret(std::ios_base::in | std::ios_base::out | std::ios_base::binary);
     ret << getMagicHeader();
     ret << getVersionString();
     for(MemEntry const & entry : machine_code_blob.second) {

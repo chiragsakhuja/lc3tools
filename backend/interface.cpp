@@ -41,7 +41,7 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threa
 
 bool lc3::sim::loadObjFile(std::string const & obj_filename)
 {
-    std::ifstream obj_file(obj_filename);
+    std::ifstream obj_file(obj_filename, std::ios_base::binary);
     if(! obj_file) {
         printer.print("could not open file " + obj_filename);
 		printer.newline();
@@ -545,7 +545,7 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
 	printer.newline();
     in_file.close();
 
-    std::ofstream out_file(obj_filename);
+    std::ofstream out_file(obj_filename, std::ios_base::binary);
     if(! out_file.is_open()) {
         printer.print("could not open " + obj_filename + " for writing");
 		printer.newline();
@@ -612,7 +612,7 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
 	printer.newline();
     in_file.close();
 
-    std::ofstream out_file(obj_filename);
+    std::ofstream out_file(obj_filename, std::ios_base::binary);
     if(! out_file.is_open()) {
         printer.print("could not open " + obj_filename + " for writing");
 		printer.newline();
