@@ -57,7 +57,7 @@
         <v-layout row wrap>
           <v-flex xs12 shrink class="editor-console-wrapper">
             <h3 id="filename" class="view-header">{{ getFilename }}</h3>
-            <editor id="editor" class="elevation-2" v-model="editor.current_content" @init="editorInit" lang="text" v-bind:theme="dark_mode ? 'twilight' : 'textmate'" height="100%" width="98%"> </editor>
+            <editor id="editor" class="elevation-2" v-model="editor.current_content" @init="editorInit" lang="lc3" v-bind:theme="dark_mode ? 'twilight' : 'textmate'" height="100%" width="98%"> </editor>
             <div id="console" class="elevation-4" v-html="console_str"></div>
           </v-flex>
         </v-layout>
@@ -155,6 +155,7 @@ export default {
       this.$emit("updateAsmFile", this.editor.current_file);
     },
     editorInit(editor) {
+      require("./lc3");
       require("brace/mode/html");
       require("brace/mode/javascript");
       require("brace/mode/less");
