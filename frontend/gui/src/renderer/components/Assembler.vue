@@ -150,6 +150,7 @@ export default {
       }
       this.console_str = lc3.GetOutput();
       lc3.ClearOutput();
+      this.$emit("updateAsmFile", this.editor.current_file);
     },
     editorInit(editor) {
       require("brace/mode/html");

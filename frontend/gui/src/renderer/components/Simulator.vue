@@ -271,7 +271,7 @@ export default {
         running: false,
       },
       mem_view: {start: 0x3000, data: []},
-      loaded_files: [],
+      loaded_files: new Set(),
       console_str: "",
       prev_inst_executed: 0,
       poll_output_handle: null,
@@ -311,6 +311,14 @@ export default {
     this.updateUI();
     this.jumpToPC(true);
   },
+  activated() {
+    if(this.asm_file !== "NULL") {
+      let obj_file = this.asm_file.substr(0, this.asm_file.lastIndexOf(".")) + ".obj";
+      if(fs.existsSync(obj_file)) {
+        this.loadFile(obj_file);
+      }
+    }
+  },
   methods: {
     openFile(path) {
       // Todo: try catch around this
@@ -322,18 +330,22 @@ export default {
         });
       }
 
-      // Dialog returns an array of files, we only care about the first one
       if (selectedFiles) {
-        this.loaded_files = selectedFiles.slice(0);
-        this.reloadFiles();
+        for (let i = 0; i < selectedFiles.length; i += 1) {
+          this.loadFile(selectedFiles[i]);
+        }
       }
+    },
+    loadFile(path) {
+      this.loaded_files.add(path);
+      lc3.LoadObjectFile(path);
       this.mem_view.start = lc3.GetRegValue("pc");
       this.updateUI();
     },
     reloadFiles() {
-      for(let i = 0; i < this.loaded_files.length; i++) {
-        lc3.LoadObjectFile(this.loaded_files[i]);
-      }
+      this.loaded_files.forEach((path) => {
+        this.loadFile(path);
+      });
       this.updateUI();
     },
     toggleSimulator(run_function_str) {
@@ -536,7 +548,10 @@ export default {
   },
   watch: {
   },
-  props: { dark_mode: Boolean }
+  props: {
+    dark_mode: Boolean,
+    asm_file: { type: String, required: true, default: "NULL" }
+  }
 };
 </script>
 
