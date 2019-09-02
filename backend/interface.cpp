@@ -31,7 +31,7 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threa
             (void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()));
-			printer.newline();
+            printer.newline();
 #endif
         }
     }
@@ -44,7 +44,7 @@ bool lc3::sim::loadObjFile(std::string const & obj_filename)
     std::ifstream obj_file(obj_filename, std::ios_base::binary);
     if(! obj_file) {
         printer.print("could not open file " + obj_filename);
-		printer.newline();
+        printer.newline();
         if(propagate_exceptions) {
             throw utils::exception("could not open file");
         } else {
@@ -61,7 +61,7 @@ bool lc3::sim::loadObjFile(std::string const & obj_filename)
             (void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()));
-			printer.newline();
+            printer.newline();
 #endif
             return false;
         }
@@ -167,7 +167,7 @@ bool lc3::sim::run(lc3::sim::RunType cur_run_type)
             (void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()));
-			printer.newline();
+            printer.newline();
 #endif
             return false;
         }
@@ -501,7 +501,7 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
     std::ifstream in_file(asm_filename);
     if(! in_file.is_open()) {
         printer.print("could not open file " + asm_filename);
-		printer.newline();
+        printer.newline();
         if(propagate_exceptions) {
             throw lc3::utils::exception("could not open file for reading");
         } else {
@@ -510,7 +510,7 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
     }
 
     printer.print("attemping to assemble " + asm_filename + " into " + obj_filename);
-	printer.newline();
+    printer.newline();
 
     std::stringstream out_stream;
 
@@ -527,7 +527,7 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
             (void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()));
-			printer.newline();
+            printer.newline();
 #endif
             return {};
         }
@@ -542,13 +542,13 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
 #endif
 
     printer.print("assembly successful");
-	printer.newline();
+    printer.newline();
     in_file.close();
 
     std::ofstream out_file(obj_filename, std::ios_base::binary);
     if(! out_file.is_open()) {
         printer.print("could not open " + obj_filename + " for writing");
-		printer.newline();
+        printer.newline();
         if(propagate_exceptions) {
             throw lc3::utils::exception("could not open file for writing");
         } else {
@@ -568,7 +568,7 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
     std::ifstream in_file(bin_filename);
     if(! in_file.is_open()) {
         printer.print("could not open file " + bin_filename);
-		printer.newline();
+        printer.newline();
         if(propagate_exceptions) {
             throw lc3::utils::exception("could not open file for reading");
         } else {
@@ -577,7 +577,7 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
     }
 
     printer.print("attemping to convert " + bin_filename + " into " + obj_filename);
-	printer.newline();
+    printer.newline();
 
     std::stringstream out_stream;
 
@@ -594,7 +594,7 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
             (void) e;
 #ifdef _ENABLE_DEBUG
             printer.print("caught exception: " + std::string(e.what()));
-			printer.newline();
+            printer.newline();
 #endif
             return {};
         }
@@ -609,13 +609,13 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
 #endif
 
     printer.print("conversion successful");
-	printer.newline();
+    printer.newline();
     in_file.close();
 
     std::ofstream out_file(obj_filename, std::ios_base::binary);
     if(! out_file.is_open()) {
         printer.print("could not open " + obj_filename + " for writing");
-		printer.newline();
+        printer.newline();
         if(propagate_exceptions) {
             throw lc3::utils::exception("could not open file for writing");
         } else {

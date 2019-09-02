@@ -38,7 +38,7 @@ namespace core
         for (uint32_t i = 0; i < num_bytes; i += 1) {
             std::cout << lc3::utils::ssprintf("0x%02x ", bytes[i]);
         }
-		std::cout << "\n";
+        std::cout << "\n";
 #endif
         delete[] bytes;
         return out;
@@ -52,8 +52,8 @@ namespace core
         uint32_t num_chars;
         in.read((char *) (&num_chars), 4);
 #ifdef _ENABLE_DEBUG_ASM
-		std::cout << "value: " << lc3::utils::ssprintf("0x%04x", out.value) << "\n";
-		std::cout << "orig: " << out.orig << "\n";
+        std::cout << "value: " << lc3::utils::ssprintf("0x%04x", out.value) << "\n";
+        std::cout << "orig: " << out.orig << "\n";
         std::cout << "num_chars: " << num_chars << "\n";
 #endif
         if(num_chars > 0) {
@@ -62,7 +62,7 @@ namespace core
             chars[num_chars] = 0;
             out.line = std::string(chars);
 #ifdef _ENABLE_DEBUG_ASM
-			std::cout << "line: " << out.line << "\n";
+            std::cout << "line: " << out.line << "\n";
 #endif
         }
         return in;
