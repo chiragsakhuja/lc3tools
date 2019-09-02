@@ -100,7 +100,9 @@ export default {
   methods: {
     newFile(content) {
       // Todo: try catch around this
-      let new_file = remote.dialog.showSaveDialog();
+      let new_file = remote.dialog.showSaveDialog({
+        filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
+      });
 
       // Guard against user cancelling
       if (new_file) {
