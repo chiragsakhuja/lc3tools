@@ -106,14 +106,21 @@ int main(int argc, char * argv[])
         std::string filename(argv[i]);
         if(filename[0] != '-') {
             lc3::optional<std::string> result;
-            if(endsWith(filename, ".bin")) {
-                result = converter.convertBin(filename);
+            if(! endsWith(filename, ".obj")) {
+                if(endsWith(filename, ".bin")) {
+                    result = converter.convertBin(filename);
+                } else {
+                    result = assembler.assemble(filename);
+                }
             } else {
-                result = assembler.assemble(filename);
+                result = filename;
             }
 
-            if(! result) { valid_program = false; }
-            obj_filenames.push_back(*result);
+            if(result) {
+                obj_filenames.push_back(*result);
+            } else {
+                valid_program = false;
+            }
         }
     }
 
