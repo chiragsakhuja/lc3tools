@@ -123,12 +123,14 @@ export default {
     openFile(path) {
       // Todo: try catch around this
       // if not given a path, open a dialog to ask user for file
-      let selected_files = [path];
-      if (!path) {
+      let selected_files = [];
+      if (path === undefined || typeof path !== 'string') {
         selected_files = remote.dialog.showOpenDialog({
           properties: ["openFile"],
           filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
         });
+      } else {
+        selected_files = [path];
       }
 
       // Dialog returns an array of files, we only care about the first one
@@ -163,15 +165,20 @@ export default {
       require("brace/theme/twilight");
       editor.setShowPrintMargin(false);
       editor.commands.addCommand({
-          name: 'save',
-          bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
-          exec: this.saveFile
+        name: 'save',
+        bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+        exec: this.saveFile
       });
       editor.commands.addCommand({
-          name: 'assemble',
-          bindKey: {win: "Ctrl-Enter", "mac": "Cmd-Enter"},
-          exec: this.assemble
-      })
+        name: 'assemble',
+        bindKey: {win: "Ctrl-Enter", "mac": "Cmd-Enter"},
+        exec: this.assemble
+      });
+      editor.commands.addCommand({
+        name: 'open',
+        bindKey: {win: "Ctrl-O", "mac": "Cmd-O"},
+        exec: this.openFile
+      });
     }
   },
   computed: {
