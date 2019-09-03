@@ -8,13 +8,13 @@ var LC3HighlightRules = function() {
 
     this.$rules = { start:
        [ { token: 'keyword.control.assembly',
-           regex: '\\b(?:add|and|br(:n|p|z)|halt|jmp|jsr|jsrr|ld|ldi|ldr|lea|not|ret|rti|st|sti|str|trap)\\b',
+           regex: '\\b(?:add|and|br(n?z?p?)?|halt|jmp|jsr|jsrr|ld|ldi|ldr|lea|not|ret|rti|st|sti|str|trap)\\b',
            caseInsensitive: true },
          { token: 'variable.parameter.register.assembly',
            regex: '\\b(?:R(?:[0-7]))\\b',
            caseInsensitive: true },
          { token: 'constant.character.decimal.assembly',
-           regex: '\\b#[0-9]+\\b' ,
+           regex: '[ |,]#[0-9]+\\b' ,
            caseInsensitive: true },
          { token: 'constant.character.hexadecimal.assembly',
            regex: '\\bx[A-F0-9]+\\b',
@@ -22,42 +22,9 @@ var LC3HighlightRules = function() {
          { token: 'string.assembly', regex: /'([^\\']|\\.)*'/ },
          { token: 'string.assembly', regex: /"([^\\"]|\\.)*"/ },
          { token: 'support.function.directive.assembly',
-           regex: '^\\[',
-           push:
-            [ { token: 'support.function.directive.assembly',
-                regex: '\\]$',
-                next: 'pop' },
-              { defaultToken: 'support.function.directive.assembly' } ] },
-         { token:
-            [ 'support.function.directive.assembly',
-              'support.function.directive.assembly',
-              'entity.name.function.assembly' ],
-           regex: '(^struc)( )([_a-zA-Z][_a-zA-Z0-9]*)' },
-         { token: 'support.function.directive.assembly',
-           regex: '^endstruc\\b' },
-        { token:
-            [ 'support.function.directive.assembly',
-              'entity.name.function.assembly',
-              'support.function.directive.assembly',
-              'constant.character.assembly' ],
-           regex: '^(%macro )([_a-zA-Z][_a-zA-Z0-9]*)( )([0-9]+)' },
-         { token: 'support.function.directive.assembly',
-           regex: '^%endmacro' },
-         { token:
-            [ 'text',
-              'support.function.directive.assembly',
-              'text',
-              'entity.name.function.assembly' ],
-           regex: '(\\s*)(.BLKW|.END|.EXTERNAL|.FILL|.ORIG|.STRINGZ)\\b( ?)((?:[_a-zA-Z][_a-zA-Z0-9]*)?)',
+           regex: '\\b(.BLKW|.END|.EXTERNAL|.FILL|.ORIG|.STRINGZ)\\b',
            caseInsensitive: true },
-          { token: 'support.function.directive.assembly',
-           regex: '\\b(?:d[bwdqtoy]|res[bwdqto]|equ|times|align|alignb|sectalign|section|ptr|byte|word|dword|qword|incbin)\\b',
-           caseInsensitive: true },
-         { token: 'entity.name.function.assembly', regex: '^\\s*%%[\\w.]+?:$' },
-         { token: 'entity.name.function.assembly', regex: '^\\s*%\\$[\\w.]+?:$' },
-         { token: 'entity.name.function.assembly', regex: '^[\\w.]+?:' },
-         { token: 'entity.name.function.assembly', regex: '^[\\w.]+?\\b' },
-         { token: 'comment.assembly', regex: ';.*$' } ]
+         { token: 'comment.assembly', regex: ';(.*)' } ]
     };
 
     this.normalizeRules();
