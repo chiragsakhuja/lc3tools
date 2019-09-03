@@ -162,6 +162,11 @@ export default {
       require("brace/theme/textmate");
       require("brace/theme/twilight");
       editor.setShowPrintMargin(false);
+      editor.commands.addCommand({
+          name: 'save',
+          bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+          exec: this.saveFile
+      })
     }
   },
   computed: {
