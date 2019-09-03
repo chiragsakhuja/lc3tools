@@ -166,6 +166,11 @@ export default {
           name: 'save',
           bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
           exec: this.saveFile
+      });
+      editor.commands.addCommand({
+          name: 'assemble',
+          bindKey: {win: "Ctrl-Enter", "mac": "Cmd-Enter"},
+          exec: this.assemble
       })
     }
   },
