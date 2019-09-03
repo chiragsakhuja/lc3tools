@@ -4,6 +4,7 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 
+#include <memory>
 #include <sstream>
 #include <vector>
 
@@ -26,7 +27,7 @@ namespace core
         Assembler & operator=(Assembler const &) = delete;
         ~Assembler(void) = default;
 
-        std::stringstream assemble(std::istream & buffer);
+        std::shared_ptr<std::stringstream> assemble(std::istream & buffer);
         void setFilename(std::string const & filename) { logger.setFilename(filename); }
 
     private:

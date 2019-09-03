@@ -4,6 +4,8 @@
 #ifndef CONVERTER_H
 #define CONVERTER_H
 
+#include <memory>
+
 #include "logger.h"
 #include "printer.h"
 
@@ -15,7 +17,7 @@ namespace core
     {
     public:
         Converter(lc3::utils::IPrinter & printer, uint32_t print_level) : logger(printer, print_level) {}
-        std::stringstream convertBin(std::istream & buffer);
+        std::shared_ptr<std::stringstream> convertBin(std::istream & buffer);
 
     private:
         lc3::utils::Logger logger;

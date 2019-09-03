@@ -15,7 +15,7 @@
 #include "mem.h"
 #include "converter.h"
 
-std::stringstream lc3::core::Converter::convertBin(std::istream & buffer)
+std::shared_ptr<std::stringstream> lc3::core::Converter::convertBin(std::istream & buffer)
 {
     using namespace lc3::utils;
 
@@ -63,11 +63,11 @@ std::stringstream lc3::core::Converter::convertBin(std::istream & buffer)
 
     logger.printf(PrintType::P_INFO, true, "conversion successful");
 
-    std::stringstream ret(std::ios_base::in | std::ios_base::out | std::ios_base::binary);
-    ret << getMagicHeader();
-    ret << getVersionString();
+    auto ret = std::make_shared<std::stringstream>(std::ios_base::in | std::ios_base::out | std::ios_base::binary);
+    (*ret) << getMagicHeader();
+    (*ret) << getVersionString();
     for(MemEntry entry : obj_blob) {
-        ret << entry;
+        (*ret) << entry;
     }
 
     return ret;

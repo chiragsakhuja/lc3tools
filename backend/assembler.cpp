@@ -17,7 +17,7 @@
 
 static constexpr uint32_t INST_NAME_CLOSENESS = 2;
 
-std::stringstream lc3::core::Assembler::assemble(std::istream & buffer)
+std::shared_ptr<std::stringstream> lc3::core::Assembler::assemble(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -62,11 +62,11 @@ std::stringstream lc3::core::Assembler::assemble(std::istream & buffer)
         throw lc3::utils::exception("assembly failed");
     }
 
-    std::stringstream ret(std::ios_base::in | std::ios_base::out | std::ios_base::binary);
-    ret << getMagicHeader();
-    ret << getVersionString();
+    auto ret = std::make_shared<std::stringstream>(std::ios_base::in | std::ios_base::out | std::ios_base::binary);
+    (*ret) << getMagicHeader();
+    (*ret) << getVersionString();
     for(MemEntry const & entry : machine_code_blob.second) {
-        ret << entry;
+        (*ret) << entry;
     }
     return ret;
 }

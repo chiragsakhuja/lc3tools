@@ -82,8 +82,8 @@ void lc3::sim::loadOS(void)
 
     std::stringstream src_buffer;
     src_buffer << lc3::core::getOSSrc();
-    std::stringstream obj_stream = assembler.assemble(src_buffer);
-    simulator.loadObj(obj_stream);
+    std::shared_ptr<std::stringstream> obj_stream = assembler.assemble(src_buffer);
+    simulator.loadObj(*obj_stream);
     getMachineState().pc = RESET_PC;
 }
 
@@ -512,7 +512,7 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
     printer.print("attemping to assemble " + asm_filename + " into " + obj_filename);
     printer.newline();
 
-    std::stringstream out_stream;
+    std::shared_ptr<std::stringstream> out_stream;
 
 #ifdef _ENABLE_DEBUG
     auto start = std::chrono::high_resolution_clock::now();
@@ -556,7 +556,7 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
         }
     }
 
-    out_file << out_stream.rdbuf();
+    out_file << out_stream->rdbuf();
     out_file.close();
 
     return obj_filename;
@@ -579,7 +579,7 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
     printer.print("attemping to convert " + bin_filename + " into " + obj_filename);
     printer.newline();
 
-    std::stringstream out_stream;
+    std::shared_ptr<std::stringstream> out_stream;
 
 #ifdef _ENABLE_DEBUG
     auto start = std::chrono::high_resolution_clock::now();
@@ -623,7 +623,7 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
         }
     }
 
-    out_file << out_stream.rdbuf();
+    out_file << out_stream->rdbuf();
     out_file.close();
 
     return obj_filename;
