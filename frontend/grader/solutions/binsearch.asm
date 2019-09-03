@@ -1,4 +1,6 @@
+;
 ; Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
+;
 .orig x3000
 
          ; set up stack
@@ -46,7 +48,7 @@ GetName    str r0, r6, #-1
            lea r0, Prompt
            puts
            ; get input until enter
-InLoop      getc
+InLoop     getc
            out
            add r3, r0, r2
            brz InLoopDone
