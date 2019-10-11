@@ -35,14 +35,14 @@
         <v-spacer></v-spacer>
         <v-toolbar-items>
           <v-tooltip bottom>
-            <v-btn large flat exact to="/assembler" slot="activator">
+            <v-btn large flat exact to="/editor" slot="activator">
               <v-icon large>code</v-icon>
             </v-btn>
-            <span>Assembler</span>
+            <span>Editor</span>
           </v-tooltip>
           <v-tooltip bottom>
             <v-btn large flat exact to="/simulator" slot="activator">
-              <v-icon large>play_arrow</v-icon>
+              <v-icon large>memory</v-icon>
             </v-btn>
             <span>Simulator</span>
           </v-tooltip>
