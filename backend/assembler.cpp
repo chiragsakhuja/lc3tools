@@ -383,13 +383,16 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
                         success = false;
                         continue;
                     } else {
-#ifndef _LIBERAL_ASM
-                        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
-                            "cannot have label on its own line");
-                        logger.newline();
-                        success = false;
-                        continue;
-#endif
+// Uncommenting following lines will disallow labels on their own line.
+/*
+ *#ifndef _LIBERAL_ASM
+ *                        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+ *                            "cannot have label on its own line");
+ *                        logger.newline();
+ *                        success = false;
+ *                        continue;
+ *#endif
+ */
                     }
                 }
 
