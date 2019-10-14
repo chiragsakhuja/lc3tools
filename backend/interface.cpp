@@ -66,6 +66,9 @@ bool lc3::sim::loadObjFile(std::string const & obj_filename)
             return false;
         }
     }
+
+    restart();
+
     return true;
 }
 
@@ -108,6 +111,11 @@ void lc3::sim::restart(void)
 {
     uint32_t mcr = getMem(MCR);
     setMem(MCR, mcr | 0x8000);
+    if(getMachineState().pc > SYSTEM_END && getMachineState().pc < MMIO_START) {
+        setPSR(getPSR() | 0x8000);
+    } else {
+        setPSR(getPSR() & (~0x8000));
+    }
 }
 
 void lc3::sim::setRunInstLimit(uint64_t inst_limit)
