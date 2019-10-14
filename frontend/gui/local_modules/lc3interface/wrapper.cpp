@@ -59,9 +59,9 @@ NAN_METHOD(Init)
     try {
         printer = new utils::UIPrinter();
         inputter = new utils::UIInputter();
-        as = new lc3::as(*printer);
-        conv = new lc3::conv(*printer);
-        sim = new lc3::sim(*printer, *inputter, true, _PRINT_LEVEL);
+        as = new lc3::as(*printer, _PRINT_LEVEL, false, false);
+        conv = new lc3::conv(*printer, _PRINT_LEVEL, false);
+        sim = new lc3::sim(*printer, *inputter, true, _PRINT_LEVEL, false);
     } catch(lc3::utils::exception const & e) {
         Nan::ThrowError(e.what());
     }
