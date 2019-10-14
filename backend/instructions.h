@@ -116,15 +116,15 @@ namespace core
     class LabelOperand : public IOperand
     {
     public:
-        LabelOperand(uint32_t width) : IOperand(OperType::LABEL, "label", width) {}
+        LabelOperand(uint32_t width) : IOperand(OperType::LABEL, "label/imm", width) {}
         virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
             SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
-    class ADDRInstruction : public IInstruction
+    class ADDRegInstruction : public IInstruction
     {
     public:
-        ADDRInstruction(void) : IInstruction("add", {
+        ADDRegInstruction(void) : IInstruction("add", {
             std::make_shared<FixedOperand>(4, 0x1),
             std::make_shared<RegOperand>(3),
             std::make_shared<RegOperand>(3),
@@ -134,10 +134,10 @@ namespace core
         virtual std::vector<PIEvent> execute(MachineState const & state) override;
     };
 
-    class ADDIInstruction : public IInstruction
+    class ADDImmInstruction : public IInstruction
     {
     public:
-        ADDIInstruction(void) : IInstruction("add", {
+        ADDImmInstruction(void) : IInstruction("add", {
             std::make_shared<FixedOperand>(4, 0x1),
             std::make_shared<RegOperand>(3),
             std::make_shared<RegOperand>(3),
@@ -147,10 +147,10 @@ namespace core
         virtual std::vector<PIEvent> execute(MachineState const & state) override;
     };
 
-    class ANDRInstruction : public IInstruction
+    class ANDRegInstruction : public IInstruction
     {
     public:
-        ANDRInstruction(void) : IInstruction("and", {
+        ANDRegInstruction(void) : IInstruction("and", {
             std::make_shared<FixedOperand>(4, 0x5),
             std::make_shared<RegOperand>(3),
             std::make_shared<RegOperand>(3),
@@ -160,10 +160,10 @@ namespace core
         virtual std::vector<PIEvent> execute(MachineState const & state) override;
     };
 
-    class ANDIInstruction : public IInstruction
+    class ANDImmInstruction : public IInstruction
     {
     public:
-        ANDIInstruction(void) : IInstruction("and", {
+        ANDImmInstruction(void) : IInstruction("and", {
             std::make_shared<FixedOperand>(4, 0x5),
             std::make_shared<RegOperand>(3),
             std::make_shared<RegOperand>(3),
@@ -288,23 +288,11 @@ namespace core
         virtual std::vector<PIEvent> execute(MachineState const & state) override;
     };
 
-    class JSRIInstruction : public IInstruction
+    class JSRInstruction : public IInstruction
     {
     public:
         using IInstruction::IInstruction;
-        JSRIInstruction(void) : IInstruction("jsr", {
-            std::make_shared<FixedOperand>(4, 0x4),
-            std::make_shared<FixedOperand>(1, 0x1),
-            std::make_shared<NumOperand>(11, true)
-        }) {}
-        virtual std::vector<PIEvent> execute(MachineState const & state) override;
-    };
-
-    class JSRLInstruction : public IInstruction
-    {
-    public:
-        using IInstruction::IInstruction;
-        JSRLInstruction(void) : IInstruction("jsr", {
+        JSRInstruction(void) : IInstruction("jsr", {
             std::make_shared<FixedOperand>(4, 0x4),
             std::make_shared<FixedOperand>(1, 0x1),
             std::make_shared<LabelOperand>(11)
@@ -359,21 +347,10 @@ namespace core
         virtual std::vector<PIEvent> execute(MachineState const & state) override;
     };
 
-    class LEAIInstruction : public IInstruction
+    class LEAInstruction : public IInstruction
     {
     public:
-        LEAIInstruction(void) : IInstruction("lea", {
-            std::make_shared<FixedOperand>(4, 0xe),
-            std::make_shared<RegOperand>(3),
-            std::make_shared<NumOperand>(9, true)
-        }) {}
-        virtual std::vector<PIEvent> execute(MachineState const & state) override;
-    };
-
-    class LEALInstruction : public IInstruction
-    {
-    public:
-        LEALInstruction(void) : IInstruction("lea", {
+        LEAInstruction(void) : IInstruction("lea", {
             std::make_shared<FixedOperand>(4, 0xe),
             std::make_shared<RegOperand>(3),
             std::make_shared<LabelOperand>(9)

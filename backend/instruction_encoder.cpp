@@ -228,14 +228,29 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
                 for(PIOperand candidate_op : candidate_inst->operands) {
                     switch(candidate_op->type) {
                         case OperType::NUM: candidate_op_string += 'n'; break;
-                        case OperType::LABEL: candidate_op_string += 's'; break;
+                        case OperType::LABEL: candidate_op_string += 'l'; break;
                         case OperType::REG: candidate_op_string += 'r'; break;
                         default: break;
                     }
                 }
 
-                uint32_t op_dist = levDistance(statement_op_string, candidate_op_string);
-                candidates.emplace_back(std::make_tuple(candidate_inst, inst_name_dist, op_dist));
+                // If there's a label in the operands, then the statement can either have a numberic or string
+                // operand, so check against s and n. Otherwise, just measure distance normally.
+                if(candidate_op_string.find('l') != std::string::npos) {
+                    std::string candidate_op_string_copy = candidate_op_string;
+                    std::replace(candidate_op_string_copy.begin(), candidate_op_string_copy.end(), 'l', 's');
+                    uint32_t op_dist_s = levDistance(statement_op_string, candidate_op_string_copy);
+
+                    candidate_op_string_copy = candidate_op_string;
+                    std::replace(candidate_op_string_copy.begin(), candidate_op_string_copy.end(), 'l', 'n');
+                    uint32_t op_dist_n = levDistance(statement_op_string, candidate_op_string_copy);
+
+                    candidates.emplace_back(std::make_tuple(candidate_inst, inst_name_dist,
+                        op_dist_n < op_dist_s ? op_dist_n : op_dist_s));
+                } else {
+                    uint32_t op_dist = levDistance(statement_op_string, candidate_op_string);
+                    candidates.emplace_back(std::make_tuple(candidate_inst, inst_name_dist, op_dist));
+                }
             }
         }
     }

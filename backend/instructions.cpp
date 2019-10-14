@@ -244,10 +244,10 @@ InstructionHandler::InstructionHandler(void)
     regs["r6"] = 6;
     regs["r7"] = 7;
 
-    instructions.push_back(std::make_shared<ADDRInstruction>());
-    instructions.push_back(std::make_shared<ADDIInstruction>());
-    instructions.push_back(std::make_shared<ANDRInstruction>());
-    instructions.push_back(std::make_shared<ANDIInstruction>());
+    instructions.push_back(std::make_shared<ADDRegInstruction>());
+    instructions.push_back(std::make_shared<ADDImmInstruction>());
+    instructions.push_back(std::make_shared<ANDRegInstruction>());
+    instructions.push_back(std::make_shared<ANDImmInstruction>());
     instructions.push_back(std::make_shared<BRInstruction>());
     instructions.push_back(std::make_shared<BRnInstruction>());
     instructions.push_back(std::make_shared<BRzInstruction>());
@@ -259,14 +259,12 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(std::make_shared<NOP0Instruction>());
     instructions.push_back(std::make_shared<NOP1Instruction>());
     instructions.push_back(std::make_shared<JMPInstruction>());
-    instructions.push_back(std::make_shared<JSRIInstruction>());
-    instructions.push_back(std::make_shared<JSRLInstruction>());
+    instructions.push_back(std::make_shared<JSRInstruction>());
     instructions.push_back(std::make_shared<JSRRInstruction>());
     instructions.push_back(std::make_shared<LDInstruction>());
     instructions.push_back(std::make_shared<LDIInstruction>());
     instructions.push_back(std::make_shared<LDRInstruction>());
-    instructions.push_back(std::make_shared<LEALInstruction>());
-    instructions.push_back(std::make_shared<LEAIInstruction>());
+    instructions.push_back(std::make_shared<LEAInstruction>());
     instructions.push_back(std::make_shared<NOTInstruction>());
     instructions.push_back(std::make_shared<RETInstruction>());
     instructions.push_back(std::make_shared<RTIInstruction>());
@@ -354,24 +352,31 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement
 lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
     SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
+    using namespace lc3::utils;
+    using namespace lc3::core::asmbl;
+
     (void) regs;
 
-    auto search = symbols.find(utils::toLower(piece.str));
-    if(search == symbols.end()) {
-        logger.asmPrintf(lc3::utils::PrintType::P_ERROR, statement, piece, "could not find label");
-        logger.newline();
-        return {};
+    if(piece.type == StatementPiece::Type::NUM) {
+        return NumOperand(this->width, true).encode(statement, piece, regs, symbols, logger);
+    } else {
+        auto search = symbols.find(utils::toLower(piece.str));
+        if(search == symbols.end()) {
+            logger.asmPrintf(PrintType::P_ERROR, statement, piece, "could not find label");
+            logger.newline();
+            return {};
+        }
+
+        uint32_t token_val = (((int32_t) search->second) - (statement.pc + 1)) & ((1 << width) - 1);
+
+        logger.printf(PrintType::P_EXTRA, true, "  label %s (0x%0.4x) := %s", piece.str.c_str(), search->second,
+            udecToBin((uint32_t) token_val, width).c_str());
+
+        return token_val;
     }
-
-    uint32_t token_val = (((int32_t) search->second) - (statement.pc + 1)) & ((1 << width) - 1);
-
-    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  label %s (0x%0.4x) := %s", piece.str.c_str(), search->second,
-        lc3::utils::udecToBin((uint32_t) token_val, width).c_str());
-
-    return token_val;
 }
 
-std::vector<PIEvent> ADDRInstruction::execute(MachineState const & state)
+std::vector<PIEvent> ADDRegInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = lc3::utils::sextTo32(state.regs[operands[2]->value], 16);
@@ -394,7 +399,7 @@ std::vector<PIEvent> ADDRInstruction::execute(MachineState const & state)
     return ret;
 }
 
-std::vector<PIEvent> ADDIInstruction::execute(MachineState const & state)
+std::vector<PIEvent> ADDImmInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = lc3::utils::sextTo32(state.regs[operands[2]->value], 16);
@@ -417,7 +422,7 @@ std::vector<PIEvent> ADDIInstruction::execute(MachineState const & state)
     return ret;
 }
 
-std::vector<PIEvent> ANDRInstruction::execute(MachineState const & state)
+std::vector<PIEvent> ANDRegInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = lc3::utils::sextTo32(state.regs[operands[2]->value], 16);
@@ -440,7 +445,7 @@ std::vector<PIEvent> ANDRInstruction::execute(MachineState const & state)
     return ret;
 }
 
-std::vector<PIEvent> ANDIInstruction::execute(MachineState const & state)
+std::vector<PIEvent> ANDImmInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t sr1_val = lc3::utils::sextTo32(state.regs[operands[2]->value], 16);
@@ -494,16 +499,7 @@ std::vector<PIEvent> JMPInstruction::execute(MachineState const & state)
     return ret;
 }
 
-std::vector<PIEvent> JSRIInstruction::execute(MachineState const & state)
-{
-    return std::vector<PIEvent> {
-        std::make_shared<RegEvent>(7, state.pc & 0xffff),
-        std::make_shared<PCEvent>(lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width)),
-        std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback)
-    };
-}
-
-std::vector<PIEvent> JSRLInstruction::execute(MachineState const & state)
+std::vector<PIEvent> JSRInstruction::execute(MachineState const & state)
 {
     return std::vector<PIEvent> {
         std::make_shared<RegEvent>(7, state.pc & 0xffff),
@@ -633,19 +629,7 @@ std::vector<PIEvent> LDRInstruction::execute(MachineState const & state)
     return ret;
 }
 
-std::vector<PIEvent> LEAIInstruction::execute(MachineState const & state)
-{
-    uint32_t dr = operands[1]->value;
-    uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
-
-    std::vector<PIEvent> ret {
-        std::make_shared<RegEvent>(dr, addr)
-    };
-
-    return ret;
-}
-
-std::vector<PIEvent> LEALInstruction::execute(MachineState const & state)
+std::vector<PIEvent> LEAInstruction::execute(MachineState const & state)
 {
     uint32_t dr = operands[1]->value;
     uint32_t addr = lc3::utils::computeBasePlusSOffset(state.pc, operands[2]->value, operands[2]->width);
