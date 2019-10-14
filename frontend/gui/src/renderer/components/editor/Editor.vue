@@ -152,8 +152,10 @@ export default {
       } else {
         lc3.Assemble(this.editor.current_file);
       }
-      this.console_str = lc3.GetOutput();
+      const temp_console_string = lc3.GetOutput();
       lc3.ClearOutput();
+      this.console_str = "";
+      setTimeout(() => { this.console_str = temp_console_string; }, 200);
       this.$emit("updateAsmFile", this.editor.current_file);
     },
     editorInit(editor) {
