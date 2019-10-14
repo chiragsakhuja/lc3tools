@@ -1,6 +1,7 @@
 const state = {
   ignore_privilege: false,
-  theme: "light"
+  theme: "light",
+  liberal_asm: false
 }
 
 const mutations = {
@@ -9,12 +10,16 @@ const mutations = {
   },
   setTheme(state, theme) {
     state.theme = theme
+  },
+  setLiberalAsm(state, setting) {
+    state.liberal_asm = setting
   }
 }
 
 const getters = {
   ignore_privilege: state => state.ignore_privilege,
-  theme: state => state.theme
+  theme: state => state.theme,
+  liberal_asm: state => state.liberal_asm
 }
 
 export default {

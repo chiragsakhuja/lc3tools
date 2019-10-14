@@ -1,6 +1,6 @@
 <!-- Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education. -->
 <template>
-  <v-app id="editor" v-bind:dark="isDarkMode">
+  <v-app id="editor" v-bind:dark="darkMode">
 
     <!-- Sidebar -->
     <v-navigation-drawer
@@ -105,7 +105,7 @@ export default {
     "ace-editor": require("vue2-ace-editor-electron")
   },
   mounted() {
-    // setInterval(this.autosaveFile, 5000);
+    // setInterval(this.autosaveFile, 5 * 60 * 1000);
   },
   methods: {
     newFile(content) {

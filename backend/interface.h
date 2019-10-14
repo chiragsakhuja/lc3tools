@@ -164,8 +164,7 @@ namespace lc3
 
         void setPropagateExceptions(void);
         void clearPropagateExceptions(void);
-        void setEnableLiberalAsm(void);
-        void clearEnableLiberalAsm(void);
+        void setEnableLiberalAsm(bool enable);
 
     private:
         friend class sim;

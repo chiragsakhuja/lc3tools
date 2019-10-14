@@ -1,7 +1,7 @@
 <!-- Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education. -->
 <template>
   <div id="app">
-    <v-app id="lc3tools" v-bind:dark="isDarkMode">
+    <v-app id="lc3tools" v-bind:dark="darkMode">
       <!-- Toolbar -->
       <v-toolbar app fixed dense>
         <v-toolbar-title>
@@ -28,6 +28,13 @@
                   <v-switch @change="saveSettings('privilege')" v-model="settings.ignore_privilege"></v-switch>
                 </v-flex>
               </v-layout>
+              <v-layout row>
+                <v-flex grow><h3>Use less strict assembly</h3></v-flex>
+                <v-flex shrink>
+                  <v-switch @change="saveSettings('liberal-asm')" v-model="settings.liberal_asm"></v-switch>
+                </v-flex>
+              </v-layout>
+              <p class="text-red" v-if="settings.liberal_asm">Might cause issues during grading</p>
               <h4>Issues? Email chirag.sakhuja@utexas.edu</h4>
             </v-container>
           </v-card>
@@ -50,7 +57,7 @@
       </v-toolbar>
 
       <keep-alive>
-        <router-view :dark_mode="isDarkMode"></router-view>
+        <router-view :dark_mode="darkMode"></router-view>
       </keep-alive>
 
       <v-dialog
@@ -117,7 +124,8 @@ export default {
       settings_menu: false,
       settings: {
         theme: "light",
-        ignore_privilege: false
+        ignore_privilege: false,
+        liberal_asm: false
       }
     };
   },
@@ -154,27 +162,40 @@ export default {
             if(err) { console.error(err); }
             else {
               this.settings = data
-              this.updateGlobals()
+              this.settings.liberal_asm = false
+              this.updateGlobals('all')
             }
           });
         }
       });
     },
     saveSettings: function(setting) {
+      this.updateGlobals(setting)
       this.$storage.set("settings.json", this.settings, (err) => {
         if(err) { console.error(err); }
       })
-      this.updateGlobals()
     },
-    updateGlobals: function() {
-      lc3.SetIgnorePrivilege(this.settings.ignore_privilege)
-      this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
-      this.$store.commit('setTheme', this.settings.theme)
+    updateGlobals: function(setting) {
+      if(setting == 'all') {
+        lc3.SetIgnorePrivilege(this.settings.ignore_privilege)
+        lc3.SetEnableLiberalAsm(this.settings.liberal_asm)
+        this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
+        this.$store.commit('setTheme', this.settings.theme)
+        this.$store.commit('setLiberalAsm', this.settings.liberal_asm)
+      } else if(setting === 'privilege') {
+        lc3.SetIgnorePrivilege(this.settings.ignore_privilege)
+        this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
+      } else if(setting === 'theme') {
+        this.$store.commit('setTheme', this.settings.theme)
+      } else if(setting === 'liberal-asm') {
+        lc3.SetEnableLiberalAsm(this.settings.liberal_asm)
+        this.$store.commit('setLiberalAsm', this.settings.liberal_asm)
+      }
     }
   },
 
   computed: {
-    isDarkMode() {
+    darkMode() {
       return this.settings.theme === "dark";
     }
   }

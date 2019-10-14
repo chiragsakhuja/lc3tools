@@ -59,9 +59,9 @@ NAN_METHOD(Init)
     try {
         printer = new utils::UIPrinter();
         inputter = new utils::UIInputter();
-        as = new lc3::as(*printer, _PRINT_LEVEL, true, false);
-        conv = new lc3::conv(*printer, _PRINT_LEVEL, true);
-        sim = new lc3::sim(*printer, *inputter, true, _PRINT_LEVEL, true);
+        as = new lc3::as(*printer, _PRINT_LEVEL, false, false);
+        conv = new lc3::conv(*printer, _PRINT_LEVEL, false);
+        sim = new lc3::sim(*printer, *inputter, true, _PRINT_LEVEL, false);
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -88,7 +88,10 @@ NAN_METHOD(ConvertBin)
     std::string bin_filename((char const *) (*str));
 
     try {
-        conv->convertBin(bin_filename);
+        auto ret = conv->convertBin(bin_filename);
+        if(! ret) {
+            Nan::ThrowError("conversion failed");
+        }
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -106,7 +109,24 @@ NAN_METHOD(Assemble)
     std::string asm_filename((char const *) (*str));
 
     try {
-        as->assemble(asm_filename);
+        auto ret = as->assemble(asm_filename);
+        if(! ret) {
+            Nan::ThrowError("assembly failed");
+        }
+    } catch(std::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
+NAN_METHOD(SetEnableLiberalAsm)
+{
+    if(!info[0]->IsBoolean()) {
+        Nan::ThrowError("Must provide setting as a bool argument");
+        return;
+    }
+
+    try {
+        as->setEnableLiberalAsm((bool) info[0]->BooleanValue(Nan::GetCurrentContext()).ToChecked());
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -187,7 +207,7 @@ NAN_METHOD(StepIn)
           try {
             sim->stepIn();
           } catch(std::exception const & e) {
-            Nan::ThrowError(e.what())
+            Nan::ThrowError(e.what());
           }
         },
         new Nan::Callback(info[0].As<v8::Function>())
@@ -206,7 +226,7 @@ NAN_METHOD(StepOut)
           try {
             sim->stepOut();
           } catch(std::exception const & e) {
-            Nan::ThrowError(e.what())
+            Nan::ThrowError(e.what());
           }
         },
         new Nan::Callback(info[0].As<v8::Function>())
@@ -225,7 +245,7 @@ NAN_METHOD(StepOver)
           try {
             sim->stepOver();
           } catch(std::exception const & e) {
-            Nan::ThrowError(e.what())
+            Nan::ThrowError(e.what());
           }
         },
         new Nan::Callback(info[0].As<v8::Function>())
@@ -504,6 +524,7 @@ NAN_MODULE_INIT(Initialize)
 
     NAN_EXPORT(target, ConvertBin);
     NAN_EXPORT(target, Assemble);
+    NAN_EXPORT(target, SetEnableLiberalAsm);
     NAN_EXPORT(target, LoadObjectFile);
 
     NAN_EXPORT(target, RestartMachine);
