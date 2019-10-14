@@ -9,7 +9,8 @@
 
 using namespace lc3::core::asmbl;
 
-InstructionEncoder::InstructionEncoder(lc3::utils::AssemblerLogger & logger) : InstructionHandler(), logger(logger)
+InstructionEncoder::InstructionEncoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal_asm)
+    : InstructionHandler(), logger(logger), enable_liberal_asm(enable_liberal_asm)
 {
     for(PIInstruction inst : instructions) {
         instructions_by_name[inst->name].push_back(inst);
@@ -126,15 +127,15 @@ bool InstructionEncoder::validatePseudo(StatementNew const & statement, lc3::cor
     } else if(lower_base == ".end") {
         return isValidPseudoEnd(statement, true);
     } else {
-#ifdef _LIBERAL_ASM
-        logger.asmPrintf(PrintType::P_WARNING, statement, *statement.base, "ignoring invalid pseudo-op");
-        logger.newline(PrintType::P_WARNING);
-        return true;
-#else
-        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.base, "invalid pseudo-op");
-        logger.newline();
-        return false;
-#endif
+        if(enable_liberal_asm) {
+            logger.asmPrintf(PrintType::P_WARNING, statement, *statement.base, "ignoring invalid pseudo-op");
+            logger.newline(PrintType::P_WARNING);
+            return true;
+        } else {
+            logger.asmPrintf(PrintType::P_ERROR, statement, *statement.base, "invalid pseudo-op");
+            logger.newline();
+            return false;
+        }
     }
 }
 

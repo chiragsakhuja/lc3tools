@@ -77,7 +77,7 @@ void lc3::sim::reinitialize(void)
 
 void lc3::sim::loadOS(void)
 {
-    core::Assembler assembler(printer, simulator.getPrintLevel());
+    core::Assembler assembler(printer, simulator.getPrintLevel(), false);
     assembler.setFilename("lc3os");
 
     std::stringstream src_buffer;
@@ -631,3 +631,5 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
 
 void lc3::as::setPropagateExceptions(void) { propagate_exceptions = true; }
 void lc3::as::clearPropagateExceptions(void) { propagate_exceptions = false; }
+void lc3::as::setEnableLiberalAsm(void) { assembler.setLiberalAsm(true); }
+void lc3::as::clearEnableLiberalAsm(void) { assembler.setLiberalAsm(false); }

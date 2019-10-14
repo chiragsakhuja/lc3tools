@@ -10,6 +10,7 @@
 struct CLIArgs
 {
     uint32_t print_level = DEFAULT_PRINT_LEVEL;
+    bool enable_liberal_asm = false;
 };
 
 bool endsWith(std::string const & search, std::string const & suffix)
@@ -25,18 +26,21 @@ int main(int argc, char *argv[])
     for(auto const & arg : parsed_args) {
         if(std::get<0>(arg) == "print-level") {
             args.print_level = std::stoi(std::get<1>(arg));
+        } else if(std::get<0>(arg) == "enable-liberal-asm") {
+            args.enable_liberal_asm = true;
         } else if(std::get<0>(arg) == "h" || std::get<0>(arg) == "help") {
             std::cout << "usage: " << argv[0] << " [OPTIONS]\n";
             std::cout << "\n";
             std::cout << "  -h,--help              Print this message\n";
             std::cout << "  --print-level=N        Output verbosity [0-9]\n";
+            std::cout << "  --enable-liberal-asm   Enable liberal assembly mode\n";
             return 0;
         }
     }
 
     lc3::ConsolePrinter printer;
-    lc3::as assembler(printer, args.print_level);
-    lc3::conv converter(printer, args.print_level);
+    lc3::as assembler(printer, args.print_level, false, args.enable_liberal_asm);
+    lc3::conv converter(printer, args.print_level, false);
 
     for(int i = 1; i < argc; i += 1) {
         std::string filename(argv[i]);

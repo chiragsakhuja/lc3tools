@@ -97,8 +97,8 @@ int main(int argc, char * argv[])
     }
 
     lc3::ConsolePrinter asm_printer;
-    lc3::as assembler(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0);
-    lc3::conv converter(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0);
+    lc3::as assembler(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0, false, true);
+    lc3::conv converter(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0, false);
 
     std::vector<std::string> obj_filenames;
     bool valid_program = true;

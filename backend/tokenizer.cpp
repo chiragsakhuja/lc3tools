@@ -5,8 +5,9 @@
 
 #include "tokenizer.h"
 
-lc3::core::asmbl::Tokenizer::Tokenizer(std::istream & buffer) : buffer(buffer), get_new_line(true),
-    return_new_line(false), row(-1), col(0), done(false)
+lc3::core::asmbl::Tokenizer::Tokenizer(std::istream & buffer, bool enable_liberal_asm)
+    : buffer(buffer), get_new_line(true), return_new_line(false), row(-1), col(0), done(false),
+      enable_liberal_asm(enable_liberal_asm)
 { }
 
 std::istream & lc3::core::asmbl::Tokenizer::getline(std::istream & is, std::string & t) const
@@ -131,9 +132,9 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
 bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, int32_t & val) const
 {
     char const * c_str = str.c_str();
-#ifdef _LIBERAL_ASM
-    if(c_str[0] == '0' && c_str[1] != '\0') { c_str += 1; }
-#endif
+    if(enable_liberal_asm) {
+        if(c_str[0] == '0' && c_str[1] != '\0') { c_str += 1; }
+    }
 
     try {
         if(c_str[0] == 'B' || c_str[0] == 'b' || c_str[0] == 'X' || c_str[0] == 'x' || c_str[0] == '#') {
@@ -148,10 +149,10 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
             }
             return true;
         } else {
-#ifdef _LIBERAL_ASM
-            val = std::stoi(c_str);
-            return true;
-#endif
+            if(enable_liberal_asm) {
+                val = std::stoi(c_str);
+                return true;
+            }
         }
         return false;
     } catch(std::invalid_argument const & e) {

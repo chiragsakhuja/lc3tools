@@ -40,7 +40,7 @@ namespace lc3
     {
     public:
         sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threaded_input,
-            uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false);
+            uint32_t print_level, bool propagate_exceptions);
         ~sim(void) = default;
 
         bool loadObjFile(std::string const & obj_filename);
@@ -155,14 +155,17 @@ namespace lc3
     class as
     {
     public:
-        as(utils::IPrinter & printer, uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false) :
-            printer(printer), assembler(printer, print_level), propagate_exceptions(propagate_exceptions) {}
+        as(utils::IPrinter & printer, uint32_t print_level, bool propagate_exceptions, bool enable_liberal_asm)
+            : printer(printer), assembler(printer, print_level, enable_liberal_asm),
+              propagate_exceptions(propagate_exceptions) {}
         ~as(void) = default;
 
         optional<std::string> assemble(std::string const & asm_filename);
 
         void setPropagateExceptions(void);
         void clearPropagateExceptions(void);
+        void setEnableLiberalAsm(void);
+        void clearEnableLiberalAsm(void);
 
     private:
         friend class sim;
@@ -176,8 +179,8 @@ namespace lc3
     class conv
     {
     public:
-        conv(utils::IPrinter & printer, uint32_t print_level = DEFAULT_PRINT_LEVEL, bool propagate_exceptions = false) :
-            printer(printer), converter(printer, print_level), propagate_exceptions(propagate_exceptions) {}
+        conv(utils::IPrinter & printer, uint32_t print_level, bool propagate_exceptions)
+            : printer(printer), converter(printer, print_level), propagate_exceptions(propagate_exceptions) {}
         optional<std::string> convertBin(std::string const & asm_filename);
 
         void setPropagateExceptions(void);

@@ -10,8 +10,6 @@
 
 #include "optional.h"
 
-//#define _LIBERAL_ASM
-
 namespace lc3
 {
 namespace core

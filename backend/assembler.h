@@ -21,8 +21,9 @@ namespace core
     class Assembler
     {
     public:
-        Assembler(lc3::utils::IPrinter & printer, uint32_t print_level) : logger(printer, print_level),
-            encoder(logger) {}
+        Assembler(lc3::utils::IPrinter & printer, uint32_t print_level, bool enable_liberal_asm)
+            : logger(printer, print_level), enable_liberal_asm(enable_liberal_asm),
+              encoder(logger, enable_liberal_asm) {}
         Assembler(Assembler const &) = default;
         Assembler & operator=(Assembler const &) = delete;
         ~Assembler(void) = default;
@@ -30,9 +31,12 @@ namespace core
         std::shared_ptr<std::stringstream> assemble(std::istream & buffer);
         void setFilename(std::string const & filename) { logger.setFilename(filename); }
 
+        void setLiberalAsm(bool enable_liberal_asm);
+
     private:
         std::vector<std::string> file_buffer;
         lc3::utils::AssemblerLogger logger;
+        bool enable_liberal_asm;
 
         asmbl::InstructionEncoder encoder;
 
@@ -42,7 +46,6 @@ namespace core
         std::pair<bool, SymbolTable> buildSymbolTable(std::vector<asmbl::StatementNew> const & statements);
         std::pair<bool, std::vector<MemEntry>> buildMachineCode(std::vector<asmbl::StatementNew> const & statements,
             SymbolTable const & symbols);
-
     };
 };
 };

@@ -319,27 +319,15 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement
 
     if(sext) {
         if((int32_t) piece.num < -(1 << (width - 1)) || (int32_t) piece.num > ((1 << (width - 1)) - 1)) {
-#ifdef _LIBERAL_ASM
-            logger.asmPrintf(PrintType::P_WARNING, statement, piece, "immediate %d truncated to %d", piece.num,
-                lc3::utils::sextTo32(token_val, width));
-            logger.newline(PrintType::P_WARNING);
-#else
             logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large");
             logger.newline();
             throw lc3::utils::exception("invalid immediate");
-#endif
         }
     } else {
         if(piece.num > ((1u << width) - 1)) {
-#ifdef _LIBERAL_ASM
-            logger.asmPrintf(PrintType::P_WARNING, statement, piece, "immediate %u truncated to %u", piece.num,
-                token_val);
-            logger.newline(PrintType::P_WARNING);
-#else
             logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large");
             logger.newline();
             throw lc3::utils::exception("invalid immediate");
-#endif
         }
     }
 

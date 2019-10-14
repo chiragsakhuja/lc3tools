@@ -19,7 +19,7 @@ namespace asmbl
     class InstructionEncoder : public InstructionHandler
     {
     public:
-        InstructionEncoder(lc3::utils::AssemblerLogger & logger);
+        InstructionEncoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal_assembly);
 
         bool isStringPseudo(std::string const & search) const;
         bool isStringValidReg(std::string const & search) const;
@@ -48,8 +48,11 @@ namespace asmbl
         optional<uint32_t> encodeInstruction(StatementNew const & statement, SymbolTable const & symbols,
             PIInstruction pattern) const;
 
+        void setLiberalAsm(bool enable_liberal_asm) { this->enable_liberal_asm = enable_liberal_asm; }
+
     private:
         lc3::utils::AssemblerLogger & logger;
+        bool enable_liberal_asm;
 
         bool validatePseudoOperands(StatementNew const & statement, std::string const & pseudo,
             std::vector<StatementPiece::Type> const & valid_types, uint32_t operand_count, bool log_enable) const;

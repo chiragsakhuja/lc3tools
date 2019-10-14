@@ -76,7 +76,7 @@ std::vector<lc3::core::asmbl::StatementNew> lc3::core::Assembler::buildStatement
     using namespace asmbl;
     using namespace lc3::utils;
 
-    Tokenizer tokenizer{buffer};
+    Tokenizer tokenizer{buffer, enable_liberal_asm};
     std::vector<StatementNew> statements;
 
     while(! tokenizer.isDone()) {
@@ -254,17 +254,17 @@ void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::Sta
         if(encoder.isPseudo(statement)) {
             if(encoder.isValidPseudoOrig(statement)) {
                 if(found_orig) {
-#ifndef _LIBERAL_ASM
-                    if(! previous_region_ended) {
-                        // If found_orig is set, meaning we've seen at least one valid .orig, and previous_region_ended
-                        // is not set, meaning we haven't seen a .end yet, then the previous .orig was not ended
-                        // properly.
-                        logger.asmPrintf(PrintType::P_ERROR, statement,
-                            "new .orig found, but previous region did not have .end");
-                        logger.newline();
-                        throw utils::exception("new .orig fund, but previous region did not have .end");
+                    if(! enable_liberal_asm) {
+                        if(! previous_region_ended) {
+                            // If found_orig is set, meaning we've seen at least one valid .orig, and
+                            // previous_region_ended is not set, meaning we haven't seen a .end yet, then the previous
+                            // .orig was not ended properly.
+                            logger.asmPrintf(PrintType::P_ERROR, statement,
+                                "new .orig found, but previous region did not have .end");
+                            logger.newline();
+                            throw utils::exception("new .orig fund, but previous region did not have .end");
+                        }
                     }
-#endif
                     previous_region_ended = false;
                 }
 
@@ -274,14 +274,15 @@ void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::Sta
                 ++cur_idx;
                 logger.printf(PrintType::P_EXTRA, true, "setting current PC to 0x%0.4x", cur_pc);
                 if((cur_pc & 0xffff) != cur_pc) {
-#ifdef _LIBERAL_ASM
-                    logger.printf(PrintType::P_WARNING, true, "truncating .orig from 0x%0.4x to 0x%0.4x", cur_pc, cur_pc & 0xffff);
-                    logger.newline(PrintType::P_WARNING);
-#else
-                    logger.printf(PrintType::P_ERROR, true, ".orig 0x%0.4x is out of range", cur_pc);
-                    logger.newline();
-                    throw utils::exception(".orig is out of range");
-#endif
+                    if(enable_liberal_asm) {
+                        logger.printf(PrintType::P_WARNING, true, "truncating .orig from 0x%0.4x to 0x%0.4x", cur_pc,
+                            cur_pc & 0xffff);
+                        logger.newline(PrintType::P_WARNING);
+                    } else {
+                        logger.printf(PrintType::P_ERROR, true, ".orig 0x%0.4x is out of range", cur_pc);
+                        logger.newline();
+                        throw utils::exception(".orig is out of range");
+                    }
                 }
                 cur_pc &= 0xffff;
                 continue;
@@ -348,14 +349,14 @@ void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::Sta
         throw utils::exception("could not find valid .orig");
     }
 
-#ifndef _LIBERAL_ASM
-    // Trigger error if there was no .end at the end of the file.
-    if(found_orig && ! previous_region_ended) {
-        logger.printf(PrintType::P_ERROR, true, "no .end at end of file");
-        logger.newline();
-        throw utils::exception("no .end at end of file");
+    if(! enable_liberal_asm) {
+        // Trigger error if there was no .end at the end of the file.
+        if(found_orig && ! previous_region_ended) {
+            logger.printf(PrintType::P_ERROR, true, "no .end at end of file");
+            logger.newline();
+            throw utils::exception("no .end at end of file");
+        }
     }
-#endif
 }
 
 std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
@@ -383,52 +384,54 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
                         success = false;
                         continue;
                     } else {
-// Uncommenting following lines will disallow labels on their own line.
-/*
- *#ifndef _LIBERAL_ASM
- *                        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
- *                            "cannot have label on its own line");
- *                        logger.newline();
- *                        success = false;
- *                        continue;
- *#endif
- */
+                        // Uncommenting following lines will disallow labels on their own line.
+                        /*
+                         *if(! enable_liberal_asm) {
+                         *    logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+                         *        "cannot have label on its own line");
+                         *    logger.newline();
+                         *    success = false;
+                         *    continue;
+                         *}
+                         */
                     }
                 }
 
                 auto search = symbols.find(utils::toLower(statement.label->str));
                 if(search != symbols.end()) {
                     uint32_t old_val = search->second;
-#ifdef _LIBERAL_ASM
-                    logger.asmPrintf(PrintType::P_WARNING, statement, *statement.label,
-                        "redefining label \'%s\' from 0x%0.4x to 0x%0.4x", statement.label->str.c_str(),
-                        old_val, statement.pc);
-                    logger.newline(PrintType::P_WARNING);
-#else
-                    logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
-                        "attempting to redefine label \'%s\' from 0x%0.4x to 0x%0.4x", statement.label->str.c_str(),
-                        old_val, statement.pc);
-                    logger.newline();
-                    success = false;
-                    continue;
-#endif
+                    if(enable_liberal_asm) {
+                        logger.asmPrintf(PrintType::P_WARNING, statement, *statement.label,
+                            "redefining label \'%s\' from 0x%0.4x to 0x%0.4x", statement.label->str.c_str(),
+                            old_val, statement.pc);
+                        logger.newline(PrintType::P_WARNING);
+                    } else {
+                        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+                            "attempting to redefine label \'%s\' from 0x%0.4x to 0x%0.4x", statement.label->str.c_str(),
+                            old_val, statement.pc);
+                        logger.newline();
+                        success = false;
+                        continue;
+                    }
                 }
 
-#ifndef _LIBERAL_ASM
-                if('0' <= statement.label->str[0] && statement.label->str[0] <= '9') {
-                    logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label, "label cannot begin with number");
-                    logger.newline();
-                    success = false;
-                    continue;
-                }
+                if(! enable_liberal_asm) {
+                    if('0' <= statement.label->str[0] && statement.label->str[0] <= '9') {
+                        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+                            "label cannot begin with number");
+                        logger.newline();
+                        success = false;
+                        continue;
+                    }
 
-                if(encoder.getDistanceToNearestInstructionName(statement.label->str) == 0) {
-                    logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label, "label cannot be an instruction");
-                    logger.newline();
-                    success = false;
-                    continue;
+                    if(encoder.getDistanceToNearestInstructionName(statement.label->str) == 0) {
+                        logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+                            "label cannot be an instruction");
+                        logger.newline();
+                        success = false;
+                        continue;
+                    }
                 }
-#endif
 
                 symbols[utils::toLower(statement.label->str)] = statement.pc;
                 logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' := 0x%0.4x", statement.label->str.c_str(),
@@ -452,14 +455,14 @@ std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMac
 
     for(StatementNew const & statement : statements) {
         if(! statement.valid) {
-#ifdef _LIBERAL_ASM
-            logger.asmPrintf(PrintType::P_WARNING, statement, "ignoring statement whose address cannot be determined");
-            logger.newline(PrintType::P_WARNING);
-#else
-            logger.asmPrintf(PrintType::P_ERROR, statement, "cannot determine address for statement");
-            logger.newline();
-            success = false;
-#endif
+            if(enable_liberal_asm) {
+                logger.asmPrintf(PrintType::P_WARNING, statement, "ignoring statement whose address cannot be determined");
+                logger.newline(PrintType::P_WARNING);
+            } else {
+                logger.asmPrintf(PrintType::P_ERROR, statement, "cannot determine address for statement");
+                logger.newline();
+                success = false;
+            }
             continue;
         }
 
@@ -536,4 +539,10 @@ std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMac
     }
 
     return std::make_pair(success, ret);
+}
+
+void lc3::core::Assembler::setLiberalAsm(bool enable_liberal_asm)
+{
+    this->enable_liberal_asm = enable_liberal_asm;
+    encoder.setLiberalAsm(enable_liberal_asm);
 }

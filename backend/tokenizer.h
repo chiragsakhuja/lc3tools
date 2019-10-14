@@ -19,7 +19,7 @@ namespace asmbl
     class Tokenizer
     {
     public:
-        Tokenizer(std::istream & buffer);
+        Tokenizer(std::istream & buffer, bool enable_liberal_asm);
         ~Tokenizer(void) = default;
 
         Tokenizer & operator>>(Token & token);
@@ -37,6 +37,8 @@ namespace asmbl
 
         bool convertStringToNum(std::string const & str, int32_t & val) const;
         std::istream & getline(std::istream & is, std::string & t) const;
+
+        bool enable_liberal_asm;
     };
 };
 };
