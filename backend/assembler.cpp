@@ -41,6 +41,8 @@ std::shared_ptr<std::stringstream> lc3::core::Assembler::assemble(std::istream &
     logger.printf(PrintType::P_EXTRA, true, "===== end building symbol table =====");
     logger.newline(PrintType::P_EXTRA);
     if(! success) {
+        logger.printf(PrintType::P_ERROR, true, "pass 1 failed, attempting to continue to pass 2");
+        logger.newline();
         fail_pass = 1;
     }
 
