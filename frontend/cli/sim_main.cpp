@@ -212,6 +212,8 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
 #endif
         if(! command_tokens.fail()) {
             simulator.setRunInstLimit(inst_limit);
+        } else {
+            simulator.setRunInstLimit(0);
         }
         simulator.run();
 #ifdef _ENABLE_DEBUG

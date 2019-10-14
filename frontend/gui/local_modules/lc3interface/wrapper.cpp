@@ -186,9 +186,10 @@ NAN_METHOD(Run)
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
         []() {
           try {
+            sim->setRunInstLimit(0);
             sim->run();
           } catch(std::exception const & e) {
-            Nan::ThrowError(e.what())
+            Nan::ThrowError(e.what());
           }
         },
         new Nan::Callback(info[0].As<v8::Function>())
