@@ -32,7 +32,7 @@ public:
     {
         try {
             run_function();
-        } catch(lc3::utils::exception const & e) {
+        } catch(std::exception const & e) {
             this->SetErrorMessage(e.what());
         }
     }
@@ -59,10 +59,10 @@ NAN_METHOD(Init)
     try {
         printer = new utils::UIPrinter();
         inputter = new utils::UIInputter();
-        as = new lc3::as(*printer, _PRINT_LEVEL, false, false);
-        conv = new lc3::conv(*printer, _PRINT_LEVEL, false);
-        sim = new lc3::sim(*printer, *inputter, true, _PRINT_LEVEL, false);
-    } catch(lc3::utils::exception const & e) {
+        as = new lc3::as(*printer, _PRINT_LEVEL, true, false);
+        conv = new lc3::conv(*printer, _PRINT_LEVEL, true);
+        sim = new lc3::sim(*printer, *inputter, true, _PRINT_LEVEL, true);
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -89,7 +89,7 @@ NAN_METHOD(ConvertBin)
 
     try {
         conv->convertBin(bin_filename);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -107,7 +107,7 @@ NAN_METHOD(Assemble)
 
     try {
         as->assemble(asm_filename);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -124,7 +124,7 @@ NAN_METHOD(LoadObjectFile)
 
     try {
         sim->loadObjFile(filename);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -133,7 +133,7 @@ NAN_METHOD(RestartMachine)
 {
     try {
         sim->restart();
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -142,7 +142,7 @@ NAN_METHOD(ReinitializeMachine)
 {
     try {
         sim->reinitialize();
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -151,7 +151,7 @@ NAN_METHOD(RandomizeMachine)
 {
     try {
         sim->randomize();
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -164,7 +164,13 @@ NAN_METHOD(Run)
     }
 
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
-        []() { sim->run(); },
+        []() {
+          try {
+            sim->run();
+          } catch(std::exception const & e) {
+            Nan::ThrowError(e.what())
+          }
+        },
         new Nan::Callback(info[0].As<v8::Function>())
     ));
 }
@@ -177,7 +183,13 @@ NAN_METHOD(StepIn)
     }
 
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
-        []() { sim->stepIn(); },
+        []() {
+          try {
+            sim->stepIn();
+          } catch(std::exception const & e) {
+            Nan::ThrowError(e.what())
+          }
+        },
         new Nan::Callback(info[0].As<v8::Function>())
     ));
 }
@@ -190,7 +202,13 @@ NAN_METHOD(StepOut)
     }
 
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
-        []() { sim->stepOut(); },
+        []() {
+          try {
+            sim->stepOut();
+          } catch(std::exception const & e) {
+            Nan::ThrowError(e.what())
+          }
+        },
         new Nan::Callback(info[0].As<v8::Function>())
     ));
 }
@@ -203,7 +221,13 @@ NAN_METHOD(StepOver)
     }
 
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
-        []() { sim->stepOver(); },
+        []() {
+          try {
+            sim->stepOver();
+          } catch(std::exception const & e) {
+            Nan::ThrowError(e.what())
+          }
+        },
         new Nan::Callback(info[0].As<v8::Function>())
     ));
 }
@@ -212,7 +236,7 @@ NAN_METHOD(Pause)
 {
     try {
         sim->pause();
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -248,7 +272,7 @@ NAN_METHOD(GetRegValue)
         } else if(reg_name == "mcr") {
             ret_val = sim->getMCR();
         }
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 
@@ -289,7 +313,7 @@ NAN_METHOD(SetRegValue)
         } else if(reg_name == "mcr") {
             sim->setMCR(value);
         }
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -306,7 +330,7 @@ NAN_METHOD(GetMemValue)
         lc3::core::MachineState const & state = sim->getMachineState();
         auto ret = Nan::New<v8::Number>(state.readMemRaw(addr));
         info.GetReturnValue().Set(ret);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -329,7 +353,7 @@ NAN_METHOD(SetMemValue)
         lc3::core::MachineState & state = sim->getMachineState();
         state.writeMemSafe(addr, value);
         state.mem[addr].setLine("");
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 
@@ -347,7 +371,7 @@ NAN_METHOD(GetMemLine)
         lc3::core::MachineState const & state = sim->getMachineState();
         auto ret = Nan::New<v8::String>(state.mem[addr].getLine()).ToLocalChecked();
         info.GetReturnValue().Set(ret);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -370,7 +394,7 @@ NAN_METHOD(SetMemLine)
 
     try {
         sim->setMemLine(addr, line);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -384,7 +408,7 @@ NAN_METHOD(SetIgnorePrivilege)
 
     try {
         sim->setIgnorePrivilege((bool) info[0]->BooleanValue(Nan::GetCurrentContext()).ToChecked());
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -410,7 +434,7 @@ NAN_METHOD(AddInput)
 
     try {
         inputter->addInput(c[0]);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -423,7 +447,7 @@ NAN_METHOD(GetOutput)
         for(std::string const & str : output) { joined += str; }
         auto ret = Nan::New<v8::String>(joined).ToLocalChecked();
         info.GetReturnValue().Set(ret);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -443,7 +467,7 @@ NAN_METHOD(SetBreakpoint)
     uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         sim->setBreakpoint(addr);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -458,7 +482,7 @@ NAN_METHOD(RemoveBreakpoint)
     uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
     try {
         sim->removeBreakpointByAddr(addr);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
@@ -468,7 +492,7 @@ NAN_METHOD(GetInstExecCount)
     try {
         auto ret = Nan::New<v8::Number>(sim->getInstExecCount());
         info.GetReturnValue().Set(ret);
-    } catch(lc3::utils::exception const & e) {
+    } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }

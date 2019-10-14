@@ -1,13 +1,13 @@
-const state = {
+const counter_state = {
   main: 0
 }
 
 const mutations = {
   DECREMENT_MAIN_COUNTER (state) {
-    state.main--
+    counter_state.main--
   },
   INCREMENT_MAIN_COUNTER (state) {
-    state.main++
+    counter_state.main++
   }
 }
 
@@ -19,7 +19,7 @@ const actions = {
 }
 
 export default {
-  state,
+  counter_state,
   mutations,
   actions
 }

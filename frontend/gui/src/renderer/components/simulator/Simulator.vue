@@ -312,11 +312,15 @@ export default {
     this.jumpToPC(true);
   },
   activated() {
-    if(this.asm_file !== "NULL") {
-      let obj_file = this.asm_file.substr(0, this.asm_file.lastIndexOf(".")) + ".obj";
-      if(fs.existsSync(obj_file)) {
-        this.loadFile(obj_file);
+    let asm_file_name = this.$store.getters.activeFilePath
+    if(asm_file_name !== null &&
+      this.$store.getters.activeFileBuildTime > this.$store.getters.activeFileLoadTime)
+    {
+      let obj_file_name = asm_file_name.substr(0, asm_file_name.lastIndexOf(".")) + ".obj";
+      if(fs.existsSync(obj_file_name)) {
+        this.loadFile(obj_file_name);
       }
+      this.$store.commit('touchActiveFileLoadTime')
     }
   },
   methods: {
@@ -550,7 +554,6 @@ export default {
   },
   props: {
     dark_mode: Boolean,
-    asm_file: { type: String, required: true, default: "NULL" }
   }
 };
 </script>

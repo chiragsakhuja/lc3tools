@@ -38,14 +38,15 @@
           <span>Open File</span>
         </v-tooltip>
         <v-tooltip right>
-          <v-list-tile slot="activator" @click="assemble()">
+          <v-list-tile slot="activator" @click="build()">
             <v-list-tile-action>
               <v-icon large>build</v-icon>
             </v-list-tile-action>
           </v-list-tile>
-          <span v-if="this.editor.current_file.endsWith('.asm')">Assemble</span>
-          <span v-else-if="this.editor.current_file.endsWith('.bin')">Convert</span>
-          <span v-else>Assemble or Convert</span>
+          <span v-if="this.$store.getters.activeFilePath === null">Assemble or Convert</span>
+          <span v-else-if="this.$store.getters.activeFilePath.endsWith('.asm')">Assemble</span>
+          <span v-else-if="this.$store.getters.activeFilePath.endsWith('.bin')">Convert</span>
+          <span v-else>Build</span>
         </v-tooltip>
       </v-list>
     </v-navigation-drawer>
@@ -85,7 +86,6 @@ export default {
       editor: {
         original_content: "",
         current_content: "",
-        current_file: "",
         content_changed: false
       },
       console_str: "",
@@ -95,7 +95,8 @@ export default {
   components: {
     "ace-editor": require("vue2-ace-editor-electron")
   },
-  created() {
+  mounted() {
+    // setInterval(this.autosaveFile, 5000);
   },
   methods: {
     newFile(content) {
@@ -113,10 +114,16 @@ export default {
     saveFile() {
       // Todo: try catch around this
       // If we don't have a file, create one
-      if (this.editor.current_file === "") {
+      if (this.$store.getters.activeFilePath === null) {
         this.newFile(this.editor.current_content);
       } else {
-        fs.writeFileSync(this.editor.current_file, this.editor.current_content);
+        fs.writeFileSync(this.$store.getters.activeFilePath, this.editor.current_content);
+        this.editor.original_content = this.editor.current_content;
+      }
+    },
+    autosaveFile() {
+      if (this.$store.getters.activeFilePath !== null && this.editor.original_content !== this.editor.current_content) {
+        fs.writeFileSync(this.$store.getters.activeFilePath, this.editor.current_content);
         this.editor.original_content = this.editor.current_content;
       }
     },
@@ -135,28 +142,41 @@ export default {
 
       // Dialog returns an array of files, we only care about the first one
       if (selected_files) {
-        this.editor.current_file = selected_files[0];
+        let active_file = selected_files[0];
         this.editor.original_content = this.editor.current_content = fs.readFileSync(
-          this.editor.current_file,
+          active_file,
           "utf-8"
         );
+        this.$store.commit('setActiveFilePath', active_file);
       }
     },
-    assemble() {
+    build() {
       // save the file if it hasn't been saved
       if (this.editor.content_changed) {
         this.saveFile();
       }
-      if(this.editor.current_file.endsWith(".bin")) {
-        lc3.ConvertBin(this.editor.current_file);
+      let success = true
+      if(this.$store.getters.activeFilePath.endsWith(".bin")) {
+        try {
+          lc3.ConvertBin(this.$store.getters.activeFilePath);
+        } catch(e) {
+          success = false
+        }
       } else {
-        lc3.Assemble(this.editor.current_file);
+        try {
+          lc3.Assemble(this.$store.getters.activeFilePath);
+        } catch(e) {
+          success = false
+        }
       }
+
       const temp_console_string = lc3.GetOutput();
       lc3.ClearOutput();
       this.console_str = "";
       setTimeout(() => { this.console_str = temp_console_string; }, 200);
-      this.$emit("updateAsmFile", this.editor.current_file);
+      if (success) {
+        this.$store.commit('touchActiveFileBuildTime');
+      }
     },
     editorInit(editor) {
       require("./lc3");
@@ -172,9 +192,9 @@ export default {
         exec: this.saveFile
       });
       editor.commands.addCommand({
-        name: 'assemble',
+        name: 'build',
         bindKey: {win: "Ctrl-Enter", "mac": "Cmd-Enter"},
-        exec: this.assemble
+        exec: this.build
       });
       editor.commands.addCommand({
         name: 'open',
@@ -185,9 +205,9 @@ export default {
   },
   computed: {
     getFilename() {
-      return this.editor.current_file === ""
+      return this.$store.getters.activeFilePath === null
         ? "Untitled"
-        : path.basename(this.editor.current_file);
+        : path.basename(this.$store.getters.activeFilePath);
     }
   },
   watch: {

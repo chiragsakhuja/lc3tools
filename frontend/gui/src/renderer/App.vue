@@ -50,7 +50,7 @@
       </v-toolbar>
 
       <keep-alive>
-        <router-view :dark_mode="isDarkMode" :asm_file="asm_file" @updateAsmFile="updateAsmFile"></router-view>
+        <router-view :dark_mode="isDarkMode"></router-view>
       </keep-alive>
 
       <v-dialog
@@ -118,8 +118,7 @@ export default {
       settings: {
         theme: "light",
         ignore_privilege: false
-      },
-      asm_file: "NULL"
+      }
     };
   },
 
@@ -166,9 +165,6 @@ export default {
       this.$storage.set("settings.json", this.settings, (err) => {
         if(err) { console.error(err); }
       });
-    },
-    updateAsmFile(file) {
-      this.asm_file = file;
     }
   },
 
