@@ -152,19 +152,24 @@ export default {
         if(exists) {
           this.$storage.get("settings.json", (err, data) => {
             if(err) { console.error(err); }
-            else { this.settings = data; }
+            else {
+              this.settings = data
+              this.updateGlobals()
+            }
           });
         }
       });
     },
     saveSettings: function(setting) {
-      if(setting == 'privilege') {
-        lc3.SetIgnorePrivilege(this.settings.ignore_privilege);
-      }
-
       this.$storage.set("settings.json", this.settings, (err) => {
         if(err) { console.error(err); }
-      });
+      })
+      this.updateGlobals()
+    },
+    updateGlobals: function() {
+      lc3.SetIgnorePrivilege(this.settings.ignore_privilege)
+      this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
+      this.$store.commit('setTheme', this.settings.theme)
     }
   },
 

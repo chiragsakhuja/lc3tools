@@ -1,6 +1,6 @@
 <!-- Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education. -->
 <template>
-  <v-app id="simulator" v-bind:dark="dark_mode">
+  <v-app id="simulator" v-bind:dark="darkMode">
 
     <!-- Sidebar -->
     <v-navigation-drawer
@@ -144,7 +144,7 @@
                     </v-tooltip>
                   </div>
                 </div>
-                <div v-bind:id="dark_mode ? 'console-dark' : 'console'" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
+                <div v-bind:id="darkMode ? 'console-dark' : 'console'" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
               </div>
 
             </div>
@@ -549,11 +549,11 @@ export default {
     }
   },
   computed: {
+    darkMode() {
+      return this.$store.getters.theme === "dark"
+    }
   },
   watch: {
-  },
-  props: {
-    dark_mode: Boolean,
   }
 };
 </script>

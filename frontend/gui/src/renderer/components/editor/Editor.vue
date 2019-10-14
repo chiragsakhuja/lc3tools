@@ -1,6 +1,6 @@
 <!-- Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education. -->
 <template>
-  <v-app id="editor" v-bind:dark="dark_mode">
+  <v-app id="editor" v-bind:dark="isDarkMode">
 
     <!-- Sidebar -->
     <v-navigation-drawer
@@ -58,7 +58,16 @@
         <v-layout row wrap>
           <v-flex xs12 shrink class="editor-console-wrapper">
             <h3 id="filename" class="view-header">{{ getFilename }}</h3>
-            <ace-editor id="ace-editor" class="elevation-2" v-model="editor.current_content" @init="editorInit" lang="lc3" v-bind:theme="dark_mode ? 'twilight' : 'textmate'" height="100%" width="98%"> </ace-editor>
+            <ace-editor
+              id="ace-editor"
+              class="elevation-2"
+              v-model="editor.current_content"
+              @init="editorInit"
+              lang="lc3"
+              v-bind:theme="darkMode ? 'twilight' : 'textmate'"
+              height="100%"
+              width="98%"
+            />
             <div id="console" class="elevation-4" v-html="console_str"></div>
           </v-flex>
         </v-layout>
@@ -208,6 +217,9 @@ export default {
       return this.$store.getters.activeFilePath === null
         ? "Untitled"
         : path.basename(this.$store.getters.activeFilePath);
+    },
+    darkMode() {
+      return this.$store.getters.theme === "dark"
     }
   },
   watch: {
@@ -228,7 +240,6 @@ export default {
       }
     }
   },
-  props: { dark_mode: Boolean }
 };
 </script>
 
