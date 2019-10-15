@@ -295,7 +295,7 @@ export default {
           if (int_value < 0) {
             // If the number is negative, convert it to an unsigned representation to be able
             // to do the following 0xffff check.
-            int_value = (1 << 16) + int_value
+            int_value = (1 << 15) + int_value
           }
           return (int_value >= 0 && int_value <= 0xffff) || "Value must be between 0 and xFFFF"
         }
