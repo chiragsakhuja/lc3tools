@@ -23,6 +23,15 @@
                 </v-flex>
               </v-layout>
               <v-layout row>
+                <v-flex grow><h3>Number View</h3></v-flex>
+                <v-flex shrink>
+                  <v-radio-group @change="saveSettings('numbers')" v-model="settings.numbers" row>
+                    <v-radio label="Unsigned" value="unsigned"></v-radio>
+                    <v-radio label="Signed" value="signed"></v-radio>
+                  </v-radio-group>
+                </v-flex>
+              </v-layout>
+              <v-layout row>
                 <v-flex grow><h3>Ignore privileged mode</h3></v-flex>
                 <v-flex shrink>
                   <v-switch @change="saveSettings('privilege')" v-model="settings.ignore_privilege"></v-switch>
@@ -124,6 +133,7 @@ export default {
       settings_menu: false,
       settings: {
         theme: "light",
+        numbers: "unsigned",
         ignore_privilege: false,
         liberal_asm: false
       }
@@ -161,7 +171,9 @@ export default {
           this.$storage.get("settings.json", (err, data) => {
             if(err) { console.error(err); }
             else {
-              this.settings = data
+              for(const key of Object.keys(data)) {
+                this.settings[key] = data[key]
+              }
               this.settings.liberal_asm = false
               this.updateGlobals('all')
             }
@@ -179,14 +191,17 @@ export default {
       if(setting == 'all') {
         lc3.SetIgnorePrivilege(this.settings.ignore_privilege)
         lc3.SetEnableLiberalAsm(this.settings.liberal_asm)
-        this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
         this.$store.commit('setTheme', this.settings.theme)
+        this.$store.commit('setNumberType', this.settings.numbers)
+        this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
         this.$store.commit('setLiberalAsm', this.settings.liberal_asm)
+      } else if(setting === 'theme') {
+        this.$store.commit('setTheme', this.settings.theme)
+      } else if(setting === 'numbers') {
+        this.$store.commit('setNumberType', this.settings.numbers)
       } else if(setting === 'privilege') {
         lc3.SetIgnorePrivilege(this.settings.ignore_privilege)
         this.$store.commit('setIgnorePrivilege', this.settings.ignore_privilege)
-      } else if(setting === 'theme') {
-        this.$store.commit('setTheme', this.settings.theme)
       } else if(setting === 'liberal-asm') {
         lc3.SetEnableLiberalAsm(this.settings.liberal_asm)
         this.$store.commit('setLiberalAsm', this.settings.liberal_asm)

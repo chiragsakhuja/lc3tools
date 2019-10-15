@@ -109,16 +109,16 @@
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ props.item.value }}</span>
+                        <span v-if="sim.running">{{ toDec(props.item.value) }}</span>
                         <v-edit-dialog v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
-                          {{ props.item.value }}
+                          {{ toDec(props.item.value) }}
                           <v-text-field
                             slot="input" label="Decimal Value"
-                            v-bind:value="props.item.value"
+                            v-bind:value="toDec(props.item.value)"
                             @change="setDataValue($event, props.item, 'reg', [rules.dec, rules.size16bit])"
                             :rules="[rules.dec, rules.size16bit]"
                           >
@@ -186,16 +186,16 @@
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ props.item.value }}</span>
+                        <span v-if="sim.running">{{ toDec(props.item.value) }}</span>
                         <v-edit-dialog v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
-                          {{ props.item.value }}
+                          {{ toDec(props.item.value) }}
                           <v-text-field
                             slot="input" label="Decimal Value"
-                            v-bind:value="props.item.value"
+                            v-bind:value="toDec(props.item.value)"
                             @change="setDataValue($event, props.item, 'mem', [rules.dec, rules.size16bit])"
                             :rules="[rules.dec, rules.size16bit]"
                           >
@@ -292,6 +292,11 @@ export default {
             value = '0' + value;
           }
           let int_value = parseInt(value);
+          if (int_value < 0) {
+            // If the number is negative, convert it to an unsigned representation to be able
+            // to do the following 0xffff check.
+            int_value = (1 << 16) + int_value
+          }
           return (int_value >= 0 && int_value <= 0xffff) || "Value must be between 0 and xFFFF"
         }
       }
@@ -539,6 +544,15 @@ export default {
     toHex(value) {
       let hex = value.toString(16).toUpperCase();
       return "x" + "0".repeat(4 - hex.length) + hex;
+    },
+    toDec(value) {
+      let dec = value
+      if (this.$store.getters.number_type === 'signed') {
+        if ((dec & 0x8000) === 0x8000) {
+          dec = (-(1 << 15)) + (dec & 0x7FFF)
+        }
+      }
+      return dec
     },
     parseValueString : (value) => {
       let mod_value = value;
