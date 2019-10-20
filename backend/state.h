@@ -193,7 +193,9 @@ namespace core
     public:
         PopSysCallTypeEvent() : IEvent(EventType::POP_SYS_CALL_TYPE) {}
         virtual void updateState(MachineState & state) const override {
-            state.sys_call_types.pop();
+            if(state.sys_call_types.size() > 0) {
+                state.sys_call_types.pop();
+            }
         }
         virtual std::string getOutputString(MachineState const & state) const override { (void)state; return ""; }
     };

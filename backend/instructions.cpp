@@ -653,7 +653,22 @@ std::vector<PIEvent> NOTInstruction::execute(MachineState const & state)
 
 std::vector<PIEvent> RTIInstruction::execute(MachineState const & state)
 {
-    return buildSysCallExitHelper(state, state.sys_call_types.top());
+    if(state.sys_call_types.size() > 0) {
+        return buildSysCallExitHelper(state, state.sys_call_types.top());
+    } else {
+        // If there are no entries in the sys_call_types stack, that means RTI
+        // is being used before a TRAP or interrupt.
+        uint32_t psr_value = state.readMemRaw(PSR);
+
+        std::vector<PIEvent> ret;
+        if(! state.ignore_privilege && (psr_value & 0x8000) != 0x0000) {
+            // If in user mode, illegal RTI was used.
+            return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+        } else {
+            // If in system mode, pretend like it was returning from a TRAP.
+            return buildSysCallExitHelper(state, MachineState::SysCallType::TRAP);
+        }
+    }
 }
 
 std::vector<PIEvent> STInstruction::execute(MachineState const & state)
