@@ -2,7 +2,37 @@
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
  */
 #include "asm_types.h"
+#include "logger.h"
 #include "utils.h"
+
+lc3::optional<uint32_t> lc3::core::asmbl::getNum(StatementNew const & statement, StatementPiece const & piece,
+    uint32_t width, bool sext, lc3::utils::AssemblerLogger & logger, bool log_enable)
+{
+    uint32_t token_val = piece.num & ((1 << width) - 1);
+
+    if(sext) {
+        int32_t signed_value = static_cast<int32_t>(piece.num);
+        if(signed_value < -(1 << (width - 1)) || signed_value > ((1 << (width - 1)) - 1)) {
+            if(log_enable) {
+                logger.asmPrintf(utils::PrintType::P_ERROR, statement, piece,
+                    "cannot encode as %d-bit 2's complement number", width);
+                logger.newline();
+            }
+            return {};
+        }
+    } else {
+        if(piece.num > ((1u << width) - 1)) {
+            if(log_enable) {
+                logger.asmPrintf(utils::PrintType::P_ERROR, statement, piece,
+                    "cannot encode as %d-bit unsigned number", width);
+                logger.newline();
+            }
+            return {};
+        }
+    }
+
+    return token_val;
+}
 
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Token const & token)
 {

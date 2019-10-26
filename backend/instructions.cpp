@@ -315,26 +315,16 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement
     (void) regs;
     (void) symbols;
 
-    uint32_t token_val = piece.num & ((1 << width) - 1);
+    auto ret = getNum(statement, piece, this->width, this->sext, logger, true);
 
-    if(sext) {
-        if((int32_t) piece.num < -(1 << (width - 1)) || (int32_t) piece.num > ((1 << (width - 1)) - 1)) {
-            logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large");
-            logger.newline();
-            throw lc3::utils::exception("invalid immediate");
-        }
-    } else {
-        if(piece.num > ((1u << width) - 1)) {
-            logger.asmPrintf(PrintType::P_ERROR, statement, piece, "immediate too large");
-            logger.newline();
-            throw lc3::utils::exception("invalid immediate");
-        }
+    if(! ret) {
+        throw lc3::utils::exception("invalid immediate");
     }
 
     logger.printf(lc3::utils::PrintType::P_EXTRA, true, "  imm %d := %s", piece.num,
-        lc3::utils::udecToBin(token_val, width).c_str());
+        lc3::utils::udecToBin(*ret, width).c_str());
 
-    return token_val;
+    return *ret;
 }
 
 lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
@@ -355,12 +345,18 @@ lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementNew const & stateme
             return {};
         }
 
-        uint32_t token_val = (((int32_t) search->second) - (statement.pc + 1)) & ((1 << width) - 1);
+        asmbl::StatementPiece num_piece = piece;
+        num_piece.num = static_cast<int32_t>(search->second) - (statement.pc + 1);
+        auto ret = getNum(statement, num_piece, this->width, true, logger, true);
+
+        if(! ret) {
+            throw lc3::utils::exception("label too far");
+        }
 
         logger.printf(PrintType::P_EXTRA, true, "  label %s (0x%0.4x) := %s", piece.str.c_str(), search->second,
-            udecToBin((uint32_t) token_val, width).c_str());
+            udecToBin(*ret, width).c_str());
 
-        return token_val;
+        return *ret;
     }
 }
 

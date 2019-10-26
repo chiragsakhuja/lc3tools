@@ -10,8 +10,14 @@
 
 #include "optional.h"
 
+
 namespace lc3
 {
+namespace utils
+{
+class AssemblerLogger;
+};
+
 namespace core
 {
 namespace asmbl
@@ -81,6 +87,9 @@ namespace asmbl
 
         StatementNew(void) : pc(0), line(""), row(0), valid(true) {}
     };
+
+    optional<uint32_t> getNum(StatementNew const & statement, StatementPiece const & piece, uint32_t width,
+        bool sext, lc3::utils::AssemblerLogger & logger, bool log_enable);
 };
 };
 };

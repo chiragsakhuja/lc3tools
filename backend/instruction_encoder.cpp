@@ -42,7 +42,9 @@ bool InstructionEncoder::isStringValidReg(std::string const & search) const
 bool InstructionEncoder::isValidPseudoOrig(StatementNew const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".orig") {
-        return validatePseudoOperands(statement, ".orig", {StatementPiece::Type::NUM}, 1, log_enable);
+        bool valid_operands = validatePseudoOperands(statement, ".orig", {StatementPiece::Type::NUM}, 1, log_enable);
+        auto num = getNum(statement, statement.operands[0], 16, false, logger, log_enable);
+        return valid_operands && num;
     }
     return false;
 }
@@ -50,8 +52,12 @@ bool InstructionEncoder::isValidPseudoOrig(StatementNew const & statement, bool 
 bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".fill") {
-        return validatePseudoOperands(statement, ".fill", {StatementPiece::Type::NUM, StatementPiece::Type::STRING}, 1,
-            log_enable);
+        bool valid_operands = validatePseudoOperands(statement, ".fill", {StatementPiece::Type::NUM,
+            StatementPiece::Type::STRING}, 1, log_enable);
+        // .fill has implicit sext; if the number is negative, treat as signed, otherwise just treat it as unsigned.
+        bool should_sext = static_cast<int32_t>(statement.operands[0].num) < 0;
+        auto num = getNum(statement, statement.operands[0], 16, should_sext, logger, log_enable);
+        return valid_operands && num;
     }
     return false;
 }
@@ -80,8 +86,9 @@ bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, lc3::
 bool InstructionEncoder::isValidPseudoBlock(StatementNew const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".blkw") {
-        bool valid = validatePseudoOperands(statement, ".blkw", {StatementPiece::Type::NUM}, 1, log_enable);
-        if(valid) {
+        bool valid_operands = validatePseudoOperands(statement, ".blkw", {StatementPiece::Type::NUM}, 1, false);
+        auto num = getNum(statement, statement.operands[0], 16, false, logger, log_enable);
+        if(valid_operands && num) {
             if(log_enable && statement.operands[0].num == 0) {
                 logger.asmPrintf(utils::PrintType::P_ERROR, statement, statement.operands[0],
                     "operand to .blkw must be > 0");
@@ -307,38 +314,16 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
     return std::get<0>(candidates[0]);
 }
 
-uint32_t InstructionEncoder::getNum(StatementNew const & statement, StatementPiece const & piece, bool sext,
-    bool log_enable) const
-{
-    (void) statement;
-    (void) log_enable;
-
-    uint32_t value = piece.num;
-
-    if(log_enable) {
-        if(sext) {
-            int32_t signed_value = static_cast<int32_t>(value);
-            if(signed_value < -(1 << 16) || signed_value > ((1 << 16) - 1)) {
-                logger.asmPrintf(utils::PrintType::P_WARNING, statement, piece, "truncating operand to 16-bits");
-                logger.newline(utils::PrintType::P_WARNING);
-            }
-        } else {
-            if(value != (value & 0xffff)) {
-                logger.asmPrintf(utils::PrintType::P_WARNING, statement, piece, "truncating operand to 16-bits");
-                logger.newline(utils::PrintType::P_WARNING);
-            }
-        }
-    }
-
-    return value & 0xffff;
-}
-
 uint32_t InstructionEncoder::getPseudoOrig(StatementNew const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoOrig(statement));
 #endif
-    return getNum(statement, statement.operands[0], false, true);
+    auto ret = getNum(statement, statement.operands[0], 16, false, logger, false);
+#ifdef _ENABLE_DEBUG
+    assert(ret.isValid());
+#endif
+    return *ret;
 }
 
 uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement,
@@ -348,7 +333,12 @@ uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement,
     assert(isValidPseudoFill(statement, symbols));
 #endif
     if(statement.operands[0].type == StatementPiece::Type::NUM) {
-        return getNum(statement, statement.operands[0], true, true);
+        bool should_sext = static_cast<int32_t>(statement.operands[0].num) < 0;
+        auto ret = getNum(statement, statement.operands[0], 16, should_sext, logger, false);
+#ifdef _ENABLE_DEBUG
+    assert(ret.isValid());
+#endif
+        return *ret;
     } else {
         return symbols.at(utils::toLower(statement.operands[0].str));
     }
@@ -359,7 +349,11 @@ uint32_t InstructionEncoder::getPseudoBlockSize(StatementNew const & statement) 
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoBlock(statement));
 #endif
-    return getNum(statement, statement.operands[0], false, true);
+    auto ret = getNum(statement, statement.operands[0], 16, false, logger, false);
+#ifdef _ENABLE_DEBUG
+    assert(ret.isValid());
+#endif
+    return *ret;
 }
 
 uint32_t InstructionEncoder::getPseudoStringSize(StatementNew const & statement) const

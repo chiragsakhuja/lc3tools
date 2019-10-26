@@ -38,8 +38,6 @@ namespace asmbl
         bool validatePseudo(StatementNew const & statement, SymbolTable const & symbols) const;
         optional<PIInstruction> validateInstruction(StatementNew const & statement) const;
 
-        uint32_t getNum(StatementNew const & statement, StatementPiece const & piece, bool sext,
-            bool log_enable = false) const;
         uint32_t getPseudoOrig(StatementNew const & statement) const;
         uint32_t getPseudoFill(StatementNew const & statement, SymbolTable const & symbols) const;
         uint32_t getPseudoBlockSize(StatementNew const & statement) const;
