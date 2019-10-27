@@ -95,7 +95,7 @@ int main(int argc, char * argv[])
             std::cout << "  --print-output         Print program output\n";
             std::cout << "  --asm-print-level=N    Assembler output verbosity [0-9]\n";
             std::cout << "  --sim-print-level=N    Simulator output verbosity [0-9]\n";
-            std::cout << "  --ignore-privilege     Ignore unprivileged accesses\n";
+            std::cout << "  --ignore-privilege     Ignore access violations\n";
             return 0;
         }
     }

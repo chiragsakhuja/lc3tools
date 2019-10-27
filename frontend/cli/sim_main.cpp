@@ -29,6 +29,7 @@ void breakpointCallback(lc3::core::MachineState & state, lc3::Breakpoint const &
 struct CLIArgs
 {
     uint32_t print_level = DEFAULT_PRINT_LEVEL;
+    bool ignore_privilege = false;
 };
 
 int main(int argc, char * argv[])
@@ -38,11 +39,14 @@ int main(int argc, char * argv[])
     for(auto const & arg : parsed_args) {
         if(std::get<0>(arg) == "print-level") {
             args.print_level = std::stoi(std::get<1>(arg));
+        } else if(std::get<0>(arg) == "ignore-privilege") {
+            args.ignore_privilege = true;
         } else if(std::get<0>(arg) == "h" || std::get<0>(arg) == "help") {
             std::cout << "usage: " << argv[0] << " [OPTIONS]\n";
             std::cout << "\n";
             std::cout << "  -h,--help              Print this message\n";
             std::cout << "  --print-level=N        Output verbosity [0-9]\n";
+            std::cout << "  --ignore-privilege     Ignore access violations\n";
             return 0;
         }
     }
@@ -54,6 +58,9 @@ int main(int argc, char * argv[])
     lc3::sim simulator(printer, inputter, true, args.print_level, false);
 
     simulator.registerBreakpointCallback(breakpointCallback);
+    if(args.ignore_privilege) {
+        simulator.setIgnorePrivilege(true);
+    }
 
     for(int i = 1; i < argc; i += 1) {
         std::string arg(argv[i]);
@@ -103,6 +110,7 @@ void breakHelp(void)
 
 bool prompt(lc3::sim & simulator)
 {
+    std::cout << "Executed " << simulator.getInstExecCount() << " instructions\n";
     std::cout << "> ";
     std::string command_line;
     std::getline(std::cin, command_line);
