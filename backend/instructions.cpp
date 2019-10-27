@@ -281,7 +281,7 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(std::make_shared<HALTInstruction>());
 }
 
-lc3::optional<uint32_t> FixedOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+lc3::optional<uint32_t> FixedOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
     SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
     (void) statement;
@@ -293,7 +293,7 @@ lc3::optional<uint32_t> FixedOperand::encode(asmbl::StatementNew const & stateme
     return value & ((1 << width) - 1);
 }
 
-lc3::optional<uint32_t> RegOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+lc3::optional<uint32_t> RegOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
     SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
     (void) statement;
@@ -307,7 +307,7 @@ lc3::optional<uint32_t> RegOperand::encode(asmbl::StatementNew const & statement
     return token_val;
 }
 
-lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+lc3::optional<uint32_t> NumOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
     SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
     using namespace lc3::utils;
@@ -327,7 +327,7 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::StatementNew const & statement
     return *ret;
 }
 
-lc3::optional<uint32_t> LabelOperand::encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+lc3::optional<uint32_t> LabelOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
     SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
     using namespace lc3::utils;

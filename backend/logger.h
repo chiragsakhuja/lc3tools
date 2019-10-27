@@ -49,10 +49,10 @@ namespace utils
         void setFilename(std::string const & filename) { this->filename = filename; }
 
         template<typename ... Args>
-        void asmPrintf(PrintType level, lc3::core::asmbl::StatementNew const & statement,
+        void asmPrintf(PrintType level, lc3::core::asmbl::Statement const & statement,
             lc3::core::asmbl::StatementPiece const & piece, std::string const & format, Args ... args) const;
         template<typename ... Args>
-        void asmPrintf(PrintType level, lc3::core::asmbl::StatementNew const & statement, std::string const & format,
+        void asmPrintf(PrintType level, lc3::core::asmbl::Statement const & statement, std::string const & format,
             Args ... args) const;
         template<typename ... Args>
         void asmPrintf(PrintType level, uint32_t row_num, uint32_t col_num, uint32_t len, std::string const & line,
@@ -125,7 +125,7 @@ void lc3::utils::Logger::printf(lc3::utils::PrintType type, bool bold, std::stri
 
 template<typename ... Args>
 void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
-    lc3::core::asmbl::StatementNew const & statement, lc3::core::asmbl::StatementPiece const & piece,
+    lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
     std::string const & format, Args ... args) const
 {
     asmPrintf(level, statement.row, piece.col, piece.len, statement.line, format, args...);
@@ -133,7 +133,7 @@ void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
 
 template<typename ... Args>
 void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level,
-    lc3::core::asmbl::StatementNew const & statement, std::string const & format, Args ... args) const
+    lc3::core::asmbl::Statement const & statement, std::string const & format, Args ... args) const
 {
     asmPrintf(level, statement.row, 0, (uint32_t) statement.line.size(), statement.line, format, args...);
 }

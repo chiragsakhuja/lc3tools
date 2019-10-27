@@ -43,7 +43,7 @@ namespace core
         IOperand(OperType type, std::string const & type_str, uint32_t width);
         virtual ~IOperand(void) = default;
 
-        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
             SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) = 0;
         bool isEqualType(OperType other) const;
     };
@@ -91,7 +91,7 @@ namespace core
     public:
         FixedOperand(uint32_t width, uint32_t value) : IOperand(OperType::FIXED, "fixed", width)
             { this->value = value; }
-        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
             SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
@@ -99,7 +99,7 @@ namespace core
     {
     public:
         RegOperand(uint32_t width) : IOperand(OperType::REG, "reg", width) {}
-        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
             SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
@@ -109,7 +109,7 @@ namespace core
         bool sext;
 
         NumOperand(uint32_t width, bool sext) : IOperand(OperType::NUM, "imm", width) { this->sext = sext; }
-        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
             SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
@@ -117,7 +117,7 @@ namespace core
     {
     public:
         LabelOperand(uint32_t width) : IOperand(OperType::LABEL, "label/imm", width) {}
-        virtual optional<uint32_t> encode(asmbl::StatementNew const & statement, asmbl::StatementPiece const & piece,
+        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
             SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 

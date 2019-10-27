@@ -23,27 +23,27 @@ namespace asmbl
 
         bool isStringPseudo(std::string const & search) const;
         bool isStringValidReg(std::string const & search) const;
-        bool isPseudo(StatementNew const & statement) const;
-        bool isInst(StatementNew const & statement) const;
-        bool isValidPseudoOrig(StatementNew const & statement, bool log_enable = false) const;
-        bool isValidPseudoFill(StatementNew const & statement, bool log_enable = false) const;
-        bool isValidPseudoFill(StatementNew const & statement, SymbolTable const & symbols,
+        bool isPseudo(Statement const & statement) const;
+        bool isInst(Statement const & statement) const;
+        bool isValidPseudoOrig(Statement const & statement, bool log_enable = false) const;
+        bool isValidPseudoFill(Statement const & statement, bool log_enable = false) const;
+        bool isValidPseudoFill(Statement const & statement, SymbolTable const & symbols,
             bool log_enable = false) const;
-        bool isValidPseudoBlock(StatementNew const & statement, bool log_enable = false) const;
-        bool isValidPseudoString(StatementNew const & statement, bool log_enable = false) const;
-        bool isValidPseudoEnd(StatementNew const & statement, bool log_enable = false) const;
+        bool isValidPseudoBlock(Statement const & statement, bool log_enable = false) const;
+        bool isValidPseudoString(Statement const & statement, bool log_enable = false) const;
+        bool isValidPseudoEnd(Statement const & statement, bool log_enable = false) const;
 
         uint32_t getDistanceToNearestInstructionName(std::string const & search) const;
 
-        bool validatePseudo(StatementNew const & statement, SymbolTable const & symbols) const;
-        optional<PIInstruction> validateInstruction(StatementNew const & statement) const;
+        bool validatePseudo(Statement const & statement, SymbolTable const & symbols) const;
+        optional<PIInstruction> validateInstruction(Statement const & statement) const;
 
-        uint32_t getPseudoOrig(StatementNew const & statement) const;
-        uint32_t getPseudoFill(StatementNew const & statement, SymbolTable const & symbols) const;
-        uint32_t getPseudoBlockSize(StatementNew const & statement) const;
-        uint32_t getPseudoStringSize(StatementNew const & statement) const;
-        std::string getPseudoString(StatementNew const & statement) const;
-        optional<uint32_t> encodeInstruction(StatementNew const & statement, SymbolTable const & symbols,
+        uint32_t getPseudoOrig(Statement const & statement) const;
+        uint32_t getPseudoFill(Statement const & statement, SymbolTable const & symbols) const;
+        uint32_t getPseudoBlockSize(Statement const & statement) const;
+        uint32_t getPseudoStringSize(Statement const & statement) const;
+        std::string getPseudoString(Statement const & statement) const;
+        optional<uint32_t> encodeInstruction(Statement const & statement, SymbolTable const & symbols,
             PIInstruction pattern) const;
 
         void setLiberalAsm(bool enable_liberal_asm) { this->enable_liberal_asm = enable_liberal_asm; }
@@ -52,7 +52,7 @@ namespace asmbl
         lc3::utils::AssemblerLogger & logger;
         bool enable_liberal_asm;
 
-        bool validatePseudoOperands(StatementNew const & statement, std::string const & pseudo,
+        bool validatePseudoOperands(Statement const & statement, std::string const & pseudo,
             std::vector<StatementPiece::Type> const & valid_types, uint32_t operand_count, bool log_enable) const;
 
         std::map<std::string, std::vector<PIInstruction>> instructions_by_name;

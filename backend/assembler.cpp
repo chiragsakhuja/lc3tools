@@ -26,7 +26,7 @@ std::shared_ptr<std::stringstream> lc3::core::Assembler::assemble(std::istream &
     uint32_t fail_pass = 0;
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin identifying tokens =====");
-    std::vector<StatementNew> statements = buildStatements(buffer);
+    std::vector<Statement> statements = buildStatements(buffer);
     logger.printf(PrintType::P_EXTRA, true, "===== end identifying tokens =====");
     logger.newline(PrintType::P_EXTRA);
 
@@ -73,13 +73,13 @@ std::shared_ptr<std::stringstream> lc3::core::Assembler::assemble(std::istream &
     return ret;
 }
 
-std::vector<lc3::core::asmbl::StatementNew> lc3::core::Assembler::buildStatements(std::istream & buffer)
+std::vector<lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatements(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;
 
     Tokenizer tokenizer{buffer, enable_liberal_asm};
-    std::vector<StatementNew> statements;
+    std::vector<Statement> statements;
 
     while(! tokenizer.isDone()) {
         std::vector<Token> tokens;
@@ -101,13 +101,13 @@ std::vector<lc3::core::asmbl::StatementNew> lc3::core::Assembler::buildStatement
     return statements;
 }
 
-lc3::core::asmbl::StatementNew lc3::core::Assembler::buildStatement(
+lc3::core::asmbl::Statement lc3::core::Assembler::buildStatement(
     std::vector<lc3::core::asmbl::Token> const & tokens)
 {
     using namespace asmbl;
     using namespace lc3::utils;
 
-    StatementNew ret;
+    Statement ret;
 
     // A lot of special case logic here to identify tokens as labels, instructions, pseudo-ops, etc.
     // Note: This DOES NOT check for valid statements, it just identifies tokens with what they should be
@@ -238,7 +238,7 @@ lc3::core::asmbl::StatementNew lc3::core::Assembler::buildStatement(
     return ret;
 }
 
-void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::StatementNew> & statements)
+void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::Statement> & statements)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -251,7 +251,7 @@ void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::Sta
 
     // Iterate over the statements, setting the current PC every time a new .orig is found.
     while(cur_idx < statements.size()) {
-        StatementNew & statement = statements[cur_idx];
+        Statement & statement = statements[cur_idx];
 
         if(encoder.isPseudo(statement)) {
             if(encoder.isValidPseudoOrig(statement)) {
@@ -362,7 +362,7 @@ void lc3::core::Assembler::setStatementPCField(std::vector<lc3::core::asmbl::Sta
 }
 
 std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
-    std::vector<lc3::core::asmbl::StatementNew> const & statements)
+    std::vector<lc3::core::asmbl::Statement> const & statements)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -370,7 +370,7 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
     SymbolTable symbols;
     bool success = true;
 
-    for(StatementNew const & statement : statements) {
+    for(Statement const & statement : statements) {
         if(statement.label) {
             if(statement.label->type == StatementPiece::Type::NUM) {
                 logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label, "label cannot be a numeric value");
@@ -446,7 +446,7 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
 }
 
 std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMachineCode(
-    std::vector<lc3::core::asmbl::StatementNew> const & statements, lc3::core::SymbolTable const & symbols)
+    std::vector<lc3::core::asmbl::Statement> const & statements, lc3::core::SymbolTable const & symbols)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -455,7 +455,7 @@ std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMac
 
     std::vector<MemEntry> ret;
 
-    for(StatementNew const & statement : statements) {
+    for(Statement const & statement : statements) {
         if(! statement.valid) {
             if(enable_liberal_asm) {
                 logger.asmPrintf(PrintType::P_WARNING, statement, "ignoring statement whose address cannot be determined");

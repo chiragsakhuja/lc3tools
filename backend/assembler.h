@@ -40,11 +40,11 @@ namespace core
 
         asmbl::InstructionEncoder encoder;
 
-        std::vector<asmbl::StatementNew> buildStatements(std::istream & buffer);
-        asmbl::StatementNew buildStatement(std::vector<asmbl::Token> const & tokens);
-        void setStatementPCField(std::vector<asmbl::StatementNew> & statements);
-        std::pair<bool, SymbolTable> buildSymbolTable(std::vector<asmbl::StatementNew> const & statements);
-        std::pair<bool, std::vector<MemEntry>> buildMachineCode(std::vector<asmbl::StatementNew> const & statements,
+        std::vector<asmbl::Statement> buildStatements(std::istream & buffer);
+        asmbl::Statement buildStatement(std::vector<asmbl::Token> const & tokens);
+        void setStatementPCField(std::vector<asmbl::Statement> & statements);
+        std::pair<bool, SymbolTable> buildSymbolTable(std::vector<asmbl::Statement> const & statements);
+        std::pair<bool, std::vector<MemEntry>> buildMachineCode(std::vector<asmbl::Statement> const & statements,
             SymbolTable const & symbols);
     };
 };

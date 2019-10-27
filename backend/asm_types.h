@@ -72,7 +72,7 @@ namespace asmbl
         }
     };
 
-    struct StatementNew
+    struct Statement
     {
         optional<StatementPiece> label;
         optional<StatementPiece> base;
@@ -85,10 +85,10 @@ namespace asmbl
 
         bool valid;
 
-        StatementNew(void) : pc(0), line(""), row(0), valid(true) {}
+        Statement(void) : pc(0), line(""), row(0), valid(true) {}
     };
 
-    optional<uint32_t> getNum(StatementNew const & statement, StatementPiece const & piece, uint32_t width,
+    optional<uint32_t> getNum(Statement const & statement, StatementPiece const & piece, uint32_t width,
         bool sext, lc3::utils::AssemblerLogger & logger, bool log_enable);
 };
 };
@@ -96,6 +96,6 @@ namespace asmbl
 
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Token const & token);
 std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementPiece const & piece);
-std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementNew const & statement);
+std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Statement const & statement);
 
 #endif

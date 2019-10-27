@@ -5,7 +5,7 @@
 #include "logger.h"
 #include "utils.h"
 
-lc3::optional<uint32_t> lc3::core::asmbl::getNum(StatementNew const & statement, StatementPiece const & piece,
+lc3::optional<uint32_t> lc3::core::asmbl::getNum(Statement const & statement, StatementPiece const & piece,
     uint32_t width, bool sext, lc3::utils::AssemblerLogger & logger, bool log_enable)
 {
     uint32_t token_val = piece.num & ((1 << width) - 1);
@@ -76,7 +76,7 @@ std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementPiece c
     return out;
 }
 
-std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::StatementNew const & statement)
+std::ostream & operator<<(std::ostream & out, lc3::core::asmbl::Statement const & statement)
 {
     out << std::hex << "0x" << statement.pc << std::dec;
     if(statement.label) {

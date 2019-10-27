@@ -22,12 +22,12 @@ bool InstructionEncoder::isStringPseudo(std::string const & search) const
     return search.size() > 0 && search[0] == '.';
 }
 
-bool InstructionEncoder::isPseudo(StatementNew const & statement) const
+bool InstructionEncoder::isPseudo(Statement const & statement) const
 {
     return statement.base && statement.base->type == StatementPiece::Type::PSEUDO;
 }
 
-bool InstructionEncoder::isInst(StatementNew const & statement) const
+bool InstructionEncoder::isInst(Statement const & statement) const
 {
     return statement.base && statement.base->type == StatementPiece::Type::INST;
 }
@@ -39,7 +39,7 @@ bool InstructionEncoder::isStringValidReg(std::string const & search) const
     return regs.find(lower_search) != regs.end();
 }
 
-bool InstructionEncoder::isValidPseudoOrig(StatementNew const & statement, bool log_enable) const
+bool InstructionEncoder::isValidPseudoOrig(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".orig") {
         bool valid_operands = validatePseudoOperands(statement, ".orig", {StatementPiece::Type::NUM}, 1, log_enable);
@@ -49,7 +49,7 @@ bool InstructionEncoder::isValidPseudoOrig(StatementNew const & statement, bool 
     return false;
 }
 
-bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, bool log_enable) const
+bool InstructionEncoder::isValidPseudoFill(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".fill") {
         bool valid_operands = validatePseudoOperands(statement, ".fill", {StatementPiece::Type::NUM,
@@ -65,7 +65,7 @@ bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, bool 
     return false;
 }
 
-bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, lc3::core::SymbolTable const & symbols,
+bool InstructionEncoder::isValidPseudoFill(Statement const & statement, lc3::core::SymbolTable const & symbols,
     bool log_enable) const
 {
     using namespace lc3::utils;
@@ -86,7 +86,7 @@ bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, lc3::
     return false;
 }
 
-bool InstructionEncoder::isValidPseudoBlock(StatementNew const & statement, bool log_enable) const
+bool InstructionEncoder::isValidPseudoBlock(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".blkw") {
         bool valid_operands = validatePseudoOperands(statement, ".blkw", {StatementPiece::Type::NUM}, 1, false);
@@ -103,7 +103,7 @@ bool InstructionEncoder::isValidPseudoBlock(StatementNew const & statement, bool
     return false;
 }
 
-bool InstructionEncoder::isValidPseudoString(StatementNew const & statement, bool log_enable) const
+bool InstructionEncoder::isValidPseudoString(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".stringz") {
         return validatePseudoOperands(statement, ".stringz", {StatementPiece::Type::STRING}, 1, log_enable);
@@ -111,7 +111,7 @@ bool InstructionEncoder::isValidPseudoString(StatementNew const & statement, boo
     return false;
 }
 
-bool InstructionEncoder::isValidPseudoEnd(StatementNew const & statement, bool log_enable) const
+bool InstructionEncoder::isValidPseudoEnd(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".end") {
         return validatePseudoOperands(statement, ".end", {}, 0, log_enable);
@@ -119,7 +119,7 @@ bool InstructionEncoder::isValidPseudoEnd(StatementNew const & statement, bool l
     return false;
 }
 
-bool InstructionEncoder::validatePseudo(StatementNew const & statement, lc3::core::SymbolTable const & symbols) const
+bool InstructionEncoder::validatePseudo(Statement const & statement, lc3::core::SymbolTable const & symbols) const
 {
     using namespace lc3::utils;
 
@@ -149,7 +149,7 @@ bool InstructionEncoder::validatePseudo(StatementNew const & statement, lc3::cor
     }
 }
 
-bool InstructionEncoder::validatePseudoOperands(StatementNew const & statement, std::string const & pseudo,
+bool InstructionEncoder::validatePseudoOperands(Statement const & statement, std::string const & pseudo,
     std::vector<StatementPiece::Type> const & valid_types, uint32_t operand_count, bool log_enable) const
 {
     using namespace lc3::utils;
@@ -210,7 +210,7 @@ bool InstructionEncoder::validatePseudoOperands(StatementNew const & statement, 
     return true;
 }
 
-lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(StatementNew const & statement) const
+lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(Statement const & statement) const
 {
     using namespace lc3::utils;
 
@@ -317,7 +317,7 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
     return std::get<0>(candidates[0]);
 }
 
-uint32_t InstructionEncoder::getPseudoOrig(StatementNew const & statement) const
+uint32_t InstructionEncoder::getPseudoOrig(Statement const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoOrig(statement));
@@ -329,7 +329,7 @@ uint32_t InstructionEncoder::getPseudoOrig(StatementNew const & statement) const
     return *ret;
 }
 
-uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement,
+uint32_t InstructionEncoder::getPseudoFill(Statement const & statement,
     lc3::core::SymbolTable const & symbols) const
 {
 #ifdef _ENABLE_DEBUG
@@ -347,7 +347,7 @@ uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement,
     }
 }
 
-uint32_t InstructionEncoder::getPseudoBlockSize(StatementNew const & statement) const
+uint32_t InstructionEncoder::getPseudoBlockSize(Statement const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoBlock(statement));
@@ -359,7 +359,7 @@ uint32_t InstructionEncoder::getPseudoBlockSize(StatementNew const & statement) 
     return *ret;
 }
 
-uint32_t InstructionEncoder::getPseudoStringSize(StatementNew const & statement) const
+uint32_t InstructionEncoder::getPseudoStringSize(Statement const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoString(statement));
@@ -367,7 +367,7 @@ uint32_t InstructionEncoder::getPseudoStringSize(StatementNew const & statement)
     return (uint32_t) (getPseudoString(statement).size() + 1);
 }
 
-std::string InstructionEncoder::getPseudoString(StatementNew const & statement) const
+std::string InstructionEncoder::getPseudoString(Statement const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoString(statement));
@@ -391,7 +391,7 @@ std::string InstructionEncoder::getPseudoString(StatementNew const & statement) 
     return ret;
 }
 
-lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(StatementNew const & statement,
+lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(Statement const & statement,
     lc3::core::SymbolTable const & symbols, lc3::core::PIInstruction pattern) const
 {
     // The first "operand" of an instruction encoding is the op-code.
