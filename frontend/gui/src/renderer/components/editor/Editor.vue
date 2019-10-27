@@ -78,169 +78,169 @@
 </template>
 
 <script>
-import { remote } from "electron";
-import path from "path";
-import Vue from "vue";
-import Vuetify from "vuetify";
-import fs from "fs";
+import { remote } from 'electron'
+import path from 'path'
+import Vue from 'vue'
+import Vuetify from 'vuetify'
+import fs from 'fs'
 
-import * as lc3 from "lc3interface";
+import * as lc3 from 'lc3interface'
 
-Vue.use(Vuetify);
+Vue.use(Vuetify)
 
 export default {
-  name: "editor",
+  name: 'editor',
   data: () => {
     return {
       editor: {
-        original_content: "",
-        current_content: "",
+        original_content: '',
+        current_content: '',
         content_changed: false
       },
-      console_str: "",
-      editor_theme: "textmate"
-    };
+      console_str: '',
+      editor_theme: 'textmate'
+    }
   },
   components: {
-    "ace-editor": require("vue2-ace-editor-electron")
+    'ace-editor': require('vue2-ace-editor-electron')
   },
-  mounted() {
+  mounted () {
     // setInterval(this.autosaveFile, 5 * 60 * 1000);
   },
   methods: {
-    newFile(content) {
+    newFile (content) {
       // Todo: try catch around this
-      let new_file = remote.dialog.showSaveDialog({
-        filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
-      });
+      let newFile = remote.dialog.showSaveDialog({
+        filters: [{name: 'Assembly', extensions: ['asm']}, {name: 'Binary', extensions: ['bin']}]
+      })
 
       // Guard against user cancelling
-      if (new_file) {
-        fs.writeFileSync(new_file, content);
-        this.openFile(new_file);
+      if (newFile) {
+        fs.writeFileSync(newFile, content)
+        this.openFile(newFile)
       }
     },
-    saveFile() {
+    saveFile () {
       // Todo: try catch around this
       // If we don't have a file, create one
       if (this.$store.getters.activeFilePath === null) {
-        this.newFile(this.editor.current_content);
+        this.newFile(this.editor.current_content)
       } else {
-        fs.writeFileSync(this.$store.getters.activeFilePath, this.editor.current_content);
-        this.editor.original_content = this.editor.current_content;
+        fs.writeFileSync(this.$store.getters.activeFilePath, this.editor.current_content)
+        this.editor.original_content = this.editor.current_content
       }
     },
-    autosaveFile() {
+    autosaveFile () {
       if (this.$store.getters.activeFilePath !== null && this.editor.original_content !== this.editor.current_content) {
-        fs.writeFileSync(this.$store.getters.activeFilePath, this.editor.current_content);
-        this.editor.original_content = this.editor.current_content;
+        fs.writeFileSync(this.$store.getters.activeFilePath, this.editor.current_content)
+        this.editor.original_content = this.editor.current_content
       }
     },
-    openFile(path) {
+    openFile (path) {
       // Todo: try catch around this
       // if not given a path, open a dialog to ask user for file
-      let selected_files = [];
+      let selectedFiles = []
       if (path === undefined || typeof path !== 'string') {
-        selected_files = remote.dialog.showOpenDialog({
-          properties: ["openFile"],
-          filters: [{name: "Assembly", extensions: ["asm"]}, {name: "Binary", extensions: ["bin"]}]
-        });
+        selectedFiles = remote.dialog.showOpenDialog({
+          properties: ['openFile'],
+          filters: [{name: 'Assembly', extensions: ['asm']}, {name: 'Binary', extensions: ['bin']}]
+        })
       } else {
-        selected_files = [path];
+        selectedFiles = [path]
       }
 
       // Dialog returns an array of files, we only care about the first one
-      if (selected_files) {
-        let active_file = selected_files[0];
+      if (selectedFiles) {
+        let activeFile = selectedFiles[0]
         this.editor.original_content = this.editor.current_content = fs.readFileSync(
-          active_file,
-          "utf-8"
-        );
-        this.$store.commit('setActiveFilePath', active_file);
+          activeFile,
+          'utf-8'
+        )
+        this.$store.commit('setActiveFilePath', activeFile)
       }
     },
-    build() {
+    build () {
       // save the file if it hasn't been saved
       if (this.editor.content_changed) {
-        this.saveFile();
+        this.saveFile()
       }
       let success = true
-      if(this.$store.getters.activeFilePath.endsWith(".bin")) {
+      if (this.$store.getters.activeFilePath.endsWith('.bin')) {
         try {
-          lc3.ConvertBin(this.$store.getters.activeFilePath);
-        } catch(e) {
+          lc3.ConvertBin(this.$store.getters.activeFilePath)
+        } catch (e) {
           success = false
         }
       } else {
         try {
-          lc3.Assemble(this.$store.getters.activeFilePath);
-        } catch(e) {
+          lc3.Assemble(this.$store.getters.activeFilePath)
+        } catch (e) {
           success = false
         }
       }
 
-      const temp_console_string = lc3.GetOutput();
-      lc3.ClearOutput();
-      this.console_str = "";
-      setTimeout(() => { this.console_str = temp_console_string; }, 200);
+      const tempConsoleString = lc3.GetOutput()
+      lc3.ClearOutput()
+      this.console_str = ''
+      setTimeout(() => { this.console_str = tempConsoleString }, 200)
       if (success) {
-        this.$store.commit('touchActiveFileBuildTime');
+        this.$store.commit('touchActiveFileBuildTime')
       }
     },
-    editorInit(editor) {
-      require("./lc3");
-      require("brace/mode/html");
-      require("brace/mode/javascript");
-      require("brace/mode/less");
-      require("brace/theme/textmate");
-      require("brace/theme/twilight");
-      editor.setShowPrintMargin(false);
+    editorInit (editor) {
+      require('./lc3')
+      require('brace/mode/html')
+      require('brace/mode/javascript')
+      require('brace/mode/less')
+      require('brace/theme/textmate')
+      require('brace/theme/twilight')
+      editor.setShowPrintMargin(false)
       editor.commands.addCommand({
         name: 'save',
-        bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
+        bindKey: {win: 'Ctrl-S', 'mac': 'Cmd-S'},
         exec: this.saveFile
-      });
+      })
       editor.commands.addCommand({
         name: 'build',
-        bindKey: {win: "Ctrl-Enter", "mac": "Cmd-Enter"},
+        bindKey: {win: 'Ctrl-Enter', 'mac': 'Cmd-Enter'},
         exec: this.build
-      });
+      })
       editor.commands.addCommand({
         name: 'open',
-        bindKey: {win: "Ctrl-O", "mac": "Cmd-O"},
+        bindKey: {win: 'Ctrl-O', 'mac': 'Cmd-O'},
         exec: this.openFile
-      });
+      })
     }
   },
   computed: {
-    getFilename() {
+    getFilename () {
       return this.$store.getters.activeFilePath === null
-        ? "Untitled"
-        : path.basename(this.$store.getters.activeFilePath);
+        ? 'Untitled'
+        : path.basename(this.$store.getters.activeFilePath)
     },
-    darkMode() {
-      return this.$store.getters.theme === "dark"
+    darkMode () {
+      return this.$store.getters.theme === 'dark'
     }
   },
   watch: {
-    "editor.current_content": function(newContent) {
+    'editor.current_content': function (newContent) {
       // Compare against original content to see if it's changed
       if (newContent !== this.editor.original_content) {
-        this.editor.content_changed = true;
+        this.editor.content_changed = true
       } else {
-        this.editor.content_changed = false;
+        this.editor.content_changed = false
       }
     },
-    "editor.original_content": function(newContent) {
+    'editor.original_content': function (newContent) {
       // Compare against original content to see if it's changed
       if (newContent !== this.editor.original_content) {
-        this.editor.content_changed = true;
+        this.editor.content_changed = true
       } else {
-        this.editor.content_changed = false;
+        this.editor.content_changed = false
       }
     }
-  },
-};
+  }
+}
 </script>
 
 <style scoped>

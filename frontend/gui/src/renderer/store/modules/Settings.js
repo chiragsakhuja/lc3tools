@@ -1,21 +1,21 @@
 const state = {
-  theme: "light",
-  number_type: "unsigned",
+  theme: 'light',
+  number_type: 'unsigned',
   ignore_privilege: false,
   liberal_asm: false
 }
 
 const mutations = {
-  setTheme(state, theme) {
+  setTheme (state, theme) {
     state.theme = theme
   },
-  setNumberType(state, setting) {
+  setNumberType (state, setting) {
     state.number_type = setting
   },
-  setIgnorePrivilege(state, setting) {
+  setIgnorePrivilege (state, setting) {
     state.ignore_privilege = setting
   },
-  setLiberalAsm(state, setting) {
+  setLiberalAsm (state, setting) {
     state.liberal_asm = setting
   }
 }

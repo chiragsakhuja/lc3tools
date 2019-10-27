@@ -249,303 +249,306 @@
 </template>
 
 <script>
-import { remote } from "electron";
-import path from "path";
-import Vue from "vue";
-import Vuetify from "vuetify";
-import fs from "fs";
-import * as lc3 from "lc3interface";
+import { remote } from 'electron'
+import Vue from 'vue'
+import Vuetify from 'vuetify'
+import fs from 'fs'
+import * as lc3 from 'lc3interface'
 
-Vue.use(Vuetify);
+Vue.use(Vuetify)
 
 export default {
-  name: "simulator",
+  name: 'simulator',
   data: () => {
     return {
       sim: {
         // !! Do not change the order of these registers because regs[9] is referenced everywhere for PC !!
-        regs: [{name: "r0", value: 0},  {name: "r1", value: 0}, {name: "r2", value: 0}, {name: "r3", value: 0},
-               {name: "r4", value: 0},  {name: "r5", value: 0}, {name: "r6", value: 0}, {name: "r7", value: 0},
-               {name: "psr", value: 0}, {name: "pc", value: 0}, {name: "mcr", value: 0}],
+        regs: [{name: 'r0', value: 0}, {name: 'r1', value: 0}, {name: 'r2', value: 0}, {name: 'r3', value: 0},
+          {name: 'r4', value: 0}, {name: 'r5', value: 0}, {name: 'r6', value: 0}, {name: 'r7', value: 0},
+          {name: 'psr', value: 0}, {name: 'pc', value: 0}, {name: 'mcr', value: 0}],
         breakpoints: [],
-        running: false,
+        running: false
       },
       mem_view: {start: 0x3000, data: []},
       loaded_files: new Set(),
-      console_str: "",
+      console_str: '',
       prev_inst_executed: 0,
       poll_output_handle: null,
-      data_bg: { backgroundColor: "" },
+      data_bg: { backgroundColor: '' },
       data_writeable: false,
       rules: {
-        hex: function(value) {
-          if(value[0] == 'x') {
-            value = '0' + value;
+        hex: function (value) {
+          if (value[0] === 'x') {
+            value = '0' + value
           }
-          return (parseInt(value, 16) == value) || "Invalid hex number"
+          return (parseInt(value, 16) === value) || 'Invalid hex number'
         },
-        dec: function(value) {
-          return (parseInt(value, 10) == value) || "Invalid decimal number"
+        dec: function (value) {
+          return (parseInt(value, 10) === value) || 'Invalid decimal number'
         },
-        size16bit: function(value) {
-          if(value[0] == 'x') {
-            value = '0' + value;
+        size16bit: function (value) {
+          if (value[0] === 'x') {
+            value = '0' + value
           }
-          let int_value = parseInt(value);
-          if (int_value < 0) {
+          let intValue = parseInt(value)
+          if (intValue < 0) {
             // If the number is negative, convert it to an unsigned representation to be able
             // to do the following 0xffff check.
-            int_value = (1 << 15) + int_value
+            intValue = (1 << 15) + intValue
           }
-          return (int_value >= 0 && int_value <= 0xffff) || "Value must be between 0 and xFFFF"
+          return (intValue >= 0 && intValue <= 0xffff) || 'Value must be between 0 and xFFFF'
         }
       }
-    };
+    }
   },
   components: {
   },
-  created() {
+  created () {
   },
-  beforeMount() {
-    this.mem_view.data.push({addr: 0, value: 0, line: ""});
+  beforeMount () {
+    this.mem_view.data.push({addr: 0, value: 0, line: ''})
   },
-  mounted() {
-    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 30) - 4; i++) {
-      this.mem_view.data.push({addr: 0, value: 0, line: ""});
+  mounted () {
+    for (let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 30) - 4; i++) {
+      this.mem_view.data.push({addr: 0, value: 0, line: ''})
     }
-    this.updateUI();
-    this.jumpToPC(true);
+    this.updateUI()
+    this.jumpToPC(true)
   },
-  activated() {
-    let asm_file_name = this.$store.getters.activeFilePath
-    if(asm_file_name !== null &&
-      this.$store.getters.activeFileBuildTime > this.$store.getters.activeFileLoadTime)
-    {
-      let obj_file_name = asm_file_name.substr(0, asm_file_name.lastIndexOf(".")) + ".obj";
-      if(fs.existsSync(obj_file_name)) {
-        this.loadFile(obj_file_name);
+  activated () {
+    let asmFileName = this.$store.getters.activeFilePath
+    if (asmFileName !== null &&
+      this.$store.getters.activeFileBuildTime > this.$store.getters.activeFileLoadTime) {
+      let objFileName = asmFileName.substr(0, asmFileName.lastIndexOf('.')) + '.obj'
+      if (fs.existsSync(objFileName)) {
+        this.loadFile(objFileName)
       }
       this.$store.commit('touchActiveFileLoadTime')
     }
   },
   methods: {
-    openFile(path) {
+    openFile (path) {
       // Todo: try catch around this
-      let selectedFiles = [path];
+      let selectedFiles = [path]
       if (!path) {
         selectedFiles = remote.dialog.showOpenDialog({
-          properties: ["openFile", "multiSelections"],
-          filters: [{name: "Objects", extensions: ["obj"]}]
-        });
+          properties: ['openFile', 'multiSelections'],
+          filters: [{name: 'Objects', extensions: ['obj']}]
+        })
       }
 
       if (selectedFiles) {
         for (let i = 0; i < selectedFiles.length; i += 1) {
-          this.loadFile(selectedFiles[i]);
+          this.loadFile(selectedFiles[i])
         }
       }
     },
-    loadFile(path) {
-      this.loaded_files.add(path);
-      lc3.LoadObjectFile(path);
-      this.mem_view.start = lc3.GetRegValue("pc");
-      this.updateUI();
+    loadFile (path) {
+      this.loaded_files.add(path)
+      lc3.LoadObjectFile(path)
+      this.mem_view.start = lc3.GetRegValue('pc')
+      this.updateUI()
     },
-    reloadFiles() {
+    reloadFiles () {
       this.loaded_files.forEach((path) => {
-        this.loadFile(path);
-      });
-      this.updateUI();
+        this.loadFile(path)
+      })
+      this.updateUI()
     },
-    toggleSimulator(run_function_str) {
-      if(!this.poll_output_handle) {
+    toggleSimulator (runFunctionStr) {
+      if (!this.poll_output_handle) {
         this.poll_output_handle = setInterval(this.updateConsole, 50)
       }
-      if(!this.sim.running) {
-        lc3.ClearInput();
-        this.sim.running = true;
-        this.data_bg.backgroundColor = "lightgrey";
+      if (!this.sim.running) {
+        lc3.ClearInput()
+        this.sim.running = true
+        this.data_bg.backgroundColor = 'lightgrey'
         return new Promise((resolve, reject) => {
           let callback = (error) => {
-            if(error) { reject(error); return; }
-            this.endSimulation(run_function_str != "run");
-            resolve();
-          };
-          if(run_function_str == "in") { lc3.StepIn(callback); }
-          else if(run_function_str == "out") { lc3.StepOut(callback); }
-          else if(run_function_str == "over") { lc3.StepOver(callback); }
-          else { lc3.Run(callback); }
-        });
+            if (error) { reject(error); return }
+            this.endSimulation(runFunctionStr !== 'run')
+            resolve()
+          }
+          if (runFunctionStr === 'in') {
+            lc3.StepIn(callback)
+          } else if (runFunctionStr === 'out') {
+            lc3.StepOut(callback)
+          } else if (runFunctionStr === 'over') {
+            lc3.StepOver(callback)
+          } else {
+            lc3.Run(callback)
+          }
+        })
       } else {
-        lc3.Pause();
-        this.endSimulation(false);
+        lc3.Pause()
+        this.endSimulation(false)
       }
     },
-    reinitializeMachine() {
-      lc3.ReinitializeMachine();
-      this.updateUI();
+    reinitializeMachine () {
+      lc3.ReinitializeMachine()
+      this.updateUI()
     },
-    randomizeMachine() {
-      lc3.RandomizeMachine();
-      this.updateUI();
+    randomizeMachine () {
+      lc3.RandomizeMachine()
+      this.updateUI()
     },
-    endSimulation(jump_to_pc) {
-      clearInterval(this.poll_output_handle);
-      this.poll_output_handle = null;
+    endSimulation (jumpToPC) {
+      clearInterval(this.poll_output_handle)
+      this.poll_output_handle = null
 
-      lc3.ClearInput();
-      this.sim.running = false;
-      this.sim.regs[9].value = lc3.GetRegValue("pc");
+      lc3.ClearInput()
+      this.sim.running = false
+      this.sim.regs[9].value = lc3.GetRegValue('pc')
 
-      if(jump_to_pc) { this.jumpToPC(false); }
-      this.updateUI();
-      this.data_bg.backgroundColor = "";
-      this.prev_inst_executed = lc3.GetInstExecCount();
+      if (jumpToPC) { this.jumpToPC(false) }
+      this.updateUI()
+      this.data_bg.backgroundColor = ''
+      this.prev_inst_executed = lc3.GetInstExecCount()
     },
-    clearConsole() {
-      this.console_str = "";
-      lc3.ClearOutput();
+    clearConsole () {
+      this.console_str = ''
+      lc3.ClearOutput()
     },
 
     // UI update functions
-    handleConsoleInput(event) {
+    handleConsoleInput (event) {
       // TODO: since the console string is rendered as I/O, the console actually allows for "HTML injection"
-      if(event.keyCode == 13) {
-        lc3.AddInput("\n");
-      } else if(event.keyCode == 8) {
-        let remove_amount = 1;
-        if(this.console_str.endsWith("</br>")) {
-          remove_amount = 5;
+      if (event.keyCode === 13) {
+        lc3.AddInput('\n')
+      } else if (event.keyCode === 8) {
+        let removeAmount = 1
+        if (this.console_str.endsWith('</br>')) {
+          removeAmount = 5
         }
-        this.console_str = this.console_str.slice(0, -remove_amount);
-      } else if(event.key.length == 1) {
-        lc3.AddInput(event.key);
+        this.console_str = this.console_str.slice(0, -removeAmount)
+      } else if (event.key.length === 1) {
+        lc3.AddInput(event.key)
       }
     },
-    setDataWriteable(value) {
-      this.data_writeable = value;
+    setDataWriteable (value) {
+      this.data_writeable = value
     },
-    setDataValue(event, data_cell, type, rules) {
-      if(this.data_writeable) {
-        for(let i = 0; i < rules.length; i += 1) {
-          if(rules[i](event) != true) {
-            if(type == "reg") {
-              data_cell.value = lc3.GetRegValue(data_cell.name);
-            } else if(type == "mem") {
-              data_call.value = lc3.GetMemValue(data_cell.addr);
+    setDataValue (event, dataCell, type, rules) {
+      if (this.data_writeable) {
+        for (let i = 0; i < rules.length; i += 1) {
+          if (rules[i](event) !== true) {
+            if (type === 'reg') {
+              dataCell.value = lc3.GetRegValue(dataCell.name)
+            } else if (type === 'mem') {
+              dataCell.value = lc3.GetMemValue(dataCell.addr)
             }
-            return;
+            return
           }
         }
-        data_cell.value = this.parseValueString(event);
-        if(type == "reg") {
-          lc3.SetRegValue(data_cell.name, data_cell.value);
-        } else if(type == "mem") {
-          lc3.SetMemValue(data_cell.addr, data_cell.value);
+        dataCell.value = this.parseValueString(event)
+        if (type === 'reg') {
+          lc3.SetRegValue(dataCell.name, dataCell.value)
+        } else if (type === 'mem') {
+          lc3.SetMemValue(dataCell.addr, dataCell.value)
         }
-        this.updateUI();
+        this.updateUI()
       }
     },
-    updateUI() {
+    updateUI () {
       // Registers
-      for(let i = 0; i < this.sim.regs.length; i++) {
-        this.sim.regs[i].value = lc3.GetRegValue(this.sim.regs[i].name);
+      for (let i = 0; i < this.sim.regs.length; i++) {
+        this.sim.regs[i].value = lc3.GetRegValue(this.sim.regs[i].name)
       }
 
       // Memory
-      for(let i = 0; i < this.mem_view.data.length; i++) {
-        let addr = (this.mem_view.start + i) & 0xffff;
-        this.mem_view.data[i].addr = addr;
-        this.mem_view.data[i].value = lc3.GetMemValue(addr);
-        this.mem_view.data[i].line = lc3.GetMemLine(addr);
+      for (let i = 0; i < this.mem_view.data.length; i++) {
+        let addr = (this.mem_view.start + i) & 0xffff
+        this.mem_view.data[i].addr = addr
+        this.mem_view.data[i].value = lc3.GetMemValue(addr)
+        this.mem_view.data[i].line = lc3.GetMemLine(addr)
       }
 
-      this.updateConsole();
+      this.updateConsole()
     },
-    updateConsole() {
+    updateConsole () {
       // Console
-      this.console_str += lc3.GetOutput();
-      lc3.ClearOutput();
-      this.prev_inst_executed = lc3.GetInstExecCount();
+      this.console_str += lc3.GetOutput()
+      lc3.ClearOutput()
+      this.prev_inst_executed = lc3.GetInstExecCount()
     },
 
-    toggleBreakpoint(addr) {
-      let idx = this.sim.breakpoints.indexOf(addr);
-      if(idx == -1) {
-        this.sim.breakpoints.push(addr);
-        lc3.SetBreakpoint(addr);
+    toggleBreakpoint (addr) {
+      let idx = this.sim.breakpoints.indexOf(addr)
+      if (idx === -1) {
+        this.sim.breakpoints.push(addr)
+        lc3.SetBreakpoint(addr)
       } else {
-        this.sim.breakpoints.splice(idx, 1);
-        lc3.RemoveBreakpoint(addr);
+        this.sim.breakpoints.splice(idx, 1)
+        lc3.RemoveBreakpoint(addr)
       }
     },
-    setPC(addr) {
-      let new_pc = addr & 0xffff;
-      lc3.SetRegValue("pc", new_pc);
-      lc3.RestartMachine();
-      this.updateUI();
+    setPC (addr) {
+      let newPC = addr & 0xffff
+      lc3.SetRegValue('pc', newPC)
+      lc3.RestartMachine()
+      this.updateUI()
     },
-    breakpointAt(addr) {
-      return this.sim.breakpoints.includes(addr);
+    breakpointAt (addr) {
+      return this.sim.breakpoints.includes(addr)
     },
-    PCAt(addr) {
-      return addr == this.sim.regs[9].value && !this.sim.running;
+    PCAt (addr) {
+      return addr === this.sim.regs[9].value && !this.sim.running
     },
 
     // Memory view jump functions
-    jumpToMemView(new_start) {
-      this.mem_view.start = new_start & 0xffff;
-      this.updateUI();
+    jumpToMemView (newStart) {
+      this.mem_view.start = newStart & 0xffff
+      this.updateUI()
     },
-    jumpToMemViewStr(value) {
-      this.jumpToMemView(this.parseValueString(value));
+    jumpToMemViewStr (value) {
+      this.jumpToMemView(this.parseValueString(value))
     },
-    jumpToPrevMemView() {
-      let new_start = this.mem_view.start - this.mem_view.data.length;
-      this.jumpToMemView(new_start);
+    jumpToPrevMemView () {
+      let newStart = this.mem_view.start - this.mem_view.data.length
+      this.jumpToMemView(newStart)
     },
-    jumpToPrevPartMemView() {
-      let new_start = this.mem_view.start - 5;
-      this.jumpToMemView(new_start);
+    jumpToPrevPartMemView () {
+      let newStart = this.mem_view.start - 5
+      this.jumpToMemView(newStart)
     },
-    jumpToNextMemView() {
-      let new_start = this.mem_view.start + this.mem_view.data.length;
-      this.jumpToMemView(new_start);
+    jumpToNextMemView () {
+      let newStart = this.mem_view.start + this.mem_view.data.length
+      this.jumpToMemView(newStart)
     },
-    jumpToNextPartMemView() {
-      let new_start = this.mem_view.start + 5;
-      this.jumpToMemView(new_start);
+    jumpToNextPartMemView () {
+      let newStart = this.mem_view.start + 5
+      this.jumpToMemView(newStart)
     },
-    jumpToPC(jump_if_in_view) {
-      let mem_view_end = (this.mem_view.start + this.mem_view.data.length) & 0xffff;
-      let pc = this.sim.regs[9].value & 0xffff;
-      let in_view = pc >= this.mem_view.start && pc < mem_view_end;
-      if(this.mem_view.start > mem_view_end) {
-        in_view = pc >= this.mem_view.start || pc < mem_view_end;
+    jumpToPC (jumpIfInView) {
+      let memViewEnd = (this.mem_view.start + this.mem_view.data.length) & 0xffff
+      let pc = this.sim.regs[9].value & 0xffff
+      let inView = pc >= this.mem_view.start && pc < memViewEnd
+      if (this.mem_view.start > memViewEnd) {
+        inView = pc >= this.mem_view.start || pc < memViewEnd
       }
-      if(jump_if_in_view || !in_view) {
-        this.jumpToMemView(pc);
+      if (jumpIfInView || !inView) {
+        this.jumpToMemView(pc)
       }
     },
 
     // Helper functions
-    PSRToCC(psr) {
-      let cc = psr & 0x7;
-      if(cc == 0x1) {
-        return "P";
-      } else if(cc == 0x2) {
-        return "Z";
-      } else if(cc == 0x4) {
-        return "N";
+    PSRToCC (psr) {
+      let cc = psr & 0x7
+      if (cc === 0x1) {
+        return 'P'
+      } else if (cc === 0x2) {
+        return 'Z'
+      } else if (cc === 0x4) {
+        return 'N'
       } else {
-        return "Undefined";
+        return 'Undefined'
       }
     },
-    toHex(value) {
-      let hex = value.toString(16).toUpperCase();
-      return "x" + "0".repeat(4 - hex.length) + hex;
+    toHex (value) {
+      let hex = value.toString(16).toUpperCase()
+      return 'x' + '0'.repeat(4 - hex.length) + hex
     },
-    toDec(value) {
+    toDec (value) {
       let dec = value
       if (this.$store.getters.number_type === 'signed') {
         if ((dec & 0x8000) === 0x8000) {
@@ -554,22 +557,22 @@ export default {
       }
       return dec
     },
-    parseValueString : (value) => {
-      let mod_value = value;
-      if(mod_value[0] == 'x') {
-        mod_value = '0' + mod_value;
+    parseValueString: (value) => {
+      let modValue = value
+      if (modValue[0] === 'x') {
+        modValue = '0' + modValue
       }
-      return parseInt(mod_value)
+      return parseInt(modValue)
     }
   },
   computed: {
-    darkMode() {
-      return this.$store.getters.theme === "dark"
+    darkMode () {
+      return this.$store.getters.theme === 'dark'
     }
   },
   watch: {
   }
-};
+}
 </script>
 
 <style scoped>

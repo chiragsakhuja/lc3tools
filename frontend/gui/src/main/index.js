@@ -1,4 +1,16 @@
+'use strict'
+
 import { app, BrowserWindow, ipcMain, screen, Menu } from 'electron'
+
+/**
+ * Auto Updater
+ *
+ * Uncomment the following code below and install `electron-updater` to
+ * support auto updating. Code Signing with a valid certificate is required.
+ * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-electron-builder.html#auto-updating
+ */
+
+import { autoUpdater } from 'electron-updater'
 
 /**
  * Set `__static` path to static files in production
@@ -17,7 +29,7 @@ function createWindow () {
   /**
    * Initial window options
    */
-  let screenSize = screen.getPrimaryDisplay().size;
+  let screenSize = screen.getPrimaryDisplay().size
   mainWindow = new BrowserWindow({
     height: screenSize.height,
     width: screenSize.width,
@@ -25,40 +37,40 @@ function createWindow () {
   })
 
   mainWindow.webContents.on('dom-ready', () => {
-    mainWindow.maximize();
+    mainWindow.maximize()
   })
 
   mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.setTitle("LC3Tools v" + autoUpdater.currentVersion);
-    //mainWindow.webContents.openDevTools();
-  });
+    mainWindow.setTitle('LC3Tools v' + autoUpdater.currentVersion)
+    // mainWindow.webContents.openDevTools();
+  })
 
-  mainWindow.loadURL(winURL);
+  mainWindow.loadURL(winURL)
 
   mainWindow.on('closed', () => {
     mainWindow = null
-  });
+  })
 
   var template = [{
-    label: "Application",
+    label: 'Application',
     submenu: [
-      { label: "About Application", selector: "orderFrontStandardAboutPanel:" },
-      { type: "separator" },
-      { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); }}
+      { label: 'About Application', selector: 'orderFrontStandardAboutPanel:' },
+      { type: 'separator' },
+      { label: 'Quit', accelerator: 'Command+Q', click: function () { app.quit() } }
     ]}, {
-      label: "Edit",
-      submenu: [
-        { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
-        { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
-        { type: "separator" },
-        { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
-        { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
-        { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
-        { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
-      ]}
-  ];
+    label: 'Edit',
+    submenu: [
+      { label: 'Undo', accelerator: 'CmdOrCtrl+Z', selector: 'undo:' },
+      { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', selector: 'redo:' },
+      { type: 'separator' },
+      { label: 'Cut', accelerator: 'CmdOrCtrl+X', selector: 'cut:' },
+      { label: 'Copy', accelerator: 'CmdOrCtrl+C', selector: 'copy:' },
+      { label: 'Paste', accelerator: 'CmdOrCtrl+V', selector: 'paste:' },
+      { label: 'Select All', accelerator: 'CmdOrCtrl+A', selector: 'selectAll:' }
+    ]}
+  ]
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
 }
 
 app.on('window-all-closed', () => {
@@ -73,45 +85,39 @@ app.on('activate', () => {
   }
 })
 
-/**
- * Auto Updater
- *
- * Uncomment the following code below and install `electron-updater` to
- * support auto updating. Code Signing with a valid certificate is required.
- * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-electron-builder.html#auto-updating
- */
- 
-import { autoUpdater, AppUpdater } from 'electron-updater'
- 
 app.on('ready', () => {
-  createWindow();
+  createWindow()
   if (process.env.NODE_ENV === 'production') {
-    autoUpdater.logger = require("electron-log")
-    autoUpdater.logger.transports.file.level = "debug"
- 
-    autoUpdater.autoDownload = false;
-    autoUpdater.checkForUpdates();
+    autoUpdater.logger = require('electron-log')
+    autoUpdater.logger.transports.file.level = 'debug'
+
+    autoUpdater.autoDownload = false
+    autoUpdater.checkForUpdates()
   }
 })
- 
+
 ipcMain.on('auto_updater', (event, text) => {
-  if (text === "update_confirmed") {
-    autoUpdater.downloadUpdate();
+  if (text === 'update_confirmed') {
+    autoUpdater.downloadUpdate()
   }
 })
- 
+
 autoUpdater.on('update-available', (info) => {
-  mainWindow.webContents.send('auto_updater', "update_available")
+  mainWindow.webContents.send('auto_updater', 'update_available')
 })
- 
+
 autoUpdater.on('error', (err) => {
-  mainWindow.webContents.send('auto_updater', err);
+  mainWindow.webContents.send('auto_updater', err)
 })
- 
+
 autoUpdater.on('download-progress', (progress) => {
-  mainWindow.webContents.send('auto_updater', "download_progress", progress);
+  mainWindow.webContents.send('auto_updater', 'download_progress', progress)
 })
- 
-autoUpdater.on('update-downloaded', (info) => {
-  autoUpdater.quitAndInstall();
+
+autoUpdater.on('update-downloaded', () => {
+  autoUpdater.quitAndInstall()
+})
+
+app.on('ready', () => {
+  if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
 })
