@@ -54,10 +54,13 @@ bool InstructionEncoder::isValidPseudoFill(StatementNew const & statement, bool 
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".fill") {
         bool valid_operands = validatePseudoOperands(statement, ".fill", {StatementPiece::Type::NUM,
             StatementPiece::Type::STRING}, 1, log_enable);
-        // .fill has implicit sext; if the number is negative, treat as signed, otherwise just treat it as unsigned.
-        bool should_sext = static_cast<int32_t>(statement.operands[0].num) < 0;
-        auto num = getNum(statement, statement.operands[0], 16, should_sext, logger, log_enable);
-        return valid_operands && num;
+        if(statement.operands[0].type == StatementPiece::Type::NUM) {
+            // .fill has implicit sext; if the number is negative, treat as signed, otherwise just treat it as unsigned.
+            bool should_sext = static_cast<int32_t>(statement.operands[0].num) < 0;
+            auto num = getNum(statement, statement.operands[0], 16, should_sext, logger, log_enable);
+            return valid_operands && num;
+        }
+        return valid_operands;
     }
     return false;
 }
@@ -336,7 +339,7 @@ uint32_t InstructionEncoder::getPseudoFill(StatementNew const & statement,
         bool should_sext = static_cast<int32_t>(statement.operands[0].num) < 0;
         auto ret = getNum(statement, statement.operands[0], 16, should_sext, logger, false);
 #ifdef _ENABLE_DEBUG
-    assert(ret.isValid());
+        assert(ret.isValid());
 #endif
         return *ret;
     } else {
