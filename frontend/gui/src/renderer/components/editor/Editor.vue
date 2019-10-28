@@ -3,51 +3,57 @@
   <v-app id="editor" v-bind:dark="darkMode">
 
     <!-- Sidebar -->
-    <v-navigation-drawer
-      fixed
-      mini-variant
-      permanent
-      app
-    >
-      <v-list two-line>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="newFile('')">
-            <v-list-tile-action>
-              <v-icon large>note_add</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>New File</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="saveFile()">
-            <v-list-tile-action>
-              <v-badge color="orange darken-2" overlap>
-                <v-icon large>save</v-icon>
-                <span v-if="editor.content_changed" slot="badge"><strong>!</strong></span>
-              </v-badge>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Save File</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="openFile()">
-            <v-list-tile-action>
-              <v-icon large>folder_open</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Open File</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="build()">
-            <v-list-tile-action>
-              <v-icon large>build</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span v-if="this.$store.getters.activeFilePath === null">Assemble or Convert</span>
-          <span v-else-if="this.$store.getters.activeFilePath.endsWith('.asm')">Assemble</span>
-          <span v-else-if="this.$store.getters.activeFilePath.endsWith('.bin')">Convert</span>
-          <span v-else>Build</span>
-        </v-tooltip>
+    <v-navigation-drawer mini-variant permanent app>
+      <v-list>
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="newFile('')" large>note_add</v-icon>
+              </template>
+              <span>New File</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-badge color="orange darken-2" overlap>
+                  <v-icon v-on="on" @click="saveFile()" large>save</v-icon>
+                  <span v-if="editor.content_changed" slot="badge"><strong>!</strong></span>
+                </v-badge>
+              </template>
+              <span>Save File</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="openFile()" large>folder_open</v-icon>
+              </template>
+              <span>Open File</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="build()" large>build</v-icon>
+              </template>
+              <span v-if="this.$store.getters.activeFilePath === null">Assemble or Convert</span>
+              <span v-else-if="this.$store.getters.activeFilePath.endsWith('.asm')">Assemble</span>
+              <span v-else-if="this.$store.getters.activeFilePath.endsWith('.bin')">Convert</span>
+              <span v-else>Build</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
 
@@ -80,13 +86,8 @@
 <script>
 import { remote } from 'electron'
 import path from 'path'
-import Vue from 'vue'
-import Vuetify from 'vuetify'
 import fs from 'fs'
-
 import * as lc3 from 'lc3interface'
-
-Vue.use(Vuetify)
 
 export default {
   name: 'editor',

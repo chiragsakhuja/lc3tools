@@ -3,78 +3,97 @@
   <v-app id="simulator" v-bind:dark="darkMode">
 
     <!-- Sidebar -->
-    <v-navigation-drawer
-      fixed
-      mini-variant
-      permanent
-      app
-    >
+    <v-navigation-drawer mini-variant permanent app >
       <v-list two-line>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="openFile()">
-            <v-list-tile-action>
-              <v-icon large>folder_open</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Open File</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="toggleSimulator('run')">
-            <v-list-tile-action>
-              <v-icon v-if="!sim.running" large>play_arrow</v-icon>
-              <v-icon v-else large>pause</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Run</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="reloadFiles">
-            <v-list-tile-action>
-              <v-icon large>refresh</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Reload Object Files</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="toggleSimulator('over')">
-            <v-list-tile-action>
-              <v-icon large>redo</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Step Over</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="toggleSimulator('in')">
-            <v-list-tile-action>
-              <v-icon large>subdirectory_arrow_right</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Step In</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="toggleSimulator('out')">
-            <v-list-tile-action>
-              <v-icon large>subdirectory_arrow_left</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Step Out</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="reinitializeMachine()">
-            <v-list-tile-action>
-              <v-icon large>power_settings_new</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Reinitialize Machine</span>
-        </v-tooltip>
-        <v-tooltip right>
-          <v-list-tile slot="activator" @click="randomizeMachine()">
-            <v-list-tile-action>
-              <v-icon large>shuffle</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-          <span>Randomize Machine</span>
-        </v-tooltip>
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="openFile()" large>folder_open</v-icon>
+              </template>
+              <span>Open File</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-if="!sim.running" v-on="on" @click="toggleSimulator('run')" large>play_arrow</v-icon>
+                <v-icon v-else v-on="on" @click="toggleSimulator('run')" large>pause</v-icon>
+              </template>
+              <span v-if="!sim.running">Run</span>
+              <span v-else>Pause</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="reloadFiles()" large>refresh</v-icon>
+              </template>
+              <span>Reload Object Files</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="toggleSimulator('over')" large>redo</v-icon>
+              </template>
+              <span>Step Over</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="toggleSimulator('in')" large>subdirectory_arrow_left</v-icon>
+              </template>
+              <span>Step In</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="toggleSimulator('out')" large>subdirectory_arrow_right</v-icon>
+              </template>
+              <span>Step Out</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="reinitializeMachine()" large>power_settings_new</v-icon>
+              </template>
+              <span>Reinitialize Machine</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
+
+        <v-list-item>
+          <v-list-item-icon>
+            <v-tooltip right>
+              <template v-slot:activator="{ on }">
+                <v-icon v-on="on" @click="randomizeMachine()" large>shuffle</v-icon>
+              </template>
+              <span>Randomize Machine</span>
+            </v-tooltip>
+          </v-list-item-icon>
+        </v-list-item>
       </v-list>
     </v-navigation-drawer>
 
@@ -250,12 +269,8 @@
 
 <script>
 import { remote } from 'electron'
-import Vue from 'vue'
-import Vuetify from 'vuetify'
 import fs from 'fs'
 import * as lc3 from 'lc3interface'
-
-Vue.use(Vuetify)
 
 export default {
   name: 'simulator',

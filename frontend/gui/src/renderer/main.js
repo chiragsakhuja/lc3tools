@@ -6,7 +6,7 @@ import router from './router'
 import store from './store'
 
 import 'material-design-icons-iconfont/dist/material-design-icons.css'
-import 'vuetify/dist/vuetify.min.css'
+import vuetify from '@/plugins/vuetify'
 
 if (!process.env.IS_WEB) {
   Vue.use(require('vue-electron'))
@@ -18,7 +18,9 @@ Vue.config.productionTip = false
 /* eslint-disable no-new */
 new Vue({
   components: { App },
+  sync: false,
   router,
   store,
+  vuetify,
   template: '<App/>'
 }).$mount('#app')
