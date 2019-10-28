@@ -3,8 +3,8 @@
   <v-app id="simulator" v-bind:dark="darkMode">
 
     <!-- Sidebar -->
-    <v-navigation-drawer mini-variant permanent app >
-      <v-list two-line>
+    <v-navigation-drawer mini-variant permanent app>
+      <v-list>
         <v-list-item>
           <v-list-item-icon>
             <v-tooltip right>
@@ -106,46 +106,53 @@
 
               <div id="regs-wrapper" ref="regView">
                 <h3 class="view-header">Registers</h3>
-                <v-data-table class="elevation-4" hide-headers hide-actions :items="sim.regs">
-                  <template slot="items" slot-scope="props">
+                <v-data-table
+                  class="elevation-4"
+                  hide-headers
+                  hide-actions
+                  hide-default-footer
+                  items-per-page=12
+                  :items="sim.regs"
+                >
+                  <template v-slot:item="{ item }">
                     <tr class="reg-row" v-bind:style="data_bg">
-                      <div class="data-cell"><strong>{{ props.item.name.toUpperCase() }}</strong></div>
+                      <div class="data-cell"><strong>{{ item.name.toUpperCase() }}</strong></div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ toHex(props.item.value) }}</span>
+                        <span v-if="sim.running">{{ toHex(item.value) }}</span>
                         <v-edit-dialog v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
-                          {{ toHex(props.item.value) }}
+                          {{ toHex(item.value) }}
                           <v-text-field
                             slot="input" label="Hex Value"
-                            v-bind:value="toHex(props.item.value)" 
-                            @change="setDataValue($event, props.item, 'reg', [rules.hex, rules.size16bit])"
+                            v-bind:value="toHex(item.value)"
+                            @change="setDataValue($event, item, 'reg', [rules.hex, rules.size16bit])"
                             :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ toDec(props.item.value) }}</span>
+                        <span v-if="sim.running">{{ toDec(item.value) }}</span>
                         <v-edit-dialog v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
-                          {{ toDec(props.item.value) }}
+                          {{ toDec(item.value) }}
                           <v-text-field
                             slot="input" label="Decimal Value"
-                            v-bind:value="toDec(props.item.value)"
-                            @change="setDataValue($event, props.item, 'reg', [rules.dec, rules.size16bit])"
+                            v-bind:value="toDec(item.value)"
+                            @change="setDataValue($event, item, 'reg', [rules.dec, rules.size16bit])"
                             :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell">
-                        <span v-if="props.item.name == 'psr'">CC: {{ PSRToCC(props.item.value) }}</span>
+                        <span v-if="item.name == 'psr'">CC: {{ PSRToCC(item.value) }}</span>
                         <span v-else></span>
                       </div>
                     </tr>
@@ -165,64 +172,70 @@
                 </div>
                 <div v-bind:id="darkMode ? 'console-dark' : 'console'" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
               </div>
-
             </div>
-            <div class="right-wrapper">
 
+            <div class="right-wrapper">
               <div id="memview" ref="memView">
                 <h3 class="view-header">Memory</h3>
-                <v-data-table class="elevation-4" hide-headers hide-actions :items="mem_view.data">
-                  <template slot="items" slot-scope="props">
+                <v-data-table
+                  class="elevation-4"
+                  hide-headers
+                  hide-actions
+                  hide-default-footer
+                  items-per-page=100
+                  :items="mem_view.data"
+                >
+                  <template v-slot:item="{ item }">
                     <tr class="mem-row" v-bind:style="data_bg">
                       <div>
-                        <a class="data-cell data-button" @click="toggleBreakpoint(props.item.addr)">
-                          <v-icon v-if="breakpointAt(props.item.addr)" color="red">report</v-icon>
+                        <a class="data-cell data-button" @click="toggleBreakpoint(item.addr)">
+                          <v-icon v-if="breakpointAt(item.addr)" color="red">report</v-icon>
                           <v-icon v-else small color="grey" class="breakpoint-icon">report</v-icon>
                         </a>
                       </div>
                       <div>
-                        <a class="data-cell data-button" @click="setPC(props.item.addr)">
-                          <v-icon v-if="PCAt(props.item.addr)" color="blue">play_arrow</v-icon>
+                        <a class="data-cell data-button" @click="setPC(item.addr)">
+                          <v-icon v-if="PCAt(item.addr)" color="blue">play_arrow</v-icon>
                           <v-icon v-else small color="grey" class="pc-icon">play_arrow</v-icon>
                         </a>
                       </div>
-                      <div class="data-cell"><strong>{{ toHex(props.item.addr) }}</strong></div>
+                      <div class="data-cell"><strong>{{ toHex(item.addr) }}</strong></div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ toHex(props.item.value) }}</span>
+                        <span v-if="sim.running">{{ toHex(item.value) }}</span>
                         <v-edit-dialog v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
-                          {{ toHex(props.item.value) }}
+                          {{ toHex(item.value) }}
                           <v-text-field
                             slot="input" label="Hex Value"
-                            v-bind:value="toHex(props.item.value)" 
-                            @change="setDataValue($event, props.item, 'mem', [rules.hex, rules.size16bit])"
+                            v-bind:value="toHex(item.value)"
+                            @change="setDataValue($event, item, 'mem', [rules.hex, rules.size16bit])"
                             :rules="[rules.hex, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell editable">
-                        <span v-if="sim.running">{{ toDec(props.item.value) }}</span>
+                        <span v-if="sim.running">{{ toDec(item.value) }}</span>
                         <v-edit-dialog v-else
                           @open="setDataWriteable(true)"
                           @close="setDataWriteable(false)"
                           lazy
                         >
-                          {{ toDec(props.item.value) }}
+                          {{ toDec(item.value) }}
                           <v-text-field
                             slot="input" label="Decimal Value"
-                            v-bind:value="toDec(props.item.value)"
-                            @change="setDataValue($event, props.item, 'mem', [rules.dec, rules.size16bit])"
+                            v-bind:value="toDec(item.value)"
+                            @change="setDataValue($event, item, 'mem', [rules.dec, rules.size16bit])"
                             :rules="[rules.dec, rules.size16bit]"
                           >
                           </v-text-field>
                         </v-edit-dialog>
                       </div>
                       <div class="data-cell">
-                        <i>{{ props.item.line }}</i>
+                        <i>{{ item.line }}</i>
                       </div>
                     </tr>
                   </template>
@@ -619,14 +632,14 @@ export default {
   grid-row: 1;
   display: grid;
   grid-template-columns: 100%;
-  grid-template-rows: 400px auto;
+  grid-template-rows: 350px auto;
   height: calc(100vh - 90px);
   overflow: hidden;
 }
 
 .data-cell {
-  height: 30px;
-  line-height: 30px;
+  height: 25px;
+  line-height: 25px;
   text-align: left;
   padding-left: 5px;
   font-family: 'Courier New', Courier, monospace;
@@ -702,7 +715,7 @@ export default {
   box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
 }
 
-/* 
+/*
 Hack to get a dark console.
 Properties are nearly same as normal #console,
 just differently colored
