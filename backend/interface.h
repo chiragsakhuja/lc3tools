@@ -87,6 +87,8 @@ namespace lc3
         void registerPostInstructionCallback(callback_func_t func);
         void registerInterruptEnterCallback(callback_func_t func);
         void registerInterruptExitCallback(callback_func_t func);
+        void registerExceptionEnterCallback(callback_func_t func);
+        void registerExceptionExitCallback(callback_func_t func);
         void registerSubEnterCallback(callback_func_t func);
         void registerSubExitCallback(callback_func_t func);
         void registerWaitForInputCallback(callback_func_t func);
@@ -108,6 +110,8 @@ namespace lc3
         static void postInstructionCallback(sim & sim_int, core::MachineState & state);
         static void interruptEnterCallback(sim & sim_int, core::MachineState & state);
         static void interruptExitCallback(sim & sim_int, core::MachineState & state);
+        static void exceptionEnterCallback(sim & sim_int, core::MachineState & state);
+        static void exceptionExitCallback(sim & sim_int, core::MachineState & state);
         static void subEnterCallback(sim & sim_int, core::MachineState & state);
         static void subExitCallback(sim & sim_int, core::MachineState & state);
         static void waitForInputCallback(sim & sim_int, core::MachineState & state);
@@ -117,11 +121,14 @@ namespace lc3
         uint64_t inst_limit = 0;
         int64_t remaining_inst_count = -1;
         int32_t sub_depth = 0;
+        bool hit_internal_exception = false;
 
         bool pre_instruction_callback_v = false;
         bool post_instruction_callback_v = false;
         bool interrupt_enter_callback_v = false;
         bool interrupt_exit_callback_v = false;
+        bool exception_enter_callback_v = false;
+        bool exception_exit_callback_v = false;
         bool sub_enter_callback_v = false;
         bool sub_exit_callback_v = false;
         bool wait_for_input_callback_v = false;
@@ -130,6 +137,8 @@ namespace lc3
         callback_func_t post_instruction_callback;
         callback_func_t interrupt_enter_callback;
         callback_func_t interrupt_exit_callback;
+        callback_func_t exception_enter_callback;
+        callback_func_t exception_exit_callback;
         callback_func_t sub_enter_callback;
         callback_func_t sub_exit_callback;
         callback_func_t wait_for_input_callback;

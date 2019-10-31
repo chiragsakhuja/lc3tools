@@ -149,8 +149,10 @@ std::vector<PIEvent> IInstruction::buildSysCallEnterHelper(MachineState const & 
 
     if(sys_call_type == MachineState::SysCallType::TRAP) {
         ret.push_back(std::make_shared<CallbackEvent>(state.sub_enter_callback_v, state.sub_enter_callback));
-    } else {
+    } else if(sys_call_type == MachineState::SysCallType::INT) {
         ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_enter_callback_v, state.interrupt_enter_callback));
+    } else if(sys_call_type == MachineState::SysCallType::EX) {
+        ret.push_back(std::make_shared<CallbackEvent>(state.exception_enter_callback_v, state.exception_enter_callback));
     }
     ret.push_back(std::make_shared<PushSysCallTypeEvent>(sys_call_type));
 
@@ -220,8 +222,10 @@ std::vector<PIEvent> IInstruction::buildSysCallExitHelper(MachineState const & s
 
     if(sys_call_type == MachineState::SysCallType::TRAP) {
         ret.push_back(std::make_shared<CallbackEvent>(state.sub_exit_callback_v, state.sub_exit_callback));
-    } else {
+    } else if(sys_call_type == MachineState::SysCallType::INT) {
         ret.push_back(std::make_shared<CallbackEvent>(state.interrupt_exit_callback_v, state.interrupt_exit_callback));
+    } else if(sys_call_type == MachineState::SysCallType::EX) {
+        ret.push_back(std::make_shared<CallbackEvent>(state.exception_exit_callback_v, state.exception_exit_callback));
     }
     ret.push_back(std::make_shared<PopSysCallTypeEvent>());
 
@@ -511,7 +515,7 @@ std::vector<PIEvent> LDInstruction::execute(MachineState const & state)
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if(! state.ignore_privilege && ((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000)) {
-        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::EX);
     }
 
     bool change_mem;
@@ -555,7 +559,7 @@ std::vector<PIEvent> LDIInstruction::execute(MachineState const & state)
     if(! state.ignore_privilege && (((addr1 <= SYSTEM_END || addr1 >= MMIO_START)
         || (addr2 <= SYSTEM_END || addr2 >= MMIO_START)) && (psr_value & 0x8000) != 0x0000))
     {
-        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::EX);
     }
 
     std::vector<PIEvent> ret {
@@ -590,7 +594,7 @@ std::vector<PIEvent> LDRInstruction::execute(MachineState const & state)
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if(! state.ignore_privilege && ((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000)) {
-        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::EX);
     }
 
     bool change_mem;
@@ -659,7 +663,7 @@ std::vector<PIEvent> RTIInstruction::execute(MachineState const & state)
         std::vector<PIEvent> ret;
         if(! state.ignore_privilege && (psr_value & 0x8000) != 0x0000) {
             // If in user mode, illegal RTI was used.
-            return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+            return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::EX);
         } else {
             // If in system mode, pretend like it was returning from a TRAP.
             return buildSysCallExitHelper(state, MachineState::SysCallType::TRAP);
@@ -677,7 +681,7 @@ std::vector<PIEvent> STInstruction::execute(MachineState const & state)
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if(! state.ignore_privilege && ((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000)) {
-        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::EX);
     }
 
     std::vector<PIEvent> ret {
@@ -706,7 +710,7 @@ std::vector<PIEvent> STIInstruction::execute(MachineState const & state)
     if(! state.ignore_privilege && (((addr1 <= SYSTEM_END || addr1 >= MMIO_START)
         || (addr2 <= SYSTEM_END || addr2 >= MMIO_START)) && (psr_value & 0x8000) != 0x0000))
     {
-        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::EX);
     }
 
     uint32_t value = state.regs[operands[1]->value] & 0xffff;
@@ -737,7 +741,7 @@ std::vector<PIEvent> STRInstruction::execute(MachineState const & state)
     uint32_t psr_value = state.readMemEvent(PSR, psr_change_mem, psr_change);
 
     if(! state.ignore_privilege && ((addr <= SYSTEM_END || addr >= MMIO_START) && (psr_value & 0x8000) != 0x0000)) {
-        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::INT);
+        return buildSysCallEnterHelper(state, INTEX_TABLE_START + 0, MachineState::SysCallType::EX);
     }
 
     std::vector<PIEvent> ret {

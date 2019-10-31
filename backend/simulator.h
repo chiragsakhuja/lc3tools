@@ -38,6 +38,8 @@ namespace core
         void registerPostInstructionCallback(callback_func_t func);
         void registerInterruptEnterCallback(callback_func_t func);
         void registerInterruptExitCallback(callback_func_t func);
+        void registerExceptionEnterCallback(callback_func_t func);
+        void registerExceptionExitCallback(callback_func_t func);
         void registerSubEnterCallback(callback_func_t func);
         void registerSubExitCallback(callback_func_t func);
         void registerWaitForInputCallback(callback_func_t func);

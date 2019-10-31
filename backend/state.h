@@ -30,6 +30,7 @@ namespace core
         enum class SysCallType {
               TRAP
             , INT
+            , EX
         };
 
         enum class SPType {
@@ -40,6 +41,7 @@ namespace core
         MachineState(sim & simulator, lc3::utils::Logger & logger) : pc(0), logger(logger),
             pre_instruction_callback_v(false),post_instruction_callback_v(false),
             interrupt_enter_callback_v(false), interrupt_exit_callback_v(false),
+            exception_enter_callback_v(false), exception_exit_callback_v(false),
             sub_enter_callback_v(false), sub_exit_callback_v(false),
             wait_for_input_callback_v(false), simulator(simulator), ignore_privilege(false) {}
 
@@ -62,6 +64,8 @@ namespace core
         bool post_instruction_callback_v;
         bool interrupt_enter_callback_v;
         bool interrupt_exit_callback_v;
+        bool exception_enter_callback_v;
+        bool exception_exit_callback_v;
         bool sub_enter_callback_v;
         bool sub_exit_callback_v;
         bool wait_for_input_callback_v;
@@ -69,6 +73,8 @@ namespace core
         callback_func_t post_instruction_callback;
         callback_func_t interrupt_enter_callback;
         callback_func_t interrupt_exit_callback;
+        callback_func_t exception_enter_callback;
+        callback_func_t exception_exit_callback;
         callback_func_t sub_enter_callback;
         callback_func_t sub_exit_callback;
         callback_func_t wait_for_input_callback;

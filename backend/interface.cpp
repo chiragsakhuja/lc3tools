@@ -19,6 +19,8 @@ lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threa
     simulator.registerPostInstructionCallback(lc3::sim::postInstructionCallback);
     simulator.registerInterruptEnterCallback(lc3::sim::interruptEnterCallback);
     simulator.registerInterruptExitCallback(lc3::sim::interruptExitCallback);
+    simulator.registerExceptionEnterCallback(lc3::sim::exceptionEnterCallback);
+    simulator.registerExceptionExitCallback(lc3::sim::exceptionExitCallback);
     simulator.registerSubEnterCallback(lc3::sim::subEnterCallback);
     simulator.registerSubExitCallback(lc3::sim::subExitCallback);
     simulator.registerWaitForInputCallback(lc3::sim::waitForInputCallback);
@@ -162,9 +164,11 @@ bool lc3::sim::stepOut(void)
 bool lc3::sim::run(lc3::sim::RunType cur_run_type)
 {
     restart();
+
     run_type = cur_run_type;
     total_inst_limit += inst_limit;
     remaining_inst_count = inst_limit;
+    hit_internal_exception = false;
 
     if(propagate_exceptions) {
         simulator.simulate();
@@ -180,7 +184,7 @@ bool lc3::sim::run(lc3::sim::RunType cur_run_type)
             return false;
         }
     }
-    return true;
+    return ! hit_internal_exception;
 }
 
 void lc3::sim::pause(void)
@@ -382,12 +386,23 @@ void lc3::sim::registerInterruptExitCallback(callback_func_t func)
     interrupt_exit_callback = func;
 }
 
+void lc3::sim::registerExceptionEnterCallback(callback_func_t func)
+{
+    exception_enter_callback_v = true;
+    exception_enter_callback = func;
+}
+
+void lc3::sim::registerExceptionExitCallback(callback_func_t func)
+{
+    exception_exit_callback_v = true;
+    exception_exit_callback = func;
+}
+
 void lc3::sim::registerSubEnterCallback(callback_func_t func)
 {
     sub_enter_callback_v = true;
     sub_enter_callback = func;
 }
-
 
 void lc3::sim::registerSubExitCallback(callback_func_t func)
 {
@@ -470,6 +485,25 @@ void lc3::sim::interruptExitCallback(lc3::sim & sim_inst, core::MachineState & s
 
     if(sim_inst.interrupt_exit_callback_v) {
         sim_inst.interrupt_exit_callback(state);
+    }
+}
+
+void lc3::sim::exceptionEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
+{
+    sim_inst.hit_internal_exception = true;
+    sim_inst.sub_depth += 1;
+
+    if(sim_inst.exception_enter_callback_v) {
+        sim_inst.exception_enter_callback(state);
+    }
+}
+
+void lc3::sim::exceptionExitCallback(lc3::sim & sim_inst, core::MachineState & state)
+{
+    sim_inst.sub_depth -= 1;
+
+    if(sim_inst.exception_exit_callback_v) {
+        sim_inst.exception_exit_callback(state);
     }
 }
 
