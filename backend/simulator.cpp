@@ -169,14 +169,14 @@ std::vector<PIEvent> Simulator::executeInstruction(void)
         && (state.readMemRaw(PSR) & 0x8000) == 0x8000))
     {
         logger.printf(lc3::utils::PrintType::P_EXTRA, true, "illegal PC 0x%0.4x accessed", state.pc);
-        return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x0, MachineState::SysCallType::INT);
+        return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x0, MachineState::SysCallType::EX);
     }
     uint32_t encoded_inst = state.readMemSafe(state.pc);
 
     optional<PIInstruction> candidate = decoder.findInstructionByEncoding(encoded_inst);
     if(! candidate) {
         logger.printf(lc3::utils::PrintType::P_EXTRA, true, "illegal opcode");
-        return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x1, MachineState::SysCallType::INT);
+        return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x1, MachineState::SysCallType::EX);
     }
 
     (*candidate)->assignOperands(encoded_inst);
@@ -265,6 +265,18 @@ void Simulator::registerInterruptExitCallback(callback_func_t func)
 {
     state.interrupt_exit_callback_v = true;
     state.interrupt_exit_callback = func;
+}
+
+void Simulator::registerExceptionEnterCallback(callback_func_t func)
+{
+    state.exception_enter_callback_v = true;
+    state.exception_enter_callback = func;
+}
+
+void Simulator::registerExceptionExitCallback(callback_func_t func)
+{
+    state.exception_exit_callback_v = true;
+    state.exception_exit_callback = func;
 }
 
 void Simulator::registerSubEnterCallback(callback_func_t func)
