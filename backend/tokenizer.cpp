@@ -96,6 +96,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
 
     // If we've made it here, we have a valid token. First find the length.
     uint32_t len = 0;
+    bool found_string = false;
     if(line[col] == '"' && (col == 0 || line[col - 1] != '\\')) {
         // If token begins with an non-escaped quotation mark, the length goes on until the matching non-escaped
         // quotation mark (or EOL if non exists).
@@ -103,6 +104,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
         while(col + len < line.size() && ! (line[col + len] == '"' && line[col + len - 1] != '\\')) {
             len += 1;
         }
+        found_string = true;
     } else {
         while(col + len < line.size() && delims.find(line[col + len]) == std::string::npos) {
             len += 1;
@@ -111,7 +113,7 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
 
     // Attempt to convert token into numeric value. If possible, mark as NUM. Otherwise, mark as STRING.
     int32_t token_num_val = 0;
-    if(convertStringToNum(line.substr(col, len), token_num_val)) {
+    if(! found_string && convertStringToNum(line.substr(col, len), token_num_val)) {
         token.type = Token::Type::NUM;
         token.num = token_num_val;
     } else {
