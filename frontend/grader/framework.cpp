@@ -16,6 +16,7 @@ struct CLIArgs
     uint32_t sim_print_level = 0;
     uint32_t sim_print_level_override = false;
     bool ignore_privilege = false;
+    bool liberal_asm = false;
 };
 
 void setup(void);
@@ -88,6 +89,8 @@ int main(int argc, char * argv[])
             args.print_output = true;
         } else if(std::get<0>(arg) == "ignore-privilege") {
             args.ignore_privilege = true;
+        } else if(std::get<0>(arg) == "liberal-asm") {
+            args.liberal_asm = true;
         } else if(std::get<0>(arg) == "h" || std::get<0>(arg) == "help") {
             std::cout << "usage: " << argv[0] << " [OPTIONS]\n";
             std::cout << "\n";
@@ -96,12 +99,13 @@ int main(int argc, char * argv[])
             std::cout << "  --asm-print-level=N    Assembler output verbosity [0-9]\n";
             std::cout << "  --sim-print-level=N    Simulator output verbosity [0-9]\n";
             std::cout << "  --ignore-privilege     Ignore access violations\n";
+            std::cout << "  --liberal-asm          Enable liberal assembly syntax\n";
             return 0;
         }
     }
 
     lc3::ConsolePrinter asm_printer;
-    lc3::as assembler(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0, false, true);
+    lc3::as assembler(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0, false, args.liberal_asm);
     lc3::conv converter(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0, false);
 
     std::vector<std::string> obj_filenames;
