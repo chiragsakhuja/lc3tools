@@ -80,7 +80,7 @@ void lc3::sim::reinitialize(void)
 
 void lc3::sim::loadOS(void)
 {
-    core::Assembler assembler(printer, simulator.getPrintLevel(), false);
+    core::Assembler assembler(printer, 0, false);
     assembler.setFilename("lc3os");
 
     std::stringstream src_buffer;
