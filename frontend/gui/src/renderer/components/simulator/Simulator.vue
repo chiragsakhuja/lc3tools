@@ -144,7 +144,7 @@
                     </v-tooltip>
                   </div>
                 </div>
-                <div v-bind:id="darkMode ? 'console-dark' : 'console'" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
+                <div v-bind:id="darkMode ? 'console-dark' : 'console'" v-html="console_str" @keydown="handleConsoleInput" tabindex="0"></div>
               </div>
 
             </div>
@@ -409,18 +409,25 @@ export default {
 
     // UI update functions
     handleConsoleInput(event) {
+      // Typable characters on a standard keyboard.
+      const overrides = {
+        'Enter':     0x0a,
+        'Backspace': 0x08,
+        'Tab':       0x09, 
+        'Escape':    0x1b,
+        'Delete':    0x7f,
+      };
       // TODO: since the console string is rendered as I/O, the console actually allows for "HTML injection"
-      if(event.keyCode == 13) {
-        lc3.AddInput("\n");
-      } else if(event.keyCode == 8) {
-        let remove_amount = 1;
-        if(this.console_str.endsWith("</br>")) {
-          remove_amount = 5;
-        }
-        this.console_str = this.console_str.slice(0, -remove_amount);
-      } else if(event.key.length == 1) {
-        lc3.AddInput(event.key);
+      let key = event.key, code = key.charCodeAt(0);
+      if(key in overrides) {
+        lc3.AddInput(String.fromCharCode(overrides[key]));
+      } else if(key.length == 1) {
+        // Handle CTRL-a through CTRL-z.
+        if((code > 64 && code < 128 && event.ctrlKey))
+          key = String.fromCharCode(code & 0x1f);
+        lc3.AddInput(key);
       }
+      event.preventDefault(); // for TAB, etc.
     },
     setDataWriteable(value) {
       this.data_writeable = value;
