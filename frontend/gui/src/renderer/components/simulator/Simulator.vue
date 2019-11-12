@@ -472,6 +472,7 @@ export default {
     updateConsole() {
       // Console
       this.console_str += lc3.GetOutput();
+      this.$refs.console.scrollTop = this.$refs.console.scrollHeight;
       lc3.ClearOutput();
       this.prev_inst_executed = lc3.GetInstExecCount();
     },
