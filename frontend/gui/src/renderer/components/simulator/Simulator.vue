@@ -144,7 +144,7 @@
                     </v-tooltip>
                   </div>
                 </div>
-                <div v-bind:id="darkMode ? 'console-dark' : 'console'" v-html="console_str" @keydown="handleConsoleInput" tabindex="0"></div>
+                <div ref="console" class="console" v-bind:id="darkMode ? 'console-dark' : 'console-light'" v-html="console_str" @keydown="handleConsoleInput" tabindex="0"></div>
               </div>
 
             </div>
@@ -672,50 +672,30 @@ export default {
   grid-row: 1;
 }
 
-#console {
+.console {
   flex: 1;
   order: 2;
   height: 100%;
   width: 100%;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.25em;
+  padding: 8px;
+  overflow-y: scroll;
+  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
+  white-space: pre-wrap;
+}
+
+.console:focus {
+  outline: none;
+  box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
+}
+
+#console-light {
   background-color: white;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1.25em;
-  padding: 8px;
-  overflow: auto;
-  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
-  white-space: pre-wrap;
 }
 
-#console:focus {
-  font-size: 1.25em;
-  outline: none;
-  box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
-}
-
-/* 
-Hack to get a dark console.
-Properties are nearly same as normal #console,
-just differently colored
-todo: find a way to avoid duplication and just modify colors?
-*/
 #console-dark {
-  flex: 1;
-  order: 2;
-  height: 100%;
-  width: 100%;
   background-color: rgba(66,66,66,1);
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1.25em;
-  padding: 8px;
-  overflow: auto;
-  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
-  white-space: pre-wrap;
-}
-
-#console-dark:focus {
-  font-size: 1.25em;
-  outline: none;
-  box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
 }
 
 .right-wrapper {
