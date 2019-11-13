@@ -691,6 +691,13 @@ export default {
   box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
 }
 
+.console::after {
+  content: '\25af';
+}
+.console:focus::after {
+  content: '\25ae';
+}
+
 #console-light {
   background-color: white;
 }
