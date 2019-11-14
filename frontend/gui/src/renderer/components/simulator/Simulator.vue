@@ -478,12 +478,12 @@ export default {
           update = update.replace(/[^\x08\n]\x08/g, '');
         }
         let bs = 0; // backspace count
-        while(update.charAt(bs) === '\x08' && bs < this.console_str.length && this.console_str.charAt(this.console_str.length - bs) != '\n') {
+        while(update.charAt(bs) === '\x08' && bs < this.console_str.length && this.console_str.substr(-(1 + bs), 1) != '\n') {
           bs++;
         }
         if(bs) {
           update = update.substring(bs);
-          this.console_str = this.console_str.substring(0, this.console_str.length - bs);
+          this.console_str = this.console_str.slice(0, -bs);
         }
         this.console_str += update;
         this.$refs.console.scrollTop = this.$refs.console.scrollHeight;
