@@ -471,9 +471,24 @@ export default {
     },
     updateConsole() {
       // Console
-      this.console_str += lc3.GetOutput();
-      this.$refs.console.scrollTop = this.$refs.console.scrollHeight;
-      lc3.ClearOutput();
+      let update = lc3.GetOutput();
+      if(update.length) {
+        // Resolve all internal backspaces first
+        while(update.match(/[^\x08\n]\x08/)) {
+          update = update.replace(/[^\x08\n]\x08/g, '');
+        }
+        let bs = 0; // backspace count
+        while(update.charAt(bs) === '\x08' && bs < this.console_str.length && this.console_str.charAt(this.console_str.length - bs) != '\n') {
+          bs++;
+        }
+        if(bs) {
+          update = update.substring(bs);
+          this.console_str = this.console_str.substring(0, this.console_str.length - bs);
+        }
+        this.console_str += update;
+        this.$refs.console.scrollTop = this.$refs.console.scrollHeight;
+        lc3.ClearOutput();
+      }
       this.prev_inst_executed = lc3.GetInstExecCount();
     },
 
