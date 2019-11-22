@@ -486,7 +486,7 @@ export default {
           this.console_str = this.console_str.slice(0, -bs);
         }
         this.console_str += update;
-        this.$refs.console.scrollTop = this.$refs.console.scrollHeight;
+        setTimeout(() => this.$refs.console.scrollTop = this.$refs.console.scrollHeight);
         lc3.ClearOutput();
       }
       this.prev_inst_executed = lc3.GetInstExecCount();
