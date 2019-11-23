@@ -2,6 +2,7 @@
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
  */
 #include <memory>
+#include <math.h>
 
 #include "common.h"
 #include "console_printer.h"
@@ -102,6 +103,7 @@ int main(int argc, char * argv[])
             std::cout << "  --asm-print-level=N    Assembler output verbosity [0-9]\n";
             std::cout << "  --sim-print-level=N    Simulator output verbosity [0-9]\n";
             std::cout << "  --ignore-privilege     Ignore access violations\n";
+            std::cout << "  --grader-verbose       Output grader messages\n";
             std::cout << "  --test-filter=TEST     Only run TEST (can be repeated)\n";
             return 0;
         }
@@ -246,12 +248,12 @@ std::pair<double, double> Grader::grade(TestCase const & test)
     testTeardown(simulator);
 
     // In case the verify points don't add up to the total points
-    double normalized_points_earned = test_points_earned * (test_points / test.points);
+    double normalized_points_earned = floor(test_points_earned * (test_points / test.points));
     double percent_points_earned = normalized_points_earned / test.points;
     std::cout << "Test points earned: " << normalized_points_earned << "/" << test.points << " ("
               << (percent_points_earned * 100) << "%)\n";
 
-    return std::make_pair(test_points_earned, test.points);
+    return std::make_pair(normalized_points_earned, test.points);
 }
 
 void Grader::verify(std::string const & message, bool pred, double points)
