@@ -43,8 +43,10 @@ bool InstructionEncoder::isValidPseudoOrig(Statement const & statement, bool log
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".orig") {
         bool valid_operands = validatePseudoOperands(statement, ".orig", {StatementPiece::Type::NUM}, 1, log_enable);
-        auto num = getNum(statement, statement.operands[0], 16, false, logger, log_enable);
-        return valid_operands && num;
+        if(valid_operands) {
+            return getNum(statement, statement.operands[0], 16, false, logger, log_enable);
+        }
+        return false;
     }
     return false;
 }
@@ -54,12 +56,13 @@ bool InstructionEncoder::isValidPseudoFill(Statement const & statement, bool log
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".fill") {
         bool valid_operands = validatePseudoOperands(statement, ".fill", {StatementPiece::Type::NUM,
             StatementPiece::Type::STRING}, 1, log_enable);
-        if(statement.operands[0].type == StatementPiece::Type::NUM) {
+        if(valid_operands && statement.operands[0].type == StatementPiece::Type::NUM) {
             // .fill has implicit sext; if the number is negative, treat as signed, otherwise just treat it as unsigned.
             bool should_sext = static_cast<int32_t>(statement.operands[0].num) < 0;
             auto num = getNum(statement, statement.operands[0], 16, should_sext, logger, log_enable);
             return valid_operands && num;
         }
+        // If you make it here, the operand is a string, so defer the check until after the symbol table is formed.
         return valid_operands;
     }
     return false;
@@ -90,14 +93,17 @@ bool InstructionEncoder::isValidPseudoBlock(Statement const & statement, bool lo
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".blkw") {
         bool valid_operands = validatePseudoOperands(statement, ".blkw", {StatementPiece::Type::NUM}, 1, false);
-        auto num = getNum(statement, statement.operands[0], 16, false, logger, log_enable);
-        if(valid_operands && num) {
-            if(log_enable && statement.operands[0].num == 0) {
-                logger.asmPrintf(utils::PrintType::P_ERROR, statement, statement.operands[0],
-                    "operand to .blkw must be > 0");
-                logger.newline();
+        if(valid_operands) {
+            auto num = getNum(statement, statement.operands[0], 16, false, logger, log_enable);
+            if(num) {
+                if(log_enable && statement.operands[0].num == 0) {
+                    logger.asmPrintf(utils::PrintType::P_ERROR, statement, statement.operands[0],
+                        "operand to .blkw must be > 0");
+                    logger.newline();
+                }
+                return statement.operands[0].num != 0;
             }
-            return statement.operands[0].num != 0;
+            return false;
         }
     }
     return false;
