@@ -159,8 +159,10 @@ void lc3::utils::AssemblerLogger::asmPrintf(lc3::utils::PrintType level, uint32_
     }
     printer.print("^");
 
-    for(uint32_t i = 0; i < len - 1; i++) {
-        printer.print("~");
+    if(len > 0) {
+        for(uint32_t i = 0; i < len - 1; i++) {
+            printer.print("~");
+        }
     }
 
     printer.setColor(lc3::utils::PrintColor::RESET);
