@@ -113,6 +113,7 @@ void lc3::sim::restart(void)
 {
     uint32_t mcr = getMem(MCR);
     setMem(MCR, mcr | 0x8000);
+    setPSR(getPSR() & (~0x0700));
     if(getMachineState().pc > SYSTEM_END && getMachineState().pc < MMIO_START) {
         setPSR(getPSR() | 0x8000);
     } else {
