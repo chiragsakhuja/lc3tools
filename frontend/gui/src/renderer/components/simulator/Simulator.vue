@@ -310,7 +310,7 @@ export default {
     this.mem_view.data.push({addr: 0, value: 0, line: ""});
   },
   mounted() {
-    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 30) - 4; i++) {
+    for(let i = 0; i < Math.floor(this.$refs.memView.clientHeight / 24) - 4; i++) {
       this.mem_view.data.push({addr: 0, value: 0, line: ""});
     }
     this.updateUI();
@@ -624,14 +624,14 @@ export default {
   grid-row: 1;
   display: grid;
   grid-template-columns: 100%;
-  grid-template-rows: 400px auto;
+  grid-template-rows: 310px auto;
   height: calc(100vh - 90px);
   overflow: hidden;
 }
 
 .data-cell {
-  height: 30px;
-  line-height: 30px;
+  height: 24px;
+  line-height: 24px;
   text-align: left;
   padding-left: 5px;
   font-family: 'Courier New', Courier, monospace;
