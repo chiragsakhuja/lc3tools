@@ -613,7 +613,7 @@ export default {
 
 .simulator-wrapper {
   display: grid;
-  grid-template-columns: 35% auto;
+  grid-template-columns: 40% auto;
   grid-template-rows: 100%;
   grid-gap: 10px;
   overflow: hidden;
