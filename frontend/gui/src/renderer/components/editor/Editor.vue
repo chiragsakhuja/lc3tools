@@ -262,7 +262,6 @@ export default {
 
 #ace-editor {
   overflow: hidden;
-  font-size: 1.25em;
   justify-self: center;
 }
 
@@ -271,6 +270,7 @@ export default {
   font-family: 'Courier New', Courier, monospace;
   margin: 15px 10px 5px 10px;
   padding: 10px;
+  white-space: pre-wrap;
 }
 
 .text {

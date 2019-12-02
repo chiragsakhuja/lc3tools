@@ -219,6 +219,10 @@ export default {
 </script>
 
 <style>
+.application {
+    font-size: 1em;
+}
+
 .text-red {
   color: red;
 }
