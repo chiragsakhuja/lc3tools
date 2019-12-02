@@ -139,7 +139,7 @@
                   <div id="console-title"><h3 class="view-header">Console (click to focus)</h3></div>
                   <div id="console-clear">
                     <v-tooltip left>
-                        <v-icon slot="activator" @click="clearConsole()">clear</v-icon>
+                        <v-icon slot="activator" @click="clearConsole()">delete_forever</v-icon>
                         <span>Clear Console</span>
                     </v-tooltip>
                   </div>
