@@ -144,7 +144,7 @@
                     </v-tooltip>
                   </div>
                 </div>
-                <div v-bind:id="darkMode ? 'console-dark' : 'console'" v-html="console_str" @keyup="handleConsoleInput" tabindex="0"></div>
+                <div ref="console" class="console" v-bind:id="darkMode ? 'console-dark' : 'console-light'" v-html="console_str" @keydown="handleConsoleInput" tabindex="0"></div>
               </div>
 
             </div>
@@ -409,18 +409,25 @@ export default {
 
     // UI update functions
     handleConsoleInput(event) {
+      // Typable characters on a standard keyboard.
+      const overrides = {
+        'Enter':     0x0a,
+        'Backspace': 0x08,
+        'Tab':       0x09, 
+        'Escape':    0x1b,
+        'Delete':    0x7f,
+      };
       // TODO: since the console string is rendered as I/O, the console actually allows for "HTML injection"
-      if(event.keyCode == 13) {
-        lc3.AddInput("\n");
-      } else if(event.keyCode == 8) {
-        let remove_amount = 1;
-        if(this.console_str.endsWith("</br>")) {
-          remove_amount = 5;
-        }
-        this.console_str = this.console_str.slice(0, -remove_amount);
-      } else if(event.key.length == 1) {
-        lc3.AddInput(event.key);
+      let key = event.key, code = key.charCodeAt(0);
+      if(key in overrides) {
+        lc3.AddInput(String.fromCharCode(overrides[key]));
+      } else if(key.length == 1) {
+        // Handle CTRL-a through CTRL-z.
+        if((code > 64 && code < 128 && event.ctrlKey))
+          key = String.fromCharCode(code & 0x1f);
+        lc3.AddInput(key);
       }
+      event.preventDefault(); // for TAB, etc.
     },
     setDataWriteable(value) {
       this.data_writeable = value;
@@ -464,8 +471,24 @@ export default {
     },
     updateConsole() {
       // Console
-      this.console_str += lc3.GetOutput();
-      lc3.ClearOutput();
+      let update = lc3.GetOutput();
+      if(update.length) {
+        // Resolve all internal backspaces first
+        while(update.match(/[^\x08\n]\x08/)) {
+          update = update.replace(/[^\x08\n]\x08/g, '');
+        }
+        let bs = 0; // backspace count
+        while(update.charAt(bs) === '\x08' && bs < this.console_str.length && this.console_str.substr(-(1 + bs), 1) != '\n') {
+          bs++;
+        }
+        if(bs) {
+          update = update.substring(bs);
+          this.console_str = this.console_str.slice(0, -bs);
+        }
+        this.console_str += update;
+        setTimeout(() => this.$refs.console.scrollTop = this.$refs.console.scrollHeight);
+        lc3.ClearOutput();
+      }
       this.prev_inst_executed = lc3.GetInstExecCount();
     },
 
@@ -665,48 +688,37 @@ export default {
   grid-row: 1;
 }
 
-#console {
+.console {
   flex: 1;
   order: 2;
   height: 100%;
   width: 100%;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.25em;
+  padding: 8px;
+  overflow-y: scroll;
+  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
+  white-space: pre-wrap;
+}
+
+.console:focus {
+  outline: none;
+  box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
+}
+
+.console::after {
+  content: '\25af';
+}
+.console:focus::after {
+  content: '\25ae';
+}
+
+#console-light {
   background-color: white;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1.25em;
-  padding: 8px;
-  overflow: auto;
-  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
 }
 
-#console:focus {
-  font-size: 1.25em;
-  outline: none;
-  box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
-}
-
-/* 
-Hack to get a dark console.
-Properties are nearly same as normal #console,
-just differently colored
-todo: find a way to avoid duplication and just modify colors?
-*/
 #console-dark {
-  flex: 1;
-  order: 2;
-  height: 100%;
-  width: 100%;
   background-color: rgba(66,66,66,1);
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 1.25em;
-  padding: 8px;
-  overflow: auto;
-  box-shadow: 0 2px 4px -1px rgba(0,0,0,.2),0 4px 5px 0 rgba(0,0,0,.14),0 1px 10px 0 rgba(0,0,0,.12);
-}
-
-#console-dark:focus {
-  font-size: 1.25em;
-  outline: none;
-  box-shadow: 0px 0px 6px 3px rgba(33,150,223,.6)
 }
 
 .right-wrapper {

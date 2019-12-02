@@ -54,18 +54,12 @@ void utils::UIPrinter::setColor(lc3::utils::PrintColor color)
 
 void utils::UIPrinter::print(std::string const & string)
 {
-    std::string temp = string;
-    size_t pos = temp.find(' ');
-    while(pos != std::string::npos) {
-        temp.replace(pos, 1, "&nbsp;");
-        pos = temp.find(' ', pos + 1);
-    }
-    output_buffer.push_back(temp);
+    output_buffer.push_back(string);
 }
 
 void utils::UIPrinter::newline(void)
 {
-    output_buffer.push_back("</br>");
+    output_buffer.push_back("\n");
 }
 
 #endif
