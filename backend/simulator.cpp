@@ -198,12 +198,15 @@ void Simulator::checkAndSetupInterrupts(void)
 {
     uint32_t value = state.readMemRaw(KBSR);
 
-    if((value & 0xc000) == 0xc000) {
+    if(((value & 0xc000) == 0xc000) && ((state.readMemRaw(PSR) & 0x0700) == 0)) {
         logger.printf(lc3::utils::PrintType::P_EXTRA, true, "jumping to keyboard ISR");
 
         std::vector<PIEvent> events = IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x80,
             MachineState::SysCallType::INT, [](uint32_t psr_value) { return (psr_value & 0x78ff) | 0x0400; });
-        events.push_back(std::make_shared<MemWriteEvent>(KBSR, state.readMemRaw(KBSR) & 0x7fff));
+        // events.push_back(std::make_shared<MemWriteEvent>(KBSR, state.readMemRaw(KBSR) & 0x7fff));
+        events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
+                state.post_instruction_callback));
+
         executeEventChain(events);
     }
 }
