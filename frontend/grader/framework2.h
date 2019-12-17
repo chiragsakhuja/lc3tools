@@ -15,10 +15,6 @@
 
 struct TestCase;
 
-extern std::vector<TestCase> tests;
-extern uint32_t verify_count;
-extern uint32_t verify_valid;
-
 class BufferedPrinter : public lc3::utils::IPrinter
 {
 public:
@@ -75,20 +71,30 @@ private:
     uint32_t print_level;
     std::vector<std::string> obj_filenames;
 
-    double test_points_earned, test_points;
+    BufferedPrinter * printer;
+    StringInputter * inputter;
+    lc3::sim * simulator;
 
-    bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr);
+    double test_points_earned;
+
+    std::pair<double, double> gradeAll(void);
+    std::pair<double, double> grade(std::string const & test_name);
+
     std::pair<double, double> grade(TestCase const & test);
     void resetTestPoints(void);
+
+    friend int main(int argc, char * argv[]);
 
 public:
     Grader(bool print_output, uint32_t print_level, bool ignore_privilege, bool verbose,
         std::vector<std::string> const & obj_filenames);
 
+    BufferedPrinter & getOutputter(void) { return *printer; }
+    StringInputter & getInputter(void) { return *inputter; }
+    lc3::sim & getSimulator(void) { return *simulator; }
+
     void registerTest(std::string const & name, test_func_t test_func, double points, bool randomize);
     void verify(std::string const & name, bool pred, double points);
-    std::pair<double, double> gradeAll(void);
-    std::pair<double, double> grade(std::string const & test_name);
     void output(std::string const & message);
     void error(std::string const & message);
 };

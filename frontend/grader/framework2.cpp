@@ -214,6 +214,9 @@ std::pair<double, double> Grader::grade(TestCase const & test)
     BufferedPrinter printer(print_output);
     StringInputter inputter;
     lc3::sim simulator(printer, inputter, false, print_level, true);
+    this->printer = &printer;
+    this->inputter = &inputter;
+    this->simulator = &simulator;
 
     testBringup(simulator);
 
@@ -247,19 +250,22 @@ std::pair<double, double> Grader::grade(TestCase const & test)
 
     testTeardown(simulator);
 
-    // In case the verify points don't add up to the total points
-    double normalized_points_earned = floor(test_points_earned * (test_points / test.points));
-    double percent_points_earned = normalized_points_earned / test.points;
-    std::cout << "Test points earned: " << normalized_points_earned << "/" << test.points << " ("
+    // In case the verify points don't add up to the total points, clamp
+    double points_earned = std::min(test_points_earned, test.points);
+    double percent_points_earned = points_earned / test.points;
+    std::cout << "Test points earned: " << points_earned << "/" << test.points << " ("
               << (percent_points_earned * 100) << "%)\n";
 
-    return std::make_pair(normalized_points_earned, test.points);
+    this->printer = nullptr;
+    this->inputter = nullptr;
+    this->simulator = nullptr;
+
+    return std::make_pair(points_earned, test.points);
 }
 
 void Grader::verify(std::string const & message, bool pred, double points)
 {
     std::cout << "  " << message << " => ";
-    test_points += points;
     if(pred) {
         std::cout << "yes";
         test_points_earned += points;
@@ -283,44 +289,5 @@ void Grader::error(std::string const & message)
 
 void Grader::resetTestPoints(void)
 {
-    test_points = 0;
     test_points_earned = 0;
-}
-
-bool Grader::outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr)
-{
-    BufferedPrinter const & buffered_printer = static_cast<BufferedPrinter const &>(printer);
-
-    std::cout << "is '" << check << "' " << (substr ? "substring of" : "==") << " '";
-    for(uint32_t i = 0; i < buffered_printer.display_buffer.size(); i += 1) {
-        if(buffered_printer.display_buffer[i] == '\n') {
-            std::cout << "\\n";
-        } else {
-            std::cout << buffered_printer.display_buffer[i];
-        }
-    }
-    std::cout << "'\n";
-
-    if(substr) {
-        uint64_t buffer_pos = 0;
-        while(buffer_pos + check.size() < buffered_printer.display_buffer.size()) {
-            uint64_t check_pos;
-            for(check_pos = 0; check_pos < check.size(); check_pos += 1) {
-                if(check[check_pos] != buffered_printer.display_buffer[buffer_pos + check_pos]) {
-                    break;
-                }
-            }
-            if(check_pos == check.size()) { return true; }
-            buffer_pos += 1;
-        }
-        return false;
-    } else {
-        if(buffered_printer.display_buffer.size() != check.size()) { return false; }
-
-        for(uint32_t i = 0; i < check.size(); i += 1) {
-            if(buffered_printer.display_buffer[i] != check[i]) { return false; }
-        }
-        return true;
-    }
-    return false;
 }
