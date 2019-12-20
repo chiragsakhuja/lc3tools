@@ -1,8 +1,8 @@
 /*
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
  */
-#ifndef SIM_H
-#define SIM_H
+#ifndef SIM_OLD_H
+#define SIM_OLD_H
 
 #include <atomic>
 #include <functional>
