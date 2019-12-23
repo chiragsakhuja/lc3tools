@@ -11,11 +11,11 @@
 #include "simulator.h"
 #include "utils.h"
 
-using namespace lc3::core;
+using namespace lc3::core_old;
 
 namespace lc3
 {
-namespace core
+namespace core_old
 {
     std::mutex g_io_lock;
 };
@@ -75,7 +75,7 @@ void Simulator::loadObj(std::istream & buffer)
     delete[] version;
 
     while(! buffer.eof()) {
-        MemEntry statement;
+        lc3::core::MemEntry statement;
         buffer >> statement;
 
         if(buffer.eof()) {
@@ -112,7 +112,7 @@ void Simulator::simulate(void)
         collecting_input = true;
         inputter.beginInput();
         if(threaded_input) {
-            input_thread = std::thread(&core::Simulator::inputThread, this);
+            input_thread = std::thread(&core_old::Simulator::inputThread, this);
         }
 
         while(isClockEnabled()) {
@@ -300,7 +300,7 @@ void Simulator::registerWaitForInputCallback(callback_func_t func)
     state.wait_for_input_callback = func;
 }
 
-void lc3::core::Simulator::setIgnorePrivilege(bool ignore)
+void lc3::core_old::Simulator::setIgnorePrivilege(bool ignore)
 {
     state.ignore_privilege = ignore;
 }

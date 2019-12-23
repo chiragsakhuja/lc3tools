@@ -12,7 +12,7 @@
 
 namespace lc3
 {
-namespace core
+namespace core_old
 {
 namespace sim
 {

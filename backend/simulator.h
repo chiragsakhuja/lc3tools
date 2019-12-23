@@ -18,7 +18,7 @@ namespace lc3
 {
 class sim;
 
-namespace core
+namespace core_old
 {
     class Simulator
     {

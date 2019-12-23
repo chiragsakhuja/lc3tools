@@ -33,8 +33,8 @@ namespace lc3
         sim const * sim_int;
     };
 
-    using callback_func_t = std::function<void(core::MachineState &)>;
-    using breakpoint_callback_func_t = std::function<void(core::MachineState & state, Breakpoint const & bp)>;
+    using callback_func_t = std::function<void(core_old::MachineState &)>;
+    using breakpoint_callback_func_t = std::function<void(core_old::MachineState & state, Breakpoint const & bp)>;
 
     class sim
     {
@@ -57,8 +57,8 @@ namespace lc3
         bool stepOver(void);
         bool stepOut(void);
 
-        core::MachineState & getMachineState(void);
-        core::MachineState const & getMachineState(void) const;
+        core_old::MachineState & getMachineState(void);
+        core_old::MachineState const & getMachineState(void) const;
         uint64_t getInstExecCount(void) const;
         bool didExceedInstLimit(void) const;
         std::vector<Breakpoint> const & getBreakpoints() const;
@@ -103,18 +103,18 @@ namespace lc3
 
     private:
         utils::IPrinter & printer;
-        core::Simulator simulator;
+        core_old::Simulator simulator;
 
-        friend class core::Simulator;
-        static void preInstructionCallback(sim & sim_int, core::MachineState & state);
-        static void postInstructionCallback(sim & sim_int, core::MachineState & state);
-        static void interruptEnterCallback(sim & sim_int, core::MachineState & state);
-        static void interruptExitCallback(sim & sim_int, core::MachineState & state);
-        static void exceptionEnterCallback(sim & sim_int, core::MachineState & state);
-        static void exceptionExitCallback(sim & sim_int, core::MachineState & state);
-        static void subEnterCallback(sim & sim_int, core::MachineState & state);
-        static void subExitCallback(sim & sim_int, core::MachineState & state);
-        static void waitForInputCallback(sim & sim_int, core::MachineState & state);
+        friend class core_old::Simulator;
+        static void preInstructionCallback(sim & sim_int, core_old::MachineState & state);
+        static void postInstructionCallback(sim & sim_int, core_old::MachineState & state);
+        static void interruptEnterCallback(sim & sim_int, core_old::MachineState & state);
+        static void interruptExitCallback(sim & sim_int, core_old::MachineState & state);
+        static void exceptionEnterCallback(sim & sim_int, core_old::MachineState & state);
+        static void exceptionExitCallback(sim & sim_int, core_old::MachineState & state);
+        static void subEnterCallback(sim & sim_int, core_old::MachineState & state);
+        static void subExitCallback(sim & sim_int, core_old::MachineState & state);
+        static void waitForInputCallback(sim & sim_int, core_old::MachineState & state);
 
         uint64_t inst_exec_count = 0;
         uint64_t total_inst_limit = 0;

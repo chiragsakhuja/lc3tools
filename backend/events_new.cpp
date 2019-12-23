@@ -14,7 +14,8 @@ namespace core
 
     std::string MemReadEvent::toString(MachineState const & state) const
     {
-        return utils::ssprintf("R%d <= MEM[0x%0.4x]: 0x%0.4x", reg_id, mem_addr, state.getMemValue(mem_addr));
+        return utils::ssprintf("R%d:0x%0.4x <= MEM[0x%0.4x]:0x%0.4x", reg_id, state.readReg(reg_id), mem_addr,
+            state.getMemValue(mem_addr));
     }
 
     void MemWriteImmEvent::handleEvent(MachineState & state) const
@@ -24,7 +25,7 @@ namespace core
 
     std::string MemWriteImmEvent::toString(MachineState const & state) const
     {
-        return utils::ssprintf("MEM[0x%0.4x] <= 0x%0.4x", addr, value);
+        return utils::ssprintf("MEM[0x%0.4x]:0x%0.4x <= 0x%0.4x", addr, state.getMemValue(addr), value);
     }
 };
 };

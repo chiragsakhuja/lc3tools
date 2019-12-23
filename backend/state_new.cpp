@@ -10,6 +10,9 @@ namespace core
     {
         mem.resize(USER_END - SYSTEM_START + 1);
         rf.resize(8);
+        PIDevice keyboard = std::make_shared<KeyboardDevice>();
+        mmio[KBSR] = keyboard;
+        mmio[KBDR] = keyboard;
     }
 
     PIEvent MachineState::readMem(uint16_t reg_id, uint16_t mem_addr)

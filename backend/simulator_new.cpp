@@ -15,12 +15,15 @@ namespace core
 
     void SimulatorNew::main(void)
     {
-        events.emplace(std::make_shared<MemReadEvent>(1, 0x1000));
+        events.emplace(state.readMem(1, KBDR));
         while(time < 100 && ! events.empty()) {
             PIEvent event = events.top();
             events.pop();
 
-            time += event->time_delta;
+            if(event != nullptr) {
+                time += event->time_delta;
+            }
+
             while(event != nullptr) {
                 std::cout << time << ": " << event->toString(state) << '\n';
                 event->handleEvent(state);

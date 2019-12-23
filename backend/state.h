@@ -18,7 +18,7 @@ namespace lc3
 {
 class sim;
 
-namespace core
+namespace core_old
 {
     class IEvent;
     struct MachineState;
@@ -45,7 +45,7 @@ namespace core
             sub_enter_callback_v(false), sub_exit_callback_v(false),
             wait_for_input_callback_v(false), simulator(simulator), ignore_privilege(false) {}
 
-        std::vector<MemEntry> mem;
+        std::vector<lc3::core::MemEntry> mem;
         std::array<uint32_t, 8> regs;
         uint32_t pc;
 

@@ -5,7 +5,7 @@
 
 #include "instructions.h"
 
-using namespace lc3::core;
+using namespace lc3::core_old;
 
 IOperand::IOperand(OperType type, std::string const & type_str, uint32_t width)
 {
@@ -285,8 +285,8 @@ InstructionHandler::InstructionHandler(void)
     instructions.push_back(std::make_shared<HALTInstruction>());
 }
 
-lc3::optional<uint32_t> FixedOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
+lc3::optional<uint32_t> FixedOperand::encode(lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
+    lc3::core::SymbolTable const & regs, lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
     (void) statement;
     (void) piece;
@@ -297,8 +297,8 @@ lc3::optional<uint32_t> FixedOperand::encode(asmbl::Statement const & statement,
     return value & ((1 << width) - 1);
 }
 
-lc3::optional<uint32_t> RegOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
+lc3::optional<uint32_t> RegOperand::encode(lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
+    lc3::core::SymbolTable const & regs, lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
     (void) statement;
     (void) symbols;
@@ -311,8 +311,8 @@ lc3::optional<uint32_t> RegOperand::encode(asmbl::Statement const & statement, a
     return token_val;
 }
 
-lc3::optional<uint32_t> NumOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
+lc3::optional<uint32_t> NumOperand::encode(lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
+    lc3::core::SymbolTable const & regs, lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
     using namespace lc3::utils;
 
@@ -331,8 +331,8 @@ lc3::optional<uint32_t> NumOperand::encode(asmbl::Statement const & statement, a
     return *ret;
 }
 
-lc3::optional<uint32_t> LabelOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
+lc3::optional<uint32_t> LabelOperand::encode(lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
+    lc3::core::SymbolTable const & regs, lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
     using namespace lc3::utils;
     using namespace lc3::core::asmbl;
@@ -349,7 +349,7 @@ lc3::optional<uint32_t> LabelOperand::encode(asmbl::Statement const & statement,
             return {};
         }
 
-        asmbl::StatementPiece num_piece = piece;
+        lc3::core::asmbl::StatementPiece num_piece = piece;
         num_piece.num = static_cast<int32_t>(search->second) - (statement.pc + 1);
         auto ret = getNum(statement, num_piece, this->width, true, logger, true);
 

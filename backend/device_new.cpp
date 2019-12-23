@@ -11,7 +11,7 @@ namespace core
         } else if(mem_addr == KBDR) {
             uint16_t status_value = status.getValue();
             PIEvent ret = std::make_shared<MemReadEvent>(reg_id, mem_addr);
-            ret->next = std::make_shared<MemWriteImmEvent>(mem_addr, status_value & 0x7FFF);
+            ret->next = std::make_shared<MemWriteImmEvent>(KBSR, status_value & 0x7FFF);
             return ret;
         } else {
             return nullptr;

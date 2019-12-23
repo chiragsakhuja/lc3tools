@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "instructions.h"
+#include "instruction_new.h"
 #include "logger.h"
 #include "optional.h"
 

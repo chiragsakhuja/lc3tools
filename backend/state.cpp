@@ -9,13 +9,13 @@
 
 namespace lc3
 {
-namespace core
+namespace core_old
 {
     extern std::mutex g_io_lock;
 };
 };
 
-uint32_t lc3::core::MachineState::readMemEvent(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const
+uint32_t lc3::core_old::MachineState::readMemEvent(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const
 {
 #ifdef _ENABLE_DEBUG
     assert(addr <= 0xFFFF);
@@ -41,7 +41,7 @@ uint32_t lc3::core::MachineState::readMemEvent(uint32_t addr, bool & change_mem,
     return value;
 }
 
-uint32_t lc3::core::MachineState::readMemSafe(uint32_t addr)
+uint32_t lc3::core_old::MachineState::readMemSafe(uint32_t addr)
 {
     bool change_mem;
     std::shared_ptr<IEvent> change;
@@ -55,7 +55,7 @@ uint32_t lc3::core::MachineState::readMemSafe(uint32_t addr)
     return value;
 }
 
-uint32_t lc3::core::MachineState::readMemRaw(uint32_t addr) const
+uint32_t lc3::core_old::MachineState::readMemRaw(uint32_t addr) const
 {
 #ifdef _ENABLE_DEBUG
     assert(addr <= 0xFFFF);
@@ -64,7 +64,7 @@ uint32_t lc3::core::MachineState::readMemRaw(uint32_t addr) const
     return mem[addr].getValue();
 }
 
-void lc3::core::MachineState::writeMemEvent(uint32_t addr, uint16_t value, bool & change_mem,
+void lc3::core_old::MachineState::writeMemEvent(uint32_t addr, uint16_t value, bool & change_mem,
     std::shared_ptr<IEvent> & change)
 {
 #ifdef _ENABLE_DEBUG
@@ -85,7 +85,7 @@ void lc3::core::MachineState::writeMemEvent(uint32_t addr, uint16_t value, bool 
     writeMemRaw(addr, value);
 }
 
-void lc3::core::MachineState::writeMemSafe(uint32_t addr, uint16_t value)
+void lc3::core_old::MachineState::writeMemSafe(uint32_t addr, uint16_t value)
 {
     bool change_mem;
     std::shared_ptr<IEvent> change;
@@ -97,7 +97,7 @@ void lc3::core::MachineState::writeMemSafe(uint32_t addr, uint16_t value)
     }
 }
 
-void lc3::core::MachineState::writeMemRaw(uint32_t addr, uint16_t value)
+void lc3::core_old::MachineState::writeMemRaw(uint32_t addr, uint16_t value)
 {
 #ifdef _ENABLE_DEBUG
     assert(addr <= 0xFFFF);
@@ -106,7 +106,7 @@ void lc3::core::MachineState::writeMemRaw(uint32_t addr, uint16_t value)
     mem[addr].setValue(value);
 }
 
-void lc3::core::MemWriteEvent::updateState(MachineState & state) const
+void lc3::core_old::MemWriteEvent::updateState(MachineState & state) const
 {
 #ifdef _ENABLE_DEBUG
     assert(addr < 0xFFFF);
@@ -128,7 +128,7 @@ void lc3::core::MemWriteEvent::updateState(MachineState & state) const
     state.writeMemSafe(addr, value);
 }
 
-void lc3::core::SwapSPEvent::updateState(MachineState & state) const
+void lc3::core_old::SwapSPEvent::updateState(MachineState & state) const
 {
     uint32_t old_sp = state.regs[6];
     state.regs[6] = state.readMemRaw(BSP);

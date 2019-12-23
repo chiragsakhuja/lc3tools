@@ -5,7 +5,7 @@
 
 #include "instruction_decoder.h"
 
-lc3::core::sim::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
+lc3::core_old::sim::InstructionDecoder::InstructionDecoder(void) : InstructionHandler()
 {
     for(PIInstruction inst : instructions) {
         // assumption: every instruction will have a FixedOperand first, and that is the opcode
@@ -14,7 +14,7 @@ lc3::core::sim::InstructionDecoder::InstructionDecoder(void) : InstructionHandle
     }
 }
 
-lc3::optional<lc3::core::PIInstruction> lc3::core::sim::InstructionDecoder::findInstructionByEncoding(uint32_t encoding)
+lc3::optional<lc3::core_old::PIInstruction> lc3::core_old::sim::InstructionDecoder::findInstructionByEncoding(uint32_t encoding)
     const
 {
     auto search = instructions_by_opcode.find(utils::getBits(encoding, 15, 12));

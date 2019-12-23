@@ -193,9 +193,9 @@ void lc3::sim::pause(void)
     simulator.disableClock();
 }
 
-lc3::core::MachineState & lc3::sim::getMachineState(void) { return simulator.getMachineState(); }
+lc3::core_old::MachineState & lc3::sim::getMachineState(void) { return simulator.getMachineState(); }
 
-lc3::core::MachineState const & lc3::sim::getMachineState(void) const { return simulator.getMachineState(); }
+lc3::core_old::MachineState const & lc3::sim::getMachineState(void) const { return simulator.getMachineState(); }
 
 uint64_t lc3::sim::getInstExecCount(void) const { return inst_exec_count; }
 
@@ -430,7 +430,7 @@ void lc3::sim::setPropagateExceptions(void) { propagate_exceptions = true; }
 void lc3::sim::clearPropagateExceptions(void) { propagate_exceptions = false; }
 void lc3::sim::setIgnorePrivilege(bool ignore) { simulator.setIgnorePrivilege(ignore); }
 
-void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineState & state)
+void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core_old::MachineState & state)
 {
     if(sim_inst.run_type == RunType::UNTIL_HALT && state.readMemRaw(state.pc) == 0xf025) {
         sim_inst.pause();
@@ -441,7 +441,7 @@ void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core::MachineSta
     }
 }
 
-void lc3::sim::postInstructionCallback(lc3::sim & sim_inst, core::MachineState & state)
+void lc3::sim::postInstructionCallback(lc3::sim & sim_inst, core_old::MachineState & state)
 {
     sim_inst.inst_exec_count += 1;
 
@@ -471,7 +471,7 @@ void lc3::sim::postInstructionCallback(lc3::sim & sim_inst, core::MachineState &
     }
 }
 
-void lc3::sim::interruptEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
+void lc3::sim::interruptEnterCallback(lc3::sim & sim_inst, core_old::MachineState & state)
 {
     sim_inst.sub_depth += 1;
 
@@ -480,7 +480,7 @@ void lc3::sim::interruptEnterCallback(lc3::sim & sim_inst, core::MachineState & 
     }
 }
 
-void lc3::sim::interruptExitCallback(lc3::sim & sim_inst, core::MachineState & state)
+void lc3::sim::interruptExitCallback(lc3::sim & sim_inst, core_old::MachineState & state)
 {
     sim_inst.sub_depth -= 1;
 
@@ -489,7 +489,7 @@ void lc3::sim::interruptExitCallback(lc3::sim & sim_inst, core::MachineState & s
     }
 }
 
-void lc3::sim::exceptionEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
+void lc3::sim::exceptionEnterCallback(lc3::sim & sim_inst, core_old::MachineState & state)
 {
     sim_inst.hit_internal_exception = true;
     sim_inst.sub_depth += 1;
@@ -499,7 +499,7 @@ void lc3::sim::exceptionEnterCallback(lc3::sim & sim_inst, core::MachineState & 
     }
 }
 
-void lc3::sim::exceptionExitCallback(lc3::sim & sim_inst, core::MachineState & state)
+void lc3::sim::exceptionExitCallback(lc3::sim & sim_inst, core_old::MachineState & state)
 {
     sim_inst.sub_depth -= 1;
 
@@ -508,7 +508,7 @@ void lc3::sim::exceptionExitCallback(lc3::sim & sim_inst, core::MachineState & s
     }
 }
 
-void lc3::sim::subEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
+void lc3::sim::subEnterCallback(lc3::sim & sim_inst, core_old::MachineState & state)
 {
     sim_inst.sub_depth += 1;
 
@@ -517,7 +517,7 @@ void lc3::sim::subEnterCallback(lc3::sim & sim_inst, core::MachineState & state)
     }
 }
 
-void lc3::sim::subExitCallback(lc3::sim & sim_inst, core::MachineState & state)
+void lc3::sim::subExitCallback(lc3::sim & sim_inst, core_old::MachineState & state)
 {
     sim_inst.sub_depth -= 1;
 
@@ -526,7 +526,7 @@ void lc3::sim::subExitCallback(lc3::sim & sim_inst, core::MachineState & state)
     }
 }
 
-void lc3::sim::waitForInputCallback(lc3::sim & sim_inst, core::MachineState & state)
+void lc3::sim::waitForInputCallback(lc3::sim & sim_inst, core_old::MachineState & state)
 {
     if(sim_inst.run_type == RunType::UNTIL_INPUT) {
         sim_inst.pause();

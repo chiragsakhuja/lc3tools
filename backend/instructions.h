@@ -17,7 +17,7 @@
 
 namespace lc3
 {
-namespace core
+namespace core_old
 {
 
     enum class OperType {
@@ -43,10 +43,14 @@ namespace core
         IOperand(OperType type, std::string const & type_str, uint32_t width);
         virtual ~IOperand(void) = default;
 
-        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) = 0;
+        virtual optional<uint32_t> encode(lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
+            lc3::core::SymbolTable const & regs, lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) = 0;
         bool isEqualType(OperType other) const;
     };
+
+    using PIOperand = std::shared_ptr<IOperand>;
+    class IEvent;
+    using PIEvent = std::shared_ptr<IEvent>;
 
     class IInstruction
     {
@@ -74,16 +78,18 @@ namespace core
             MachineState::SysCallType call_type);
     };
 
+    using PIInstruction = std::shared_ptr<IInstruction>;
+
     class InstructionHandler
     {
     public:
         InstructionHandler(void);
         virtual ~InstructionHandler(void) = default;
 
-        SymbolTable const & getRegs(void) { return regs; }
+        lc3::core::SymbolTable const & getRegs(void) { return regs; }
     protected:
         std::vector<PIInstruction> instructions;
-        SymbolTable regs;
+        lc3::core::SymbolTable regs;
     };
 
     class FixedOperand : public IOperand
@@ -91,16 +97,16 @@ namespace core
     public:
         FixedOperand(uint32_t width, uint32_t value) : IOperand(OperType::FIXED, "fixed", width)
             { this->value = value; }
-        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
+        virtual optional<uint32_t> encode(lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
+            lc3::core::SymbolTable const & regs, lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
     class RegOperand : public IOperand
     {
     public:
         RegOperand(uint32_t width) : IOperand(OperType::REG, "reg", width) {}
-        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
+        virtual optional<uint32_t> encode(lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
+            lc3::core::SymbolTable const & regs, lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
     class NumOperand : public IOperand
@@ -109,16 +115,16 @@ namespace core
         bool sext;
 
         NumOperand(uint32_t width, bool sext) : IOperand(OperType::NUM, "imm", width) { this->sext = sext; }
-        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
+        virtual optional<uint32_t> encode(lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
+            lc3::core::SymbolTable const & regs, lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
     class LabelOperand : public IOperand
     {
     public:
         LabelOperand(uint32_t width) : IOperand(OperType::LABEL, "label/imm", width) {}
-        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
+        virtual optional<uint32_t> encode(lc3::core::asmbl::Statement const & statement, lc3::core::asmbl::StatementPiece const & piece,
+            lc3::core::SymbolTable const & regs, lc3::core::SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) override;
     };
 
     class ADDRegInstruction : public IInstruction

@@ -244,9 +244,9 @@ lc3::optional<lc3::core::PIInstruction> InstructionEncoder::validateInstruction(
                 std::string candidate_op_string = "";
                 for(PIOperand candidate_op : candidate_inst->operands) {
                     switch(candidate_op->type) {
-                        case OperType::NUM: candidate_op_string += 'n'; break;
-                        case OperType::LABEL: candidate_op_string += 'l'; break;
-                        case OperType::REG: candidate_op_string += 'r'; break;
+                        case IOperand::Type::NUM: candidate_op_string += 'n'; break;
+                        case IOperand::Type::LABEL: candidate_op_string += 'l'; break;
+                        case IOperand::Type::REG: candidate_op_string += 'r'; break;
                         default: break;
                     }
                 }
@@ -428,7 +428,7 @@ lc3::optional<uint32_t> InstructionEncoder::encodeInstruction(Statement const & 
             return {};
         }
 
-        if(operand->type != OperType::FIXED) {
+        if(operand->type != IOperand::Type::FIXED) {
             operand_idx += 1;
         }
     }
