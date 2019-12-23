@@ -1,72 +1,47 @@
-/*
- * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
- */
-#ifndef DEVICE_H
-#define DEVICE_H
+#ifndef DEV_NEW_H
+#define DEV_NEW_H
 
-#include <functional>
-#include <mutex>
-#include <unordered_map>
+#include <memory>
 
 #include "device_regs.h"
+#include "events_new.h"
+#include "mem_new.h"
 
 namespace lc3
 {
 namespace core
 {
-
-    extern std::mutex g_io_lock;
-
-struct State;
-
-class Device
-{
-public:
-    using read_callback_t  = std::function<void(uint32_t, State &)>;
-    using write_callback_t  = std::function<void(uint32_t, State &)>;
-
-    virtual std::unordered_map<uint32_t, read_callback_t> getReadAddrMap(void) const = 0;
-    virtual std::unordered_map<uint32_t, write_callback_t> getWriteAddrMap(void) const = 0;
-};
-
-class KeyboardDevice : public Device
-{
-public:
-    virtual std::unordered_map<uint32_t, read_callback_t> getReadAddrMap(void) const override
+    class IDevice
     {
-        return { { KBDR, readKBDR } };
-    }
+    public:
+        virtual ~IDevice(void) {}
 
-    virtual std::unordered_map<uint32_t, write_callback_t> getWriteAddrMap(void) const override
-    {
-        return { { KBSR, writeKBSR } };
+        virtual PIEvent read(uint16_t reg_id, uint16_t mem_addr) = 0;
+        /*
+         *virtual void write(uint16_t addr, uint16_t value) = 0;
+         *virtual void tick(void) = 0;
+         */
+
+        virtual uint16_t getValue(uint16_t addr) const = 0;
+        virtual void setValue(uint16_t addr, uint16_t value) = 0;
     };
 
-    static void readKBDR(uint32_t value, State & state)
+    class KeyboardDevice : public IDevice
     {
-        std::lock_guard<std::mutex> guard(g_io_lock);
-        state[KBSR] &= 0x7FFF;
- /*    if(addr == KBSR || addr == KBDR) {
- *        std::lock_guard<std::mutex> guard(g_io_lock);
- *        value = readMemRaw(addr);
- *        if(addr == KBDR) {
- *            change_mem = true;
- *            change = std::make_shared<MemWriteEvent>(KBSR, readMemRaw(KBSR) & 0x7FFF);
- *        } else if(addr == KBSR && (value & 0x8000) == 0) {
- *            change_mem = true;
- *            change = std::make_shared<CallbackEvent>(wait_for_input_callback_v, wait_for_input_callback);
- *        }
- *    } else {
- *        value = readMemRaw(addr);
- *    }
- */
-    }
+    private:
+        MemLocation status;
+        MemLocation data;
 
-    static void writeKBSR(uint32_t data, State & state)
-    {
-    }
-};
+    public:
+        KeyboardDevice(void) { status.setValue(0xC000); }
+        virtual ~KeyboardDevice(void) override = default;
 
+        virtual PIEvent read(uint16_t reg_id, uint16_t mem_addr) override;
+        virtual uint16_t getValue(uint16_t addr) const override;
+        virtual void setValue(uint16_t addr, uint16_t value) override;
+    };
+
+    using PIDevice = std::shared_ptr<IDevice>;
 };
 };
 
