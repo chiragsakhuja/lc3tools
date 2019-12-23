@@ -12,7 +12,7 @@
 #include "instruction_decoder.h"
 #include "logger.h"
 #include "printer.h"
-#include "state.h"
+#include "state_old.h"
 
 namespace lc3
 {

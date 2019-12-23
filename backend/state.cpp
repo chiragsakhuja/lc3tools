@@ -1,6 +1,6 @@
 #include "device_regs.h"
-#include "device_new.h"
-#include "state_new.h"
+#include "device.h"
+#include "state.h"
 
 namespace lc3
 {

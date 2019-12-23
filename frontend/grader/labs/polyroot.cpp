@@ -64,7 +64,7 @@ void QuadraticTest2(lc3::sim & sim, StringInputter & inputter)
     VERIFY(success && ! sim.didExceedInstLimit());
 }
 
-void subEnterCallback(lc3::core::MachineState & state)
+void subEnterCallback(lc3::core_old::MachineState & state)
 {
     if(state.pc == 0x5000) {
         sub_count += 1;

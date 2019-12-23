@@ -5,7 +5,7 @@
 #include <mutex>
 
 #include "device_regs.h"
-#include "state.h"
+#include "state_old.h"
 
 namespace lc3
 {

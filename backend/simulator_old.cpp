@@ -8,7 +8,7 @@
 
 #include "device_regs.h"
 #include "lc3os.h"
-#include "simulator.h"
+#include "simulator_old.h"
 #include "utils.h"
 
 using namespace lc3::core_old;

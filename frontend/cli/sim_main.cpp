@@ -24,7 +24,7 @@ void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens);
 void list(lc3::sim const & simulator, int32_t context);
 std::string formatMem(lc3::sim const & simulator, uint32_t addr);
 std::ostream & operator<<(std::ostream & out, lc3::Breakpoint const & x);
-void breakpointCallback(lc3::core::MachineState & state, lc3::Breakpoint const & bp);
+void breakpointCallback(lc3::core_old::MachineState & state, lc3::Breakpoint const & bp);
 
 struct CLIArgs
 {
@@ -383,7 +383,7 @@ std::ostream & operator<<(std::ostream & out, lc3::Breakpoint const & x)
     return out;
 }
 
-void breakpointCallback(lc3::core::MachineState & state, lc3::Breakpoint const & bp)
+void breakpointCallback(lc3::core_old::MachineState & state, lc3::Breakpoint const & bp)
 {
     (void) state;
     std::cout << "hit a breakpoint\n" << bp << "\n";

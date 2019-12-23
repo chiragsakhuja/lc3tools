@@ -1,4 +1,4 @@
-#include "device_new.h"
+#include "device.h"
 
 namespace lc3
 {

@@ -1,5 +1,5 @@
-#ifndef INSTRUCTION_NEW_H
-#define INSTRUCTION_NEW_H
+#ifndef INSTRUCTION_H
+#define INSTRUCTION_H
 
 #include <memory>
 #include <string>
@@ -7,7 +7,7 @@
 
 #include "asm_types.h"
 #include "aliases.h"
-#include "state_new.h"
+#include "state.h"
 
 namespace lc3
 {

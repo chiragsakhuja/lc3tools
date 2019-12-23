@@ -1,8 +1,8 @@
 /*
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
  */
-#ifndef STATE_H
-#define STATE_H
+#ifndef STATE_OLD_H
+#define STATE_OLD_H
 
 #include <array>
 #include <functional>

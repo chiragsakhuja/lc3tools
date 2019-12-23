@@ -1,11 +1,11 @@
-#ifndef STATE_NEW_H
-#define STATE_NEW_H
+#ifndef STATE_H
+#define STATE_H
 
 #include <string>
 #include <vector>
 #include <unordered_map>
 
-#include "device_new.h"
+#include "device.h"
 #include "mem_new.h"
 
 namespace lc3

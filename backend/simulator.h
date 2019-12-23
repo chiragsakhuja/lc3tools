@@ -1,14 +1,14 @@
 /*
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
  */
-#ifndef SIM_NEW_H
-#define SIM_NEW_H
+#ifndef SIMULATOR_H
+#define SIMULATOR_H
 
 #include <cstdint>
 #include <queue>
 
-#include "events_new.h"
-#include "state_new.h"
+#include "event.h"
+#include "state.h"
 
 namespace std
 {

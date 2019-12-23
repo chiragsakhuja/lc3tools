@@ -13,7 +13,7 @@
 #include "asm_types.h"
 #include "logger.h"
 #include "optional.h"
-#include "state.h"
+#include "state_old.h"
 
 namespace lc3
 {

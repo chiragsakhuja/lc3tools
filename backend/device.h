@@ -1,10 +1,10 @@
-#ifndef DEV_NEW_H
-#define DEV_NEW_H
+#ifndef DEVICE_H
+#define DEVICE_H
 
 #include <memory>
 
 #include "device_regs.h"
-#include "events_new.h"
+#include "event.h"
 #include "mem_new.h"
 
 namespace lc3
