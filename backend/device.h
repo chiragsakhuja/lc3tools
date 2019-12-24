@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "device_regs.h"
-#include "event.h"
+#include "uop.h"
 #include "mem_new.h"
 
 namespace lc3

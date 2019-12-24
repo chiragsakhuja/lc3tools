@@ -5,6 +5,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include "aliases.h"
 #include "device.h"
 #include "mem_new.h"
 
