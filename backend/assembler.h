@@ -10,9 +10,9 @@
 
 #include "instruction_encoder.h"
 #include "logger.h"
-#include "optional.h"
 #include "printer.h"
 #include "tokenizer.h"
+#include "utils.h"
 
 namespace lc3
 {

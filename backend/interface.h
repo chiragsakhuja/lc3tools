@@ -17,8 +17,8 @@
 
 #include "assembler.h"
 #include "converter.h"
-#include "optional.h"
 #include "simulator_old.h"
+#include "utils.h"
 
 namespace lc3
 {

@@ -12,8 +12,8 @@
 #include "aliases.h"
 #include "asm_types.h"
 #include "logger.h"
-#include "optional.h"
 #include "state_old.h"
+#include "utils.h"
 
 namespace lc3
 {

@@ -7,63 +7,60 @@
 
 #include "asm_types.h"
 #include "aliases.h"
+#include "isa_abstract.h"
 #include "state.h"
 
 namespace lc3
 {
 namespace core
 {
-    class IOperand
+    class FixedOperand : public IOperand
     {
     public:
-        enum class Type {
-              FIXED = 0
-            , NUM
-            , LABEL
-            , REG
-            , INVALID
-        } type;
-
-        IOperand(Type type, std::string const & type_str, uint32_t width);
-        virtual ~IOperand(void) = default;
-
-        // Used by assembler.
-        std::string type_str;
-        uint32_t width;
-
+        FixedOperand(uint32_t width, uint32_t value);
         virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
-            SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger) = 0;
-        bool isEqualType(Type other) const;
-
-        // Used by simulator.
-        uint16_t value;
+            SymbolTable const & regs, SymbolTable const & symbols, utils::AssemblerLogger & logger) override;
     };
 
-    class ISAHandler
+    class RegOperand : public IOperand
     {
     public:
-        ISAHandler(void);
-        virtual ~ISAHandler(void) = default;
-
-        lc3::core::SymbolTable const & getRegs(void) { return regs; }
-    protected:
-        std::vector<PIInstruction> instructions;
-        lc3::core::SymbolTable regs;
+        RegOperand(uint32_t width);
+        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
+            SymbolTable const & regs, SymbolTable const & symbols, utils::AssemblerLogger & logger) override;
     };
 
-    class IInstruction
+    class NumOperand : public IOperand
     {
     public:
-        std::string name;
-        std::vector<PIOperand> operands;
+        NumOperand(uint32_t width, bool sext);
+        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
+            SymbolTable const & regs, SymbolTable const & symbols, utils::AssemblerLogger & logger) override;
 
-        IInstruction(std::string const & name, std::vector<PIOperand> const & operands);
-        IInstruction(IInstruction const & that);
-        virtual ~IInstruction(void) = default;
+    private:
+        bool sext;
+    };
 
-        virtual PIEvent execute(MachineState const & state) const = 0;
-        std::string toFormatString(void) const;
-        std::string toValueString(void) const;
+    class LabelOperand : public IOperand
+    {
+    public:
+        LabelOperand(uint32_t width);
+        virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
+            SymbolTable const & regs, SymbolTable const & symbols, utils::AssemblerLogger & logger) override;
+    };
+
+    class AddRegInstruction : public IInstruction
+    {
+    public:
+        AddRegInstruction(void);
+        virtual PIEvent buildEvents(MachineState const & state) const override;
+    };
+
+    class AddImmInstruction : public IInstruction
+    {
+    public:
+        AddImmInstruction(void);
+        virtual PIEvent buildEvents(MachineState const & state) const override;
     };
 };
 };

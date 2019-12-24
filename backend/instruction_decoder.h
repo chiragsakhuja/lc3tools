@@ -8,7 +8,7 @@
 #include <map>
 
 #include "instructions.h"
-#include "optional.h"
+#include "utils.h"
 
 namespace lc3
 {

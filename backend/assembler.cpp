@@ -12,7 +12,7 @@
 #include "asm_types.h"
 #include "assembler.h"
 #include "device_regs.h"
-#include "optional.h"
+#include "utils.h"
 #include "tokenizer.h"
 
 static constexpr uint32_t INST_NAME_CLOSENESS = 2;

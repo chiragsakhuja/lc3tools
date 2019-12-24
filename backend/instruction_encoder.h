@@ -7,9 +7,9 @@
 #include <memory>
 
 #include "instructions.h"
-#include "instruction.h"
+#include "isa.h"
 #include "logger.h"
-#include "optional.h"
+#include "utils.h"
 
 namespace lc3
 {

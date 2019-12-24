@@ -1,63 +1,101 @@
-#include "instruction.h"
+#include "isa.h"
+#include "logger.h"
 
 using namespace lc3::core;
 
-ISAHandler::ISAHandler(void)
+lc3::optional<uint32_t> FixedOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
+    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
-    regs["r0"] = 0;
-    regs["r1"] = 1;
-    regs["r2"] = 2;
-    regs["r3"] = 3;
-    regs["r4"] = 4;
-    regs["r5"] = 5;
-    regs["r6"] = 6;
-    regs["r7"] = 7;
+    (void) statement;
+    (void) piece;
+    (void) regs;
+    (void) symbols;
+    (void) logger;
 
-    /*
-     *instructions.push_back(std::make_shared<ADDRegInstruction>());
-     *instructions.push_back(std::make_shared<ADDImmInstruction>());
-     *instructions.push_back(std::make_shared<ANDRegInstruction>());
-     *instructions.push_back(std::make_shared<ANDImmInstruction>());
-     *instructions.push_back(std::make_shared<BRInstruction>());
-     *instructions.push_back(std::make_shared<BRnInstruction>());
-     *instructions.push_back(std::make_shared<BRzInstruction>());
-     *instructions.push_back(std::make_shared<BRpInstruction>());
-     *instructions.push_back(std::make_shared<BRnzInstruction>());
-     *instructions.push_back(std::make_shared<BRzpInstruction>());
-     *instructions.push_back(std::make_shared<BRnpInstruction>());
-     *instructions.push_back(std::make_shared<BRnzpInstruction>());
-     *instructions.push_back(std::make_shared<NOP0Instruction>());
-     *instructions.push_back(std::make_shared<NOP1Instruction>());
-     *instructions.push_back(std::make_shared<JMPInstruction>());
-     *instructions.push_back(std::make_shared<JSRInstruction>());
-     *instructions.push_back(std::make_shared<JSRRInstruction>());
-     *instructions.push_back(std::make_shared<LDInstruction>());
-     *instructions.push_back(std::make_shared<LDIInstruction>());
-     *instructions.push_back(std::make_shared<LDRInstruction>());
-     *instructions.push_back(std::make_shared<LEAInstruction>());
-     *instructions.push_back(std::make_shared<NOTInstruction>());
-     *instructions.push_back(std::make_shared<RETInstruction>());
-     *instructions.push_back(std::make_shared<RTIInstruction>());
-     *instructions.push_back(std::make_shared<STInstruction>());
-     *instructions.push_back(std::make_shared<STIInstruction>());
-     *instructions.push_back(std::make_shared<STRInstruction>());
-     *instructions.push_back(std::make_shared<TRAPInstruction>());
-     *instructions.push_back(std::make_shared<GETCInstruction>());
-     *instructions.push_back(std::make_shared<OUTInstruction>());
-     *instructions.push_back(std::make_shared<PUTCInstruction>());
-     *instructions.push_back(std::make_shared<PUTSInstruction>());
-     *instructions.push_back(std::make_shared<INInstruction>());
-     *instructions.push_back(std::make_shared<PUTSPInstruction>());
-     *instructions.push_back(std::make_shared<HALTInstruction>());
-     */
+    return value & ((1 << width) - 1);
 }
 
-std::string IInstruction::toFormatString(void) const
+lc3::optional<uint32_t> RegOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
+    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
-    return "";
+    using namespace lc3::utils;
+
+    (void) statement;
+    (void) symbols;
+
+    uint32_t token_val = regs.at(toLower(piece.str)) & ((1 << width) - 1);
+
+    logger.printf(PrintType::P_EXTRA, true, "  reg %s := %s", piece.str.c_str(), udecToBin(token_val, width).c_str());
+
+    return token_val;
 }
 
-std::string IInstruction::toValueString(void) const
+lc3::optional<uint32_t> NumOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
+    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
 {
-    return "";
+    using namespace lc3::utils;
+
+    (void) regs;
+    (void) symbols;
+
+    auto ret = getNum(statement, piece, this->width, this->sext, logger, true);
+
+    if(! ret) {
+        throw lc3::utils::exception("invalid immediate");
+    }
+
+    logger.printf(PrintType::P_EXTRA, true, "  imm %d := %s", piece.num, udecToBin(*ret, width).c_str());
+
+    return *ret;
 }
+
+lc3::optional<uint32_t> LabelOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
+    SymbolTable const & regs, SymbolTable const & symbols, lc3::utils::AssemblerLogger & logger)
+{
+    using namespace lc3::utils;
+    using namespace asmbl;
+
+    (void) regs;
+
+    if(piece.type == StatementPiece::Type::NUM) {
+        return NumOperand(this->width, true).encode(statement, piece, regs, symbols, logger);
+    } else {
+        auto search = symbols.find(toLower(piece.str));
+        if(search == symbols.end()) {
+            logger.asmPrintf(PrintType::P_ERROR, statement, piece, "could not find label");
+            logger.newline();
+            return {};
+        }
+
+        StatementPiece num_piece = piece;
+        num_piece.num = static_cast<int32_t>(search->second) - (statement.pc + 1);
+        auto ret = getNum(statement, num_piece, this->width, true, logger, true);
+
+        if(! ret) {
+            throw lc3::utils::exception("label too far");
+        }
+
+        logger.printf(PrintType::P_EXTRA, true, "  label %s (0x%0.4x) := %s", piece.str.c_str(), search->second,
+            udecToBin(*ret, width).c_str());
+
+        return *ret;
+    }
+}
+
+AddRegInstruction::AddRegInstruction(void) : IInstruction("add", {
+        std::make_shared<FixedOperand>(4, 0x1),
+        std::make_shared<RegOperand>(3),
+        std::make_shared<RegOperand>(3),
+        std::make_shared<FixedOperand>(3, 0x0),
+        std::make_shared<RegOperand>(3)
+    })
+{ }
+
+AddImmInstruction::AddImmInstruction(void) : IInstruction("add", {
+        std::make_shared<FixedOperand>(4, 0x1),
+        std::make_shared<RegOperand>(3),
+        std::make_shared<RegOperand>(3),
+        std::make_shared<FixedOperand>(1, 0x1),
+        std::make_shared<NumOperand>(5, true)
+    })
+{ }

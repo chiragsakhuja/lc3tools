@@ -13,7 +13,7 @@ ISAEncoder::ISAEncoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal
     : ISAHandler(), logger(logger), enable_liberal_asm(enable_liberal_asm)
 {
     for(PIInstruction inst : instructions) {
-        instructions_by_name[inst->name].push_back(inst);
+        instructions_by_name[inst->getName()].push_back(inst);
     }
 }
 
@@ -242,8 +242,8 @@ lc3::optional<lc3::core::PIInstruction> ISAEncoder::validateInstruction(Statemen
                 // Convert the operand types of the candidate and the statement into a string so that Levenshtein
                 // distance can be used on the operands too.
                 std::string candidate_op_string = "";
-                for(PIOperand candidate_op : candidate_inst->operands) {
-                    switch(candidate_op->type) {
+                for(PIOperand candidate_op : candidate_inst->getOperands()) {
+                    switch(candidate_op->getType()) {
                         case IOperand::Type::NUM: candidate_op_string += 'n'; break;
                         case IOperand::Type::LABEL: candidate_op_string += 'l'; break;
                         case IOperand::Type::REG: candidate_op_string += 'r'; break;
@@ -282,7 +282,7 @@ lc3::optional<lc3::core::PIInstruction> ISAEncoder::validateInstruction(Statemen
         std::string prev_candidate_inst_name = "";
         uint32_t candidate_count = 0;
         for(Candidate const & candidate : candidates) {
-            std::string const & candidate_inst_name = std::get<0>(candidate)->name;
+            std::string const & candidate_inst_name = std::get<0>(candidate)->getName();
             if(candidate_inst_name != prev_candidate_inst_name) {
                 if(candidate_count < 3) {
                     logger.printf(PrintType::P_NOTE, false, "did you mean \'%s\'?", candidate_inst_name.c_str());
@@ -305,7 +305,7 @@ lc3::optional<lc3::core::PIInstruction> ISAEncoder::validateInstruction(Statemen
             statement.base->str.c_str());
         uint32_t candidate_count = 0;
         for(Candidate const & candidate : candidates) {
-            if(utils::toLower(statement.base->str) == std::get<0>(candidate)->name) {
+            if(utils::toLower(statement.base->str) == std::get<0>(candidate)->getName()) {
                 if(candidate_count < 3) {
                     logger.printf(PrintType::P_NOTE, false, "did you mean \'%s\'?",
                         std::get<0>(candidate)->toFormatString().c_str());
@@ -401,7 +401,7 @@ lc3::optional<uint32_t> ISAEncoder::encodeInstruction(Statement const & statemen
     lc3::core::SymbolTable const & symbols, lc3::core::PIInstruction pattern) const
 {
     // The first "operand" of an instruction encoding is the op-code.
-    optional<uint32_t> inst_encoding = pattern->operands[0]->encode(statement, *statement.base, regs, symbols, logger);
+    optional<uint32_t> inst_encoding = pattern->getOperand(0)->encode(statement, *statement.base, regs, symbols, logger);
     uint32_t encoding;
     if(inst_encoding) {
         encoding = *inst_encoding;
@@ -411,10 +411,10 @@ lc3::optional<uint32_t> ISAEncoder::encodeInstruction(Statement const & statemen
 
     // Iterate over the remaining "operands" of the instruction encoding.
     uint32_t operand_idx = 0;
-    for(uint32_t i = 1; i < pattern->operands.size(); i += 1) {
-        PIOperand operand = pattern->operands[i];
+    for(uint32_t i = 1; i < pattern->getOperands().size(); i += 1) {
+        PIOperand operand = pattern->getOperand(i);
 
-        encoding <<= operand->width;
+        encoding <<= operand->getWidth();
         try {
             optional<uint32_t> operand_encoding = operand->encode(statement, statement.operands[operand_idx], regs,
                 symbols, logger);
@@ -428,7 +428,7 @@ lc3::optional<uint32_t> ISAEncoder::encodeInstruction(Statement const & statemen
             return {};
         }
 
-        if(operand->type != IOperand::Type::FIXED) {
+        if(operand->getType() != IOperand::Type::FIXED) {
             operand_idx += 1;
         }
     }
