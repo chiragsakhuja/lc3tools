@@ -2,7 +2,7 @@
 
 using namespace lc3::core;
 
-InstructionHandler::InstructionHandler(void)
+ISAHandler::ISAHandler(void)
 {
     regs["r0"] = 0;
     regs["r1"] = 1;

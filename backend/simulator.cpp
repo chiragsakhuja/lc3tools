@@ -15,8 +15,8 @@ namespace core
 
     void SimulatorNew::main(void)
     {
-        events.emplace(state.readMem(1, KBDR));
-        while(time < 100 && ! events.empty()) {
+        events.emplace(std::make_shared<AtomicInstProcessEvent>());
+        while(! events.empty()) {
             PIEvent event = events.top();
             events.pop();
 
@@ -24,19 +24,23 @@ namespace core
                 time += event->time_delta;
             }
 
+            std::string prefix = "";
             while(event != nullptr) {
-                std::cout << time << ": " << event->toString(state) << '\n';
+                std::cout << time << ": " << prefix << event->toString(state) << '\n';
                 event->handleEvent(state);
                 event = event->next;
+                prefix = "  ";
             }
 
-            if(events.empty()) {
-                if(time % 20 == 0) {
-                    events.emplace(std::make_shared<MemReadEvent>(10, 1, 0x1000));
-                } else {
-                    events.emplace(std::make_shared<MemWriteImmEvent>(10, 0x1000, time & 0xFFFF));
-                }
-            }
+            /*
+             *if(events.empty()) {
+             *    if(time % 20 == 0) {
+             *        events.emplace(std::make_shared<MemReadEvent>(10, 1, 0x1000));
+             *    } else {
+             *        events.emplace(std::make_shared<MemWriteImmEvent>(10, 0x1000, time & 0xFFFF));
+             *    }
+             *}
+             */
         }
     }
 };

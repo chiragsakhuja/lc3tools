@@ -38,7 +38,7 @@ namespace core
         lc3::utils::AssemblerLogger logger;
         bool enable_liberal_asm;
 
-        asmbl::InstructionEncoder encoder;
+        asmbl::ISAEncoder encoder;
 
         std::vector<asmbl::Statement> buildStatements(std::istream & buffer);
         asmbl::Statement buildStatement(std::vector<asmbl::Token> const & tokens);

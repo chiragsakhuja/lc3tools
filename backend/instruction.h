@@ -39,13 +39,11 @@ namespace core
         uint16_t value;
     };
 
-    using PIOperand = std::shared_ptr<IOperand>;
-
-    class InstructionHandler
+    class ISAHandler
     {
     public:
-        InstructionHandler(void);
-        virtual ~InstructionHandler(void) = default;
+        ISAHandler(void);
+        virtual ~ISAHandler(void) = default;
 
         lc3::core::SymbolTable const & getRegs(void) { return regs; }
     protected:
@@ -62,9 +60,6 @@ namespace core
         IInstruction(std::string const & name, std::vector<PIOperand> const & operands);
         IInstruction(IInstruction const & that);
         virtual ~IInstruction(void) = default;
-
-        uint32_t getNumOperands(void) const;
-        void assignOperands(uint32_t encoded_inst);
 
         virtual PIEvent execute(MachineState const & state) const = 0;
         std::string toFormatString(void) const;

@@ -17,10 +17,10 @@ namespace core
 {
 namespace asmbl
 {
-    class InstructionEncoder : public InstructionHandler
+    class ISAEncoder : public ISAHandler
     {
     public:
-        InstructionEncoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal_assembly);
+        ISAEncoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal_assembly);
 
         bool isStringPseudo(std::string const & search) const;
         bool isStringValidReg(std::string const & search) const;
