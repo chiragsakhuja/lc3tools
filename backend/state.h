@@ -24,6 +24,7 @@ namespace core
         std::vector<uint16_t> rf;
         std::unordered_map<uint16_t, PIDevice> mmio;
         uint16_t pc, ir;
+        PIInstruction decoded_ir;
 
     public:
         MachineState(void);
@@ -32,6 +33,8 @@ namespace core
         void writePC(uint16_t value) { pc = value; }
         uint16_t readIR(void) const { return ir; }
         void writeIR(uint16_t value) { ir = value; }
+        PIInstruction readDecodedIR(void) const { return decoded_ir; }
+        void writeDecodedIR(PIInstruction value) { decoded_ir = value; }
         uint16_t readReg(uint16_t id) const { return rf[id]; }
         void writeReg(uint16_t id, uint16_t value) { rf[id] = value; }
         std::pair<uint16_t, PIMicroOp> readMem(uint16_t addr) const;

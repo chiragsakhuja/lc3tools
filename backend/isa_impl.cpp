@@ -55,18 +55,24 @@ ISAHandler::ISAHandler(void)
      */
 }
 
-PIMicroOp AddImmInstruction::buildMicroOps(MachineState const & state) const
+PIMicroOp AddRegInstruction::buildMicroOps(MachineState const & state) const
 {
+    (void) state;
+
     PFutureResult result = std::make_shared<FutureResult>();
-    PIMicroOp chain = std::make_shared<RegAddImmMicroOp>(result, 0, 0);
+    PIMicroOp chain = std::make_shared<RegAddRegMicroOp>(result, getOperand(2)->getValue(), getOperand(4)->getValue());
     chain->insert(std::make_shared<CCUpdateMicroOp>(result));
     return chain;
 }
 
-PIMicroOp AddRegInstruction::buildMicroOps(MachineState const & state) const
+PIMicroOp AddImmInstruction::buildMicroOps(MachineState const & state) const
 {
+    (void) state;
+
     PFutureResult result = std::make_shared<FutureResult>();
-    PIMicroOp chain = std::make_shared<RegAddRegMicroOp>(result, 0, 0);
+    PIMicroOp chain = std::make_shared<RegAddImmMicroOp>(result, getOperand(2)->getValue(),
+        lc3::utils::sextTo16(getOperand(4)->getValue(), getOperand(4)->getWidth()));
     chain->insert(std::make_shared<CCUpdateMicroOp>(result));
     return chain;
 }
+

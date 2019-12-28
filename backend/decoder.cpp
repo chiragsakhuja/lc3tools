@@ -5,7 +5,7 @@ using namespace lc3::core::sim;
 Decoder::Decoder(void) : ISAHandler()
 {
     for(PIInstruction inst : instructions) {
-        uint16_t opcode = std::static_pointer_cast<FixedOperand>(inst->getOperand(0))->getValue();
+        uint16_t opcode = inst->getOperand(0)->getValue();
         instructions_by_opcode[opcode].push_back(inst);
     }
 }
@@ -24,7 +24,7 @@ lc3::optional<lc3::core::PIInstruction> Decoder::decode(uint16_t value) const
             for(PIOperand const op : inst->getOperands()) {
                 if(op->getType() == IOperand::Type::FIXED) {
                     if(lc3::utils::getBits(value, bit_check_pos, bit_check_pos - op->getWidth() + 1) !=
-                        std::static_pointer_cast<FixedOperand>(op)->getValue())
+                        op->getValue())
                     {
                         valid = false;
                         break;
@@ -34,6 +34,13 @@ lc3::optional<lc3::core::PIInstruction> Decoder::decode(uint16_t value) const
             }
 
             if(valid) {
+                uint32_t bit_pos = 15;
+                for(PIOperand op : inst->getOperands()) {
+                    if(op->getType() != IOperand::Type::FIXED) {
+                        op->setValue(lc3::utils::getBits(value, bit_pos, bit_pos - op->getWidth() + 1));
+                    }
+                    bit_pos -= op->getWidth();
+                }
                 return inst;
             }
         }

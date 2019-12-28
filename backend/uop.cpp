@@ -38,6 +38,7 @@ void DecodeMicroOp::handleMicroOp(MachineState & state)
     lc3::optional<PIInstruction> inst = decoder.decode(state.readIR());
     if(inst) {
         insert((*inst)->buildMicroOps(state));
+        state.writeDecodedIR(*inst);
     } else {
         // TODO: Handle illegal instruction
     }

@@ -46,6 +46,7 @@ namespace core
         Type getType(void) const { return type; }
         uint32_t getWidth(void) const { return width; }
         uint16_t getValue(void) const { return value; }
+        void setValue(uint16_t new_value) { value = new_value; }
 
     protected:
         Type type;

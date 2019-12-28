@@ -8,6 +8,8 @@ using namespace lc3::core;
 
 void AtomicInstProcessEvent::handleEvent(MachineState & state)
 {
+    (void) state;
+
     PIMicroOp fetch = std::make_shared<FetchMicroOp>();
     PIMicroOp inc_pc = std::make_shared<PCAddImmMicroOp>(1);
     PIMicroOp decode = std::make_shared<DecodeMicroOp>(decoder);
