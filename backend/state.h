@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <utility>
 
 #include "aliases.h"
 #include "device.h"
@@ -33,11 +34,8 @@ namespace core
         void writeIR(uint16_t value) { ir = value; }
         uint16_t readReg(uint16_t id) const { return rf[id]; }
         void writeReg(uint16_t id, uint16_t value) { rf[id] = value; }
-        PIEvent readMem(uint16_t reg_id, uint16_t mem_addr);
-        PIEvent writeMemImm(uint16_t addr, uint16_t value);
-
-        uint16_t getMemValue(uint16_t addr) const;
-        void setMemValue(uint16_t addr, uint16_t value);
+        std::pair<uint16_t, PIMicroOp> readMem(uint16_t addr) const;
+        PIMicroOp writeMemImm(uint16_t addr, uint16_t value);
     };
 };
 };

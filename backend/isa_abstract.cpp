@@ -14,6 +14,14 @@ bool IOperand::isEqualType(IOperand::Type other) const
     return type == other;
 }
 
+FixedOperand::FixedOperand(uint32_t width, uint32_t value) : IOperand(IOperand::Type::FIXED, "fixed", width)
+{
+    this->value = value;
+}
+
+RegOperand::RegOperand(uint32_t width) : IOperand(IOperand::Type::REG, "reg", width) { }
+NumOperand::NumOperand(uint32_t width, bool sext) : IOperand(IOperand::Type::NUM, "imm", width), sext(sext) { }
+LabelOperand::LabelOperand(uint32_t width) : IOperand(IOperand::Type::LABEL, "label/imm", width) { }
 
 IInstruction::IInstruction(std::string const & name, std::vector<PIOperand> const & operands)
 {

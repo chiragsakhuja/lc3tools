@@ -15,44 +15,32 @@ namespace core
         mmio[KBDR] = keyboard;
     }
 
-    PIEvent MachineState::readMem(uint16_t reg_id, uint16_t mem_addr)
-    {
-        if(MMIO_START <= mem_addr && mem_addr <= MMIO_END) {
-            auto search = mmio.find(mem_addr);
-            if(search != mmio.end()) {
-                return search->second->read(reg_id, mem_addr);
-            } else {
-                return nullptr;
-            }
-        } else {
-            return std::make_shared<MemReadEvent>(reg_id, mem_addr);
-        }
-    }
-
-    uint16_t MachineState::getMemValue(uint16_t addr) const
+    std::pair<uint16_t, PIMicroOp> MachineState::readMem(uint16_t addr) const
     {
         if(MMIO_START <= addr && addr <= MMIO_END) {
             auto search = mmio.find(addr);
             if(search != mmio.end()) {
-                return search->second->getValue(addr);
+                return search->second->read(addr);
             } else {
-                return 0x0000;
+                return std::make_pair(0x0000, nullptr);
             }
         } else {
-            return mem[addr].getValue();
+            return std::make_pair(mem[addr].getValue(), nullptr);
         }
     }
 
-    void MachineState::setMemValue(uint16_t addr, uint16_t value)
+    PIMicroOp MachineState::writeMemImm(uint16_t addr, uint16_t value)
     {
         if(MMIO_START <= addr && addr <= MMIO_END) {
             auto search = mmio.find(addr);
             if(search != mmio.end()) {
-                search->second->setValue(addr, value);
+                return search->second->write(addr, value);
             }
         } else {
-            return mem[addr].setValue(value);
+            mem[addr].setValue(value);
         }
+
+        return nullptr;
     }
 };
 };

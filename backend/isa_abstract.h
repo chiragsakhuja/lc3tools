@@ -45,6 +45,7 @@ namespace core
 
         Type getType(void) const { return type; }
         uint32_t getWidth(void) const { return width; }
+        uint16_t getValue(void) const { return value; }
 
     protected:
         Type type;
@@ -64,7 +65,7 @@ namespace core
         IInstruction(IInstruction const & that);
         virtual ~IInstruction(void) = default;
 
-        virtual PIEvent buildEvents(MachineState const & state) const = 0;
+        virtual PIMicroOp buildMicroOps(MachineState const & state) const = 0;
         std::string toFormatString(void) const;
         std::string toValueString(void) const;
 
@@ -111,7 +112,6 @@ namespace core
         virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
             SymbolTable const & regs, SymbolTable const & symbols, utils::AssemblerLogger & logger) override;
     };
-
 };
 };
 

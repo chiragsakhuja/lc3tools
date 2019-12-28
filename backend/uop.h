@@ -1,45 +1,82 @@
 #ifndef UOP_H
 #define UOP_H
 
-#include "event.h"
-#include "state.h"
+#include <memory>
+
+#include "aliases.h"
+#include "utils.h"
 
 namespace lc3
 {
 namespace core
 {
-    class FetchEvent : public IEvent
+    namespace sim { class Decoder; };
+    class MachineState;
+
+    using FutureResult = future<uint16_t>;
+    using PFutureResult = std::shared_ptr<FutureResult>;
+
+    class IMicroOp
     {
     public:
-        FetchEvent(void) : FetchEvent(0) {}
-        FetchEvent(uint64_t time_delta) : IEvent(time_delta) {}
+        IMicroOp(void) : IMicroOp(nullptr) {}
+        IMicroOp(PFutureResult result) : result(result), next(nullptr) {}
+        virtual ~IMicroOp(void) = default;
 
-        virtual void handleEvent(MachineState & state) override;
+        virtual void handleMicroOp(MachineState & state) = 0;
+        virtual std::string toString(MachineState const & state) const = 0;
+        PIMicroOp insert(PIMicroOp new_next);
+        PIMicroOp getNext(void) const { return next; }
+
+    protected:
+        PFutureResult result;
+        PIMicroOp next;
+    };
+
+    class FetchMicroOp : public IMicroOp
+    {
+    public:
+        FetchMicroOp(void) : FetchMicroOp(nullptr) {}
+        FetchMicroOp(PFutureResult result) : IMicroOp(result) {}
+
+        virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
     };
 
-    class PCAddImmEvent : public IEvent
+    class DecodeMicroOp : public IMicroOp
     {
     public:
-        PCAddImmEvent(int16_t amnt) : PCAddImmEvent(0, amnt) {}
-        PCAddImmEvent(uint64_t time_delta, int16_t amnt) :
-            IEvent(time_delta), amnt(amnt) {}
+        DecodeMicroOp(sim::Decoder const & decoder) : IMicroOp(nullptr), decoder(decoder) {}
 
-        virtual void handleEvent(MachineState & state) override;
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        sim::Decoder const & decoder;
+    };
+
+    class PCAddImmMicroOp : public IMicroOp
+    {
+    public:
+        PCAddImmMicroOp(int16_t amnt) : PCAddImmMicroOp(nullptr, amnt) {}
+        PCAddImmMicroOp(PFutureResult result, int16_t amnt) :
+            IMicroOp(result), amnt(amnt) {}
+
+        virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
         int16_t amnt;
     };
 
-    class RegAddImmEvent : public IEvent
+    class RegAddImmMicroOp : public IMicroOp
     {
     public:
-        RegAddImmEvent(uint16_t reg_id, int16_t amnt) : RegAddImmEvent(0, reg_id, amnt) {}
-        RegAddImmEvent(uint64_t time_delta, uint16_t reg_id, int16_t amnt) :
-            IEvent(time_delta), reg_id(reg_id), amnt(amnt) {}
+        RegAddImmMicroOp(uint16_t reg_id, int16_t amnt) : RegAddImmMicroOp(nullptr, reg_id, amnt) {}
+        RegAddImmMicroOp(PFutureResult result, uint16_t reg_id, int16_t amnt) :
+            IMicroOp(result), reg_id(reg_id), amnt(amnt) {}
 
-        virtual void handleEvent(MachineState & state) override;
+        virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
@@ -47,56 +84,52 @@ namespace core
         int16_t amnt;
     };
 
-    class RegAddRegEvent : public IEvent
+    class RegAddRegMicroOp : public IMicroOp
     {
     public:
-        RegAddRegEvent(uint16_t reg_id1, uint16_t reg_id2) : RegAddRegEvent(0, reg_id1, reg_id2) {}
-        RegAddRegEvent(uint64_t time_delta, uint16_t reg_id1, uint16_t reg_id2) :
-            IEvent(time_delta), reg_id1(reg_id1), reg_id2(reg_id2) {}
+        RegAddRegMicroOp(uint16_t reg_id1, uint16_t reg_id2) : RegAddRegMicroOp(nullptr, reg_id1, reg_id2) {}
+        RegAddRegMicroOp(PFutureResult result, uint16_t reg_id1, uint16_t reg_id2) :
+            IMicroOp(result), reg_id1(reg_id1), reg_id2(reg_id2) {}
 
-        virtual void handleEvent(MachineState & state) override;
+        virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
         uint16_t reg_id1, reg_id2;
     };
 
-    class MemReadEvent : public IEvent
+    class MemReadMicroOp : public IMicroOp
     {
     public:
-        MemReadEvent(uint16_t reg_id, uint16_t mem_addr) : MemReadEvent(0, reg_id, mem_addr) {}
-        MemReadEvent(uint64_t time_delta, uint16_t reg_id, uint16_t mem_addr) :
-            IEvent(time_delta), reg_id(reg_id), mem_addr(mem_addr) {}
+        MemReadMicroOp(uint16_t reg_id, uint16_t mem_addr) : MemReadMicroOp(nullptr, reg_id, mem_addr) {}
+        MemReadMicroOp(PFutureResult result, uint16_t reg_id, uint16_t mem_addr) :
+            IMicroOp(result), reg_id(reg_id), mem_addr(mem_addr) {}
 
-        virtual void handleEvent(MachineState & state) override;
+        virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
         uint16_t reg_id, mem_addr;
     };
 
-    class MemWriteImmEvent : public IEvent
+    class MemWriteImmMicroOp : public IMicroOp
     {
     public:
-        MemWriteImmEvent(uint16_t addr, uint16_t value) : MemWriteImmEvent(0, addr, value) {}
-        MemWriteImmEvent(uint64_t time_delta, uint16_t addr, uint16_t value) :
-            IEvent(time_delta), addr(addr), value(value) {}
+        MemWriteImmMicroOp(uint16_t addr, uint16_t value) : IMicroOp(nullptr), addr(addr), value(value) {}
 
-        virtual void handleEvent(MachineState & state) override;
+        virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
         uint16_t addr, value;
     };
 
-    class CCUpdateEvent : public IEvent
+    class CCUpdateMicroOp : public IMicroOp
     {
     public:
-        CCUpdateEvent(PFutureResult prev_result) : CCUpdateEvent(0, prev_result) {}
-        CCUpdateEvent(uint64_t time_delta, PFutureResult prev_result) :
-            IEvent(time_delta), prev_result(prev_result) {}
+        CCUpdateMicroOp(PFutureResult prev_result) : IMicroOp(nullptr), prev_result(prev_result) {}
 
-        virtual void handleEvent(MachineState & state) override;
+        virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:

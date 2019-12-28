@@ -16,14 +16,9 @@ namespace core
     public:
         virtual ~IDevice(void) {}
 
-        virtual PIEvent read(uint16_t reg_id, uint16_t mem_addr) = 0;
-        /*
-         *virtual void write(uint16_t addr, uint16_t value) = 0;
-         *virtual void tick(void) = 0;
-         */
-
-        virtual uint16_t getValue(uint16_t addr) const = 0;
-        virtual void setValue(uint16_t addr, uint16_t value) = 0;
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const = 0;
+        virtual PIMicroOp write(uint16_t addr, uint16_t value) = 0;
+        //virtual void tick(void) = 0;
     };
 
     class KeyboardDevice : public IDevice
@@ -36,9 +31,8 @@ namespace core
         KeyboardDevice(void) { status.setValue(0xC000); }
         virtual ~KeyboardDevice(void) override = default;
 
-        virtual PIEvent read(uint16_t reg_id, uint16_t mem_addr) override;
-        virtual uint16_t getValue(uint16_t addr) const override;
-        virtual void setValue(uint16_t addr, uint16_t value) override;
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const override;
+        virtual PIMicroOp write(uint16_t addr, uint16_t value) override;
     };
 
     using PIDevice = std::shared_ptr<IDevice>;

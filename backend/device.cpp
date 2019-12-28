@@ -4,39 +4,28 @@ namespace lc3
 {
 namespace core
 {
-    PIEvent KeyboardDevice::read(uint16_t reg_id, uint16_t mem_addr)
-    {
-        if(mem_addr == KBSR) {
-            return std::make_shared<MemReadEvent>(reg_id, mem_addr);
-        } else if(mem_addr == KBDR) {
-            uint16_t status_value = status.getValue();
-            PIEvent ret = std::make_shared<MemReadEvent>(reg_id, mem_addr);
-            ret->next = std::make_shared<MemWriteImmEvent>(KBSR, status_value & 0x7FFF);
-            return ret;
-        } else {
-            return nullptr;
-        }
-    }
-
-    uint16_t KeyboardDevice::getValue(uint16_t addr) const
+    std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr) const
     {
         if(addr == KBSR) {
-            return status.getValue();
+            return std::make_pair(status.getValue(), nullptr);
         } else if(addr == KBDR) {
-            return data.getValue();
+            uint16_t status_value = status.getValue();
+            PIMicroOp toggle_status = std::make_shared<MemWriteImmMicroOp>(KBSR, status_value & 0x7FFF);
+            return std::make_pair(data.getValue(), toggle_status);
         } else {
-            // This should never happen if the device is registered properly, but return 0 just in case.
-            return 0x0000;
+            return std::make_pair(0x0000, nullptr);
         }
     }
 
-    void KeyboardDevice::setValue(uint16_t addr, uint16_t value)
+    PIMicroOp KeyboardDevice::write(uint16_t addr, uint16_t value)
     {
         if(addr == KBSR) {
             status.setValue(value);
         } else if(addr == KBDR) {
-            return data.setValue(value);
+            data.setValue(value);
         }
+
+        return nullptr;
     }
 };
 };

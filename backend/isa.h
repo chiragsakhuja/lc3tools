@@ -8,6 +8,7 @@
 #include "aliases.h"
 #include "isa_abstract.h"
 #include "state.h"
+#include "uop.h"
 
 namespace lc3
 {
@@ -17,14 +18,14 @@ namespace core
     {
     public:
         AddRegInstruction(void);
-        virtual PIEvent buildEvents(MachineState const & state) const override;
+        virtual PIMicroOp buildMicroOps(MachineState const & state) const override;
     };
 
     class AddImmInstruction : public IInstruction
     {
     public:
         AddImmInstruction(void);
-        virtual PIEvent buildEvents(MachineState const & state) const override;
+        virtual PIMicroOp buildMicroOps(MachineState const & state) const override;
     };
 };
 };
