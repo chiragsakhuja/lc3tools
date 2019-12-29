@@ -48,6 +48,7 @@ uint32_t lc3::utils::getBits(uint32_t value, uint32_t end, uint32_t start)
     return (value >> start) & ((1 << (end - start + 1)) - 1);
 }
 
+// TODO: Remove
 uint32_t lc3::utils::computePSRCC(uint32_t value, uint32_t psr)
 {
     uint32_t cc = 0;

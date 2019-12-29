@@ -18,18 +18,24 @@ PIMicroOp IMicroOp::insert(PIMicroOp new_next)
     return next;
 }
 
+std::string IMicroOp::regToString(uint16_t reg_id) const
+{
+    if(reg_id < 8) {
+        return utils::ssprintf("R%d", reg_id);
+    } else {
+        return utils::ssprintf("T%d", reg_id - 8);
+    }
+}
+
 void FetchMicroOp::handleMicroOp(MachineState & state)
 {
     uint16_t value = std::get<0>(state.readMem(state.readPC()));
     state.writeIR(value);
-    if(result) {
-        *result = value;
-    }
 }
 
 std::string FetchMicroOp::toString(MachineState const & state) const
 {
-    return utils::ssprintf("IR:0x%0.4x <= M[0x%0.4x]:0x%0.4x", state.readIR(), state.readPC(),
+    return utils::ssprintf("IR:0x%0.4hx <= M[0x%0.4hx]:0x%0.4hx", state.readIR(), state.readPC(),
         std::get<0>(state.readMem(state.readPC())));
 }
 
@@ -46,58 +52,123 @@ void DecodeMicroOp::handleMicroOp(MachineState & state)
 
 std::string DecodeMicroOp::toString(MachineState const & state) const
 {
-    return utils::ssprintf("Decoding IR:0x%0.4x", state.readIR());
+    // TODO: Print out as dIR <= ...
+    return utils::ssprintf("Decoding IR:0x%0.4hx", state.readIR());
+}
+
+void PCWriteRegMicroOp::handleMicroOp(MachineState & state)
+{
+    uint16_t value = state.readReg(reg_id);
+    state.writePC(value);
+}
+
+std::string PCWriteRegMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("PC:0x%0.4hx <= %s:0x%0.4hx", state.readPC(), regToString(reg_id).c_str(),
+        state.readReg(reg_id));
 }
 
 void PCAddImmMicroOp::handleMicroOp(MachineState & state)
 {
     uint16_t value = state.readPC() + amnt;
     state.writePC(value);
-    if(result) {
-        *result = value;
-    }
 }
 
 std::string PCAddImmMicroOp::toString(MachineState const & state) const
 {
-    return utils::ssprintf("PC:0x%0.4x <= (PC:0x%0.4x + #%d):0x%0.4x", state.readPC(), state.readPC(), amnt,
+    return utils::ssprintf("PC:0x%0.4hx <= (PC:0x%0.4hx + #%d):0x%0.4hx", state.readPC(), state.readPC(), amnt,
         state.readPC() + amnt);
+}
+
+void RegWriteRegMicroOp::handleMicroOp(MachineState & state)
+{
+    state.writeReg(dst_id, state.readReg(src_id));
+}
+
+std::string RegWriteRegMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("%s:0x%0.4hx <= %s:0x%0.4hx", regToString(dst_id).c_str(), state.readReg(dst_id),
+        regToString(src_id).c_str(), state.readReg(src_id));
+}
+
+void RegWritePCMicroOp::handleMicroOp(MachineState & state)
+{
+    state.writeReg(reg_id, state.readPC());
+}
+
+std::string RegWritePCMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("%s:0x%0.4hx <= PC:0x%0.4hx", regToString(reg_id).c_str(), state.readReg(reg_id),
+        state.readPC());
 }
 
 void RegAddImmMicroOp::handleMicroOp(MachineState & state)
 {
-    uint16_t value = state.readReg(reg_id) + amnt;
-    state.writeReg(reg_id, value);
-    if(result) {
-        *result = value;
-    }
+    uint16_t value = state.readReg(src_id) + amnt;
+    state.writeReg(dst_id, value);
 }
 
 std::string RegAddImmMicroOp::toString(MachineState const & state) const
 {
-    return utils::ssprintf("R%d:0x%0.4x <= (R%d:0x%0.4x + #%d):0x%0.4x", reg_id, state.readReg(reg_id), reg_id,
-        state.readReg(reg_id), amnt, state.readReg(reg_id) + amnt);
+    return utils::ssprintf("%s:0x%0.4hx <= (%s:0x%0.4hx + #%d):0x%0.4hx", regToString(dst_id).c_str(),
+        state.readReg(dst_id), regToString(src_id).c_str(), state.readReg(src_id), amnt, state.readReg(src_id) + amnt);
 }
 
 void RegAddRegMicroOp::handleMicroOp(MachineState & state)
 {
-    uint16_t value = state.readReg(reg_id1) + state.readReg(reg_id2);
-    state.writeReg(reg_id1, value);
-    if(result) {
-        *result = value;
-    }
+    uint16_t value = state.readReg(src_id1) + state.readReg(src_id2);
+    state.writeReg(dst_id, value);
 }
 
 std::string RegAddRegMicroOp::toString(MachineState const & state) const
 {
-    return utils::ssprintf("R%d:0x%0.4x <= (R%d:0x%0.4x + R%d:0x%0.4x):0x%0.4x", reg_id1, state.readReg(reg_id1),
-        reg_id1, state.readReg(reg_id1), reg_id2, state.readReg(reg_id2),
-        state.readReg(reg_id1) + state.readReg(reg_id2));
+    return utils::ssprintf("%s:0x%0.4hx <= (%s:0x%0.4hx + %s:0x%0.4hx):0x%0.4hx", regToString(dst_id).c_str(),
+        state.readReg(dst_id), regToString(src_id1).c_str(), state.readReg(src_id1), regToString(src_id2).c_str(),
+        state.readReg(src_id2), state.readReg(src_id1) + state.readReg(src_id2));
+}
+
+void RegAndImmMicroOp::handleMicroOp(MachineState & state)
+{
+    uint16_t value = state.readReg(src_id) & amnt;
+    state.writeReg(dst_id, value);
+}
+
+std::string RegAndImmMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("%s:0x%0.4hx <= (%s:0x%0.4hx & #%d):0x%0.4hx", regToString(dst_id).c_str(),
+        state.readReg(dst_id), regToString(src_id).c_str(), state.readReg(src_id), amnt, state.readReg(src_id) & amnt);
+}
+
+void RegAndRegMicroOp::handleMicroOp(MachineState & state)
+{
+    uint16_t value = state.readReg(src_id1) & state.readReg(src_id2);
+    state.writeReg(dst_id, value);
+}
+
+std::string RegAndRegMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("%s:0x%0.4hx <= (%s:0x%0.4hx & %s:0x%0.4hx):0x%0.4hx", regToString(dst_id).c_str(),
+        state.readReg(dst_id), regToString(src_id1).c_str(), state.readReg(src_id1), regToString(src_id2).c_str(),
+        state.readReg(src_id2), state.readReg(src_id1) & state.readReg(src_id2));
+}
+
+void RegNotMicroOp::handleMicroOp(MachineState & state)
+{
+    uint16_t value = ~state.readReg(src_id);
+    state.writeReg(dst_id, value);
+}
+
+std::string RegNotMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("%s:0x%0.4hx <= (~%s:0x%0.4hx):0x%0.4hx", regToString(dst_id).c_str(),
+        state.readReg(dst_id), regToString(src_id).c_str(), state.readReg(src_id),
+        ~state.readReg(src_id));
 }
 
 void MemReadMicroOp::handleMicroOp(MachineState & state)
 {
-    std::pair<uint16_t, PIMicroOp> read_result = state.readMem(mem_addr);
+    std::pair<uint16_t, PIMicroOp> read_result = state.readMem(state.readReg(addr_reg_id));
+
     uint16_t value = std::get<0>(read_result);
     PIMicroOp op = std::get<1>(read_result);
 
@@ -105,21 +176,19 @@ void MemReadMicroOp::handleMicroOp(MachineState & state)
         insert(op);
     }
 
-    state.writeReg(reg_id, value);
-    if(result) {
-        *result = value;
-    }
+    state.writeReg(dst_id, value);
 }
 
 std::string MemReadMicroOp::toString(MachineState const & state) const
 {
-    return utils::ssprintf("R%d:0x%0.4x <= MEM[0x%0.4x]:0x%0.4x", reg_id, state.readReg(reg_id), mem_addr,
-        std::get<0>(state.readMem(mem_addr)));
+    return utils::ssprintf("%s:0x%0.4hx <= MEM[%s:0x%0.4hx]:0x%0.4hx", regToString(dst_id).c_str(),
+        state.readReg(dst_id), regToString(addr_reg_id).c_str(), state.readReg(addr_reg_id),
+        std::get<0>(state.readMem(state.readReg(addr_reg_id))));
 }
 
 void MemWriteImmMicroOp::handleMicroOp(MachineState & state)
 {
-    PIMicroOp op = state.writeMemImm(addr, value);
+    PIMicroOp op = state.writeMemImm(state.readReg(addr_reg_id), value);
 
     if(op) {
         insert(op);
@@ -128,46 +197,56 @@ void MemWriteImmMicroOp::handleMicroOp(MachineState & state)
 
 std::string MemWriteImmMicroOp::toString(MachineState const & state) const
 {
-    return utils::ssprintf("MEM[0x%0.4x]:0x%0.4x <= 0x%0.4x", addr, std::get<0>(state.readMem(addr)), value);
+    return utils::ssprintf("MEM[%s:0x%0.4hx]:0x%0.4hx <= 0x%0.4hx", regToString(addr_reg_id).c_str(),
+        std::get<0>(state.readMem(state.readReg(addr_reg_id))), value);
 }
 
-void CCUpdateMicroOp::handleMicroOp(MachineState & state)
+void MemWriteRegMicroOp::handleMicroOp(MachineState & state)
 {
-    if(prev_result) {
-        uint16_t prev_value = prev_result->get();
-        uint16_t psr_value = std::get<0>(state.readMem(PSR));
-        char cc_char = getCCChar(prev_value);
-        if(cc_char == 'N') {
-            state.writeMemImm(PSR, (psr_value & 0xFFF8) | 0x0004);
-        } else if(cc_char == 'Z') {
-            state.writeMemImm(PSR, (psr_value & 0xFFF8) | 0x0002);
-        } else {
-            state.writeMemImm(PSR, (psr_value & 0xFFF8) | 0x0001);
-        }
+    PIMicroOp op = state.writeMemImm(state.readReg(addr_reg_id), state.readReg(src_id));
+
+    if(op) {
+        insert(op);
     }
 }
 
-std::string CCUpdateMicroOp::toString(MachineState const & state) const
+std::string MemWriteRegMicroOp::toString(MachineState const & state) const
 {
-    if(prev_result) {
-        char cur_cc_char;
-        uint16_t prev_value = prev_result->get();
-        uint16_t psr_value = std::get<0>(state.readMem(PSR));
-        if((psr_value & 0x0004) != 0) {
-            cur_cc_char = 'N';
-        } else if((psr_value & 0x0002) != 0) {
-            cur_cc_char = 'Z';
-        } else {
-            cur_cc_char = 'P';
-        }
-
-        return utils::ssprintf("CC:%c <= ComputeCC(0x%0.4x):%c", cur_cc_char, prev_value, getCCChar(prev_value));
-    }
-
-    return "invalid CC change";
+    return utils::ssprintf("MEM[%s:0x%0.4hx]:0x%0.4hx <= %s:0x%0.4hx", regToString(addr_reg_id).c_str(),
+        state.readReg(addr_reg_id), std::get<0>(state.readMem(state.readReg(addr_reg_id))), regToString(src_id).c_str(),
+        state.readReg(src_id));
 }
 
-char CCUpdateMicroOp::getCCChar(uint16_t value) const
+void CCUpdateRegMicroOp::handleMicroOp(MachineState & state)
+{
+    uint16_t psr_value = state.readPSR();
+    char cc_char = getCCChar(state.readReg(reg_id));
+    if(cc_char == 'N') {
+        state.writePSR((psr_value & 0xFFF8) | 0x0004);
+    } else if(cc_char == 'Z') {
+        state.writePSR((psr_value & 0xFFF8) | 0x0002);
+    } else {
+        state.writePSR((psr_value & 0xFFF8) | 0x0001);
+    }
+}
+
+std::string CCUpdateRegMicroOp::toString(MachineState const & state) const
+{
+    char cur_cc_char;
+    uint16_t psr_value = state.readPSR();
+    if((psr_value & 0x0004) != 0) {
+        cur_cc_char = 'N';
+    } else if((psr_value & 0x0002) != 0) {
+        cur_cc_char = 'Z';
+    } else {
+        cur_cc_char = 'P';
+    }
+
+    return utils::ssprintf("CC:%c <= ComputeCC(0x%0.4hx):%c", cur_cc_char, state.readReg(reg_id),
+        getCCChar(state.readReg(reg_id)));
+}
+
+char CCUpdateRegMicroOp::getCCChar(uint16_t value) const
 {
     if((value & 0x8000) != 0) {
         return 'N';

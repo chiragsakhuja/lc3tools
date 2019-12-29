@@ -13,14 +13,10 @@ namespace core
     namespace sim { class Decoder; };
     class MachineState;
 
-    using FutureResult = future<uint16_t>;
-    using PFutureResult = std::shared_ptr<FutureResult>;
-
     class IMicroOp
     {
     public:
-        IMicroOp(void) : IMicroOp(nullptr) {}
-        IMicroOp(PFutureResult result) : result(result), next(nullptr) {}
+        IMicroOp(void) : next(nullptr) { }
         virtual ~IMicroOp(void) = default;
 
         virtual void handleMicroOp(MachineState & state) = 0;
@@ -29,15 +25,15 @@ namespace core
         PIMicroOp getNext(void) const { return next; }
 
     protected:
-        PFutureResult result;
         PIMicroOp next;
+
+        std::string regToString(uint16_t reg_id) const;
     };
 
     class FetchMicroOp : public IMicroOp
     {
     public:
-        FetchMicroOp(void) : FetchMicroOp(nullptr) {}
-        FetchMicroOp(PFutureResult result) : IMicroOp(result) {}
+        FetchMicroOp(void) = default;
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
@@ -46,7 +42,7 @@ namespace core
     class DecodeMicroOp : public IMicroOp
     {
     public:
-        DecodeMicroOp(sim::Decoder const & decoder) : IMicroOp(nullptr), decoder(decoder) {}
+        DecodeMicroOp(sim::Decoder const & decoder) : IMicroOp(), decoder(decoder) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
@@ -55,85 +51,170 @@ namespace core
         sim::Decoder const & decoder;
     };
 
-    class PCAddImmMicroOp : public IMicroOp
+    class PCWriteRegMicroOp : public IMicroOp
     {
     public:
-        PCAddImmMicroOp(int16_t amnt) : PCAddImmMicroOp(nullptr, amnt) {}
-        PCAddImmMicroOp(PFutureResult result, int16_t amnt) :
-            IMicroOp(result), amnt(amnt) {}
-
-        virtual void handleMicroOp(MachineState & state) override;
-        virtual std::string toString(MachineState const & state) const override;
-
-    private:
-        int16_t amnt;
-    };
-
-    class RegAddImmMicroOp : public IMicroOp
-    {
-    public:
-        RegAddImmMicroOp(uint16_t reg_id, int16_t amnt) : RegAddImmMicroOp(nullptr, reg_id, amnt) {}
-        RegAddImmMicroOp(PFutureResult result, uint16_t reg_id, int16_t amnt) :
-            IMicroOp(result), reg_id(reg_id), amnt(amnt) {}
+        PCWriteRegMicroOp(uint16_t reg_id) : IMicroOp(), reg_id(reg_id) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
         uint16_t reg_id;
-        int16_t amnt;
+    };
+
+    class PCAddImmMicroOp : public IMicroOp
+    {
+    public:
+        PCAddImmMicroOp(int16_t amnt) : IMicroOp(), amnt(amnt) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t amnt;
+    };
+
+    class RegWriteRegMicroOp : public IMicroOp
+    {
+    public:
+        RegWriteRegMicroOp(uint16_t dst_id, uint16_t src_id) : IMicroOp(), dst_id(dst_id), src_id(src_id) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t dst_id, src_id;
+    };
+
+    class RegWritePCMicroOp : public IMicroOp
+    {
+    public:
+        RegWritePCMicroOp(uint16_t reg_id) : IMicroOp(), reg_id(reg_id) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t reg_id;
+    };
+
+    class RegAddImmMicroOp : public IMicroOp
+    {
+    public:
+        RegAddImmMicroOp(uint16_t dst_id, uint16_t src_id, uint16_t amnt) :
+            IMicroOp(), dst_id(dst_id), src_id(src_id), amnt(amnt) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t dst_id, src_id;
+        uint16_t amnt;
     };
 
     class RegAddRegMicroOp : public IMicroOp
     {
     public:
-        RegAddRegMicroOp(uint16_t reg_id1, uint16_t reg_id2) : RegAddRegMicroOp(nullptr, reg_id1, reg_id2) {}
-        RegAddRegMicroOp(PFutureResult result, uint16_t reg_id1, uint16_t reg_id2) :
-            IMicroOp(result), reg_id1(reg_id1), reg_id2(reg_id2) {}
+        RegAddRegMicroOp(uint16_t dst_id, uint16_t src_id1, uint16_t src_id2) :
+            IMicroOp(), dst_id(dst_id), src_id1(src_id1), src_id2(src_id2) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
-        uint16_t reg_id1, reg_id2;
+        uint16_t dst_id, src_id1, src_id2;
+    };
+
+    class RegAndImmMicroOp : public IMicroOp
+    {
+    public:
+        RegAndImmMicroOp(uint16_t dst_id, uint16_t src_id, uint16_t amnt) :
+            IMicroOp(), dst_id(dst_id), src_id(src_id), amnt(amnt) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t dst_id, src_id;
+        uint16_t amnt;
+    };
+
+    class RegAndRegMicroOp : public IMicroOp
+    {
+    public:
+        RegAndRegMicroOp(uint16_t dst_id, uint16_t src_id1, uint16_t src_id2) :
+            IMicroOp(), dst_id(dst_id), src_id1(src_id1), src_id2(src_id2) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t dst_id, src_id1, src_id2;
+    };
+
+    class RegNotMicroOp : public IMicroOp
+    {
+    public:
+        RegNotMicroOp(uint16_t dst_id, uint16_t src_id) :
+            IMicroOp(), dst_id(dst_id), src_id(src_id) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t dst_id, src_id;
     };
 
     class MemReadMicroOp : public IMicroOp
     {
     public:
-        MemReadMicroOp(uint16_t reg_id, uint16_t mem_addr) : MemReadMicroOp(nullptr, reg_id, mem_addr) {}
-        MemReadMicroOp(PFutureResult result, uint16_t reg_id, uint16_t mem_addr) :
-            IMicroOp(result), reg_id(reg_id), mem_addr(mem_addr) {}
+        MemReadMicroOp(uint16_t dst_id, uint16_t addr_reg_id) :
+            IMicroOp(), dst_id(dst_id), addr_reg_id(addr_reg_id) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
-        uint16_t reg_id, mem_addr;
+        uint16_t dst_id, addr_reg_id;
     };
 
     class MemWriteImmMicroOp : public IMicroOp
     {
     public:
-        MemWriteImmMicroOp(uint16_t addr, uint16_t value) : IMicroOp(nullptr), addr(addr), value(value) {}
+        MemWriteImmMicroOp(uint16_t addr_reg_id, uint16_t value) :
+            IMicroOp(), addr_reg_id(addr_reg_id), value(value) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
-        uint16_t addr, value;
+        uint16_t addr_reg_id, value;
     };
 
-    class CCUpdateMicroOp : public IMicroOp
+    class MemWriteRegMicroOp : public IMicroOp
     {
     public:
-        CCUpdateMicroOp(PFutureResult prev_result) : IMicroOp(nullptr), prev_result(prev_result) {}
+        MemWriteRegMicroOp (uint16_t addr_reg_id, uint16_t src_id) :
+            IMicroOp(), addr_reg_id(addr_reg_id), src_id(src_id) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
-        PFutureResult prev_result;
+        uint16_t addr_reg_id, src_id;
+    };
+
+    class CCUpdateRegMicroOp : public IMicroOp
+    {
+    public:
+        CCUpdateRegMicroOp(uint16_t reg_id) : IMicroOp(), reg_id(reg_id) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t reg_id;
 
         char getCCChar(uint16_t value) const;
     };

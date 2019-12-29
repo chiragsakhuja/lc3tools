@@ -2,45 +2,45 @@
 #include "device.h"
 #include "state.h"
 
-namespace lc3
+using namespace lc3::core;
+
+MachineState::MachineState(void) : pc(0), ir(0), decoded_ir(nullptr)
 {
-namespace core
+    mem.resize(USER_END - SYSTEM_START + 1);
+    rf.resize(9);
+}
+
+std::pair<uint16_t, PIMicroOp> MachineState::readMem(uint16_t addr) const
 {
-    MachineState::MachineState(void)
-    {
-        mem.resize(USER_END - SYSTEM_START + 1);
-        rf.resize(8);
-        PIDevice keyboard = std::make_shared<KeyboardDevice>();
-        mmio[KBSR] = keyboard;
-        mmio[KBDR] = keyboard;
-    }
-
-    std::pair<uint16_t, PIMicroOp> MachineState::readMem(uint16_t addr) const
-    {
-        if(MMIO_START <= addr && addr <= MMIO_END) {
-            auto search = mmio.find(addr);
-            if(search != mmio.end()) {
-                return search->second->read(addr);
-            } else {
-                return std::make_pair(0x0000, nullptr);
-            }
+    // TODO: Check ACV
+    if(MMIO_START <= addr && addr <= MMIO_END) {
+        auto search = mmio.find(addr);
+        if(search != mmio.end()) {
+            return search->second->read(addr);
         } else {
-            return std::make_pair(mem[addr].getValue(), nullptr);
+            return std::make_pair(0x0000, nullptr);
         }
+    } else {
+        return std::make_pair(mem[addr].getValue(), nullptr);
+    }
+}
+
+PIMicroOp MachineState::writeMemImm(uint16_t addr, uint16_t value)
+{
+    // TODO: Check ACV
+    if(MMIO_START <= addr && addr <= MMIO_END) {
+        auto search = mmio.find(addr);
+        if(search != mmio.end()) {
+            return search->second->write(addr, value);
+        }
+    } else {
+        mem[addr].setValue(value);
     }
 
-    PIMicroOp MachineState::writeMemImm(uint16_t addr, uint16_t value)
-    {
-        if(MMIO_START <= addr && addr <= MMIO_END) {
-            auto search = mmio.find(addr);
-            if(search != mmio.end()) {
-                return search->second->write(addr, value);
-            }
-        } else {
-            mem[addr].setValue(value);
-        }
+    return nullptr;
+}
 
-        return nullptr;
-    }
-};
-};
+void MachineState::registerDeviceReg(uint16_t mem_addr, PIDevice device)
+{
+    mmio[mem_addr] = device;
+}

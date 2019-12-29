@@ -27,16 +27,18 @@ namespace lc3
 {
 namespace core
 {
-    class SimulatorNew
+    class Simulator
     {
+    public:
+        Simulator(void);
+        void main(void);
+
     private:
         std::priority_queue<PIEvent, std::vector<PIEvent>, std::greater<PIEvent>> events;
-        MachineState state;
         uint64_t time;
 
-    public:
-        SimulatorNew(void);
-        void main(void);
+        MachineState state;
+        std::vector<PIDevice> devices;
     };
 };
 };

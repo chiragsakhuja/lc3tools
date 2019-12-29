@@ -19,13 +19,6 @@ namespace core
 
     class MachineState
     {
-    private:
-        std::vector<MemLocation> mem;
-        std::vector<uint16_t> rf;
-        std::unordered_map<uint16_t, PIDevice> mmio;
-        uint16_t pc, ir;
-        PIInstruction decoded_ir;
-
     public:
         MachineState(void);
 
@@ -35,10 +28,21 @@ namespace core
         void writeIR(uint16_t value) { ir = value; }
         PIInstruction readDecodedIR(void) const { return decoded_ir; }
         void writeDecodedIR(PIInstruction value) { decoded_ir = value; }
+        uint16_t readPSR(void) const { return std::get<0>(readMem(PSR)); }
+        void writePSR(uint16_t value) { writeMemImm(PSR, value); }
         uint16_t readReg(uint16_t id) const { return rf[id]; }
         void writeReg(uint16_t id, uint16_t value) { rf[id] = value; }
         std::pair<uint16_t, PIMicroOp> readMem(uint16_t addr) const;
         PIMicroOp writeMemImm(uint16_t addr, uint16_t value);
+
+        void registerDeviceReg(uint16_t mem_addr, PIDevice device);
+
+    private:
+        std::vector<MemLocation> mem;
+        std::vector<uint16_t> rf;
+        std::unordered_map<uint16_t, PIDevice> mmio;
+        uint16_t pc, ir;
+        PIInstruction decoded_ir;
     };
 };
 };

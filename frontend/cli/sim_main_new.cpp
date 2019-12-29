@@ -6,7 +6,7 @@
 
 int main(int argc, char * argv[])
 {
-    lc3::core::SimulatorNew sim;
+    lc3::core::Simulator sim;
     sim.main();
     return 0;
 }
