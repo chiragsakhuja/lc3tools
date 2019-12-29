@@ -4,10 +4,10 @@
 
 using namespace lc3::core;
 
-MachineState::MachineState(void) : pc(0), ir(0), decoded_ir(nullptr)
+MachineState::MachineState(void) : pc(0), ir(0), decoded_ir(nullptr), ssp(0)
 {
     mem.resize(USER_END - SYSTEM_START + 1);
-    rf.resize(9);
+    rf.resize(16);
 }
 
 std::pair<uint16_t, PIMicroOp> MachineState::readMem(uint16_t addr) const

@@ -279,6 +279,53 @@ PIMicroOp STRInstruction::buildMicroOps(MachineState const & state) const
 
 PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
 {
-    // TODO: Fill in code
-    return nullptr;
+    (void) state;
+
+    PIMicroOp save_cur_sp = std::make_shared<RegWriteRegMicroOp>(8, 6);
+    PIMicroOp write_ssp = std::make_shared<RegWriteSSPMicroOp>(6);
+    PIMicroOp write_cur_sp = std::make_shared<SSPWriteRegMicroOp>(8);
+    PIMicroOp dec_sp1 = std::make_shared<RegAddImmMicroOp>(6, 6, -1);
+    PIMicroOp write_psr = std::make_shared<RegWritePSRMicroOp>(9);
+    PIMicroOp set_priv = std::make_shared<RegAndImmMicroOp>(9, 9, 0x7FFF);
+    PIMicroOp change_priv = std::make_shared<PSRWriteRegMicroOp>(9);
+    PIMicroOp store_psr = std::make_shared<MemWriteRegMicroOp>(6, 9);
+    PIMicroOp dec_sp2 = std::make_shared<RegAddImmMicroOp>(6, 6, -1);
+    PIMicroOp write_pc = std::make_shared<RegWritePCMicroOp>(9);
+    PIMicroOp store_pc = std::make_shared<MemWriteRegMicroOp>(6, 9);
+    PIMicroOp write_table_start = std::make_shared<RegWriteImmMicroOp>(10, TRAP_TABLE_START);
+    PIMicroOp add_table_offset = std::make_shared<RegAddImmMicroOp>(10, 10, getOperand(2)->getValue());
+    PIMicroOp load_table = std::make_shared<MemReadMicroOp>(10, 10);
+    PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(10);
+
+    if((state.readPSR() & 0x8000) != 0) {
+        // Only swap stack pointers if currently in user mode.
+        save_cur_sp->insert(write_ssp);
+        write_ssp->insert(write_cur_sp);
+        write_cur_sp->insert(dec_sp1);
+    }
+
+    dec_sp1->insert(write_psr);
+
+    if((state.readPSR() & 0x8000) != 0) {
+        // Only change privilege if currently in user mode.
+        write_psr->insert(set_priv);
+        set_priv->insert(change_priv);
+        change_priv->insert(store_psr);
+    } else {
+        write_psr->insert(store_psr);
+    }
+
+    store_psr->insert(dec_sp2);
+    dec_sp2->insert(write_pc);
+    write_pc->insert(store_pc);
+    store_pc->insert(write_table_start);
+    write_table_start->insert(add_table_offset);
+    add_table_offset->insert(load_table);
+    load_table->insert(jump);
+
+    if((state.readPSR() & 0x8000) != 0) {
+        return save_cur_sp;
+    } else {
+        return dec_sp1;
+    }
 }

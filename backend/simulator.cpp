@@ -9,8 +9,6 @@ using namespace lc3::core;
 
 Simulator::Simulator(void) : time(0)
 {
-    state.writePC(RESET_PC);
-
     devices.emplace_back(std::make_shared<RWReg>(PSR));
 
     for(PIDevice dev : devices) {
@@ -18,6 +16,13 @@ Simulator::Simulator(void) : time(0)
             state.registerDeviceReg(dev_addr, dev);
         }
     }
+
+    // TODO: Create start event
+    state.writePC(RESET_PC);
+    // TODO: Start off in system mode, so initialize R6 to system stack pointer
+    state.writeSSP(USER_START);
+    state.writePSR(0x8002);
+
 }
 
 void Simulator::main(void)
@@ -25,11 +30,15 @@ void Simulator::main(void)
     sim::Decoder decoder;
     state.writeReg(0, 0xdead);
     state.writeReg(1, 0xbeef);
+    state.writeMemImm(0x25, 0x200);
+
     state.writeMemImm(0x200, 0x927f);
     state.writeMemImm(0x201, 0x3005);
     state.writeMemImm(0x202, 0xb204);
     state.writeMemImm(0x203, 0xa403);
+    state.writeMemImm(0x204, 0xf025);
     events.emplace(std::make_shared<AtomicInstProcessEvent>(0, decoder));
+    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
     events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
     events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
     events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));

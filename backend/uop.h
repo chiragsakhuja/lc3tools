@@ -63,6 +63,18 @@ namespace core
         uint16_t reg_id;
     };
 
+    class PSRWriteRegMicroOp : public IMicroOp
+    {
+    public:
+        PSRWriteRegMicroOp(uint16_t reg_id) : IMicroOp(), reg_id(reg_id) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t reg_id;
+    };
+
     class PCAddImmMicroOp : public IMicroOp
     {
     public:
@@ -73,6 +85,18 @@ namespace core
 
     private:
         uint16_t amnt;
+    };
+
+    class RegWriteImmMicroOp : public IMicroOp
+    {
+    public:
+        RegWriteImmMicroOp(uint16_t reg_id, uint16_t value) : IMicroOp(), reg_id(reg_id), value(value) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t reg_id, value;
     };
 
     class RegWriteRegMicroOp : public IMicroOp
@@ -91,6 +115,42 @@ namespace core
     {
     public:
         RegWritePCMicroOp(uint16_t reg_id) : IMicroOp(), reg_id(reg_id) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t reg_id;
+    };
+
+    class RegWritePSRMicroOp : public IMicroOp
+    {
+    public:
+        RegWritePSRMicroOp(uint16_t reg_id) : IMicroOp(), reg_id(reg_id) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t reg_id;
+    };
+
+    class RegWriteSSPMicroOp : public IMicroOp
+    {
+    public:
+        RegWriteSSPMicroOp(uint16_t reg_id) : IMicroOp(), reg_id(reg_id) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        uint16_t reg_id;
+    };
+
+    class SSPWriteRegMicroOp : public IMicroOp
+    {
+    public:
+        SSPWriteRegMicroOp(uint16_t reg_id) : IMicroOp(), reg_id(reg_id) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;

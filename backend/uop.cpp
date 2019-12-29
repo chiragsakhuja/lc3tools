@@ -68,6 +68,18 @@ std::string PCWriteRegMicroOp::toString(MachineState const & state) const
         state.readReg(reg_id));
 }
 
+void PSRWriteRegMicroOp::handleMicroOp(MachineState & state)
+{
+    uint16_t value = state.readReg(reg_id);
+    state.writePSR(value);
+}
+
+std::string PSRWriteRegMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("PSR:0x%0.4hx <= %s:0x%0.4hx", state.readPSR(), regToString(reg_id).c_str(),
+        state.readReg(reg_id));
+}
+
 void PCAddImmMicroOp::handleMicroOp(MachineState & state)
 {
     uint16_t value = state.readPC() + amnt;
@@ -78,6 +90,16 @@ std::string PCAddImmMicroOp::toString(MachineState const & state) const
 {
     return utils::ssprintf("PC:0x%0.4hx <= (PC:0x%0.4hx + #%d):0x%0.4hx", state.readPC(), state.readPC(), amnt,
         state.readPC() + amnt);
+}
+
+void RegWriteImmMicroOp::handleMicroOp(MachineState & state)
+{
+    state.writeReg(reg_id, value);
+}
+
+std::string RegWriteImmMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("%s:0x%0.4hx <= 0x%0.4hx", regToString(reg_id).c_str(), state.readReg(reg_id), value);
 }
 
 void RegWriteRegMicroOp::handleMicroOp(MachineState & state)
@@ -100,6 +122,40 @@ std::string RegWritePCMicroOp::toString(MachineState const & state) const
 {
     return utils::ssprintf("%s:0x%0.4hx <= PC:0x%0.4hx", regToString(reg_id).c_str(), state.readReg(reg_id),
         state.readPC());
+}
+
+void RegWritePSRMicroOp::handleMicroOp(MachineState & state)
+{
+    state.writeReg(reg_id, state.readPSR());
+}
+
+std::string RegWritePSRMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("%s:0x%0.4hx <= PSR:0x%0.4hx", regToString(reg_id).c_str(), state.readReg(reg_id),
+        state.readPSR());
+}
+
+void RegWriteSSPMicroOp::handleMicroOp(MachineState & state)
+{
+    state.writeReg(reg_id, state.readSSP());
+}
+
+std::string RegWriteSSPMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("%s:0x%0.4hx <= SSP:0x%0.4hx", regToString(reg_id).c_str(), state.readReg(reg_id),
+        state.readSSP());
+}
+
+void SSPWriteRegMicroOp::handleMicroOp(MachineState & state)
+{
+    state.writeSSP(state.readReg(reg_id));
+}
+
+std::string SSPWriteRegMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("SSP:0x%0.4hx <= %s:0x%0.4hx", state.readSSP(), regToString(reg_id).c_str(),
+        state.readReg(reg_id));
+        
 }
 
 void RegAddImmMicroOp::handleMicroOp(MachineState & state)

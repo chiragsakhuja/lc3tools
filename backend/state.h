@@ -30,6 +30,10 @@ namespace core
         void writeDecodedIR(PIInstruction value) { decoded_ir = value; }
         uint16_t readPSR(void) const { return std::get<0>(readMem(PSR)); }
         void writePSR(uint16_t value) { writeMemImm(PSR, value); }
+        uint16_t readSSP(void) const { return ssp; }
+        void writeSSP(uint16_t value) { ssp = value; }
+
+
         uint16_t readReg(uint16_t id) const { return rf[id]; }
         void writeReg(uint16_t id, uint16_t value) { rf[id] = value; }
         std::pair<uint16_t, PIMicroOp> readMem(uint16_t addr) const;
@@ -43,6 +47,7 @@ namespace core
         std::unordered_map<uint16_t, PIDevice> mmio;
         uint16_t pc, ir;
         PIInstruction decoded_ir;
+        uint16_t ssp;
     };
 };
 };
