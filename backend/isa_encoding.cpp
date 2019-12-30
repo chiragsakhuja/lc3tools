@@ -224,4 +224,5 @@ PUTSPInstruction::PUTSPInstruction(void) : TRAPInstruction("putsp", {
 HALTInstruction::HALTInstruction(void) : TRAPInstruction("halt", {
     std::make_shared<FixedOperand>(4, 0xf),
     std::make_shared<FixedOperand>(4, 0x0),
+    std::make_shared<FixedOperand>(8, 0x25)
 }) { }

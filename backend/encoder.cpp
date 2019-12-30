@@ -5,11 +5,11 @@
 #include <cassert>
 #include <sstream>
 
-#include "instruction_encoder.h"
+#include "encoder.h"
 
 using namespace lc3::core::asmbl;
 
-ISAEncoder::ISAEncoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal_asm)
+Encoder::Encoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal_asm)
     : ISAHandler(), logger(logger), enable_liberal_asm(enable_liberal_asm)
 {
     for(PIInstruction inst : instructions) {
@@ -17,29 +17,29 @@ ISAEncoder::ISAEncoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal
     }
 }
 
-bool ISAEncoder::isStringPseudo(std::string const & search) const
+bool Encoder::isStringPseudo(std::string const & search) const
 {
     return search.size() > 0 && search[0] == '.';
 }
 
-bool ISAEncoder::isPseudo(Statement const & statement) const
+bool Encoder::isPseudo(Statement const & statement) const
 {
     return statement.base && statement.base->type == StatementPiece::Type::PSEUDO;
 }
 
-bool ISAEncoder::isInst(Statement const & statement) const
+bool Encoder::isInst(Statement const & statement) const
 {
     return statement.base && statement.base->type == StatementPiece::Type::INST;
 }
 
-bool ISAEncoder::isStringValidReg(std::string const & search) const
+bool Encoder::isStringValidReg(std::string const & search) const
 {
     std::string lower_search = search;
     std::transform(lower_search.begin(), lower_search.end(), lower_search.begin(), ::tolower);
     return regs.find(lower_search) != regs.end();
 }
 
-bool ISAEncoder::isValidPseudoOrig(Statement const & statement, bool log_enable) const
+bool Encoder::isValidPseudoOrig(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".orig") {
         bool valid_operands = validatePseudoOperands(statement, ".orig", {StatementPiece::Type::NUM}, 1, log_enable);
@@ -51,7 +51,7 @@ bool ISAEncoder::isValidPseudoOrig(Statement const & statement, bool log_enable)
     return false;
 }
 
-bool ISAEncoder::isValidPseudoFill(Statement const & statement, bool log_enable) const
+bool Encoder::isValidPseudoFill(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".fill") {
         bool valid_operands = validatePseudoOperands(statement, ".fill", {StatementPiece::Type::NUM,
@@ -68,7 +68,7 @@ bool ISAEncoder::isValidPseudoFill(Statement const & statement, bool log_enable)
     return false;
 }
 
-bool ISAEncoder::isValidPseudoFill(Statement const & statement, lc3::core::SymbolTable const & symbols,
+bool Encoder::isValidPseudoFill(Statement const & statement, lc3::core::SymbolTable const & symbols,
     bool log_enable) const
 {
     using namespace lc3::utils;
@@ -89,7 +89,7 @@ bool ISAEncoder::isValidPseudoFill(Statement const & statement, lc3::core::Symbo
     return false;
 }
 
-bool ISAEncoder::isValidPseudoBlock(Statement const & statement, bool log_enable) const
+bool Encoder::isValidPseudoBlock(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".blkw") {
         bool valid_operands = validatePseudoOperands(statement, ".blkw", {StatementPiece::Type::NUM}, 1, false);
@@ -109,7 +109,7 @@ bool ISAEncoder::isValidPseudoBlock(Statement const & statement, bool log_enable
     return false;
 }
 
-bool ISAEncoder::isValidPseudoString(Statement const & statement, bool log_enable) const
+bool Encoder::isValidPseudoString(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".stringz") {
         return validatePseudoOperands(statement, ".stringz", {StatementPiece::Type::STRING}, 1, log_enable);
@@ -117,7 +117,7 @@ bool ISAEncoder::isValidPseudoString(Statement const & statement, bool log_enabl
     return false;
 }
 
-bool ISAEncoder::isValidPseudoEnd(Statement const & statement, bool log_enable) const
+bool Encoder::isValidPseudoEnd(Statement const & statement, bool log_enable) const
 {
     if(isPseudo(statement) && utils::toLower(statement.base->str) == ".end") {
         return validatePseudoOperands(statement, ".end", {}, 0, log_enable);
@@ -125,7 +125,7 @@ bool ISAEncoder::isValidPseudoEnd(Statement const & statement, bool log_enable) 
     return false;
 }
 
-bool ISAEncoder::validatePseudo(Statement const & statement, lc3::core::SymbolTable const & symbols) const
+bool Encoder::validatePseudo(Statement const & statement, lc3::core::SymbolTable const & symbols) const
 {
     using namespace lc3::utils;
 
@@ -155,7 +155,7 @@ bool ISAEncoder::validatePseudo(Statement const & statement, lc3::core::SymbolTa
     }
 }
 
-bool ISAEncoder::validatePseudoOperands(Statement const & statement, std::string const & pseudo,
+bool Encoder::validatePseudoOperands(Statement const & statement, std::string const & pseudo,
     std::vector<StatementPiece::Type> const & valid_types, uint32_t operand_count, bool log_enable) const
 {
     using namespace lc3::utils;
@@ -216,7 +216,7 @@ bool ISAEncoder::validatePseudoOperands(Statement const & statement, std::string
     return true;
 }
 
-lc3::optional<lc3::core::PIInstruction> ISAEncoder::validateInstruction(Statement const & statement) const
+lc3::optional<lc3::core::PIInstruction> Encoder::validateInstruction(Statement const & statement) const
 {
     using namespace lc3::utils;
 
@@ -323,7 +323,7 @@ lc3::optional<lc3::core::PIInstruction> ISAEncoder::validateInstruction(Statemen
     return std::get<0>(candidates[0]);
 }
 
-uint32_t ISAEncoder::getPseudoOrig(Statement const & statement) const
+uint32_t Encoder::getPseudoOrig(Statement const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoOrig(statement));
@@ -335,7 +335,7 @@ uint32_t ISAEncoder::getPseudoOrig(Statement const & statement) const
     return *ret;
 }
 
-uint32_t ISAEncoder::getPseudoFill(Statement const & statement,
+uint32_t Encoder::getPseudoFill(Statement const & statement,
     lc3::core::SymbolTable const & symbols) const
 {
 #ifdef _ENABLE_DEBUG
@@ -353,7 +353,7 @@ uint32_t ISAEncoder::getPseudoFill(Statement const & statement,
     }
 }
 
-uint32_t ISAEncoder::getPseudoBlockSize(Statement const & statement) const
+uint32_t Encoder::getPseudoBlockSize(Statement const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoBlock(statement));
@@ -365,7 +365,7 @@ uint32_t ISAEncoder::getPseudoBlockSize(Statement const & statement) const
     return *ret;
 }
 
-uint32_t ISAEncoder::getPseudoStringSize(Statement const & statement) const
+uint32_t Encoder::getPseudoStringSize(Statement const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoString(statement));
@@ -373,7 +373,7 @@ uint32_t ISAEncoder::getPseudoStringSize(Statement const & statement) const
     return (uint32_t) (getPseudoString(statement).size() + 1);
 }
 
-std::string ISAEncoder::getPseudoString(Statement const & statement) const
+std::string Encoder::getPseudoString(Statement const & statement) const
 {
 #ifdef _ENABLE_DEBUG
     assert(isValidPseudoString(statement));
@@ -397,8 +397,8 @@ std::string ISAEncoder::getPseudoString(Statement const & statement) const
     return ret;
 }
 
-lc3::optional<uint32_t> ISAEncoder::encodeInstruction(Statement const & statement,
-    lc3::core::SymbolTable const & symbols, lc3::core::PIInstruction pattern) const
+lc3::optional<uint32_t> Encoder::encodeInstruction(Statement const & statement, lc3::core::SymbolTable const & symbols,
+    lc3::core::PIInstruction pattern) const
 {
     // The first "operand" of an instruction encoding is the op-code.
     optional<uint32_t> inst_encoding = pattern->getOperand(0)->encode(statement, *statement.base, regs, symbols, logger);
@@ -436,7 +436,7 @@ lc3::optional<uint32_t> ISAEncoder::encodeInstruction(Statement const & statemen
     return encoding;
 }
 
-uint32_t ISAEncoder::getDistanceToNearestInstructionName(std::string const & search) const
+uint32_t Encoder::getDistanceToNearestInstructionName(std::string const & search) const
 {
     std::string lower_search = utils::toLower(search);
     uint32_t min_distance = 0;
@@ -452,13 +452,12 @@ uint32_t ISAEncoder::getDistanceToNearestInstructionName(std::string const & sea
     return min_distance;
 }
 
-uint32_t ISAEncoder::levDistance(std::string const & a, std::string const & b) const
+uint32_t Encoder::levDistance(std::string const & a, std::string const & b) const
 {
     return levDistanceHelper(a, (uint32_t) a.size(), b, (uint32_t) b.size());
 }
 
-uint32_t ISAEncoder::levDistanceHelper(std::string const & a, uint32_t a_len, std::string const & b,
-    uint32_t b_len) const
+uint32_t Encoder::levDistanceHelper(std::string const & a, uint32_t a_len, std::string const & b, uint32_t b_len) const
 {
     // lazy, redundant recursive version of Levenshtein distance...may use dynamic programming eventually
     if(a_len == 0) { return b_len; }

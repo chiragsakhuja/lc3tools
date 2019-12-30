@@ -20,28 +20,48 @@ Simulator::Simulator(void) : time(0)
     // TODO: Create start event
     state.writePC(RESET_PC);
     // TODO: Start off in system mode, so initialize R6 to system stack pointer
-    state.writeSSP(USER_START);
-    state.writePSR(0x8002);
+    state.writeReg(6, USER_START);
+    state.writePSR(0x0002);
 
 }
 
-void Simulator::main(void)
+void Simulator::simulate(void)
 {
     sim::Decoder decoder;
     state.writeReg(0, 0xdead);
     state.writeReg(1, 0xbeef);
-    state.writeMemImm(0x25, 0x200);
+    state.writeMem(0x25, 0x200);
 
-    state.writeMemImm(0x200, 0x927f);
-    state.writeMemImm(0x201, 0x3005);
-    state.writeMemImm(0x202, 0xb204);
-    state.writeMemImm(0x203, 0xa403);
-    state.writeMemImm(0x204, 0xf025);
+    /*
+     *state.writeMem(0x200, 0x927f);
+     *state.writeMem(0x201, 0x3005);
+     *state.writeMem(0x202, 0xb204);
+     *state.writeMem(0x203, 0xa403);
+     *state.writeMem(0x204, 0xf025);
+     */
     events.emplace(std::make_shared<AtomicInstProcessEvent>(0, decoder));
     events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
     events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
     events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
     events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
+    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
+    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
+    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
+    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
+    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
+
+    mainLoop();
+}
+
+void Simulator::loadObjFile(std::string filename, std::istream & buffer)
+{
+    events.emplace(std::make_shared<LoadObjFileEvent>(filename, buffer));
+
+    mainLoop();
+}
+
+void Simulator::mainLoop(void)
+{
     while(! events.empty()) {
         PIEvent event = events.top();
         events.pop();

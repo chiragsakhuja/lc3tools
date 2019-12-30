@@ -24,20 +24,26 @@ namespace core
 
         uint16_t readPC(void) const { return pc; }
         void writePC(uint16_t value) { pc = value; }
+
         uint16_t readIR(void) const { return ir; }
         void writeIR(uint16_t value) { ir = value; }
+
         PIInstruction readDecodedIR(void) const { return decoded_ir; }
         void writeDecodedIR(PIInstruction value) { decoded_ir = value; }
+
         uint16_t readPSR(void) const { return std::get<0>(readMem(PSR)); }
-        void writePSR(uint16_t value) { writeMemImm(PSR, value); }
+        void writePSR(uint16_t value) { writeMem(PSR, value); }
+
         uint16_t readSSP(void) const { return ssp; }
         void writeSSP(uint16_t value) { ssp = value; }
 
-
         uint16_t readReg(uint16_t id) const { return rf[id]; }
         void writeReg(uint16_t id, uint16_t value) { rf[id] = value; }
+
         std::pair<uint16_t, PIMicroOp> readMem(uint16_t addr) const;
-        PIMicroOp writeMemImm(uint16_t addr, uint16_t value);
+        PIMicroOp writeMem(uint16_t addr, uint16_t value);
+        std::string getMemLine(uint16_t addr) const;
+        void setMemLine(uint16_t addr, std::string const & value);
 
         void registerDeviceReg(uint16_t mem_addr, PIDevice device);
 
@@ -48,6 +54,9 @@ namespace core
         uint16_t pc, ir;
         PIInstruction decoded_ir;
         uint16_t ssp;
+
+        MemLocation & getMemLocation(uint16_t addr);
+        MemLocation const & getMemLocation(uint16_t addr) const;
     };
 };
 };

@@ -17,6 +17,7 @@
 
 #include "assembler.h"
 #include "converter.h"
+#include "simulator.h"
 #include "simulator_old.h"
 #include "utils.h"
 
@@ -38,6 +39,12 @@ namespace lc3
 
     class sim
     {
+    private:
+        core::Simulator simulator;
+
+
+
+
     public:
         sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threaded_input,
             uint32_t print_level, bool propagate_exceptions);
@@ -103,7 +110,7 @@ namespace lc3
 
     private:
         utils::IPrinter & printer;
-        core_old::Simulator simulator;
+        core_old::Simulator simulator_old;
 
         friend class core_old::Simulator;
         static void preInstructionCallback(sim & sim_int, core_old::MachineState & state);

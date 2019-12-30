@@ -31,7 +31,8 @@ namespace core
     {
     public:
         Simulator(void);
-        void main(void);
+        void simulate(void);
+        void loadObjFile(std::string filename, std::istream & buffer);
 
     private:
         std::priority_queue<PIEvent, std::vector<PIEvent>, std::greater<PIEvent>> events;
@@ -39,6 +40,8 @@ namespace core
 
         MachineState state;
         std::vector<PIDevice> devices;
+
+        void mainLoop(void);
     };
 };
 };

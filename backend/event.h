@@ -43,6 +43,19 @@ namespace core
     private:
         sim::Decoder const & decoder;
     };
+
+    class LoadObjFileEvent : public IEvent
+    {
+    public:
+        LoadObjFileEvent(std::string filename, std::istream & buffer) : IEvent(1), filename(filename), buffer(buffer) {}
+
+        virtual void handleEvent(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        std::string filename;
+        std::istream & buffer;
+    };
 };
 };
 

@@ -8,7 +8,7 @@
 #include <sstream>
 #include <vector>
 
-#include "instruction_encoder.h"
+#include "encoder.h"
 #include "logger.h"
 #include "printer.h"
 #include "tokenizer.h"
@@ -38,7 +38,7 @@ namespace core
         lc3::utils::AssemblerLogger logger;
         bool enable_liberal_asm;
 
-        asmbl::ISAEncoder encoder;
+        asmbl::Encoder encoder;
 
         std::vector<asmbl::Statement> buildStatements(std::istream & buffer);
         asmbl::Statement buildStatement(std::vector<asmbl::Token> const & tokens);

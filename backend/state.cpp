@@ -25,7 +25,7 @@ std::pair<uint16_t, PIMicroOp> MachineState::readMem(uint16_t addr) const
     }
 }
 
-PIMicroOp MachineState::writeMemImm(uint16_t addr, uint16_t value)
+PIMicroOp MachineState::writeMem(uint16_t addr, uint16_t value)
 {
     // TODO: Check ACV
     if(MMIO_START <= addr && addr <= MMIO_END) {
@@ -38,6 +38,22 @@ PIMicroOp MachineState::writeMemImm(uint16_t addr, uint16_t value)
     }
 
     return nullptr;
+}
+
+std::string MachineState::getMemLine(uint16_t addr) const
+{
+    if(addr < MMIO_START) {
+        return mem[addr].getLine();
+    }
+
+    return "";
+}
+
+void MachineState::setMemLine(uint16_t addr, std::string const & value)
+{
+    if(addr < MMIO_START) {
+        mem[addr].setLine(value);
+    }
 }
 
 void MachineState::registerDeviceReg(uint16_t mem_addr, PIDevice device)

@@ -12,18 +12,18 @@
 
 lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threaded_input, uint32_t print_level,
     bool propagate_exceptions) :
-    printer(printer), simulator(*this, printer, inputter, print_level, threaded_input),
+    printer(printer), simulator_old(*this, printer, inputter, print_level, threaded_input),
     propagate_exceptions(propagate_exceptions)
 {
-    simulator.registerPreInstructionCallback(lc3::sim::preInstructionCallback);
-    simulator.registerPostInstructionCallback(lc3::sim::postInstructionCallback);
-    simulator.registerInterruptEnterCallback(lc3::sim::interruptEnterCallback);
-    simulator.registerInterruptExitCallback(lc3::sim::interruptExitCallback);
-    simulator.registerExceptionEnterCallback(lc3::sim::exceptionEnterCallback);
-    simulator.registerExceptionExitCallback(lc3::sim::exceptionExitCallback);
-    simulator.registerSubEnterCallback(lc3::sim::subEnterCallback);
-    simulator.registerSubExitCallback(lc3::sim::subExitCallback);
-    simulator.registerWaitForInputCallback(lc3::sim::waitForInputCallback);
+    simulator_old.registerPreInstructionCallback(lc3::sim::preInstructionCallback);
+    simulator_old.registerPostInstructionCallback(lc3::sim::postInstructionCallback);
+    simulator_old.registerInterruptEnterCallback(lc3::sim::interruptEnterCallback);
+    simulator_old.registerInterruptExitCallback(lc3::sim::interruptExitCallback);
+    simulator_old.registerExceptionEnterCallback(lc3::sim::exceptionEnterCallback);
+    simulator_old.registerExceptionExitCallback(lc3::sim::exceptionExitCallback);
+    simulator_old.registerSubEnterCallback(lc3::sim::subEnterCallback);
+    simulator_old.registerSubExitCallback(lc3::sim::subExitCallback);
+    simulator_old.registerWaitForInputCallback(lc3::sim::waitForInputCallback);
     if(propagate_exceptions) {
         loadOS();
     } else {
@@ -55,10 +55,10 @@ bool lc3::sim::loadObjFile(std::string const & obj_filename)
     }
 
     if(propagate_exceptions) {
-        simulator.loadObj(obj_file);
+        simulator.loadObjFile(obj_filename, obj_file);
     } else {
         try {
-            simulator.loadObj(obj_file);
+            simulator.loadObjFile(obj_filename, obj_file);
         } catch(utils::exception const & e) {
             (void) e;
 #ifdef _ENABLE_DEBUG
@@ -76,7 +76,7 @@ bool lc3::sim::loadObjFile(std::string const & obj_filename)
 
 void lc3::sim::reinitialize(void)
 {
-    simulator.reinitialize();
+    simulator_old.reinitialize();
     loadOS();
 }
 
@@ -88,8 +88,7 @@ void lc3::sim::loadOS(void)
     std::stringstream src_buffer;
     src_buffer << lc3::core::getOSSrc();
     std::shared_ptr<std::stringstream> obj_stream = assembler.assemble(src_buffer);
-    simulator.loadObj(*obj_stream);
-    getMachineState().pc = RESET_PC;
+    simulator.loadObjFile("lc3os", *obj_stream);
 }
 
 void lc3::sim::randomize(void)
@@ -190,12 +189,12 @@ bool lc3::sim::run(lc3::sim::RunType cur_run_type)
 
 void lc3::sim::pause(void)
 {
-    simulator.disableClock();
+    simulator_old.disableClock();
 }
 
-lc3::core_old::MachineState & lc3::sim::getMachineState(void) { return simulator.getMachineState(); }
+lc3::core_old::MachineState & lc3::sim::getMachineState(void) { return simulator_old.getMachineState(); }
 
-lc3::core_old::MachineState const & lc3::sim::getMachineState(void) const { return simulator.getMachineState(); }
+lc3::core_old::MachineState const & lc3::sim::getMachineState(void) const { return simulator_old.getMachineState(); }
 
 uint64_t lc3::sim::getInstExecCount(void) const { return inst_exec_count; }
 
@@ -425,10 +424,10 @@ void lc3::sim::registerBreakpointCallback(breakpoint_callback_func_t func)
 
 lc3::utils::IPrinter & lc3::sim::getPrinter(void) { return printer; }
 lc3::utils::IPrinter const & lc3::sim::getPrinter(void) const { return printer; }
-void lc3::sim::setPrintLevel(uint32_t print_level) { simulator.setPrintLevel(print_level); }
+void lc3::sim::setPrintLevel(uint32_t print_level) { simulator_old.setPrintLevel(print_level); }
 void lc3::sim::setPropagateExceptions(void) { propagate_exceptions = true; }
 void lc3::sim::clearPropagateExceptions(void) { propagate_exceptions = false; }
-void lc3::sim::setIgnorePrivilege(bool ignore) { simulator.setIgnorePrivilege(ignore); }
+void lc3::sim::setIgnorePrivilege(bool ignore) { simulator_old.setIgnorePrivilege(ignore); }
 
 void lc3::sim::preInstructionCallback(lc3::sim & sim_inst, lc3::core_old::MachineState & state)
 {

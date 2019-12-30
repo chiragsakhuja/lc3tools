@@ -244,7 +244,7 @@ std::string MemReadMicroOp::toString(MachineState const & state) const
 
 void MemWriteImmMicroOp::handleMicroOp(MachineState & state)
 {
-    PIMicroOp op = state.writeMemImm(state.readReg(addr_reg_id), value);
+    PIMicroOp op = state.writeMem(state.readReg(addr_reg_id), value);
 
     if(op) {
         insert(op);
@@ -259,7 +259,7 @@ std::string MemWriteImmMicroOp::toString(MachineState const & state) const
 
 void MemWriteRegMicroOp::handleMicroOp(MachineState & state)
 {
-    PIMicroOp op = state.writeMemImm(state.readReg(addr_reg_id), state.readReg(src_id));
+    PIMicroOp op = state.writeMem(state.readReg(addr_reg_id), state.readReg(src_id));
 
     if(op) {
         insert(op);

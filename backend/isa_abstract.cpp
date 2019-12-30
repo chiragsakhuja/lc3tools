@@ -40,7 +40,7 @@ IInstruction::IInstruction(IInstruction const & that)
 std::string IInstruction::toFormatString(void) const
 {
     // TODO: Fill in code
-    return "";
+    return "NANI";
 }
 
 std::string IInstruction::toValueString(void) const
