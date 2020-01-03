@@ -312,3 +312,19 @@ char CCUpdateRegMicroOp::getCCChar(uint16_t value) const
         return 'P';
     }
 }
+
+void BranchMicroOp::handleMicroOp(MachineState & state)
+{
+    bool result = pred(state);
+
+    if(result) {
+        next = true_next;
+    } else {
+        next = false_next;
+    }
+}
+
+std::string BranchMicroOp::toString(MachineState const & state) const
+{
+    return utils::ssprintf("uBEN <= %s", pred(state) ? "true" : "false");
+}

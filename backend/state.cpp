@@ -4,10 +4,13 @@
 
 using namespace lc3::core;
 
-MachineState::MachineState(void) : pc(0), ir(0), decoded_ir(nullptr), ssp(0)
+MachineState::MachineState(void) : reset_pc(RESET_PC), pc(0), ir(0), decoded_ir(nullptr), ssp(0)
 {
     mem.resize(USER_END - SYSTEM_START + 1);
     rf.resize(16);
+
+    registerDeviceReg(PSR, std::make_shared<RWReg>(PSR));
+    registerDeviceReg(MCR, std::make_shared<RWReg>(MCR));
 }
 
 std::pair<uint16_t, PIMicroOp> MachineState::readMem(uint16_t addr) const

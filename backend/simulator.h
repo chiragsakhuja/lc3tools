@@ -7,7 +7,10 @@
 #include <cstdint>
 #include <queue>
 
+#include "inputter.h"
 #include "event.h"
+#include "logger.h"
+#include "printer.h"
 #include "state.h"
 
 namespace std
@@ -30,7 +33,7 @@ namespace core
     class Simulator
     {
     public:
-        Simulator(void);
+        Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, uint32_t print_level);
         void simulate(void);
         void loadObjFile(std::string filename, std::istream & buffer);
 
@@ -40,6 +43,9 @@ namespace core
 
         MachineState state;
         std::vector<PIDevice> devices;
+
+        lc3::utils::Logger logger;
+        lc3::utils::IInputter & inputter;
 
         void mainLoop(void);
     };

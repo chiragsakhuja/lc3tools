@@ -1,6 +1,7 @@
 #ifndef UOP_H
 #define UOP_H
 
+#include <functional>
 #include <memory>
 
 #include "aliases.h"
@@ -277,6 +278,22 @@ namespace core
         uint16_t reg_id;
 
         char getCCChar(uint16_t value) const;
+    };
+
+    class BranchMicroOp : public IMicroOp
+    {
+    public:
+        using PredFunction = std::function<bool(MachineState const & state)>;
+
+        BranchMicroOp(PredFunction pred, PIMicroOp true_next, PIMicroOp false_next) :
+            pred(pred), true_next(true_next), false_next(false_next) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        PredFunction pred;
+        PIMicroOp true_next, false_next;
     };
 };
 };

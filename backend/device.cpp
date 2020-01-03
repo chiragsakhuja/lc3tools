@@ -51,3 +51,44 @@ std::vector<uint16_t> KeyboardDevice::getAddrMap(void) const
 {
     return { KBSR, KBDR };
 }
+
+std::pair<uint16_t, PIMicroOp> DisplayDevice::read(uint16_t addr) const
+{
+    if(addr == DSR) {
+        return std::make_pair(status.getValue(), nullptr);
+    }
+
+    return std::make_pair(0x0000, nullptr);
+}
+
+PIMicroOp DisplayDevice::write(uint16_t addr, uint16_t value)
+{
+    if(addr == DSR) {
+        status.setValue(value & 0x4000);
+    } else if(addr == DDR) {
+        // Clear ready bit.
+        status.setValue(status.getValue() & 0x7FFF);
+
+        // Write to DDR and output to screen.
+        data.setValue(value & 0x00FF);
+        char char_value = static_cast<char>(value & 0x00FF);
+        if(char_value == 10 || char_value == 13) {
+            logger.newline(utils::PrintType::P_NONE);
+        } else {
+            logger.print(std::string(1, char_value));
+        }
+    }
+
+    return nullptr;
+}
+
+std::vector<uint16_t> DisplayDevice::getAddrMap(void) const
+{
+    return { DSR, DDR };
+}
+
+void DisplayDevice::tick(void)
+{
+    // Set ready bit.
+    status.setValue(status.getValue() | 0x8000);
+}

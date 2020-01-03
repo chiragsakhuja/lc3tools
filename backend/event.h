@@ -44,6 +44,15 @@ namespace core
         sim::Decoder const & decoder;
     };
 
+    class StartupEvent : public IEvent
+    {
+    public:
+        StartupEvent(void) : IEvent(0) {}
+
+        virtual void handleEvent(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+    };
+
     class LoadObjFileEvent : public IEvent
     {
     public:
@@ -55,6 +64,19 @@ namespace core
     private:
         std::string filename;
         std::istream & buffer;
+    };
+
+    class DeviceUpdateEvent : public IEvent
+    {
+    public:
+        DeviceUpdateEvent(PIDevice device) : DeviceUpdateEvent(0, device) { }
+        DeviceUpdateEvent(uint64_t time_delta, PIDevice device) : IEvent(time_delta), device(device) { }
+
+        virtual void handleEvent(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        PIDevice device;
     };
 };
 };

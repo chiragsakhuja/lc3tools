@@ -104,12 +104,14 @@ PIMicroOp ANDImmInstruction::buildMicroOps(MachineState const & state) const
 
 PIMicroOp BRInstruction::buildMicroOps(MachineState const & state) const
 {
-    if((getOperand(1)->getValue() & (state.readPSR() & 0x0007)) != 0) {
-        return std::make_shared<PCAddImmMicroOp>(lc3::utils::sextTo16(getOperand(2)->getValue(),
-            getOperand(2)->getWidth()));
-    }
+    (void) state;
 
-    return nullptr;
+    PIMicroOp jump = std::make_shared<PCAddImmMicroOp>(lc3::utils::sextTo16(getOperand(2)->getValue(),
+        getOperand(2)->getWidth()));
+
+    return std::make_shared<BranchMicroOp>([this](MachineState const & state) {
+        return (getOperand(1)->getValue() & lc3::utils::getBits(state.readPSR(), 2, 0)) != 0;
+    }, jump, nullptr);
 }
 
 PIMicroOp JMPInstruction::buildMicroOps(MachineState const & state) const
@@ -190,7 +192,7 @@ PIMicroOp LDRInstruction::buildMicroOps(MachineState const & state) const
     PIMicroOp compute_addr = std::make_shared<RegAddImmMicroOp>(8, 8,
         lc3::utils::sextTo16(getOperand(3)->getValue(), getOperand(3)->getWidth()));
     PIMicroOp load = std::make_shared<MemReadMicroOp>(dst_id, 8);
-    PIMicroOp set_cc = std::make_shared<CCUpdateRegMicroOp>(8);
+    PIMicroOp set_cc = std::make_shared<CCUpdateRegMicroOp>(dst_id);
 
     write_base->insert(compute_addr);
     compute_addr->insert(load);
@@ -225,8 +227,31 @@ PIMicroOp NOTInstruction::buildMicroOps(MachineState const & state) const
 
 PIMicroOp RTIInstruction::buildMicroOps(MachineState const & state) const
 {
-    // TODO: Fill in code
-    return nullptr;
+    (void) state;
+
+    // TODO: ACV if used from user mode.
+    PIMicroOp load_pc = std::make_shared<MemReadMicroOp>(8, 6);
+    PIMicroOp write_pc = std::make_shared<PCWriteRegMicroOp>(8);
+    PIMicroOp dec_sp1 = std::make_shared<RegAddImmMicroOp>(6, 6, 1);
+    PIMicroOp load_psr = std::make_shared<MemReadMicroOp>(8, 6);
+    PIMicroOp write_psr = std::make_shared<PSRWriteRegMicroOp>(8);
+    PIMicroOp dec_sp2 = std::make_shared<RegAddImmMicroOp>(6, 6, 1);
+    PIMicroOp save_cur_sp = std::make_shared<RegWriteRegMicroOp>(9, 6);
+    PIMicroOp write_ssp = std::make_shared<RegWriteSSPMicroOp>(6);
+    PIMicroOp write_cur_sp = std::make_shared<SSPWriteRegMicroOp>(9);
+
+    load_pc->insert(write_pc);
+    write_pc->insert(dec_sp1);
+    dec_sp1->insert(load_psr);
+    load_psr->insert(write_psr);
+    write_psr->insert(dec_sp2);
+    dec_sp2->insert(std::make_shared<BranchMicroOp>([](MachineState const & state) {
+        return lc3::utils::getBit(state.readPSR(), 15) == 0;
+    }, nullptr, save_cur_sp));
+    save_cur_sp->insert(write_ssp);
+    write_ssp->insert(write_cur_sp);
+
+    return load_pc;
 }
 
 PIMicroOp STInstruction::buildMicroOps(MachineState const & state) const
@@ -286,9 +311,9 @@ PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
     PIMicroOp write_cur_sp = std::make_shared<SSPWriteRegMicroOp>(8);
     PIMicroOp dec_sp1 = std::make_shared<RegAddImmMicroOp>(6, 6, -1);
     PIMicroOp write_psr = std::make_shared<RegWritePSRMicroOp>(9);
+    PIMicroOp store_psr = std::make_shared<MemWriteRegMicroOp>(6, 9);
     PIMicroOp set_priv = std::make_shared<RegAndImmMicroOp>(9, 9, 0x7FFF);
     PIMicroOp change_priv = std::make_shared<PSRWriteRegMicroOp>(9);
-    PIMicroOp store_psr = std::make_shared<MemWriteRegMicroOp>(6, 9);
     PIMicroOp dec_sp2 = std::make_shared<RegAddImmMicroOp>(6, 6, -1);
     PIMicroOp write_pc = std::make_shared<RegWritePCMicroOp>(9);
     PIMicroOp store_pc = std::make_shared<MemWriteRegMicroOp>(6, 9);
@@ -297,25 +322,23 @@ PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
     PIMicroOp load_table = std::make_shared<MemReadMicroOp>(10, 10);
     PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(10);
 
-    if((state.readPSR() & 0x8000) != 0) {
-        // Only swap stack pointers if currently in user mode.
-        save_cur_sp->insert(write_ssp);
-        write_ssp->insert(write_cur_sp);
-        write_cur_sp->insert(dec_sp1);
-    }
+    PIMicroOp start = std::make_shared<BranchMicroOp>([](MachineState const & state) {
+        return lc3::utils::getBit(state.readPSR(), 15) == 1;
+    }, save_cur_sp, dec_sp1);
+
+    save_cur_sp->insert(write_ssp);
+    write_ssp->insert(write_cur_sp);
+    write_cur_sp->insert(dec_sp1);
 
     dec_sp1->insert(write_psr);
+    write_psr->insert(store_psr);
+    store_psr->insert(std::make_shared<BranchMicroOp>([](MachineState const & state) {
+        return lc3::utils::getBit(state.readPSR(), 15) == 1;
+    }, set_priv, dec_sp2));
 
-    if((state.readPSR() & 0x8000) != 0) {
-        // Only change privilege if currently in user mode.
-        write_psr->insert(set_priv);
-        set_priv->insert(change_priv);
-        change_priv->insert(store_psr);
-    } else {
-        write_psr->insert(store_psr);
-    }
+    set_priv->insert(change_priv);
+    change_priv->insert(dec_sp2);
 
-    store_psr->insert(dec_sp2);
     dec_sp2->insert(write_pc);
     write_pc->insert(store_pc);
     store_pc->insert(write_table_start);
@@ -323,9 +346,5 @@ PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
     add_table_offset->insert(load_table);
     load_table->insert(jump);
 
-    if((state.readPSR() & 0x8000) != 0) {
-        return save_cur_sp;
-    } else {
-        return dec_sp1;
-    }
+    return start;
 }

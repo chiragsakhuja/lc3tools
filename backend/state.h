@@ -24,6 +24,8 @@ namespace core
 
         uint16_t readPC(void) const { return pc; }
         void writePC(uint16_t value) { pc = value; }
+        uint16_t readResetPC(void) const { return reset_pc; }
+        void writeResetPC(uint16_t value) { reset_pc = value; }
 
         uint16_t readIR(void) const { return ir; }
         void writeIR(uint16_t value) { ir = value; }
@@ -31,11 +33,14 @@ namespace core
         PIInstruction readDecodedIR(void) const { return decoded_ir; }
         void writeDecodedIR(PIInstruction value) { decoded_ir = value; }
 
+        uint16_t readSSP(void) const { return ssp; }
+        void writeSSP(uint16_t value) { ssp = value; }
+
         uint16_t readPSR(void) const { return std::get<0>(readMem(PSR)); }
         void writePSR(uint16_t value) { writeMem(PSR, value); }
 
-        uint16_t readSSP(void) const { return ssp; }
-        void writeSSP(uint16_t value) { ssp = value; }
+        uint16_t readMCR(void) const { return std::get<0>(readMem(MCR)); }
+        void writeMCR(uint16_t value) { writeMem(MCR, value); }
 
         uint16_t readReg(uint16_t id) const { return rf[id]; }
         void writeReg(uint16_t id, uint16_t value) { rf[id] = value; }
@@ -51,7 +56,7 @@ namespace core
         std::vector<MemLocation> mem;
         std::vector<uint16_t> rf;
         std::unordered_map<uint16_t, PIDevice> mmio;
-        uint16_t pc, ir;
+        uint16_t reset_pc, pc, ir;
         PIInstruction decoded_ir;
         uint16_t ssp;
 

@@ -7,50 +7,31 @@
 
 using namespace lc3::core;
 
-Simulator::Simulator(void) : time(0)
+Simulator::Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, uint32_t print_level) :
+    time(0), logger(printer, print_level), inputter(inputter)
 {
-    devices.emplace_back(std::make_shared<RWReg>(PSR));
+    devices.emplace_back(std::make_shared<DisplayDevice>(logger));
 
     for(PIDevice dev : devices) {
         for(uint16_t dev_addr : dev->getAddrMap()) {
             state.registerDeviceReg(dev_addr, dev);
         }
     }
-
-    // TODO: Create start event
-    state.writePC(RESET_PC);
-    // TODO: Start off in system mode, so initialize R6 to system stack pointer
-    state.writeReg(6, USER_START);
-    state.writePSR(0x0002);
-
 }
 
 void Simulator::simulate(void)
 {
     sim::Decoder decoder;
-    state.writeReg(0, 0xdead);
-    state.writeReg(1, 0xbeef);
-    state.writeMem(0x25, 0x200);
+    events.emplace(std::make_shared<StartupEvent>());
 
-    /*
-     *state.writeMem(0x200, 0x927f);
-     *state.writeMem(0x201, 0x3005);
-     *state.writeMem(0x202, 0xb204);
-     *state.writeMem(0x203, 0xa403);
-     *state.writeMem(0x204, 0xf025);
-     */
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(0, decoder));
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
-    events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
+    do {
+        for(PIDevice dev : devices) {
+            events.emplace(std::make_shared<DeviceUpdateEvent>(9, dev));
+        }
+        events.emplace(std::make_shared<AtomicInstProcessEvent>(10, decoder));
 
-    mainLoop();
+        mainLoop();
+    } while(lc3::utils::getBit(state.readMCR(), 15) == 1);
 }
 
 void Simulator::loadObjFile(std::string filename, std::istream & buffer)
@@ -68,15 +49,17 @@ void Simulator::mainLoop(void)
 
         if(event != nullptr) {
             time += event->time_delta;
-            std::cout << time << ": " << event->toString(state) << '\n';
+            logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d: %s", time, event->toString(state).c_str());
             event->handleEvent(state);
 
             PIMicroOp uop = event->uops;
             while(uop != nullptr) {
-                std::cout << time << ": |- " << uop->toString(state) << '\n';
+                logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d: |- %s", time, uop->toString(state).c_str());
                 uop->handleMicroOp(state);
                 uop = uop->getNext();
             }
         }
+
+        logger.newline(lc3::utils::PrintType::P_EXTRA);
     }
 }

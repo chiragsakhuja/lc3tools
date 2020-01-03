@@ -21,8 +21,29 @@ void AtomicInstProcessEvent::handleEvent(MachineState & state)
 
 std::string AtomicInstProcessEvent::toString(MachineState const & state) const
 {
-    return utils::ssprintf("Processing M[0x%0.4x]:0x%0.4x (%s)", state.readPC(),
+    return lc3::utils::ssprintf("Processing M[0x%0.4x]:0x%0.4x (%s)", state.readPC(),
         std::get<0>(state.readMem(state.readPC())), state.getMemLine(state.readPC()).c_str());
+}
+
+void StartupEvent::handleEvent(MachineState & state)
+{
+    uint16_t reset_pc = state.readResetPC();
+    state.writePC(reset_pc == 0x0000 ? RESET_PC : reset_pc);
+    state.writeMCR(0x8000);
+    if(USER_START <= reset_pc && reset_pc <= USER_END) {
+        state.writeSSP(USER_START);
+        state.writePSR(0x8002);
+    } else {
+        state.writeReg(6, USER_START);
+        state.writePSR(0x0002);
+    }
+}
+
+std::string StartupEvent::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return "Starting machine";
 }
 
 void LoadObjFileEvent::handleEvent(MachineState & state)
@@ -32,34 +53,34 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
     bool first_orig_set = false;
 
     // Verify header.
-    std::string expected_header = utils::getMagicHeader();
+    std::string expected_header = lc3::utils::getMagicHeader();
     char * header = new char[expected_header.size()];
     if(buffer.read(header, expected_header.size())) {
         for(uint32_t i = 0; i < expected_header.size(); i += 1) {
             if(header[i] != expected_header[i]) {
                 //logger.printf(PrintType::P_ERROR, true, "invalid header (is this a .obj file?); try re-assembling");
-                throw utils::exception("invalid header (is this a .obj file?); try re-assembling");
+                throw lc3::utils::exception("invalid header (is this a .obj file?); try re-assembling");
             }
         }
     } else {
         //logger.printf(PrintType::P_ERROR, true, "could not read header");
-        throw utils::exception("could not read header");
+        throw lc3::utils::exception("could not read header");
     }
     delete[] header;
 
     // Verify version number matches current version number.
-    std::string expected_version = utils::getVersionString();
+    std::string expected_version = lc3::utils::getVersionString();
     char * version = new char[expected_version.size()];
     if(buffer.read(version, expected_version.size())) {
         for(uint32_t i = 0; i < expected_version.size(); i += 1) {
             if(version[i] != expected_version[i]) {
                 //logger.printf(PrintType::P_ERROR, true, "mismatched version numbers; try re-assembling");
-                throw utils::exception("mismatched version numbers; try re-assembling");
+                throw lc3::utils::exception("mismatched version numbers; try re-assembling");
             }
         }
     } else {
         //logger.printf(PrintType::P_ERROR, true, "could not version number; try re-assembling");
-        throw utils::exception("could not read version number; try re-assembling");
+        throw lc3::utils::exception("could not read version number; try re-assembling");
     }
     delete[] version;
 
@@ -73,7 +94,7 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
 
         if(mem.isOrig()) {
             if(! first_orig_set) {
-                state.writePC(mem.getValue());
+                state.writeResetPC(mem.getValue());
                 first_orig_set = true;
             }
             fill_pc = mem.getValue();
@@ -95,5 +116,20 @@ std::string LoadObjFileEvent::toString(MachineState const & state) const
 {
     (void) state;
 
-    return utils::ssprintf("Loading %s into memory", filename.c_str());
+    return lc3::utils::ssprintf("Loading %s into memory", filename.c_str());
+}
+
+
+void DeviceUpdateEvent::handleEvent(MachineState & state)
+{
+    (void) state;
+
+    device->tick();
+}
+
+std::string DeviceUpdateEvent::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return lc3::utils::ssprintf("Updating %s", device->getName().c_str());
 }
