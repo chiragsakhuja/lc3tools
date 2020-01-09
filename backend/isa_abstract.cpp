@@ -40,13 +40,51 @@ IInstruction::IInstruction(IInstruction const & that)
 std::string IInstruction::toFormatString(void) const
 {
     // TODO: Fill in code
-    return "NANI";
+    std::stringstream assembly;
+    assembly << name;
+    if(getOperands().size() > 0) {
+        assembly << " ";
+    }
+    std::string prefix = "";
+    for(PIOperand operand : operands) {
+        if(operand->getType() != IOperand::Type::FIXED) {
+            assembly << prefix << operand->getTypeString();
+            prefix = ", ";
+        }
+    }
+    return assembly.str();
 }
 
 std::string IInstruction::toValueString(void) const
 {
-    // TODO: Fill in code
-    return "";
+    std::stringstream assembly;
+    assembly << name;
+    if(getOperands().size() > 0) {
+        assembly << " ";
+    }
+    std::string prefix = "";
+    for(PIOperand operand : operands) {
+        if(operand->getType() != IOperand::Type::FIXED) {
+            std::string oper_str;
+            if(operand->getType() == IOperand::Type::NUM || operand->getType() == IOperand::Type::LABEL) {
+                if((operand->getType() == IOperand::Type::NUM &&
+                        std::static_pointer_cast<NumOperand>(operand)->shouldSEXT()) ||
+                    operand->getType() == IOperand::Type::LABEL)
+                {
+                    oper_str = "#" + std::to_string(static_cast<uint32_t>(
+                        lc3::utils::sextTo32(operand->getValue(), operand->getWidth())
+                    ));
+                } else {
+                    oper_str = "#" + std::to_string(operand->getValue());
+                }
+            } else if(operand->getType() == IOperand::Type::REG) {
+                oper_str = "r" + std::to_string(operand->getValue());
+            }
+            assembly << prefix << oper_str;
+            prefix = ", ";
+        }
+    }
+    return assembly.str();
 }
 
 lc3::optional<uint32_t> FixedOperand::encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,

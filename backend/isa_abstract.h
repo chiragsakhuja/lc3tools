@@ -44,6 +44,7 @@ namespace core
         bool isEqualType(Type other) const;
 
         Type getType(void) const { return type; }
+        std::string const & getTypeString(void) const { return type_str; }
         uint32_t getWidth(void) const { return width; }
         uint16_t getValue(void) const { return value; }
         void setValue(uint16_t new_value) { value = new_value; }
@@ -101,6 +102,7 @@ namespace core
         NumOperand(uint32_t width, bool sext);
         virtual optional<uint32_t> encode(asmbl::Statement const & statement, asmbl::StatementPiece const & piece,
             SymbolTable const & regs, SymbolTable const & symbols, utils::AssemblerLogger & logger) override;
+        bool shouldSEXT(void) const { return sext; }
 
     private:
         bool sext;

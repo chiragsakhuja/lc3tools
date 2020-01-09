@@ -52,8 +52,13 @@ void DecodeMicroOp::handleMicroOp(MachineState & state)
 
 std::string DecodeMicroOp::toString(MachineState const & state) const
 {
-    // TODO: Print out as dIR <= ...
-    return utils::ssprintf("Decoding IR:0x%0.4hx", state.readIR());
+    lc3::optional<PIInstruction> inst = decoder.decode(state.readIR());
+    if(inst) {
+        (*inst)->buildMicroOps(state);
+        return utils::ssprintf("dIR <= %s", (*inst)->toValueString().c_str());
+    } else {
+        return "dIR <= Illegal instruction";
+    }
 }
 
 void PCWriteRegMicroOp::handleMicroOp(MachineState & state)
@@ -326,5 +331,5 @@ void BranchMicroOp::handleMicroOp(MachineState & state)
 
 std::string BranchMicroOp::toString(MachineState const & state) const
 {
-    return utils::ssprintf("uBEN <= %s", pred(state) ? "true" : "false");
+    return utils::ssprintf("uBEN <= (%s):%s", msg.c_str(), pred(state) ? "true" : "false");
 }

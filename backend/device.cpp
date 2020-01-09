@@ -25,6 +25,22 @@ std::vector<uint16_t> RWReg::getAddrMap(void) const
     return { data_addr };
 }
 
+KeyboardDevice::KeyboardDevice(lc3::utils::IInputter & inputter) : inputter(inputter)
+{
+    status.setValue(0x0000);
+    data.setValue(0x0000);
+}
+
+void KeyboardDevice::startup(void)
+{
+    inputter.beginInput();
+}
+
+void KeyboardDevice::shutdown(void)
+{
+    inputter.endInput();
+}
+
 std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr) const
 {
     if(addr == KBSR) {
@@ -52,6 +68,15 @@ std::vector<uint16_t> KeyboardDevice::getAddrMap(void) const
     return { KBSR, KBDR };
 }
 
+void KeyboardDevice::tick(void)
+{
+    char c;
+    if(inputter.getChar(c)) {
+        status.setValue(status.getValue() | 0x8000);
+        data.setValue(static_cast<uint16_t>(c));
+    }
+}
+
 std::pair<uint16_t, PIMicroOp> DisplayDevice::read(uint16_t addr) const
 {
     if(addr == DSR) {
@@ -59,6 +84,12 @@ std::pair<uint16_t, PIMicroOp> DisplayDevice::read(uint16_t addr) const
     }
 
     return std::make_pair(0x0000, nullptr);
+}
+
+DisplayDevice::DisplayDevice(lc3::utils::Logger & logger) : logger(logger)
+{
+    status.setValue(0x0000);
+    data.setValue(0x0000);
 }
 
 PIMicroOp DisplayDevice::write(uint16_t addr, uint16_t value)

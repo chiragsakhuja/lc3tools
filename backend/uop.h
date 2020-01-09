@@ -285,14 +285,15 @@ namespace core
     public:
         using PredFunction = std::function<bool(MachineState const & state)>;
 
-        BranchMicroOp(PredFunction pred, PIMicroOp true_next, PIMicroOp false_next) :
-            pred(pred), true_next(true_next), false_next(false_next) { }
+        BranchMicroOp(PredFunction pred, std::string msg, PIMicroOp true_next, PIMicroOp false_next) :
+            pred(pred), msg(msg), true_next(true_next), false_next(false_next) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
 
     private:
         PredFunction pred;
+        std::string msg;
         PIMicroOp true_next, false_next;
     };
 };

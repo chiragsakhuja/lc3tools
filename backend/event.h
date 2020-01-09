@@ -18,11 +18,11 @@ namespace core
     class IEvent
     {
     public:
-        uint64_t time_delta;
+        uint64_t time;
         PIMicroOp uops;
 
         IEvent(void) : IEvent(0) {}
-        IEvent(uint64_t time_delta) : time_delta(time_delta), uops(nullptr) {}
+        IEvent(uint64_t time) : time(time), uops(nullptr) {}
         virtual ~IEvent(void) = default;
 
         virtual void handleEvent(MachineState & state) = 0;
@@ -33,8 +33,8 @@ namespace core
     {
     public:
         AtomicInstProcessEvent(sim::Decoder const & decoder) : AtomicInstProcessEvent(0, decoder) {}
-        AtomicInstProcessEvent(uint64_t time_delta, sim::Decoder const & decoder) :
-            IEvent(time_delta), decoder(decoder)
+        AtomicInstProcessEvent(uint64_t time, sim::Decoder const & decoder) :
+            IEvent(time), decoder(decoder)
         {}
 
         virtual void handleEvent(MachineState & state) override;
@@ -47,7 +47,7 @@ namespace core
     class StartupEvent : public IEvent
     {
     public:
-        StartupEvent(void) : IEvent(0) {}
+        StartupEvent(uint64_t time) : IEvent(time) {}
 
         virtual void handleEvent(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
@@ -56,7 +56,8 @@ namespace core
     class LoadObjFileEvent : public IEvent
     {
     public:
-        LoadObjFileEvent(std::string filename, std::istream & buffer) : IEvent(1), filename(filename), buffer(buffer) {}
+        LoadObjFileEvent(uint64_t time, std::string filename, std::istream & buffer) :
+            IEvent(time), filename(filename), buffer(buffer) {}
 
         virtual void handleEvent(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
@@ -70,7 +71,7 @@ namespace core
     {
     public:
         DeviceUpdateEvent(PIDevice device) : DeviceUpdateEvent(0, device) { }
-        DeviceUpdateEvent(uint64_t time_delta, PIDevice device) : IEvent(time_delta), device(device) { }
+        DeviceUpdateEvent(uint64_t time, PIDevice device) : IEvent(time), device(device) { }
 
         virtual void handleEvent(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;

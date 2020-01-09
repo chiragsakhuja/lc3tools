@@ -21,7 +21,7 @@ namespace std
     {
         bool operator()(PIEvent lhs, PIEvent rhs)
         {
-            return std::greater<uint64_t>()(lhs->time_delta, rhs->time_delta);
+            return std::greater<uint64_t>()(lhs->time, rhs->time);
         }
     };
 };
