@@ -63,3 +63,19 @@ void MachineState::registerDeviceReg(uint16_t mem_addr, PIDevice device)
 {
     mmio[mem_addr] = device;
 }
+
+FuncType MachineState::peekFuncTraceType(void) const
+{
+    if(func_trace.size() == 0) {
+        return FuncType::INVALID;
+    }
+
+    return func_trace.top();
+}
+
+FuncType MachineState::popFuncTraceType(void)
+{
+    FuncType type = func_trace.top();
+    func_trace.pop();
+    return type;
+}

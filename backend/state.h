@@ -1,12 +1,14 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include <stack>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <utility>
 
 #include "aliases.h"
+#include "func_type.h"
 #include "callback.h"
 #include "device.h"
 #include "mem_new.h"
@@ -53,11 +55,17 @@ namespace core
 
         void registerDeviceReg(uint16_t mem_addr, PIDevice device);
 
+
+        void pushFuncTraceType(FuncType type) { func_trace.push(type); }
+        FuncType peekFuncTraceType(void) const;
+        FuncType popFuncTraceType(void);
+
         std::vector<CallbackType> const & getPendingCallbacks(void) const { return pending_callbacks; }
         void clearPendingCallbacks(void) { pending_callbacks.clear(); }
         void addPendingCallback(CallbackType type) { pending_callbacks.push_back(type); }
 
     private:
+        // Hardware state.
         std::vector<MemLocation> mem;
         std::vector<uint16_t> rf;
         std::unordered_map<uint16_t, PIDevice> mmio;
@@ -65,6 +73,8 @@ namespace core
         PIInstruction decoded_ir;
         uint16_t ssp;
 
+        // Simulation state.
+        std::stack<FuncType> func_trace;
         std::vector<CallbackType> pending_callbacks;
     };
 };

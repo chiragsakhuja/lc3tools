@@ -343,5 +343,29 @@ std::string CallbackMicroOp::toString(MachineState const & state) const
 {
     (void) state;
 
-    return lc3::utils::ssprintf("Callbacks <= %s", callbackTypeToString(type).c_str());
+    return lc3::utils::ssprintf("callbacks <= %s", callbackTypeToString(type).c_str());
+}
+
+void PushFuncType::handleMicroOp(MachineState & state)
+{
+    state.pushFuncTraceType(type);
+}
+
+std::string PushFuncType::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return lc3::utils::ssprintf("traceStack <= %s", funcTypeToString(type).c_str());
+}
+
+void PopFuncType::handleMicroOp(MachineState & state)
+{
+    state.popFuncTraceType();
+}
+
+std::string PopFuncType::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return lc3::utils::ssprintf("traceStack <= traceStack.removeTop()");
 }

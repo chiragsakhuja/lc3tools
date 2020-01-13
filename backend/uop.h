@@ -6,6 +6,7 @@
 
 #include "aliases.h"
 #include "callback.h"
+#include "func_type.h"
 #include "utils.h"
 
 namespace lc3
@@ -308,6 +309,27 @@ namespace core
 
     private:
         CallbackType type;
+    };
+
+    class PushFuncType : public IMicroOp
+    {
+    public:
+        PushFuncType(FuncType type) : IMicroOp(), type(type) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        FuncType type;
+    };
+
+    class PopFuncType : public IMicroOp
+    {
+    public:
+        PopFuncType(void) : IMicroOp() { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
     };
 };
 };

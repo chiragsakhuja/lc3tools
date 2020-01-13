@@ -118,7 +118,17 @@ PIMicroOp JMPInstruction::buildMicroOps(MachineState const & state) const
 {
     (void) state;
 
-    return std::make_shared<PCWriteRegMicroOp>(getOperand(2)->getValue());
+    uint16_t reg_id = getOperand(2)->getValue();
+    PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(reg_id);
+    PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_EXIT);
+    PIMicroOp func_trace = std::make_shared<PopFuncType>();
+
+    jump->insert(std::make_shared<BranchMicroOp>([this](MachineState const & state) {
+        return (getOperand(2)->getValue() == 7 && state.peekFuncTraceType() == FuncType::SUBROUTINE);
+    }, "funcTrace.top() == subroutine", callback, nullptr));
+    callback->insert(func_trace);
+
+    return jump;
 }
 
 PIMicroOp JSRInstruction::buildMicroOps(MachineState const & state) const
@@ -128,9 +138,12 @@ PIMicroOp JSRInstruction::buildMicroOps(MachineState const & state) const
     PIMicroOp link = std::make_shared<RegWritePCMicroOp>(7);
     PIMicroOp jump = std::make_shared<PCAddImmMicroOp>(lc3::utils::sextTo16(getOperand(2)->getValue(),
         getOperand(2)->getWidth()));
-    // TODO: Add subroutine enter callback
+    PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_ENTER);
+    PIMicroOp func_trace = std::make_shared<PushFuncType>(FuncType::SUBROUTINE);
 
     link->insert(jump);
+    jump->insert(callback);
+    callback->insert(func_trace);
     return link;
 }
 
@@ -140,9 +153,12 @@ PIMicroOp JSRRInstruction::buildMicroOps(MachineState const & state) const
 
     PIMicroOp link = std::make_shared<RegWritePCMicroOp>(7);
     PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(getOperand(2)->getValue());
-    // TODO: Add subroutine enter callback
+    PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_ENTER);
+    PIMicroOp func_trace = std::make_shared<PushFuncType>(FuncType::SUBROUTINE);
 
     link->insert(jump);
+    jump->insert(callback);
+    callback->insert(func_trace);
     return link;
 }
 

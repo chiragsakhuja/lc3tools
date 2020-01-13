@@ -13,7 +13,7 @@ namespace core
 
     enum class CallbackType : CallbackTypeUnderlying
     {
-          PRE_INST = -2
+          PRE_INST = -1
         , POST_INST = 1
         , SUB_ENTER = 6
         , SUB_EXIT = 7
@@ -21,7 +21,8 @@ namespace core
         , EX_EXIT = 3
         , INT_ENTER = 4
         , INT_EXIT = 5
-        , BREAKPOINT = -3
+        , BREAKPOINT = -2
+        , INVALID
     };
 
     std::string callbackTypeToString(CallbackType type);

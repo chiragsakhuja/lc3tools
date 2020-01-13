@@ -35,8 +35,10 @@ void Simulator::simulate(void)
     do {
         uint64_t fetch_time_offset = INST_TIMESTEP - (time % INST_TIMESTEP);
 
+        auto bp_search = std::find(breakpoints.begin(), breakpoints.end(), state.readPC());
+
         // Either insert breakpoints event or normal processing.
-        if(breakpoints.find(state.readPC()) != breakpoints.end()) {
+        if(bp_search != breakpoints.end()) {
             state.writeMCR(state.readMCR() & 0x7FFF);
             events.emplace(std::make_shared<CallbackEvent>(
                 time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::BREAKPOINT), CallbackType::BREAKPOINT,
@@ -55,7 +57,7 @@ void Simulator::simulate(void)
 
             // Insert device update events.
             for(PIDevice dev : devices) {
-                events.emplace(std::make_shared<DeviceUpdateEvent>(time + fetch_time_offset - 1, dev));
+                events.emplace(std::make_shared<DeviceUpdateEvent>(time + fetch_time_offset - 10, dev));
             }
 
             // Insert instruction fetch event.
@@ -94,14 +96,6 @@ void Simulator::registerCallback(CallbackType type, Callback func)
 void Simulator::addBreakpoint(uint16_t pc)
 {
     breakpoints.insert(pc);
-}
-
-void Simulator::removeBreakpoint(uint16_t pc)
-{
-    auto search = breakpoints.find(pc);
-    if(search != breakpoints.end()) {
-        breakpoints.erase(search);
-    }
 }
 
 void Simulator::mainLoop(void)
