@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "aliases.h"
+#include "callback.h"
 #include "utils.h"
 
 namespace lc3
@@ -295,6 +296,18 @@ namespace core
         PredFunction pred;
         std::string msg;
         PIMicroOp true_next, false_next;
+    };
+
+    class CallbackMicroOp : public IMicroOp
+    {
+    public:
+        CallbackMicroOp(CallbackType type) : IMicroOp(), type(type) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        CallbackType type;
     };
 };
 };

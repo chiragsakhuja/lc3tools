@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "aliases.h"
+#include "callback.h"
 #include "decoder.h"
 #include "utils.h"
 
@@ -21,8 +22,9 @@ namespace core
         uint64_t time;
         PIMicroOp uops;
 
-        IEvent(void) : IEvent(0) {}
-        IEvent(uint64_t time) : time(time), uops(nullptr) {}
+        IEvent(void) : IEvent(0) { }
+        IEvent(uint64_t time) : IEvent(time, nullptr) { }
+        IEvent(uint64_t time, PIMicroOp uops) : time(time), uops(uops) { }
         virtual ~IEvent(void) = default;
 
         virtual void handleEvent(MachineState & state) = 0;
@@ -32,10 +34,10 @@ namespace core
     class AtomicInstProcessEvent : public IEvent
     {
     public:
-        AtomicInstProcessEvent(sim::Decoder const & decoder) : AtomicInstProcessEvent(0, decoder) {}
+        AtomicInstProcessEvent(sim::Decoder const & decoder) : AtomicInstProcessEvent(0, decoder) { }
         AtomicInstProcessEvent(uint64_t time, sim::Decoder const & decoder) :
             IEvent(time), decoder(decoder)
-        {}
+        { }
 
         virtual void handleEvent(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
@@ -47,7 +49,7 @@ namespace core
     class StartupEvent : public IEvent
     {
     public:
-        StartupEvent(uint64_t time) : IEvent(time) {}
+        StartupEvent(uint64_t time) : IEvent(time) { }
 
         virtual void handleEvent(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
@@ -56,8 +58,9 @@ namespace core
     class LoadObjFileEvent : public IEvent
     {
     public:
-        LoadObjFileEvent(uint64_t time, std::string filename, std::istream & buffer) :
-            IEvent(time), filename(filename), buffer(buffer) {}
+        LoadObjFileEvent(uint64_t time, std::string filename, std::istream & buffer, lc3::utils::Logger & logger) :
+            IEvent(time), filename(filename), buffer(buffer), logger(logger)
+        { }
 
         virtual void handleEvent(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
@@ -65,12 +68,12 @@ namespace core
     private:
         std::string filename;
         std::istream & buffer;
+        lc3::utils::Logger & logger;
     };
 
     class DeviceUpdateEvent : public IEvent
     {
     public:
-        DeviceUpdateEvent(PIDevice device) : DeviceUpdateEvent(0, device) { }
         DeviceUpdateEvent(uint64_t time, PIDevice device) : IEvent(time), device(device) { }
 
         virtual void handleEvent(MachineState & state) override;
@@ -78,6 +81,21 @@ namespace core
 
     private:
         PIDevice device;
+    };
+
+    class CallbackEvent : public IEvent
+    {
+    public:
+        using Callback = std::function<void(CallbackType, MachineState &)>;
+
+        CallbackEvent(uint64_t time, CallbackType type, Callback func) : IEvent(time), type(type), func(func) { }
+
+        virtual void handleEvent(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        CallbackType type;
+        Callback func;
     };
 };
 };

@@ -12,8 +12,8 @@
 
 lc3::sim::sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threaded_input, uint32_t print_level,
     bool propagate_exceptions) :
-    printer(printer), simulator_old(*this, printer, inputter, print_level, threaded_input),
     simulator(printer, inputter, print_level),
+    printer(printer), simulator_old(*this, printer, inputter, print_level, threaded_input),
     propagate_exceptions(propagate_exceptions)
 {
     simulator_old.registerPreInstructionCallback(lc3::sim::preInstructionCallback);

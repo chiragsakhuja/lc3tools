@@ -48,6 +48,8 @@ std::string StartupEvent::toString(MachineState const & state) const
 
 void LoadObjFileEvent::handleEvent(MachineState & state)
 {
+    using namespace lc3::utils;
+
     uint32_t fill_pc = 0;
     uint32_t offset = 0;
     bool first_orig_set = false;
@@ -58,7 +60,7 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
     if(buffer.read(header, expected_header.size())) {
         for(uint32_t i = 0; i < expected_header.size(); i += 1) {
             if(header[i] != expected_header[i]) {
-                //logger.printf(PrintType::P_ERROR, true, "invalid header (is this a .obj file?); try re-assembling");
+                logger.printf(PrintType::P_ERROR, true, "invalid header (is this a .obj file?); try re-assembling");
                 throw lc3::utils::exception("invalid header (is this a .obj file?); try re-assembling");
             }
         }
@@ -74,12 +76,12 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
     if(buffer.read(version, expected_version.size())) {
         for(uint32_t i = 0; i < expected_version.size(); i += 1) {
             if(version[i] != expected_version[i]) {
-                //logger.printf(PrintType::P_ERROR, true, "mismatched version numbers; try re-assembling");
+                logger.printf(PrintType::P_ERROR, true, "mismatched version numbers; try re-assembling");
                 throw lc3::utils::exception("mismatched version numbers; try re-assembling");
             }
         }
     } else {
-        //logger.printf(PrintType::P_ERROR, true, "could not version number; try re-assembling");
+        logger.printf(PrintType::P_ERROR, true, "could not version number; try re-assembling");
         throw lc3::utils::exception("could not read version number; try re-assembling");
     }
     delete[] version;
@@ -100,10 +102,8 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
             fill_pc = mem.getValue();
             offset = 0;
         } else {
-            /*
-             *logger.printf(lc3::utils::PrintType::P_DEBUG, true, "0x%0.4x: %s (0x%0.4x)", fill_pc + offset,
-             *    statement.getLine().c_str(), statement.getValue());
-             */
+            logger.printf(lc3::utils::PrintType::P_DEBUG, true, "0x%0.4x: %s (0x%0.4x)", fill_pc + offset,
+                mem.getLine().c_str(), mem.getValue());
             state.writeMem(fill_pc + offset, mem.getValue());
             state.setMemLine(fill_pc + offset, mem.getLine());
             offset += 1;
@@ -119,7 +119,6 @@ std::string LoadObjFileEvent::toString(MachineState const & state) const
     return lc3::utils::ssprintf("Loading %s into memory", filename.c_str());
 }
 
-
 void DeviceUpdateEvent::handleEvent(MachineState & state)
 {
     (void) state;
@@ -132,4 +131,16 @@ std::string DeviceUpdateEvent::toString(MachineState const & state) const
     (void) state;
 
     return lc3::utils::ssprintf("Updating %s", device->getName().c_str());
+}
+
+void CallbackEvent::handleEvent(MachineState & state)
+{
+    func(type, state);
+}
+
+std::string CallbackEvent::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return lc3::utils::ssprintf("Triggering %s callback", callbackTypeToString(type).c_str());
 }

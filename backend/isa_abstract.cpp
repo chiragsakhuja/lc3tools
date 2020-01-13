@@ -39,7 +39,6 @@ IInstruction::IInstruction(IInstruction const & that)
 
 std::string IInstruction::toFormatString(void) const
 {
-    // TODO: Fill in code
     std::stringstream assembly;
     assembly << name;
     if(getOperands().size() > 0) {

@@ -5,7 +5,9 @@
 #define SIMULATOR_H
 
 #include <cstdint>
+#include <unordered_map>
 #include <queue>
+#include <set>
 
 #include "inputter.h"
 #include "event.h"
@@ -33,9 +35,14 @@ namespace core
     class Simulator
     {
     public:
+        using Callback = std::function<void(MachineState &)>;
+
         Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, uint32_t print_level);
         void simulate(void);
         void loadObjFile(std::string filename, std::istream & buffer);
+        void registerCallback(CallbackType type, Callback func);
+        void addBreakpoint(uint16_t pc);
+        void removeBreakpoint(uint16_t pc);
 
     private:
         std::priority_queue<PIEvent, std::vector<PIEvent>, std::greater<PIEvent>> events;
@@ -47,7 +54,13 @@ namespace core
         lc3::utils::Logger logger;
         lc3::utils::IInputter & inputter;
 
+        std::unordered_map<CallbackType, Callback> callbacks;
+        std::set<uint16_t> breakpoints;
+
         void mainLoop(void);
+
+        friend void callbackDispatcher(Simulator *, CallbackType, MachineState &);
+        static void callbackDispatcher(Simulator * sim, CallbackType type, MachineState & state);
     };
 };
 };

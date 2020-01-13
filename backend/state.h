@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "aliases.h"
+#include "callback.h"
 #include "device.h"
 #include "mem_new.h"
 
@@ -52,6 +53,10 @@ namespace core
 
         void registerDeviceReg(uint16_t mem_addr, PIDevice device);
 
+        std::vector<CallbackType> const & getPendingCallbacks(void) const { return pending_callbacks; }
+        void clearPendingCallbacks(void) { pending_callbacks.clear(); }
+        void addPendingCallback(CallbackType type) { pending_callbacks.push_back(type); }
+
     private:
         std::vector<MemLocation> mem;
         std::vector<uint16_t> rf;
@@ -60,8 +65,7 @@ namespace core
         PIInstruction decoded_ir;
         uint16_t ssp;
 
-        MemLocation & getMemLocation(uint16_t addr);
-        MemLocation const & getMemLocation(uint16_t addr) const;
+        std::vector<CallbackType> pending_callbacks;
     };
 };
 };
