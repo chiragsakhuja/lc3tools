@@ -271,9 +271,9 @@ namespace core
     .FILL BAD_TRAP    ; xFF
 
 ; the interrupt vector table
-    .FILL EX_PRIV   ; x00
-    .FILL EX_ILL    ; x01
-    .FILL BAD_INT    ; x02
+    .FILL EX_PRIV    ; x00
+    .FILL EX_ILL     ; x01
+    .FILL EX_ACV     ; x02
     .FILL BAD_INT    ; x03
     .FILL BAD_INT    ; x04
     .FILL BAD_INT    ; x05
@@ -530,36 +530,34 @@ namespace core
 
         char const * lc3os_src_2 = R"LC3OS2(
 OS_START
-    LD R6, OS_SP            ; set system stack pointer
-    LEA R0, OS_START_MSG    ; print a welcome message
-    PUTS
-    LDI R0, OS_PSR          ; go to user mode
-    LD R1, MASK_HI
-    NOT R0, R0
-    AND R0, R0, R1
-    NOT R0, R0
-    ; normally this part would be in user space and the
-    ; loader would set the PC
-    STI R0, OS_PSR
-    HALT
+    ; set system stack pointer
+    LD R6, OS_SP
+    ; push synthesized PSR onto system stack
+    LD R0, USER_PSR
+    ADD R6, R6, #-1
+    STR R0, R6, #0
+    ; push synthesized (x3000) PSR onto system stack
+    LD R0, USER_PC
+    ADD R6, R6, #-1
+    STR R0, R6, #0
+    ; enter user mode
+    RTI
 
-OS_START_MSG    .STRINGZ ""
+OS_SP       .FILL x3000
+USER_PSR    .FILL x8002
+USER_PC     .FILL x3000
+    .END
 
-OS_KBSR    .FILL xFE00
-OS_KBDR    .FILL xFE02
-OS_DSR     .FILL xFE04
-OS_DDR     .FILL xFE06
-OS_PSR     .FILL xFFFC
-OS_MCR     .FILL xFFFE
-OS_SP      .FILL x3000
-MASK_HI    .FILL x7FFF
-LOW_8_BITS .FILL x00FF
-
+    .ORIG x300
 TRAP_GETC
     LDI R0, OS_KBSR        ; wait for a keystroke
     BRzp TRAP_GETC
     LDI R0, OS_KBDR        ; read it and return
     RTI
+
+OS_KBSR    .FILL xFE00
+OS_KBDR    .FILL xFE02
+
 
 TRAP_OUT
     ADD R6, R6, #-1
@@ -571,6 +569,10 @@ TRAP_OUT_WAIT
     LDR R1, R6, #0        ; restore R1
     ADD R6, R6, #1
     RTI
+
+OS_DSR     .FILL xFE04
+OS_DDR     .FILL xFE06
+
 
 TRAP_PUTS
     ADD R6, R6, #-1       ; save R0 and R1
@@ -604,6 +606,10 @@ TRAP_IN
     LDR R0, R6, #0         ; restore the character
     ADD R6, R6, #1
     RTI
+
+TRAP_IN_MSG    .STRINGZ "\nInput a character> "
+
+
 
     ; NOTE: This trap will end when it sees any NUL, even in
     ; packed form, despite the P&P second edition's requirement
@@ -651,7 +657,10 @@ TRAP_PUTSP_DONE
     ADD R6, R6, #1
     RTI
 
-    ; an infinite loop of lowering OS_MCR's MSB
+LOW_8_BITS  .FILL x00FF
+
+
+    ; clear power-on bit in MCR
 TRAP_HALT
     LEA R0, TRAP_HALT_MSG  ; give a warning
     PUTS
@@ -659,7 +668,12 @@ TRAP_HALT
     LD R1, MASK_HI
     AND R0, R0, R1
     STI R0, OS_MCR
-    BRnzp TRAP_HALT        ; HALT again...
+    BRnzp TRAP_HALT        ; HALT again if need be...
+
+OS_MCR          .FILL xFFFE
+MASK_HI         .FILL x7FFF
+TRAP_HALT_MSG   .STRINGZ "\n\n--- Halting the LC-3 ---\n\n"
+
 
     ; print an error message, then HALT
 BAD_TRAP
@@ -667,11 +681,17 @@ BAD_TRAP
     PUTS
     HALT                   ; execute HALT
 
+BAD_TRAP_MSG   .STRINGZ "\n\n--- Undefined trap executed ---\n\n"
+
+
     ; print an error message, then HALT
 EX_PRIV
     LEA R0, EX_PRIV_MSG    ; give an error message
     PUTS
     HALT                   ; execute HALT
+
+EX_PRIV_MSG    .STRINGZ "\n\n--- Privilege violation ---\n\n"
+
 
     ; print an error message, then HALT
 EX_ILL
@@ -679,14 +699,20 @@ EX_ILL
     PUTS
     HALT                   ; execute HALT
 
+EX_ILL_MSG     .STRINGZ "\n\n--- Illegal opcode ---\n\n"
+
+
+    ; print an error message, then HALT
+EX_ACV
+    LEA R0, EX_ACV_MSG     ; give an error message
+    PUTS
+    HALT                   ; execute HALT
+
+EX_ACV_MSG     .STRINGZ "\n\n--- Access violation---\n\n"
+
+
 BAD_INT
     RTI
-
-TRAP_IN_MSG    .STRINGZ "\nInput a character> "
-TRAP_HALT_MSG  .STRINGZ "\n\n--- Halting the LC-3 ---\n\n"
-EX_PRIV_MSG    .STRINGZ "\n\n--- Access violation ---\n\n"
-EX_ILL_MSG     .STRINGZ "\n\n--- Illegal opcode ---\n\n"
-BAD_TRAP_MSG   .STRINGZ "\n\n--- Undefined trap executed ---\n\n"
 
     .END
 )LC3OS2";
