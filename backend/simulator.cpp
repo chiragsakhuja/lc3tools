@@ -28,6 +28,7 @@ void Simulator::simulate(void)
     sim::Decoder decoder;
     events.emplace(std::make_shared<StartupEvent>(time));
 
+    // Initialize devices.
     for(PIDevice dev : devices) {
         dev->startup();
     }
@@ -76,6 +77,10 @@ void Simulator::simulate(void)
         state.clearPendingCallbacks();
     } while(lc3::utils::getBit(state.readMCR(), 15) == 1);
 
+    // Execute any remaining callbacks.
+    // mainLoop();
+
+    // Shutdown devices.
     for(PIDevice dev : devices) {
         dev->shutdown();
     }
