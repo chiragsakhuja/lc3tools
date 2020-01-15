@@ -31,12 +31,20 @@ void StartupEvent::handleEvent(MachineState & state)
     uint16_t reset_pc = state.readResetPC();
     state.writePC(reset_pc == 0x0000 ? RESET_PC : reset_pc);
     state.writeMCR(0x8000);
+
+    // Clear privilege bit and condition codes.
+    uint16_t psr_value = state.readPSR();
+    psr_value &= 0x7FF8;
     if(USER_START <= reset_pc && reset_pc <= USER_END) {
+        // Set privilege bit to user mode and condition codes to Z.
+        psr_value |= 0x8002;
+        state.writePSR(psr_value);
         state.writeSSP(USER_START);
-        state.writePSR(0x8002);
     } else {
-        state.writeReg(6, USER_START);
-        state.writePSR(0x0002);
+        // Set condition codes to Z.
+        psr_value |= 0x0002;
+        state.writePSR(psr_value);
+        // Don't initialize stack pointer if in program starts in system mode.
     }
 }
 
