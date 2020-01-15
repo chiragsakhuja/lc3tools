@@ -25,7 +25,7 @@ std::vector<uint16_t> RWReg::getAddrMap(void) const
     return { data_addr };
 }
 
-KeyboardDevice::KeyboardDevice(lc3::utils::IInputter & inputter) : inputter(inputter)
+KeyboardDevice::KeyboardDevice(lc3::utils::IInputter & inputter) : inputter(inputter), interrupt_triggered(false)
 {
     status.setValue(0x0000);
     data.setValue(0x0000);
@@ -47,8 +47,11 @@ std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr) const
         return std::make_pair(status.getValue(), nullptr);
     } else if(addr == KBDR) {
         uint16_t status_value = status.getValue();
-        PIMicroOp toggle_status = std::make_shared<MemWriteImmMicroOp>(KBSR, status_value & 0x7FFF);
-        return std::make_pair(data.getValue(), toggle_status);
+        PIMicroOp write_addr = std::make_shared<RegWriteImmMicroOp>(9, KBSR);
+        PIMicroOp toggle_status = std::make_shared<MemWriteImmMicroOp>(9, status_value & 0x7FFF);
+        write_addr->insert(toggle_status);
+
+        return std::make_pair(data.getValue(), write_addr);
     }
 
     return std::make_pair(0x0000, nullptr);
@@ -68,13 +71,23 @@ std::vector<uint16_t> KeyboardDevice::getAddrMap(void) const
     return { KBSR, KBDR };
 }
 
-void KeyboardDevice::tick(void)
+PIMicroOp KeyboardDevice::tick(void)
 {
+    // Set ready bit.
     char c;
     if(inputter.getChar(c)) {
         status.setValue(status.getValue() | 0x8000);
         data.setValue(static_cast<uint16_t>(c));
+        interrupt_triggered = false;
     }
+
+    // Trigger interrupt.
+    if(! interrupt_triggered && (status.getValue() & 0xC000) == 0xC000) {
+        interrupt_triggered = true;
+        return std::make_shared<PushInterruptType>(InterruptType::KEYBOARD);
+    }
+
+    return nullptr;
 }
 
 std::pair<uint16_t, PIMicroOp> DisplayDevice::read(uint16_t addr) const
@@ -118,8 +131,10 @@ std::vector<uint16_t> DisplayDevice::getAddrMap(void) const
     return { DSR, DDR };
 }
 
-void DisplayDevice::tick(void)
+PIMicroOp DisplayDevice::tick(void)
 {
     // Set ready bit.
     status.setValue(status.getValue() | 0x8000);
+
+    return nullptr;
 }

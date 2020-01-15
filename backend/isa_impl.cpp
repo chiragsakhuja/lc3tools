@@ -320,21 +320,26 @@ PIMicroOp STRInstruction::buildMicroOps(MachineState const & state) const
 
 PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
 {
-    (void) state;
+    return buildSystemModeEnter(TRAP_TABLE_START, getOperand(2)->getValue(), (state.readPSR() & 0x0700) >> 8).first;
+}
 
+std::pair<PIMicroOp, PIMicroOp> lc3::core::buildSystemModeEnter(uint16_t table_start, uint8_t vec, uint8_t priority)
+{
     PIMicroOp save_cur_sp = std::make_shared<RegWriteRegMicroOp>(8, 6);
     PIMicroOp write_ssp = std::make_shared<RegWriteSSPMicroOp>(6);
     PIMicroOp write_cur_sp = std::make_shared<SSPWriteRegMicroOp>(8);
     PIMicroOp dec_sp1 = std::make_shared<RegAddImmMicroOp>(6, 6, -1);
     PIMicroOp write_psr = std::make_shared<RegWritePSRMicroOp>(9);
     PIMicroOp store_psr = std::make_shared<MemWriteRegMicroOp>(6, 9);
+    PIMicroOp clear_priority = std::make_shared<RegAndImmMicroOp>(9, 9, 0xF1FF);
+    PIMicroOp set_priority = std::make_shared<RegAddImmMicroOp>(9, 9, (priority & 0x7) << 8);
     PIMicroOp set_priv = std::make_shared<RegAndImmMicroOp>(9, 9, 0x7FFF);
     PIMicroOp change_priv = std::make_shared<PSRWriteRegMicroOp>(9);
     PIMicroOp dec_sp2 = std::make_shared<RegAddImmMicroOp>(6, 6, -1);
     PIMicroOp write_pc = std::make_shared<RegWritePCMicroOp>(9);
     PIMicroOp store_pc = std::make_shared<MemWriteRegMicroOp>(6, 9);
-    PIMicroOp write_table_start = std::make_shared<RegWriteImmMicroOp>(10, TRAP_TABLE_START);
-    PIMicroOp add_table_offset = std::make_shared<RegAddImmMicroOp>(10, 10, getOperand(2)->getValue());
+    PIMicroOp write_table_start = std::make_shared<RegWriteImmMicroOp>(10, table_start);
+    PIMicroOp add_table_offset = std::make_shared<RegAddImmMicroOp>(10, 10, vec);
     PIMicroOp load_table = std::make_shared<MemReadMicroOp>(10, 10);
     PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(10);
 
@@ -348,7 +353,9 @@ PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
 
     dec_sp1->insert(write_psr);
     write_psr->insert(store_psr);
-    store_psr->insert(std::make_shared<BranchMicroOp>([](MachineState const & state) {
+    store_psr->insert(clear_priority);
+    clear_priority->insert(set_priority);
+    set_priority->insert(std::make_shared<BranchMicroOp>([](MachineState const & state) {
         return lc3::utils::getBit(state.readPSR(), 15) == 1;
     }, "PSR[15] == 1", set_priv, dec_sp2));
 
@@ -362,5 +369,5 @@ PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
     add_table_offset->insert(load_table);
     load_table->insert(jump);
 
-    return start;
+    return std::make_pair(start, jump);
 }

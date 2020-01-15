@@ -64,6 +64,26 @@ void MachineState::registerDeviceReg(uint16_t mem_addr, PIDevice device)
     mmio[mem_addr] = device;
 }
 
+InterruptType MachineState::peekInterrupt(void) const
+{
+    if(pending_interrupts.size() == 0) {
+        return InterruptType::INVALID;
+    }
+
+    return pending_interrupts.front();
+}
+
+InterruptType MachineState::dequeueInterrupt(void)
+{
+    if(pending_interrupts.size() == 0) {
+        return InterruptType::INVALID;
+    }
+
+    InterruptType type = pending_interrupts.front();
+    pending_interrupts.pop();
+    return type;
+}
+
 FuncType MachineState::peekFuncTraceType(void) const
 {
     if(func_trace.size() == 0) {
@@ -75,6 +95,10 @@ FuncType MachineState::peekFuncTraceType(void) const
 
 FuncType MachineState::popFuncTraceType(void)
 {
+    if(func_trace.size() == 0) {
+        return FuncType::INVALID;
+    }
+
     FuncType type = func_trace.top();
     func_trace.pop();
     return type;

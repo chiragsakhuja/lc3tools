@@ -6,6 +6,7 @@
 
 #include "device_regs.h"
 #include "inputter.h"
+#include "intex.h"
 #include "logger.h"
 #include "mem_new.h"
 #include "uop.h"
@@ -26,7 +27,7 @@ namespace core
         virtual PIMicroOp write(uint16_t addr, uint16_t value) = 0;
         virtual std::vector<uint16_t> getAddrMap(void) const = 0;
         virtual std::string getName(void) const = 0;
-        virtual void tick(void) { }
+        virtual PIMicroOp tick(void) { return nullptr; }
     };
 
     class RWReg : public IDevice
@@ -57,13 +58,14 @@ namespace core
         virtual PIMicroOp write(uint16_t addr, uint16_t value) override;
         virtual std::vector<uint16_t> getAddrMap(void) const override;
         virtual std::string getName(void) const override { return "Keyboard"; }
-        virtual void tick(void) override;
+        virtual PIMicroOp tick(void) override;
 
     private:
         lc3::utils::IInputter & inputter;
 
         MemLocation status;
         MemLocation data;
+        bool interrupt_triggered;
     };
 
     class DisplayDevice : public IDevice
@@ -76,7 +78,7 @@ namespace core
         virtual PIMicroOp write(uint16_t addr, uint16_t value) override;
         virtual std::vector<uint16_t> getAddrMap(void) const override;
         virtual std::string getName(void) const override { return "Display"; }
-        virtual void tick(void) override;
+        virtual PIMicroOp tick(void) override;
 
     private:
         lc3::utils::Logger & logger;

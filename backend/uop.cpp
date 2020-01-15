@@ -7,12 +7,14 @@ using namespace lc3::core;
 
 PIMicroOp IMicroOp::insert(PIMicroOp new_next)
 {
-    if(next) {
-        PIMicroOp cur_next = next;
+    if(next == nullptr) {
         next = new_next;
-        new_next->next = cur_next;
     } else {
-        next = new_next;
+        PIMicroOp cur = next;
+        while(cur->next != nullptr) {
+            cur = cur->next;
+        }
+        cur->next = new_next;
     }
 
     return next;
@@ -259,7 +261,7 @@ void MemWriteImmMicroOp::handleMicroOp(MachineState & state)
 std::string MemWriteImmMicroOp::toString(MachineState const & state) const
 {
     return lc3::utils::ssprintf("MEM[%s:0x%0.4hx]:0x%0.4hx <= 0x%0.4hx", regToString(addr_reg_id).c_str(),
-        std::get<0>(state.readMem(state.readReg(addr_reg_id))), value);
+        state.readReg(addr_reg_id), std::get<0>(state.readMem(state.readReg(addr_reg_id))), value);
 }
 
 void MemWriteRegMicroOp::handleMicroOp(MachineState & state)
@@ -334,6 +336,14 @@ std::string BranchMicroOp::toString(MachineState const & state) const
     return lc3::utils::ssprintf("uBEN <= (%s):%s", msg.c_str(), pred(state) ? "true" : "false");
 }
 
+PIMicroOp BranchMicroOp::insert(PIMicroOp new_next)
+{
+    if(true_next) { true_next->insert(new_next); }
+    if(false_next) { false_next->insert(new_next); }
+
+    return new_next;
+}
+
 void CallbackMicroOp::handleMicroOp(MachineState & state)
 {
     state.addPendingCallback(type);
@@ -344,6 +354,30 @@ std::string CallbackMicroOp::toString(MachineState const & state) const
     (void) state;
 
     return lc3::utils::ssprintf("callbacks <= %s", callbackTypeToString(type).c_str());
+}
+
+void PushInterruptType::handleMicroOp(MachineState & state)
+{
+    state.enqueueInterrupt(type);
+}
+
+std::string PushInterruptType::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return lc3::utils::ssprintf("interrupts <= %s", interruptTypeToString(type).c_str());
+}
+
+void PopInterruptType::handleMicroOp(MachineState & state)
+{
+    state.dequeueInterrupt();
+}
+
+std::string PopInterruptType::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return lc3::utils::ssprintf("interrupts <= interrupts.removeFront()");
 }
 
 void PushFuncType::handleMicroOp(MachineState & state)

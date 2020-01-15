@@ -61,6 +61,9 @@ void Simulator::simulate(void)
                 events.emplace(std::make_shared<DeviceUpdateEvent>(time + fetch_time_offset - 10, dev));
             }
 
+            // Check for interrupts triggered by devices.
+            events.emplace(std::make_shared<CheckForInterruptEvent>(time + fetch_time_offset - 9));
+
             // Insert instruction fetch event.
             events.emplace(std::make_shared<AtomicInstProcessEvent>(time + fetch_time_offset, decoder));
         }

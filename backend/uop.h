@@ -7,6 +7,7 @@
 #include "aliases.h"
 #include "callback.h"
 #include "func_type.h"
+#include "intex.h"
 #include "utils.h"
 
 namespace lc3
@@ -24,7 +25,7 @@ namespace core
 
         virtual void handleMicroOp(MachineState & state) = 0;
         virtual std::string toString(MachineState const & state) const = 0;
-        PIMicroOp insert(PIMicroOp new_next);
+        virtual PIMicroOp insert(PIMicroOp new_next);
         PIMicroOp getNext(void) const { return next; }
 
     protected:
@@ -292,6 +293,7 @@ namespace core
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
+        virtual PIMicroOp insert(PIMicroOp new_next) override;
 
     private:
         PredFunction pred;
@@ -309,6 +311,27 @@ namespace core
 
     private:
         CallbackType type;
+    };
+
+    class PushInterruptType : public IMicroOp
+    {
+    public:
+        PushInterruptType(InterruptType type) : IMicroOp(), type(type) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        InterruptType type;
+    };
+
+    class PopInterruptType : public IMicroOp
+    {
+    public:
+        PopInterruptType(void) : IMicroOp() { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
     };
 
     class PushFuncType : public IMicroOp
@@ -331,6 +354,8 @@ namespace core
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
     };
+
+    std::pair<PIMicroOp, PIMicroOp> buildSystemModeEnter(uint16_t table_start, uint8_t vec, uint8_t priority);
 };
 };
 

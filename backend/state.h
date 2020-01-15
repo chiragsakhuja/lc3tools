@@ -1,6 +1,7 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include <queue>
 #include <stack>
 #include <string>
 #include <vector>
@@ -8,9 +9,10 @@
 #include <utility>
 
 #include "aliases.h"
-#include "func_type.h"
 #include "callback.h"
 #include "device.h"
+#include "func_type.h"
+#include "intex.h"
 #include "mem_new.h"
 
 namespace lc3
@@ -55,6 +57,10 @@ namespace core
 
         void registerDeviceReg(uint16_t mem_addr, PIDevice device);
 
+        void enqueueInterrupt(InterruptType type) { pending_interrupts.push(type); }
+        InterruptType peekInterrupt(void) const;
+        InterruptType dequeueInterrupt(void);
+
 
         void pushFuncTraceType(FuncType type) { func_trace.push(type); }
         FuncType peekFuncTraceType(void) const;
@@ -72,6 +78,7 @@ namespace core
         uint16_t reset_pc, pc, ir;
         PIInstruction decoded_ir;
         uint16_t ssp;
+        std::queue<InterruptType> pending_interrupts;
 
         // Simulation state.
         std::stack<FuncType> func_trace;

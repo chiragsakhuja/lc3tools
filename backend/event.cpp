@@ -16,6 +16,7 @@ void AtomicInstProcessEvent::handleEvent(MachineState & state)
 
     fetch->insert(inc_pc);
     inc_pc->insert(decode);
+
     uops = fetch;
 }
 
@@ -123,7 +124,7 @@ void DeviceUpdateEvent::handleEvent(MachineState & state)
 {
     (void) state;
 
-    device->tick();
+    uops = device->tick();
 }
 
 std::string DeviceUpdateEvent::toString(MachineState const & state) const
@@ -131,6 +132,31 @@ std::string DeviceUpdateEvent::toString(MachineState const & state) const
     (void) state;
 
     return lc3::utils::ssprintf("Updating %s", device->getName().c_str());
+}
+
+void CheckForInterruptEvent::handleEvent(MachineState & state)
+{
+    InterruptType interrupt = state.peekInterrupt();
+    if(interrupt != InterruptType::INVALID && (getInterruptPriority(interrupt) > ((state.readPSR() & 0x0700) >> 8))) {
+        std::pair<PIMicroOp, PIMicroOp> handle_interrupt_chain = buildSystemModeEnter(INTEX_TABLE_START,
+            getInterruptVector(interrupt), getInterruptPriority(interrupt)
+        );
+        PIMicroOp dequeue_interrupt = std::make_shared<PopInterruptType>();
+
+        handle_interrupt_chain.second->insert(dequeue_interrupt);
+
+        uops = handle_interrupt_chain.first;
+    }
+}
+
+std::string CheckForInterruptEvent::toString(MachineState const & state) const
+{
+    InterruptType interrupt = state.peekInterrupt();
+    if(interrupt != InterruptType::INVALID && (getInterruptPriority(interrupt) > ((state.readPSR() & 0x0700) >> 8))) {
+        return lc3::utils::ssprintf("Handling %s interrupt", interruptTypeToString(interrupt).c_str());
+    } else {
+        return "No interrupt of higher priority pending";
+    }
 }
 
 void CallbackEvent::handleEvent(MachineState & state)

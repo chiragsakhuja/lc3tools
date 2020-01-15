@@ -83,6 +83,15 @@ namespace core
         PIDevice device;
     };
 
+    class CheckForInterruptEvent : public IEvent
+    {
+    public:
+        CheckForInterruptEvent(uint64_t time) : IEvent(time) { }
+
+        virtual void handleEvent(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+    };
+
     class CallbackEvent : public IEvent
     {
     public:
