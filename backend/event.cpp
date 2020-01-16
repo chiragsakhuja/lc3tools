@@ -150,8 +150,10 @@ void CheckForInterruptEvent::handleEvent(MachineState & state)
             getInterruptVector(interrupt), getInterruptPriority(interrupt)
         );
         PIMicroOp dequeue_interrupt = std::make_shared<PopInterruptType>();
+        PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::INT_ENTER);
 
         handle_interrupt_chain.second->insert(dequeue_interrupt);
+        dequeue_interrupt->insert(callback);
 
         uops = handle_interrupt_chain.first;
     }

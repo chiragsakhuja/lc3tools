@@ -58,8 +58,9 @@ namespace core
         std::set<uint16_t> breakpoints;
 
         void mainLoop(void);
+        void handleDevices(void);
+        void handleInstruction(sim::Decoder & decoder);
 
-        friend void callbackDispatcher(Simulator *, CallbackType, MachineState &);
         static void callbackDispatcher(Simulator * sim, CallbackType type, MachineState & state);
     };
 };

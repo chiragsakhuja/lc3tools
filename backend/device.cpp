@@ -47,8 +47,8 @@ std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr) const
         return std::make_pair(status.getValue(), nullptr);
     } else if(addr == KBDR) {
         uint16_t status_value = status.getValue();
-        PIMicroOp write_addr = std::make_shared<RegWriteImmMicroOp>(9, KBSR);
-        PIMicroOp toggle_status = std::make_shared<MemWriteImmMicroOp>(9, status_value & 0x7FFF);
+        PIMicroOp write_addr = std::make_shared<RegWriteImmMicroOp>(8, KBSR);
+        PIMicroOp toggle_status = std::make_shared<MemWriteImmMicroOp>(8, status_value & 0x7FFF);
         write_addr->insert(toggle_status);
 
         return std::make_pair(data.getValue(), write_addr);
