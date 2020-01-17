@@ -313,10 +313,10 @@ namespace core
         CallbackType type;
     };
 
-    class PushInterruptType : public IMicroOp
+    class PushInterruptTypeMicroOp : public IMicroOp
     {
     public:
-        PushInterruptType(InterruptType type) : IMicroOp(), type(type) { }
+        PushInterruptTypeMicroOp(InterruptType type) : IMicroOp(), type(type) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
@@ -325,19 +325,19 @@ namespace core
         InterruptType type;
     };
 
-    class PopInterruptType : public IMicroOp
+    class PopInterruptTypeMicroOp : public IMicroOp
     {
     public:
-        PopInterruptType(void) : IMicroOp() { }
+        PopInterruptTypeMicroOp(void) : IMicroOp() { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
     };
 
-    class PushFuncType : public IMicroOp
+    class PushFuncTypeMicroOp : public IMicroOp
     {
     public:
-        PushFuncType(FuncType type) : IMicroOp(), type(type) { }
+        PushFuncTypeMicroOp(FuncType type) : IMicroOp(), type(type) { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
@@ -346,15 +346,28 @@ namespace core
         FuncType type;
     };
 
-    class PopFuncType : public IMicroOp
+    class PopFuncTypeMicroOp : public IMicroOp
     {
     public:
-        PopFuncType(void) : IMicroOp() { }
+        PopFuncTypeMicroOp(void) : IMicroOp() { }
 
         virtual void handleMicroOp(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
     };
 
+    class PrintMessageMicroOp : public IMicroOp
+    {
+    public:
+        PrintMessageMicroOp(std::string const & msg) : IMicroOp(), msg(msg) { }
+
+        virtual void handleMicroOp(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+
+    private:
+        std::string msg;
+    };
+
+    bool isAccessViolation(uint16_t addr, MachineState const & state);
     std::pair<PIMicroOp, PIMicroOp> buildSystemModeEnter(uint16_t table_start, uint8_t vec, uint8_t priority);
 };
 };

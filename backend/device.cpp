@@ -84,7 +84,7 @@ PIMicroOp KeyboardDevice::tick(void)
     // Trigger interrupt.
     if(! interrupt_triggered && (status.getValue() & 0xC000) == 0xC000) {
         interrupt_triggered = true;
-        return std::make_shared<PushInterruptType>(InterruptType::KEYBOARD);
+        return std::make_shared<PushInterruptTypeMicroOp>(InterruptType::KEYBOARD);
     }
 
     return nullptr;

@@ -31,8 +31,22 @@ std::string IMicroOp::regToString(uint16_t reg_id) const
 
 void FetchMicroOp::handleMicroOp(MachineState & state)
 {
-    uint16_t value = std::get<0>(state.readMem(state.readPC()));
-    state.writeIR(value);
+    if(isAccessViolation(state.readPC(), state)) {
+        PIMicroOp msg = std::make_shared<PrintMessageMicroOp>("illegal memory access (ACV)");
+        std::pair<PIMicroOp, PIMicroOp> handle_exception_chain = buildSystemModeEnter(INTEX_TABLE_START, 0x2,
+            lc3::utils::getBits(state.readPSR(), 10, 8));
+        PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::EX_ENTER);
+        PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::EXCEPTION);
+
+        msg->insert(handle_exception_chain.first);
+        handle_exception_chain.second->insert(callback);
+        callback->insert(func_trace);
+
+        next = msg;
+    } else {
+        uint16_t value = std::get<0>(state.readMem(state.readPC()));
+        state.writeIR(value);
+    }
 }
 
 std::string FetchMicroOp::toString(MachineState const & state) const
@@ -48,7 +62,19 @@ void DecodeMicroOp::handleMicroOp(MachineState & state)
         insert((*inst)->buildMicroOps(state));
         state.writeDecodedIR(*inst);
     } else {
-        // TODO: Handle illegal instruction
+        PIMicroOp msg = std::make_shared<PrintMessageMicroOp>("unknown opcode");
+        PIMicroOp dec_pc = std::make_shared<PCAddImmMicroOp>(-1);
+        std::pair<PIMicroOp, PIMicroOp> handle_exception_chain = buildSystemModeEnter(INTEX_TABLE_START, 0x1,
+            lc3::utils::getBits(state.readPSR(), 10, 8));
+        PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::EX_ENTER);
+        PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::EXCEPTION);
+
+        msg->insert(dec_pc);
+        dec_pc->insert(handle_exception_chain.first);
+        handle_exception_chain.second->insert(callback);
+        callback->insert(func_trace);
+
+        next = msg;
     }
 }
 
@@ -230,16 +256,33 @@ std::string RegNotMicroOp::toString(MachineState const & state) const
 
 void MemReadMicroOp::handleMicroOp(MachineState & state)
 {
-    std::pair<uint16_t, PIMicroOp> read_result = state.readMem(state.readReg(addr_reg_id));
+    uint16_t addr = state.readReg(addr_reg_id);
+    if(isAccessViolation(addr, state)) {
+        PIMicroOp msg = std::make_shared<PrintMessageMicroOp>("illegal memory access (ACV)");
+        PIMicroOp dec_pc = std::make_shared<PCAddImmMicroOp>(-1);
+        std::pair<PIMicroOp, PIMicroOp> handle_exception_chain = buildSystemModeEnter(INTEX_TABLE_START, 0x2,
+            lc3::utils::getBits(state.readPSR(), 10, 8));
+        PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::EX_ENTER);
+        PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::EXCEPTION);
 
-    uint16_t value = std::get<0>(read_result);
-    PIMicroOp op = std::get<1>(read_result);
+        msg->insert(dec_pc);
+        dec_pc->insert(handle_exception_chain.first);
+        handle_exception_chain.second->insert(callback);
+        callback->insert(func_trace);
 
-    if(op) {
-        insert(op);
+        next = msg;
+    } else {
+        std::pair<uint16_t, PIMicroOp> read_result = state.readMem(addr);
+
+        uint16_t value = std::get<0>(read_result);
+        PIMicroOp op = std::get<1>(read_result);
+
+        if(op) {
+            insert(op);
+        }
+
+        state.writeReg(dst_id, value);
     }
-
-    state.writeReg(dst_id, value);
 }
 
 std::string MemReadMicroOp::toString(MachineState const & state) const
@@ -251,10 +294,27 @@ std::string MemReadMicroOp::toString(MachineState const & state) const
 
 void MemWriteImmMicroOp::handleMicroOp(MachineState & state)
 {
-    PIMicroOp op = state.writeMem(state.readReg(addr_reg_id), value);
+    uint16_t addr = state.readReg(addr_reg_id);
+    if(isAccessViolation(addr, state)) {
+        PIMicroOp msg = std::make_shared<PrintMessageMicroOp>("illegal memory access (ACV)");
+        PIMicroOp dec_pc = std::make_shared<PCAddImmMicroOp>(-1);
+        std::pair<PIMicroOp, PIMicroOp> handle_exception_chain = buildSystemModeEnter(INTEX_TABLE_START, 0x2,
+            lc3::utils::getBits(state.readPSR(), 10, 8));
+        PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::EX_ENTER);
+        PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::EXCEPTION);
 
-    if(op) {
-        insert(op);
+        msg->insert(dec_pc);
+        dec_pc->insert(handle_exception_chain.first);
+        handle_exception_chain.second->insert(callback);
+        callback->insert(func_trace);
+
+        next = msg;
+    } else {
+        PIMicroOp op = state.writeMem(addr, value);
+
+        if(op) {
+            insert(op);
+        }
     }
 }
 
@@ -266,10 +326,27 @@ std::string MemWriteImmMicroOp::toString(MachineState const & state) const
 
 void MemWriteRegMicroOp::handleMicroOp(MachineState & state)
 {
-    PIMicroOp op = state.writeMem(state.readReg(addr_reg_id), state.readReg(src_id));
+    uint16_t addr = state.readReg(addr_reg_id);
+    if(isAccessViolation(addr, state)) {
+        PIMicroOp msg = std::make_shared<PrintMessageMicroOp>("illegal memory access (ACV)");
+        PIMicroOp dec_pc = std::make_shared<PCAddImmMicroOp>(-1);
+        std::pair<PIMicroOp, PIMicroOp> handle_exception_chain = buildSystemModeEnter(INTEX_TABLE_START, 0x2,
+            lc3::utils::getBits(state.readPSR(), 10, 8));
+        PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::EX_ENTER);
+        PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::EXCEPTION);
 
-    if(op) {
-        insert(op);
+        msg->insert(dec_pc);
+        dec_pc->insert(handle_exception_chain.first);
+        handle_exception_chain.second->insert(callback);
+        callback->insert(func_trace);
+
+        next = msg;
+    } else {
+        PIMicroOp op = state.writeMem(addr, state.readReg(src_id));
+
+        if(op) {
+            insert(op);
+        }
     }
 }
 
@@ -356,50 +433,62 @@ std::string CallbackMicroOp::toString(MachineState const & state) const
     return lc3::utils::ssprintf("callbacks <= %s", callbackTypeToString(type).c_str());
 }
 
-void PushInterruptType::handleMicroOp(MachineState & state)
+void PushInterruptTypeMicroOp::handleMicroOp(MachineState & state)
 {
     state.enqueueInterrupt(type);
 }
 
-std::string PushInterruptType::toString(MachineState const & state) const
+std::string PushInterruptTypeMicroOp::toString(MachineState const & state) const
 {
     (void) state;
 
     return lc3::utils::ssprintf("interrupts <= %s", interruptTypeToString(type).c_str());
 }
 
-void PopInterruptType::handleMicroOp(MachineState & state)
+void PopInterruptTypeMicroOp::handleMicroOp(MachineState & state)
 {
     state.dequeueInterrupt();
 }
 
-std::string PopInterruptType::toString(MachineState const & state) const
+std::string PopInterruptTypeMicroOp::toString(MachineState const & state) const
 {
     (void) state;
 
     return lc3::utils::ssprintf("interrupts <= interrupts.removeFront()");
 }
 
-void PushFuncType::handleMicroOp(MachineState & state)
+void PushFuncTypeMicroOp::handleMicroOp(MachineState & state)
 {
     state.pushFuncTraceType(type);
 }
 
-std::string PushFuncType::toString(MachineState const & state) const
+std::string PushFuncTypeMicroOp::toString(MachineState const & state) const
 {
     (void) state;
 
     return lc3::utils::ssprintf("traceStack <= %s", funcTypeToString(type).c_str());
 }
 
-void PopFuncType::handleMicroOp(MachineState & state)
+void PopFuncTypeMicroOp::handleMicroOp(MachineState & state)
 {
     state.popFuncTraceType();
 }
 
-std::string PopFuncType::toString(MachineState const & state) const
+std::string PopFuncTypeMicroOp::toString(MachineState const & state) const
 {
     (void) state;
 
     return lc3::utils::ssprintf("traceStack <= traceStack.removeTop()");
+}
+
+void PrintMessageMicroOp::handleMicroOp(MachineState & state)
+{
+    (void) state;
+}
+
+std::string PrintMessageMicroOp::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return msg;
 }

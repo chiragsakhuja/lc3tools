@@ -121,7 +121,7 @@ PIMicroOp JMPInstruction::buildMicroOps(MachineState const & state) const
     uint16_t reg_id = getOperand(2)->getValue();
     PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(reg_id);
     PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_EXIT);
-    PIMicroOp func_trace = std::make_shared<PopFuncType>();
+    PIMicroOp func_trace = std::make_shared<PopFuncTypeMicroOp>();
 
     jump->insert(std::make_shared<BranchMicroOp>([this](MachineState const & state) {
         return (getOperand(2)->getValue() == 7 && state.peekFuncTraceType() == FuncType::SUBROUTINE);
@@ -139,7 +139,7 @@ PIMicroOp JSRInstruction::buildMicroOps(MachineState const & state) const
     PIMicroOp jump = std::make_shared<PCAddImmMicroOp>(lc3::utils::sextTo16(getOperand(2)->getValue(),
         getOperand(2)->getWidth()));
     PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_ENTER);
-    PIMicroOp func_trace = std::make_shared<PushFuncType>(FuncType::SUBROUTINE);
+    PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::SUBROUTINE);
 
     link->insert(jump);
     jump->insert(callback);
@@ -154,7 +154,7 @@ PIMicroOp JSRRInstruction::buildMicroOps(MachineState const & state) const
     PIMicroOp link = std::make_shared<RegWritePCMicroOp>(7);
     PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(getOperand(2)->getValue());
     PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_ENTER);
-    PIMicroOp func_trace = std::make_shared<PushFuncType>(FuncType::SUBROUTINE);
+    PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::SUBROUTINE);
 
     link->insert(jump);
     jump->insert(callback);
@@ -243,9 +243,13 @@ PIMicroOp NOTInstruction::buildMicroOps(MachineState const & state) const
 
 PIMicroOp RTIInstruction::buildMicroOps(MachineState const & state) const
 {
-    (void) state;
+    PIMicroOp msg = std::make_shared<PrintMessageMicroOp>("privilege violation");
+    PIMicroOp dec_pc = std::make_shared<PCAddImmMicroOp>(-1);
+    std::pair<PIMicroOp, PIMicroOp> handle_exception_chain = buildSystemModeEnter(INTEX_TABLE_START, 0x0,
+        lc3::utils::getBits(state.readPSR(), 10, 8));
+    PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::EX_ENTER);
+    PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::EXCEPTION);
 
-    // TODO: ACV if used from user mode.
     PIMicroOp load_pc = std::make_shared<MemReadMicroOp>(8, 6);
     PIMicroOp write_pc = std::make_shared<PCWriteRegMicroOp>(8);
     PIMicroOp dec_sp1 = std::make_shared<RegAddImmMicroOp>(6, 6, 1);
@@ -255,6 +259,15 @@ PIMicroOp RTIInstruction::buildMicroOps(MachineState const & state) const
     PIMicroOp save_cur_sp = std::make_shared<RegWriteRegMicroOp>(9, 6);
     PIMicroOp write_ssp = std::make_shared<RegWriteSSPMicroOp>(6);
     PIMicroOp write_cur_sp = std::make_shared<SSPWriteRegMicroOp>(9);
+
+    PIMicroOp start = std::make_shared<BranchMicroOp>([](MachineState const & state) {
+        return lc3::utils::getBit(state.readPSR(), 15) == 0;
+    }, "PSR[15] == 0", load_pc, msg);
+
+    msg->insert(dec_pc);
+    dec_pc->insert(handle_exception_chain.first);
+    handle_exception_chain.second->insert(callback);
+    callback->insert(func_trace);
 
     load_pc->insert(write_pc);
     write_pc->insert(dec_sp1);
@@ -267,7 +280,7 @@ PIMicroOp RTIInstruction::buildMicroOps(MachineState const & state) const
     save_cur_sp->insert(write_ssp);
     write_ssp->insert(write_cur_sp);
 
-    return load_pc;
+    return start;
 }
 
 PIMicroOp STInstruction::buildMicroOps(MachineState const & state) const
@@ -323,6 +336,11 @@ PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
     return buildSystemModeEnter(TRAP_TABLE_START, getOperand(2)->getValue(), (state.readPSR() & 0x0700) >> 8).first;
 }
 
+bool lc3::core::isAccessViolation(uint16_t addr, MachineState const & state)
+{
+    return lc3::utils::getBit(state.readPSR(), 15) == 1 && (addr <= SYSTEM_END || addr >= MMIO_START);
+}
+
 std::pair<PIMicroOp, PIMicroOp> lc3::core::buildSystemModeEnter(uint16_t table_start, uint8_t vec, uint8_t priority)
 {
     PIMicroOp save_cur_sp = std::make_shared<RegWriteRegMicroOp>(8, 6);
@@ -330,18 +348,19 @@ std::pair<PIMicroOp, PIMicroOp> lc3::core::buildSystemModeEnter(uint16_t table_s
     PIMicroOp write_cur_sp = std::make_shared<SSPWriteRegMicroOp>(8);
     PIMicroOp dec_sp1 = std::make_shared<RegAddImmMicroOp>(6, 6, -1);
     PIMicroOp write_psr = std::make_shared<RegWritePSRMicroOp>(9);
+    PIMicroOp copy_psr = std::make_shared<RegWriteRegMicroOp>(10, 9);
+    PIMicroOp clear_priority = std::make_shared<RegAndImmMicroOp>(10, 10, 0xF1FF);
+    PIMicroOp set_priority = std::make_shared<RegAddImmMicroOp>(10, 10, (priority & 0x7) << 8);
+    PIMicroOp set_priv = std::make_shared<RegAndImmMicroOp>(10, 10, 0x7FFF);
+    PIMicroOp change_priv = std::make_shared<PSRWriteRegMicroOp>(10);
     PIMicroOp store_psr = std::make_shared<MemWriteRegMicroOp>(6, 9);
-    PIMicroOp clear_priority = std::make_shared<RegAndImmMicroOp>(9, 9, 0xF1FF);
-    PIMicroOp set_priority = std::make_shared<RegAddImmMicroOp>(9, 9, (priority & 0x7) << 8);
-    PIMicroOp set_priv = std::make_shared<RegAndImmMicroOp>(9, 9, 0x7FFF);
-    PIMicroOp change_priv = std::make_shared<PSRWriteRegMicroOp>(9);
     PIMicroOp dec_sp2 = std::make_shared<RegAddImmMicroOp>(6, 6, -1);
     PIMicroOp write_pc = std::make_shared<RegWritePCMicroOp>(9);
     PIMicroOp store_pc = std::make_shared<MemWriteRegMicroOp>(6, 9);
-    PIMicroOp write_table_start = std::make_shared<RegWriteImmMicroOp>(10, table_start);
-    PIMicroOp add_table_offset = std::make_shared<RegAddImmMicroOp>(10, 10, vec);
-    PIMicroOp load_table = std::make_shared<MemReadMicroOp>(10, 10);
-    PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(10);
+    PIMicroOp write_table_start = std::make_shared<RegWriteImmMicroOp>(11, table_start);
+    PIMicroOp add_table_offset = std::make_shared<RegAddImmMicroOp>(11, 11, vec);
+    PIMicroOp load_table = std::make_shared<MemReadMicroOp>(11, 11);
+    PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(11);
 
     PIMicroOp start = std::make_shared<BranchMicroOp>([](MachineState const & state) {
         return lc3::utils::getBit(state.readPSR(), 15) == 1;
@@ -352,16 +371,17 @@ std::pair<PIMicroOp, PIMicroOp> lc3::core::buildSystemModeEnter(uint16_t table_s
     write_cur_sp->insert(dec_sp1);
 
     dec_sp1->insert(write_psr);
-    write_psr->insert(store_psr);
-    store_psr->insert(clear_priority);
+    write_psr->insert(copy_psr);
+    copy_psr->insert(clear_priority);
     clear_priority->insert(set_priority);
     set_priority->insert(std::make_shared<BranchMicroOp>([](MachineState const & state) {
         return lc3::utils::getBit(state.readPSR(), 15) == 1;
-    }, "PSR[15] == 1", set_priv, dec_sp2));
+    }, "PSR[15] == 1", set_priv, store_psr));
 
     set_priv->insert(change_priv);
-    change_priv->insert(dec_sp2);
+    change_priv->insert(store_psr);
 
+    store_psr->insert(dec_sp2);
     dec_sp2->insert(write_pc);
     write_pc->insert(store_pc);
     store_pc->insert(write_table_start);

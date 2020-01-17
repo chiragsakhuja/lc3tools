@@ -145,12 +145,15 @@ std::string DeviceUpdateEvent::toString(MachineState const & state) const
 void CheckForInterruptEvent::handleEvent(MachineState & state)
 {
     InterruptType interrupt = state.peekInterrupt();
-    if(interrupt != InterruptType::INVALID && (getInterruptPriority(interrupt) > ((state.readPSR() & 0x0700) >> 8))) {
+    if(interrupt != InterruptType::INVALID &&
+        (getInterruptPriority(interrupt) > lc3::utils::getBits(state.readPSR(), 10, 8)))
+    {
         std::pair<PIMicroOp, PIMicroOp> handle_interrupt_chain = buildSystemModeEnter(INTEX_TABLE_START,
             getInterruptVector(interrupt), getInterruptPriority(interrupt)
         );
-        PIMicroOp dequeue_interrupt = std::make_shared<PopInterruptType>();
+        PIMicroOp dequeue_interrupt = std::make_shared<PopInterruptTypeMicroOp>();
         PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::INT_ENTER);
+        PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::INTERRUPT);
 
         handle_interrupt_chain.second->insert(dequeue_interrupt);
         dequeue_interrupt->insert(callback);
@@ -162,7 +165,9 @@ void CheckForInterruptEvent::handleEvent(MachineState & state)
 std::string CheckForInterruptEvent::toString(MachineState const & state) const
 {
     InterruptType interrupt = state.peekInterrupt();
-    if(interrupt != InterruptType::INVALID && (getInterruptPriority(interrupt) > ((state.readPSR() & 0x0700) >> 8))) {
+    if(interrupt != InterruptType::INVALID &&
+        (getInterruptPriority(interrupt) > lc3::utils::getBits(state.readPSR(), 10, 8)))
+    {
         return lc3::utils::ssprintf("Handling %s interrupt", interruptTypeToString(interrupt).c_str());
     } else {
         return "No interrupt of higher priority pending";
