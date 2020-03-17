@@ -6,17 +6,17 @@
 #include <fstream>
 
 #include "common.h"
-#include "console_printer.h"
+#include "file_printer.h"
 #include "console_inputter.h"
 #include "interface.h"
 
 int main(int argc, char * argv[])
 {
-    lc3::ConsolePrinter printer;
+    lc3::FilePrinter printer("run.log");
     lc3::ConsoleInputter inputter;
     lc3::sim sim(printer, inputter, true, 9, false);
 
-    for(int i = 1; i < argc; i += 1) {
+    for(int i = 2; i < argc; i += 1) {
         std::string arg(argv[i]);
         if(arg[0] != '-') {
             std::string filename(argv[i]);

@@ -11,4 +11,4 @@ add_library(frontend_common OBJECT ${COMMON_CXX_SOURCES} ${COMMON_CXX_HEADERS})
 
 # recurse into sources
 add_subdirectory(cli)
-add_subdirectory(grader)
+#add_subdirectory(grader)

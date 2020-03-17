@@ -61,6 +61,8 @@ namespace core
         void handleDevices(void);
         void handleInstruction(sim::Decoder & decoder);
 
+        uint16_t pre_inst_pc;
+        std::vector<uint16_t> stack_trace;
         static void callbackDispatcher(Simulator * sim, CallbackType type, MachineState & state);
     };
 };

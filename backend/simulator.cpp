@@ -160,6 +160,19 @@ void Simulator::handleInstruction(sim::Decoder & decoder)
 
 void Simulator::callbackDispatcher(Simulator * sim, CallbackType type, MachineState & state)
 {
+    if(type == CallbackType::PRE_INST) {
+        sim->pre_inst_pc = state.readPC();
+    } else if(type == CallbackType::SUB_ENTER || type == CallbackType::EX_ENTER || type == CallbackType::INT_ENTER) {
+        sim->stack_trace.push_back(sim->pre_inst_pc);
+        sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "Stack trace");
+        for(int64_t i = sim->stack_trace.size() - 1; i >= 0; --i) {
+            uint16_t pc = sim->stack_trace[i];
+            sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "#%d 0x%0.4hx (%s)",
+                sim->stack_trace.size() - 1 - i, pc, state.getMemLine(pc).c_str());
+        }
+    } else if(type == CallbackType::SUB_EXIT || type == CallbackType::EX_EXIT || type == CallbackType::INT_EXIT) {
+        sim->stack_trace.pop_back();
+    }
     auto search = sim->callbacks.find(type);
     if(search != sim->callbacks.end()) {
         search->second(state);

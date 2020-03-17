@@ -247,8 +247,8 @@ PIMicroOp RTIInstruction::buildMicroOps(MachineState const & state) const
     PIMicroOp dec_pc = std::make_shared<PCAddImmMicroOp>(-1);
     std::pair<PIMicroOp, PIMicroOp> handle_exception_chain = buildSystemModeEnter(INTEX_TABLE_START, 0x0,
         lc3::utils::getBits(state.readPSR(), 10, 8));
-    PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::EX_ENTER);
-    PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::EXCEPTION);
+    PIMicroOp ex_callback = std::make_shared<CallbackMicroOp>(CallbackType::EX_ENTER);
+    PIMicroOp ex_func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::EXCEPTION);
 
     PIMicroOp load_pc = std::make_shared<MemReadMicroOp>(8, 6);
     PIMicroOp write_pc = std::make_shared<PCWriteRegMicroOp>(8);
@@ -260,14 +260,23 @@ PIMicroOp RTIInstruction::buildMicroOps(MachineState const & state) const
     PIMicroOp write_ssp = std::make_shared<RegWriteSSPMicroOp>(6);
     PIMicroOp write_cur_sp = std::make_shared<SSPWriteRegMicroOp>(9);
 
+    PIMicroOp callback = nullptr;
+    switch(state.peekFuncTraceType()) {
+        case FuncType::TRAP: callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_EXIT); break;
+        case FuncType::INTERRUPT: callback = std::make_shared<CallbackMicroOp>(CallbackType::INT_EXIT); break;
+        case FuncType::EXCEPTION: callback = std::make_shared<CallbackMicroOp>(CallbackType::EX_EXIT); break;
+        default: break;
+    }
+    PIMicroOp func_trace = std::make_shared<PopFuncTypeMicroOp>();
+
     PIMicroOp start = std::make_shared<BranchMicroOp>([](MachineState const & state) {
         return lc3::utils::getBit(state.readPSR(), 15) == 0;
     }, "PSR[15] == 0", load_pc, msg);
 
     msg->insert(dec_pc);
     dec_pc->insert(handle_exception_chain.first);
-    handle_exception_chain.second->insert(callback);
-    callback->insert(func_trace);
+    handle_exception_chain.second->insert(ex_callback);
+    ex_callback->insert(ex_func_trace);
 
     load_pc->insert(write_pc);
     write_pc->insert(dec_sp1);
@@ -276,9 +285,15 @@ PIMicroOp RTIInstruction::buildMicroOps(MachineState const & state) const
     write_psr->insert(dec_sp2);
     dec_sp2->insert(std::make_shared<BranchMicroOp>([](MachineState const & state) {
         return lc3::utils::getBit(state.readPSR(), 15) == 0;
-    }, "PSR[15] == 0", nullptr, save_cur_sp));
+    }, "PSR[15] == 0", callback, save_cur_sp));
+
     save_cur_sp->insert(write_ssp);
     write_ssp->insert(write_cur_sp);
+    if(callback != nullptr) {
+        write_cur_sp->insert(callback);
+    }
+
+    callback->insert(func_trace);
 
     return start;
 }
@@ -333,7 +348,15 @@ PIMicroOp STRInstruction::buildMicroOps(MachineState const & state) const
 
 PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
 {
-    return buildSystemModeEnter(TRAP_TABLE_START, getOperand(2)->getValue(), (state.readPSR() & 0x0700) >> 8).first;
+    std::pair<PIMicroOp, PIMicroOp> handle_trap_chain =  buildSystemModeEnter(TRAP_TABLE_START,
+        getOperand(2)->getValue(), (state.readPSR() & 0x0700) >> 8);
+    PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_ENTER);
+    PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::TRAP);
+
+    handle_trap_chain.second->insert(callback);
+    callback->insert(func_trace);
+
+    return handle_trap_chain.first;
 }
 
 bool lc3::core::isAccessViolation(uint16_t addr, MachineState const & state)
