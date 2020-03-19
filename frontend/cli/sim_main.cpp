@@ -69,7 +69,7 @@ int main(int argc, char * argv[])
         }
     }
 
-    init_pc = simulator.getPC();
+    init_pc = simulator.readPC();
 
     while(prompt(simulator)) {}
 
@@ -199,7 +199,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
         for(uint32_t i = 0; i < 2; i += 1) {
             for(uint32_t j = 0; j < 4; j += 1) {
                 uint32_t reg = i * 4 + j;
-                uint32_t value = simulator.getReg(reg);
+                uint32_t value = simulator.readReg(reg);
                 std::cout << lc3::utils::ssprintf("R%u: 0x%0.4X (%5d)", reg, value, value);
                 if(j != 3) {
                     std::cout << "    ";
@@ -207,7 +207,7 @@ bool promptMain(lc3::sim & simulator, std::stringstream & command_tokens)
             }
             std::cout << "\n";
         }
-        std::cout << lc3::utils::ssprintf("PC: 0x%0.4X\n", simulator.getPC());
+        std::cout << lc3::utils::ssprintf("PC: 0x%0.4X\n", simulator.readPC());
         std::cout << lc3::utils::ssprintf("PSR: 0x%0.4X\n", simulator.getPSR());
         std::cout << lc3::utils::ssprintf("CC: %c\n", simulator.getCC());
         std::cout << lc3::utils::ssprintf("MCR: 0x%0.4X\n", simulator.getMCR());
@@ -355,7 +355,7 @@ void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens)
 
 void list(lc3::sim const & simulator, int32_t context)
 {
-    uint32_t pc = simulator.getPC();
+    uint32_t pc = simulator.readPC();
     for(int32_t pos = -context; pos <= context; pos += 1) {
         if(((int32_t) pc) + pos >= 0 && ((int32_t) pc) + pos <= 0xffff) {
             if(pos == 0) {
@@ -371,7 +371,7 @@ void list(lc3::sim const & simulator, int32_t context)
 std::string formatMem(lc3::sim const & simulator, uint32_t addr)
 {
     std::stringstream out;
-    uint32_t value = simulator.getMem(addr);
+    uint32_t value = simulator.readMem(addr);
     std::string line = simulator.getMemLine(addr);
     out << lc3::utils::ssprintf("0x%0.4X: 0x%0.4X %s", addr, value, line.c_str());
     return out.str();

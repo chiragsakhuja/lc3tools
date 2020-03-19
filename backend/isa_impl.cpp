@@ -291,9 +291,8 @@ PIMicroOp RTIInstruction::buildMicroOps(MachineState const & state) const
     write_ssp->insert(write_cur_sp);
     if(callback != nullptr) {
         write_cur_sp->insert(callback);
+        callback->insert(func_trace);
     }
-
-    callback->insert(func_trace);
 
     return start;
 }

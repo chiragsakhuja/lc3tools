@@ -55,6 +55,18 @@ std::string StartupEvent::toString(MachineState const & state) const
     return "Starting machine";
 }
 
+void ShutdownEvent::handleEvent(MachineState & state)
+{
+    state.writeMCR(state.readMCR() & 0x7FFF);
+}
+
+std::string ShutdownEvent::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return "Shutting down machine";
+}
+
 void LoadObjFileEvent::handleEvent(MachineState & state)
 {
     using namespace lc3::utils;

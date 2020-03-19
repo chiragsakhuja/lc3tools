@@ -39,10 +39,15 @@ namespace core
 
         Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, uint32_t print_level);
         void simulate(void);
-        void loadObjFile(std::string filename, std::istream & buffer);
+        void loadObj(std::string const & name, std::istream & buffer);
+        void triggerShutdown(void);
         void registerCallback(CallbackType type, Callback func);
         void addBreakpoint(uint16_t pc);
         void removeBreakpoint(uint16_t pc);
+        MachineState & getMachineState(void);
+        MachineState const & getMachineState(void) const;
+
+        void setPrintLevel(uint32_t print_level);
 
     private:
         std::priority_queue<PIEvent, std::vector<PIEvent>, std::greater<PIEvent>> events;
@@ -57,7 +62,7 @@ namespace core
         std::unordered_map<CallbackType, Callback> callbacks;
         std::set<uint16_t> breakpoints;
 
-        void mainLoop(void);
+        void executeEvents(void);
         void handleDevices(void);
         void handleInstruction(sim::Decoder & decoder);
 

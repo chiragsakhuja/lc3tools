@@ -39,8 +39,8 @@ int main(int argc, char *argv[])
     }
 
     lc3::ConsolePrinter printer;
-    lc3::as assembler(printer, args.print_level, false, args.enable_liberal_asm);
-    lc3::conv converter(printer, args.print_level, false);
+    lc3::as assembler(printer, args.print_level, args.enable_liberal_asm);
+    lc3::conv converter(printer, args.print_level);
 
     for(int i = 1; i < argc; i += 1) {
         std::string filename(argv[i]);

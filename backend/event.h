@@ -55,6 +55,15 @@ namespace core
         virtual std::string toString(MachineState const & state) const override;
     };
 
+    class ShutdownEvent : public IEvent
+    {
+    public:
+        ShutdownEvent(uint64_t time) : IEvent(time) { }
+
+        virtual void handleEvent(MachineState & state) override;
+        virtual std::string toString(MachineState const & state) const override;
+    };
+
     class LoadObjFileEvent : public IEvent
     {
     public:

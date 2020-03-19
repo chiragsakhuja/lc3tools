@@ -39,7 +39,7 @@ void Simulator::simulate(void)
     } while(lc3::utils::getBit(state.readMCR(), 15) == 1);
 
     // Execute any remaining callbacks.
-    // mainLoop();
+    // executeEvents();
 
     // Shutdown devices.
     for(PIDevice dev : devices) {
@@ -47,11 +47,17 @@ void Simulator::simulate(void)
     }
 }
 
-void Simulator::loadObjFile(std::string filename, std::istream & buffer)
+void Simulator::loadObj(std::string const & name, std::istream & buffer)
 {
-    events.emplace(std::make_shared<LoadObjFileEvent>(time + 1, filename, buffer, logger));
+    events.emplace(std::make_shared<LoadObjFileEvent>(time + 1, name, buffer, logger));
 
-    mainLoop();
+    executeEvents();
+}
+
+void Simulator::triggerShutdown(void)
+{
+    while(! events.empty()) { events.pop(); }
+    events.emplace(std::make_shared<ShutdownEvent>(time));
 }
 
 void Simulator::registerCallback(CallbackType type, Callback func)
@@ -64,7 +70,7 @@ void Simulator::addBreakpoint(uint16_t pc)
     breakpoints.insert(pc);
 }
 
-void Simulator::mainLoop(void)
+void Simulator::executeEvents(void)
 {
     while(! events.empty()) {
         PIEvent event = events.top();
@@ -107,7 +113,7 @@ void Simulator::handleDevices(void)
     events.emplace(std::make_shared<CheckForInterruptEvent>(time + fetch_time_offset - 9));
 
     // Execute events.
-    mainLoop();
+    executeEvents();
 
     // Insert callback events that might have been generated during execution.
     for(CallbackType cb : state.getPendingCallbacks()) {
@@ -126,7 +132,7 @@ void Simulator::handleInstruction(sim::Decoder & decoder)
 
     // Either insert breakpoints event or normal processing.
     if(bp_search != breakpoints.end()) {
-        state.writeMCR(state.readMCR() & 0x7FFF);
+        triggerShutdown();
         events.emplace(std::make_shared<CallbackEvent>(
             time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::BREAKPOINT), CallbackType::BREAKPOINT,
             std::bind(callbackDispatcher, this, CallbackType::BREAKPOINT, std::placeholders::_2)
@@ -147,7 +153,7 @@ void Simulator::handleInstruction(sim::Decoder & decoder)
     }
 
     // Execute events.
-    mainLoop();
+    executeEvents();
 
     // Insert callback events that might have been generated during execution.
     for(CallbackType cb : state.getPendingCallbacks()) {
@@ -178,3 +184,7 @@ void Simulator::callbackDispatcher(Simulator * sim, CallbackType type, MachineSt
         search->second(state);
     }
 }
+
+MachineState & Simulator::getMachineState(void) { return state; }
+MachineState const & Simulator::getMachineState(void) const { return state; }
+void Simulator::setPrintLevel(uint32_t print_level) { logger.setPrintLevel(print_level); }
