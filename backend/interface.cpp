@@ -15,6 +15,22 @@ lc3::sim::sim(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, 
     printer(printer), inputter(inputter), simulator(printer, inputter, print_level)
 {
     loadOS();
+
+    auto callback_dispatcher = std::bind(callbackDispatcher, this, std::placeholders::_1, std::placeholders::_2);
+    simulator.registerCallback(core::CallbackType::PRE_INST, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::POST_INST, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::SUB_ENTER, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::SUB_EXIT, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::EX_ENTER, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::EX_EXIT, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::INT_ENTER, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::INT_EXIT, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::BREAKPOINT, callback_dispatcher);
+
+    total_inst_exec = 0;
+    cur_inst_exec_limit = 0;
+    target_inst_exec = 0;
+    cur_sub_depth = 0;
 }
 
 bool lc3::sim::loadObjFile(std::string const & filename)
@@ -71,11 +87,41 @@ void lc3::sim::randomizeState(void)
     loadOS();
 }
 
+void lc3::sim::setRunInstLimit(uint64_t inst_limit) { cur_inst_exec_limit = inst_limit; }
+
 bool lc3::sim::run(void)
 {
-    simulator.simulate();
-    // TODO: get return status
-    return true;
+    run_type = RunType::NORMAL;
+    return runHelper();
+}
+
+bool lc3::sim::runUntilHalt(void)
+{
+    run_type = RunType::UNTIL_HALT;
+    return runHelper();
+}
+
+bool lc3::sim::stepIn(void)
+{
+    run_type = RunType::NORMAL;
+    setRunInstLimit(1);
+    return runHelper();
+}
+
+bool lc3::sim::stepOver(void)
+{
+    run_type = RunType::UNTIL_DEPTH;
+    cur_sub_depth = 0;
+    setRunInstLimit(0);
+    return runHelper();
+}
+
+bool lc3::sim::stepOut(void)
+{
+    run_type = RunType::UNTIL_DEPTH;
+    cur_sub_depth = 1;
+    setRunInstLimit(0);
+    return runHelper();
 }
 
 lc3::core::MachineState & lc3::sim::getMachineState(void) { return simulator.getMachineState(); }
@@ -132,6 +178,70 @@ void lc3::sim::loadOS(void)
     src_buffer << lc3::core::getOSSrc();
     std::shared_ptr<std::stringstream> obj_stream = assembler.assemble(src_buffer);
     simulator.loadObj("lc3os", *obj_stream);
+}
+
+bool lc3::sim::runHelper()
+{
+    encountered_lc3_exception = false;
+    target_inst_exec = total_inst_exec + cur_inst_exec_limit;
+
+#ifdef _ENABLE_DEBUG
+    auto start = std::chrono::high_resolution_clock::now();
+#endif
+
+    try {
+        simulator.simulate();
+    } catch(utils::exception const & e) {
+        printer.print("caught exception: " + std::string(e.what()));
+        printer.newline();
+        return false;
+    }
+
+#ifdef _ENABLE_DEBUG
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = end - start;
+
+    printer.print("elapsed time: " + std::to_string(elapsed.count() * 1000) + " ms");
+    printer.newline();
+#endif
+
+    return ! encountered_lc3_exception;
+}
+
+void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType type, lc3::core::MachineState & state)
+{
+    using namespace lc3::core;
+
+    if(type == CallbackType::PRE_INST) {
+        if(sim_inst->run_type == RunType::UNTIL_HALT && state.readMem(state.readPC()).first == 0xf025) {
+            // Halt if current instruction is HALT.
+            sim_inst->simulator.triggerSuspend();
+        }
+    } else if(type == CallbackType::EX_ENTER) {
+        // Mark that execution resulted in LC-3 exception.
+        sim_inst->encountered_lc3_exception = true;
+    } else if(type == CallbackType::SUB_ENTER) {
+        ++(sim_inst->cur_sub_depth);
+    } else if(type == CallbackType::SUB_EXIT) {
+        if(sim_inst->cur_sub_depth > 0) {
+            --(sim_inst->cur_sub_depth);
+        }
+    } else if(type == CallbackType::POST_INST) {
+        // Increment total instruction count
+        ++(sim_inst->total_inst_exec);
+        if(sim_inst->cur_inst_exec_limit != 0) {
+            if(sim_inst->total_inst_exec == sim_inst->target_inst_exec) {
+                // If an instruction limit is set (i.e. cur_inst_exec_limit != 0), halt when target is reached.
+                sim_inst->simulator.triggerSuspend();
+            }
+        }
+
+        if(sim_inst->run_type == RunType::UNTIL_DEPTH) {
+            if(sim_inst->cur_sub_depth == 0) {
+                sim_inst->simulator.triggerSuspend();
+            }
+        }
+    } 
 }
 
 lc3::as::as(utils::IPrinter & printer, uint32_t print_level, bool enable_liberal_asm) :
@@ -191,9 +301,8 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
     return obj_filename;
 }
 
-
 lc3::conv::conv(utils::IPrinter & printer, uint32_t print_level) :
-    printer(printer), converter(printer, print_level) 
+    printer(printer), converter(printer, print_level)
 { }
 
 lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filename)

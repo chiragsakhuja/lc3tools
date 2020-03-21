@@ -14,13 +14,13 @@ namespace core
     enum class CallbackType : CallbackTypeUnderlying
     {
           PRE_INST = -1
-        , POST_INST = 1
-        , SUB_ENTER = 6
-        , SUB_EXIT = 7
-        , EX_ENTER = 2
-        , EX_EXIT = 3
-        , INT_ENTER = 4
-        , INT_EXIT = 5
+        , POST_INST = 7
+        , SUB_ENTER = 5
+        , SUB_EXIT = 6
+        , EX_ENTER = 1
+        , EX_EXIT = 2
+        , INT_ENTER = 3
+        , INT_EXIT = 4
         , BREAKPOINT = -2
         , INVALID
     };

@@ -35,12 +35,14 @@ namespace core
     class Simulator
     {
     public:
-        using Callback = std::function<void(MachineState &)>;
+        using Callback = std::function<void(CallbackType, MachineState &)>;
 
         Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, uint32_t print_level);
         void simulate(void);
         void loadObj(std::string const & name, std::istream & buffer);
-        void triggerShutdown(void);
+        void startup(uint64_t t_delta = 0);
+        void resume(uint64_t t_delta = 0);
+        void triggerSuspend(uint64_t t_delta = 0);
         void registerCallback(CallbackType type, Callback func);
         void addBreakpoint(uint16_t pc);
         void removeBreakpoint(uint16_t pc);
@@ -65,6 +67,7 @@ namespace core
         void executeEvents(void);
         void handleDevices(void);
         void handleInstruction(sim::Decoder & decoder);
+        void handleCallbacks(void);
 
         uint16_t pre_inst_pc;
         std::vector<uint16_t> stack_trace;

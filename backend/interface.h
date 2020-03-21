@@ -25,6 +25,8 @@ namespace lc3
     class sim
     {
     public:
+        using Callback = std::function<void(core::CallbackType, core::MachineState &)>;
+
         sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level);
 
         bool loadObjFile(std::string const & filename);
@@ -70,7 +72,22 @@ namespace lc3
         utils::IInputter & inputter;
         core::Simulator simulator;
 
+        enum class RunType
+        {
+              UNTIL_INPUT
+            , UNTIL_HALT
+            , UNTIL_DEPTH
+            , NORMAL
+        } run_type;
+
+        bool encountered_lc3_exception;
+        uint64_t total_inst_exec;
+        uint64_t cur_inst_exec_limit, target_inst_exec;
+        uint64_t cur_sub_depth;
+
         void loadOS(void);
+        bool runHelper(void);
+        static void callbackDispatcher(sim * sim_inst, core::CallbackType type, core::MachineState & state);
     };
 
     class as

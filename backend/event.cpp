@@ -26,7 +26,7 @@ std::string AtomicInstProcessEvent::toString(MachineState const & state) const
         std::get<0>(state.readMem(state.readPC())), state.getMemLine(state.readPC()).c_str());
 }
 
-void StartupEvent::handleEvent(MachineState & state)
+void InitializeEvent::handleEvent(MachineState & state)
 {
     uint16_t reset_pc = state.readResetPC();
     state.writePC(reset_pc == 0x0000 ? RESET_PC : reset_pc);
@@ -48,12 +48,25 @@ void StartupEvent::handleEvent(MachineState & state)
     }
 }
 
-std::string StartupEvent::toString(MachineState const & state) const
+std::string InitializeEvent::toString(MachineState const & state) const
 {
     (void) state;
 
-    return "Starting machine";
+    return "Initializing machine";
 }
+
+void ResumeEvent::handleEvent(MachineState & state)
+{
+    state.writeMCR(0x8000);
+}
+
+std::string ResumeEvent::toString(MachineState const & state) const
+{
+    (void) state;
+
+    return "Resuming machine";
+}
+
 
 void ShutdownEvent::handleEvent(MachineState & state)
 {
@@ -64,7 +77,7 @@ std::string ShutdownEvent::toString(MachineState const & state) const
 {
     (void) state;
 
-    return "Shutting down machine";
+    return "Suspending machine";
 }
 
 void LoadObjFileEvent::handleEvent(MachineState & state)

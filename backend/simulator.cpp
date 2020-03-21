@@ -21,12 +21,15 @@ Simulator::Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inp
             state.registerDeviceReg(dev_addr, dev);
         }
     }
+
+    startup(0);
 }
 
 void Simulator::simulate(void)
 {
+    resume();
+
     sim::Decoder decoder;
-    events.emplace(std::make_shared<StartupEvent>(time));
 
     // Initialize devices.
     for(PIDevice dev : devices) {
@@ -36,10 +39,10 @@ void Simulator::simulate(void)
     do {
         handleDevices();
         handleInstruction(decoder);
+        executeEvents();
+        handleCallbacks();
+        executeEvents();
     } while(lc3::utils::getBit(state.readMCR(), 15) == 1);
-
-    // Execute any remaining callbacks.
-    // executeEvents();
 
     // Shutdown devices.
     for(PIDevice dev : devices) {
@@ -50,14 +53,26 @@ void Simulator::simulate(void)
 void Simulator::loadObj(std::string const & name, std::istream & buffer)
 {
     events.emplace(std::make_shared<LoadObjFileEvent>(time + 1, name, buffer, logger));
+    startup(2);
 
     executeEvents();
 }
 
-void Simulator::triggerShutdown(void)
+void Simulator::startup(uint64_t t_delta)
 {
-    while(! events.empty()) { events.pop(); }
-    events.emplace(std::make_shared<ShutdownEvent>(time));
+    events.emplace(std::make_shared<InitializeEvent>(time + t_delta));
+    executeEvents();
+}
+
+void Simulator::resume(uint64_t t_delta)
+{
+    events.emplace(std::make_shared<ResumeEvent>(time + t_delta));
+    executeEvents();
+}
+
+void Simulator::triggerSuspend(uint64_t t_delta)
+{
+    events.emplace(std::make_shared<ShutdownEvent>(time + t_delta));
 }
 
 void Simulator::registerCallback(CallbackType type, Callback func)
@@ -111,18 +126,6 @@ void Simulator::handleDevices(void)
 
     // Check for interrupts triggered by devices.
     events.emplace(std::make_shared<CheckForInterruptEvent>(time + fetch_time_offset - 9));
-
-    // Execute events.
-    executeEvents();
-
-    // Insert callback events that might have been generated during execution.
-    for(CallbackType cb : state.getPendingCallbacks()) {
-        events.emplace(std::make_shared<CallbackEvent>(
-            time + callbackTypeToUnderlying(cb), cb, std::bind(callbackDispatcher, this, cb, std::placeholders::_2)
-        ));
-    }
-    state.clearPendingCallbacks();
-
 }
 
 void Simulator::handleInstruction(sim::Decoder & decoder)
@@ -132,7 +135,7 @@ void Simulator::handleInstruction(sim::Decoder & decoder)
 
     // Either insert breakpoints event or normal processing.
     if(bp_search != breakpoints.end()) {
-        triggerShutdown();
+        triggerSuspend();
         events.emplace(std::make_shared<CallbackEvent>(
             time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::BREAKPOINT), CallbackType::BREAKPOINT,
             std::bind(callbackDispatcher, this, CallbackType::BREAKPOINT, std::placeholders::_2)
@@ -143,17 +146,18 @@ void Simulator::handleInstruction(sim::Decoder & decoder)
             time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::PRE_INST), CallbackType::PRE_INST,
             std::bind(callbackDispatcher, this, CallbackType::PRE_INST, std::placeholders::_2)
         ));
-        events.emplace(std::make_shared<CallbackEvent>(
-            time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::POST_INST), CallbackType::POST_INST,
-            std::bind(callbackDispatcher, this, CallbackType::POST_INST, std::placeholders::_2)
-        ));
 
         // Insert instruction fetch event.
         events.emplace(std::make_shared<AtomicInstProcessEvent>(time + fetch_time_offset, decoder));
     }
+}
 
-    // Execute events.
-    executeEvents();
+void Simulator::handleCallbacks(void)
+{
+    events.emplace(std::make_shared<CallbackEvent>(
+        time + callbackTypeToUnderlying(CallbackType::POST_INST), CallbackType::POST_INST,
+        std::bind(callbackDispatcher, this, CallbackType::POST_INST, std::placeholders::_2)
+    ));
 
     // Insert callback events that might have been generated during execution.
     for(CallbackType cb : state.getPendingCallbacks()) {
@@ -181,7 +185,7 @@ void Simulator::callbackDispatcher(Simulator * sim, CallbackType type, MachineSt
     }
     auto search = sim->callbacks.find(type);
     if(search != sim->callbacks.end()) {
-        search->second(state);
+        search->second(type, state);
     }
 }
 
