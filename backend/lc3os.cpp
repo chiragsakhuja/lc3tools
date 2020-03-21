@@ -271,9 +271,9 @@ namespace core
     .FILL BAD_TRAP    ; xFF
 
 ; the interrupt vector table
-    .FILL EX_PRIV   ; x00
-    .FILL EX_ILL    ; x01
-    .FILL BAD_INT    ; x02
+    .FILL EX_PRIV    ; x00
+    .FILL EX_ILL     ; x01
+    .FILL EX_ACV     ; x02
     .FILL BAD_INT    ; x03
     .FILL BAD_INT    ; x04
     .FILL BAD_INT    ; x05
@@ -529,145 +529,190 @@ namespace core
     .FILL BAD_INT    ; xFF)LC3OS1";
 
         char const * lc3os_src_2 = R"LC3OS2(
-OS_START LD R6,OS_SP            ; set system stack pointer
-    LEA R0,OS_START_MSG    ; print a welcome message
-    PUTS
-    LDI R0,OS_PSR          ; go to user mode
-    LD R1, MASK_HI
-    NOT R0,R0
-    AND R0,R0,R1
-    NOT R0,R0
-    ; normally this part would be in user space and the
-    ; loader would set the PC
-    STI R0,OS_PSR
-    HALT
+OS_START
+    ; set system stack pointer
+    LD R6, OS_SP
+    ; push synthesized PSR onto system stack
+    LD R0, USER_PSR
+    ADD R6, R6, #-1
+    STR R0, R6, #0
+    ; push synthesized (x3000) PSR onto system stack
+    LD R0, USER_PC
+    ADD R6, R6, #-1
+    STR R0, R6, #0
+    ; enter user mode
+    RTI
 
-OS_START_MSG    .STRINGZ ""
+OS_SP       .FILL x3000
+USER_PSR    .FILL x8002
+USER_PC     .FILL x3000
+    .END
+
+    .ORIG x300
+TRAP_GETC
+    LDI R0, OS_KBSR        ; wait for a keystroke
+    BRzp TRAP_GETC
+    LDI R0, OS_KBDR        ; read it and return
+    RTI
 
 OS_KBSR    .FILL xFE00
 OS_KBDR    .FILL xFE02
+
+
+TRAP_OUT
+    ADD R6, R6, #-1
+    STR R1, R6, #0        ; save R1
+TRAP_OUT_WAIT
+    LDI R1, OS_DSR        ; wait for the display to be ready
+    BRzp TRAP_OUT_WAIT
+    STI R0, OS_DDR        ; write the character and return
+    LDR R1, R6, #0        ; restore R1
+    ADD R6, R6, #1
+    RTI
+
 OS_DSR     .FILL xFE04
 OS_DDR     .FILL xFE06
-OS_PSR     .FILL xFFFC
-OS_MCR     .FILL xFFFE
-OS_SP      .FILL x3000
-MASK_HI    .FILL x7FFF
-LOW_8_BITS .FILL x00FF
-TOUT_R1    .BLKW #1
-TIN_R7     .BLKW #1
-OS_R0      .BLKW #1
-OS_R1      .BLKW #1
-OS_R2      .BLKW #1
-OS_R3      .BLKW #1
-OS_R7      .BLKW #1
 
 
-TRAP_GETC LDI R0,OS_KBSR        ; wait for a keystroke
-    BRzp TRAP_GETC
-    LDI R0,OS_KBDR        ; read it and return
-    RTI
-
-TRAP_OUT      ST R1,TOUT_R1  ; save R1
-TRAP_OUT_WAIT LDI R1,OS_DSR  ; wait for the display to be ready
-    BRzp TRAP_OUT_WAIT
-    STI R0,OS_DDR            ; write the character and return
-    LD R1,TOUT_R1            ; restore R1
-    RTI
-
-TRAP_PUTS ST R0,OS_R0        ; save R0, R1, and R7
-    ST R1,OS_R1
-    ST R7,OS_R7
-    ADD R1,R0,#0             ; move string pointer (R0) into R1
-TRAP_PUTS_LOOP LDR R0,R1,#0  ; write characters in string using OUT
+TRAP_PUTS
+    ADD R6, R6, #-1       ; save R0 and R1
+    STR R0, R6, #0
+    ADD R6, R6, #-1
+    STR R1, R6, #0
+    ADD R1, R0, #0        ; move string pointer (R0) into R1
+TRAP_PUTS_LOOP
+    LDR R0, R1, #0        ; write characters in string using OUT
     BRz TRAP_PUTS_DONE
     OUT
-    ADD R1,R1,#1
+    ADD R1, R1, #1
     BRnzp TRAP_PUTS_LOOP
-TRAP_PUTS_DONE LD R0,OS_R0   ; restore R0, R1, and R7
-    LD R1,OS_R1
-    LD R7,OS_R7
+TRAP_PUTS_DONE
+    LDR R1, R6, #0         ; restore R0 and R1
+    ADD R6, R6, #1
+    LDR R0, R6, #0
+    ADD R6, R6, #1
     RTI
 
-TRAP_IN ST R7,TIN_R7   ; save R7 (no need to save R0, since we
-                       ; overwrite later
-    LEA R0,TRAP_IN_MSG ; prompt for input
+TRAP_IN
+    LEA R0, TRAP_IN_MSG    ; prompt for input
     PUTS
-    GETC               ; read a character
-    OUT                ; echo back to monitor
-    ST R0,OS_R0        ; save the character
-    AND R0,R0,#0       ; write a linefeed, too
-    ADD R0,R0,#10
+    GETC                   ; read a character
+    OUT                    ; echo back to monitor
+    ADD R6, R6, #-1
+    STR R0, R6, #0         ; save the character
+    AND R0, R0, #0         ; write a linefeed, too
+    ADD R0, R0, #10
     OUT
-    LD R0,OS_R0        ; restore the character
-    LD R7,TIN_R7       ; restore R7
+    LDR R0, R6, #0         ; restore the character
+    ADD R6, R6, #1
     RTI
+
+TRAP_IN_MSG    .STRINGZ "\nInput a character> "
+
+
 
     ; NOTE: This trap will end when it sees any NUL, even in
     ; packed form, despite the P&P second edition's requirement
     ; of a double NUL.
-TRAP_PUTSP ST R0,OS_R0  ; save R0, R1, R2, R3, and R7
-    ST R1,OS_R1
-    ST R2,OS_R2
-    ST R3,OS_R3
-    ST R7,OS_R7
-    ADD R1,R0,#0                ; move string pointer (R0) into R1
-TRAP_PUTSP_LOOP LDR R2,R1,#0    ; read the next two characters
-    LD R0,LOW_8_BITS            ; use mask to get low byte
-    AND R0,R0,R2                ; if low byte is NUL, quit printing
+TRAP_PUTSP 
+    ADD R6, R6, #-1        ; save R0, R1, R2, and R3
+    STR R0, R6, #0
+    ADD R6, R6, #-1
+    STR R1, R6, #0
+    ADD R6, R6, #-1
+    STR R2, R6, #0
+    ADD R6, R6, #-1
+    STR R3, R6, #0
+    ADD R1, R0, #0         ; move string pointer (R0) into R1
+TRAP_PUTSP_LOOP
+    LDR R2, R1, #0         ; read the next two characters
+    LD R0, LOW_8_BITS      ; use mask to get low byte
+    AND R0, R0, R2         ; if low byte is NUL, quit printing
     BRz TRAP_PUTSP_DONE
-    OUT                         ; otherwise print the low byte
-    AND R0,R0,#0                ; shift high byte into R0
-    ADD R3,R0,#8
-TRAP_PUTSP_S_LOOP ADD R0,R0,R0  ; shift R0 left
-    ADD R2,R2,#0                ; move MSB from R2 into R0
+    OUT                    ; otherwise print the low byte
+    AND R0, R0, #0         ; shift high byte into R0
+    ADD R3, R0, #8
+TRAP_PUTSP_S_LOOP
+    ADD R0, R0, R0         ; shift R0 left
+    ADD R2, R2, #0         ; move MSB from R2 into R0
     BRzp TRAP_PUTSP_MSB_0
-    ADD R0,R0,#1
-TRAP_PUTSP_MSB_0 ADD R2,R2,R2   ; shift R2 left
-    ADD R3,R3,#-1
+    ADD R0, R0, #1
+TRAP_PUTSP_MSB_0
+    ADD R2, R2, R2         ; shift R2 left
+    ADD R3, R3, #-1
     BRp TRAP_PUTSP_S_LOOP
-    ADD R0,R0,#0                ; if high byte is NUL, quit printing
+    ADD R0, R0, #0         ; if high byte is NUL, quit printing
     BRz TRAP_PUTSP_DONE
-    OUT                         ; otherwise print the low byte
-    ADD R1,R1,#1                ; and keep going
+    OUT                    ; otherwise print the low byte
+    ADD R1, R1, #1         ; and keep going
     BRnzp TRAP_PUTSP_LOOP
-TRAP_PUTSP_DONE LD R0,OS_R0     ; restore R0, R1, R2, R3, and R7
-    LD R1,OS_R1
-    LD R2,OS_R2
-    LD R3,OS_R3
-    LD R7,OS_R7
+TRAP_PUTSP_DONE
+    LDR R3, R6, #0         ; restore R0, R1, R2, and R3
+    ADD R6, R6, #1
+    LDR R2, R6, #0
+    ADD R6, R6, #1
+    LDR R1, R6, #0
+    ADD R6, R6, #1
+    LDR R0, R6, #0
+    ADD R6, R6, #1
     RTI
 
-    ; an infinite loop of lowering OS_MCR's MSB
-TRAP_HALT LEA R0,TRAP_HALT_MSG  ; give a warning
+LOW_8_BITS  .FILL x00FF
+
+
+    ; clear power-on bit in MCR
+TRAP_HALT
+    LEA R0, TRAP_HALT_MSG  ; give a warning
     PUTS
-    LDI R0,OS_MCR               ; halt the machine
-    LD R1,MASK_HI
-    AND R0,R0,R1
-    STI R0,OS_MCR
-    BRnzp TRAP_HALT             ; HALT again...
+    LDI R0, OS_MCR         ; halt the machine
+    LD R1, MASK_HI
+    AND R0, R0, R1
+    STI R0, OS_MCR
+    BRnzp TRAP_HALT        ; HALT again if need be...
+
+OS_MCR          .FILL xFFFE
+MASK_HI         .FILL x7FFF
+TRAP_HALT_MSG   .STRINGZ "\n\n--- Halting the LC-3 ---\n\n"
+
 
     ; print an error message, then HALT
-BAD_TRAP LEA R0,BAD_TRAP_MSG    ; give an error message
+BAD_TRAP
+    LEA R0, BAD_TRAP_MSG   ; give an error message
     PUTS
-    HALT                        ; execute HALT
+    HALT                   ; execute HALT
 
-    ; print an error message, then HALT
-EX_PRIV LEA R0,EX_PRIV_MSG      ; give an error message
-    PUTS
-    HALT                        ; execute HALT
-
-    ; print an error message, then HALT
-EX_ILL LEA R0,EX_ILL_MSG        ; give an error message
-    PUTS
-    HALT                        ; execute HALT
-
-BAD_INT        RTI
-
-TRAP_IN_MSG    .STRINGZ "\nInput a character> "
-TRAP_HALT_MSG  .STRINGZ "\n\n--- Halting the LC-3 ---\n\n"
-EX_PRIV_MSG    .STRINGZ "\n\n--- Access violation ---\n\n"
-EX_ILL_MSG     .STRINGZ "\n\n--- Illegal opcode ---\n\n"
 BAD_TRAP_MSG   .STRINGZ "\n\n--- Undefined trap executed ---\n\n"
+
+
+    ; print an error message, then HALT
+EX_PRIV
+    LEA R0, EX_PRIV_MSG    ; give an error message
+    PUTS
+    HALT                   ; execute HALT
+
+EX_PRIV_MSG    .STRINGZ "\n\n--- Privilege violation ---\n\n"
+
+
+    ; print an error message, then HALT
+EX_ILL
+    LEA R0, EX_ILL_MSG     ; give an error message
+    PUTS
+    HALT                   ; execute HALT
+
+EX_ILL_MSG     .STRINGZ "\n\n--- Illegal opcode ---\n\n"
+
+
+    ; print an error message, then HALT
+EX_ACV
+    LEA R0, EX_ACV_MSG     ; give an error message
+    PUTS
+    HALT                   ; execute HALT
+
+EX_ACV_MSG     .STRINGZ "\n\n--- Access violation---\n\n"
+
+
+BAD_INT
+    RTI
 
     .END
 )LC3OS2";

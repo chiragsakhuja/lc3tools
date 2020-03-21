@@ -1,325 +1,215 @@
-/*
- * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
- */
-#include <fstream>
-#include <mutex>
-#include <thread>
-#include <sstream>
-
-#include "device_regs.h"
-#include "lc3os.h"
 #include "simulator.h"
-#include "utils.h"
+
+#include <algorithm>
+#include <iostream>
+
+#include "decoder.h"
+#include "device_regs.h"
 
 using namespace lc3::core;
 
-namespace lc3
+static constexpr uint64_t INST_TIMESTEP = 20;
+
+Simulator::Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, uint32_t print_level) :
+    time(0), logger(printer, print_level), inputter(inputter)
 {
-namespace core
-{
-    std::mutex g_io_lock;
-};
-};
+    devices.emplace_back(std::make_shared<KeyboardDevice>(inputter));
+    devices.emplace_back(std::make_shared<DisplayDevice>(logger));
 
-Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter,
-    uint32_t print_level, bool threaded_input) : state(simulator, logger), logger(printer, print_level),
-    inputter(inputter), threaded_input(threaded_input), collecting_input(false)
-{
-    state.mem.resize(1 << 16);
-    reinitialize();
-
-    state.pre_instruction_callback_v = false;
-    state.post_instruction_callback_v = false;
-    state.interrupt_enter_callback_v = false;
-    state.interrupt_exit_callback_v = false;
-}
-
-void Simulator::loadObj(std::istream & buffer)
-{
-    using namespace lc3::utils;
-
-    uint32_t fill_pc = 0;
-    uint32_t offset = 0;
-    bool first_orig_set = false;
-
-    // Verify header.
-    std::string expected_header = getMagicHeader();
-    char * header = new char[expected_header.size()];
-    if(buffer.read(header, expected_header.size())) {
-        for(uint32_t i = 0; i < expected_header.size(); i += 1) {
-            if(header[i] != expected_header[i]) {
-                logger.printf(PrintType::P_ERROR, true, "invalid header (is this a .obj file?); try re-assembling");
-                throw utils::exception("invalid header (is this a .obj file?); try re-assembling");
-            }
+    for(PIDevice dev : devices) {
+        for(uint16_t dev_addr : dev->getAddrMap()) {
+            state.registerDeviceReg(dev_addr, dev);
         }
-    } else {
-        logger.printf(PrintType::P_ERROR, true, "could not read header");
-        throw utils::exception("could not read header");
     }
-    delete[] header;
 
-    // Verify version number matches current version number.
-    std::string expected_version = getVersionString();
-    char * version = new char[expected_version.size()];
-    if(buffer.read(version, expected_version.size())) {
-        for(uint32_t i = 0; i < expected_version.size(); i += 1) {
-            if(version[i] != expected_version[i]) {
-                logger.printf(PrintType::P_ERROR, true, "mismatched version numbers; try re-assembling");
-                throw utils::exception("mismatched version numbers; try re-assembling");
-            }
-        }
-    } else {
-        logger.printf(PrintType::P_ERROR, true, "could not version number; try re-assembling");
-        throw utils::exception("could not read version number; try re-assembling");
-    }
-    delete[] version;
-
-    while(! buffer.eof()) {
-        MemEntry statement;
-        buffer >> statement;
-
-        if(buffer.eof()) {
-            break;
-        }
-
-        if(statement.isOrig()) {
-            if(! first_orig_set) {
-                state.pc = statement.getValue();
-                first_orig_set = true;
-            }
-            fill_pc = statement.getValue();
-            offset = 0;
-        } else {
-            logger.printf(lc3::utils::PrintType::P_DEBUG, true, "0x%0.4x: %s (0x%0.4x)", fill_pc + offset,
-                statement.getLine().c_str(), statement.getValue());
-            state.mem[fill_pc + offset] = statement;
-            offset += 1;
-        }
-
-    }
-    enableClock();
+    setup(0);
 }
 
 void Simulator::simulate(void)
 {
-    std::thread input_thread;
-    utils::exception exception;
-    bool exception_valid = false;
+    powerOn(0);
+    inst_count_this_run = 0;
 
-    try {
-        enableClock();
+    sim::Decoder decoder;
 
-        collecting_input = true;
-        inputter.beginInput();
-        if(threaded_input) {
-            input_thread = std::thread(&core::Simulator::inputThread, this);
-        }
-
-        while(isClockEnabled()) {
-            executeEvent(std::make_shared<CallbackEvent>(state.pre_instruction_callback_v,
-                state.pre_instruction_callback));
-            if(! isClockEnabled()) { break; }    // pre_instruction_callback may pause machine
-            std::vector<PIEvent> events = executeInstruction();
-            events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
-                state.post_instruction_callback));
-            executeEventChain(events);
-            updateDevices();
-            if(! threaded_input) {
-                collectInput();
-            }
-            checkAndSetupInterrupts();
-        }
-    } catch(utils::exception & e) {
-        exception = e;
-        exception_valid = true;
-    } catch(std::exception & e) { (void) e; }
-
-    disableClock();
-    collecting_input = false;
-    if(threaded_input && input_thread.joinable()) {
-        input_thread.join();
+    // Initialize devices.
+    for(PIDevice dev : devices) {
+        dev->startup();
     }
-    inputter.endInput();
 
-    if(exception_valid) {
-        throw exception;
+    do {
+        handleDevices();
+        handleInstruction(decoder);
+        executeEvents();
+        handleCallbacks();
+        executeEvents();
+    } while(lc3::utils::getBit(state.readMCR(), 15) == 1);
+
+    // Shutdown devices.
+    for(PIDevice dev : devices) {
+        dev->shutdown();
     }
 }
 
-void Simulator::enableClock(void)
+void Simulator::loadObj(std::string const & name, std::istream & buffer)
 {
-    uint16_t mcr = state.readMemRaw(MCR);
-    state.writeMemRaw(MCR, mcr | 0x8000);
+    events.emplace(std::make_shared<LoadObjFileEvent>(time + 1, name, buffer, logger));
+    setup(2);
+
+    executeEvents();
 }
 
-void Simulator::disableClock(void)
+void Simulator::setup(uint64_t t_delta)
 {
-    uint16_t mcr = state.readMemRaw(MCR);
-    state.writeMemRaw(MCR, mcr & (~0x8000));
-}
-
-bool Simulator::isClockEnabled(void) const
-{
-    return (state.readMemRaw(MCR) & 0x8000) == 0x8000;
-}
-
-std::vector<PIEvent> Simulator::executeInstruction(void)
-{
-    if(! state.ignore_privilege && ((state.pc <= SYSTEM_END || state.pc >= MMIO_START)
-        && (state.readMemRaw(PSR) & 0x8000) == 0x8000))
-    {
-        logger.printf(lc3::utils::PrintType::P_EXTRA, true, "illegal PC 0x%0.4x accessed", state.pc);
-        return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x0, MachineState::SysCallType::EX);
-    }
-    uint32_t encoded_inst = state.readMemSafe(state.pc);
-
-    optional<PIInstruction> candidate = decoder.findInstructionByEncoding(encoded_inst);
-    if(! candidate) {
-        logger.printf(lc3::utils::PrintType::P_EXTRA, true, "illegal opcode");
-        return IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x1, MachineState::SysCallType::EX);
-    }
-
-    (*candidate)->assignOperands(encoded_inst);
-    logger.printf(lc3::utils::PrintType::P_EXTRA, true, "executing PC 0x%0.4x: %s (0x%0.4x)", state.pc,
-        state.mem[state.pc].getLine().c_str(), encoded_inst);
-    state.pc = (state.pc + 1) & 0xffff;
-    std::vector<PIEvent> events = (*candidate)->execute(state);
-
-    return events;
-}
-
-void Simulator::updateDevices(void)
-{
-    uint16_t value = state.readMemRaw(DSR);
-    state.writeMemRaw(DSR, value | 0x8000);
-}
-
-void Simulator::checkAndSetupInterrupts(void)
-{
-    uint32_t value = state.readMemRaw(KBSR);
-
-    if(((value & 0xc000) == 0xc000) && ((state.readMemRaw(PSR) & 0x0700) == 0)) {
-        logger.printf(lc3::utils::PrintType::P_EXTRA, true, "jumping to keyboard ISR");
-
-        std::vector<PIEvent> events = IInstruction::buildSysCallEnterHelper(state, INTEX_TABLE_START + 0x80,
-            MachineState::SysCallType::INT, [](uint32_t psr_value) { return (psr_value & 0x78ff) | 0x0400; });
-        // events.push_back(std::make_shared<MemWriteEvent>(KBSR, state.readMemRaw(KBSR) & 0x7fff));
-        events.push_back(std::make_shared<CallbackEvent>(state.post_instruction_callback_v,
-                state.post_instruction_callback));
-
-        executeEventChain(events);
-    }
-}
-
-void Simulator::executeEventChain(std::vector<PIEvent> & events)
-{
-    for(PIEvent event : events) {
-        executeEvent(event);
-    }
-
-    events.clear();
-}
-
-void Simulator::executeEvent(PIEvent event)
-{
-    if(event->getOutputString(state) != "") {
-        logger.printf(lc3::utils::PrintType::P_EXTRA, false, "  %s", event->getOutputString(state).c_str());
-    }
-    event->updateState(state);
+    events.emplace(std::make_shared<SetupEvent>(time + t_delta));
+    executeEvents();
 }
 
 void Simulator::reinitialize(void)
 {
-    for(uint32_t i = 0; i < 8; i += 1) {
-        state.regs[i] = 0;
-    }
-
-    state.pc = RESET_PC;
-
-    for(uint32_t i = 0; i < (1 << 16); i += 1) {
-        state.writeMemRaw(i, 0);
-        state.mem[i].setLine("");
-    }
-
-    state.writeMemRaw(BSP, 0x3000);
-    state.writeMemRaw(PSR, 0x8002);
-    enableClock();
+    state.reinitialize();
 }
 
-void Simulator::registerPreInstructionCallback(callback_func_t func)
+void Simulator::triggerSuspend(uint64_t t_delta)
 {
-    state.pre_instruction_callback_v = true;
-    state.pre_instruction_callback = func;
+    events.emplace(std::make_shared<ShutdownEvent>(time + t_delta));
 }
 
-void Simulator::registerPostInstructionCallback(callback_func_t func)
+void Simulator::registerCallback(CallbackType type, Callback func)
 {
-    state.post_instruction_callback_v = true;
-    state.post_instruction_callback = func;
+    callbacks[type] = func;
 }
 
-void Simulator::registerInterruptEnterCallback(callback_func_t func)
+void Simulator::addBreakpoint(uint16_t pc)
 {
-    state.interrupt_enter_callback_v = true;
-    state.interrupt_enter_callback = func;
+    breakpoints.insert(pc);
 }
 
-void Simulator::registerInterruptExitCallback(callback_func_t func)
+void Simulator::removeBreakpoint(uint16_t pc)
 {
-    state.interrupt_exit_callback_v = true;
-    state.interrupt_exit_callback = func;
+    breakpoints.erase(pc);
 }
 
-void Simulator::registerExceptionEnterCallback(callback_func_t func)
+void Simulator::powerOn(uint64_t t_delta)
 {
-    state.exception_enter_callback_v = true;
-    state.exception_enter_callback = func;
+    events.emplace(std::make_shared<PowerOnEvent>(time + t_delta));
+    executeEvents();
 }
 
-void Simulator::registerExceptionExitCallback(callback_func_t func)
+void Simulator::executeEvents(void)
 {
-    state.exception_exit_callback_v = true;
-    state.exception_exit_callback = func;
-}
+    while(! events.empty()) {
+        PIEvent event = events.top();
+        events.pop();
 
-void Simulator::registerSubEnterCallback(callback_func_t func)
-{
-    state.sub_enter_callback_v = true;
-    state.sub_enter_callback = func;
-}
+        if(event != nullptr) {
+            if(event->time < time) {
+                logger.printf(lc3::utils::PrintType::P_WARNING, true, "%d: Skipping '%s' scheduled for %d", time,
+                    event->toString(state).c_str(), event->time);
+                logger.newline(lc3::utils::PrintType::P_WARNING);
+                continue;
+            }
 
-void Simulator::registerSubExitCallback(callback_func_t func)
-{
-    state.sub_exit_callback_v = true;
-    state.sub_exit_callback = func;
-}
+            time = event->time;
+            logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d: %s", time, event->toString(state).c_str());
+            event->handleEvent(state);
 
-void Simulator::registerWaitForInputCallback(callback_func_t func)
-{
-    state.wait_for_input_callback_v = true;
-    state.wait_for_input_callback = func;
-}
+            PIMicroOp uop = event->uops;
+            while(uop != nullptr) {
+                logger.printf(lc3::utils::PrintType::P_EXTRA, true, "%d: |- %s", time, uop->toString(state).c_str());
+                uop->handleMicroOp(state);
+                uop = uop->getNext();
+            }
+        }
 
-void lc3::core::Simulator::setIgnorePrivilege(bool ignore)
-{
-    state.ignore_privilege = ignore;
-}
-
-void Simulator::collectInput(void)
-{
-    char c;
-    uint16_t kbsr = state.readMemRaw(KBSR);
-    if((kbsr & 0x8000) == 0 && inputter.getChar(c)) {
-        std::lock_guard<std::mutex> guard(g_io_lock);
-        state.writeMemRaw(KBSR, kbsr | 0x8000);
-        state.writeMemRaw(KBDR, ((uint32_t) c) & 0xFF);
+        logger.newline(lc3::utils::PrintType::P_EXTRA);
     }
 }
 
-void Simulator::inputThread(void)
+void Simulator::handleDevices(void)
 {
-    while(collecting_input) {
-        collectInput();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    uint64_t fetch_time_offset = INST_TIMESTEP - (time % INST_TIMESTEP);
+
+    // Insert device update events.
+    for(PIDevice dev : devices) {
+        events.emplace(std::make_shared<DeviceUpdateEvent>(time + fetch_time_offset - 10, dev));
+    }
+
+    // Check for interrupts triggered by devices.
+    events.emplace(std::make_shared<CheckForInterruptEvent>(time + fetch_time_offset - 9));
+}
+
+void Simulator::handleInstruction(sim::Decoder & decoder)
+{
+    uint64_t fetch_time_offset = INST_TIMESTEP - (time % INST_TIMESTEP);
+    auto bp_search = std::find(breakpoints.begin(), breakpoints.end(), state.readPC());
+
+    // Either insert breakpoints event or normal processing.
+    if(bp_search != breakpoints.end() && inst_count_this_run != 0) {
+        triggerSuspend();
+        events.emplace(std::make_shared<CallbackEvent>(
+            time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::BREAKPOINT), CallbackType::BREAKPOINT,
+            std::bind(callbackDispatcher, this, CallbackType::BREAKPOINT, std::placeholders::_2)
+        ));
+    } else {
+        // Insert pre- and post-instruction callback events.
+        events.emplace(std::make_shared<CallbackEvent>(
+            time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::PRE_INST), CallbackType::PRE_INST,
+            std::bind(callbackDispatcher, this, CallbackType::PRE_INST, std::placeholders::_2)
+        ));
+
+        // Insert instruction fetch event.
+        events.emplace(std::make_shared<AtomicInstProcessEvent>(time + fetch_time_offset, decoder));
     }
 }
+
+void Simulator::handleCallbacks(void)
+{
+    events.emplace(std::make_shared<CallbackEvent>(
+        time + callbackTypeToUnderlying(CallbackType::POST_INST), CallbackType::POST_INST,
+        std::bind(callbackDispatcher, this, CallbackType::POST_INST, std::placeholders::_2)
+    ));
+
+    // Insert callback events that might have been generated during execution.
+    for(CallbackType cb : state.getPendingCallbacks()) {
+        events.emplace(std::make_shared<CallbackEvent>(
+            time + callbackTypeToUnderlying(cb), cb, std::bind(callbackDispatcher, this, cb, std::placeholders::_2)
+        ));
+    }
+    state.clearPendingCallbacks();
+}
+
+void Simulator::callbackDispatcher(Simulator * sim, CallbackType type, MachineState & state)
+{
+    if(type == CallbackType::PRE_INST) {
+        sim->pre_inst_pc = state.readPC();
+    } else if(type == CallbackType::SUB_ENTER || type == CallbackType::EX_ENTER || type == CallbackType::INT_ENTER) {
+        sim->stack_trace.push_back(sim->pre_inst_pc);
+        sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "Stack trace");
+        for(int64_t i = sim->stack_trace.size() - 1; i >= 0; --i) {
+            uint16_t pc = sim->stack_trace[i];
+            sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "#%d 0x%0.4hx (%s)",
+                sim->stack_trace.size() - 1 - i, pc, state.getMemLine(pc).c_str());
+        }
+    } else if(type == CallbackType::SUB_EXIT || type == CallbackType::EX_EXIT || type == CallbackType::INT_EXIT) {
+        sim->stack_trace.pop_back();
+        sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "Stack trace");
+        for(int64_t i = sim->stack_trace.size() - 1; i >= 0; --i) {
+            uint16_t pc = sim->stack_trace[i];
+            sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "#%d 0x%0.4hx (%s)",
+                sim->stack_trace.size() - 1 - i, pc, state.getMemLine(pc).c_str());
+        }
+    } else if(type == CallbackType::POST_INST) {
+        ++(sim->inst_count_this_run);
+    }
+
+    auto search = sim->callbacks.find(type);
+    if(search != sim->callbacks.end() && search->second != nullptr) {
+        search->second(type, state);
+    }
+}
+
+MachineState & Simulator::getMachineState(void) { return state; }
+MachineState const & Simulator::getMachineState(void) const { return state; }
+void Simulator::setPrintLevel(uint32_t print_level) { logger.setPrintLevel(print_level); }
+void Simulator::setIgnorePrivilege(bool ignore_privilege) { state.setIgnorePrivilege(ignore_privilege); }

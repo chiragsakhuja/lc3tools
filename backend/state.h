@@ -1,209 +1,94 @@
-/*
- * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
- */
 #ifndef STATE_H
 #define STATE_H
 
-#include <array>
-#include <functional>
-#include <memory>
+#include <queue>
 #include <stack>
+#include <string>
 #include <vector>
+#include <unordered_map>
+#include <utility>
 
-#include "device_regs.h"
-#include "logger.h"
-#include "mem.h"
+#include "aliases.h"
+#include "callback.h"
+#include "device.h"
+#include "func_type.h"
+#include "intex.h"
+#include "mem_new.h"
 
 namespace lc3
 {
-class sim;
-
 namespace core
 {
     class IEvent;
-    struct MachineState;
+    using PIEvent = std::shared_ptr<IEvent>;
 
-    using callback_func_t = std::function<void(sim &, MachineState &)>;
-
-    struct MachineState
+    class MachineState
     {
-        enum class SysCallType {
-              TRAP
-            , INT
-            , EX
-        };
+    public:
+        MachineState(void);
 
-        enum class SPType {
-              SSP
-            , USP
-        };
+        void reinitialize(void);
+        bool getIgnorePrivilege(void) const;
+        void setIgnorePrivilege(bool ignore);
 
-        MachineState(sim & simulator, lc3::utils::Logger & logger) : pc(0), logger(logger),
-            pre_instruction_callback_v(false),post_instruction_callback_v(false),
-            interrupt_enter_callback_v(false), interrupt_exit_callback_v(false),
-            exception_enter_callback_v(false), exception_exit_callback_v(false),
-            sub_enter_callback_v(false), sub_exit_callback_v(false),
-            wait_for_input_callback_v(false), simulator(simulator), ignore_privilege(false) {}
+        uint16_t readPC(void) const { return pc; }
+        void writePC(uint16_t value) { pc = value; }
+        uint16_t readResetPC(void) const { return reset_pc; }
+        void writeResetPC(uint16_t value) { reset_pc = value; }
 
-        std::vector<MemEntry> mem;
-        std::array<uint32_t, 8> regs;
-        uint32_t pc;
+        uint16_t readIR(void) const { return ir; }
+        void writeIR(uint16_t value) { ir = value; }
 
-        std::stack<SysCallType> sys_call_types;
+        PIInstruction readDecodedIR(void) const { return decoded_ir; }
+        void writeDecodedIR(PIInstruction value) { decoded_ir = value; }
 
-        lc3::utils::Logger & logger;
+        uint16_t readSSP(void) const { return ssp; }
+        void writeSSP(uint16_t value) { ssp = value; }
 
-        uint32_t readMemEvent(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const;
-        uint32_t readMemSafe(uint32_t addr);
-        uint32_t readMemRaw(uint32_t addr) const;
-        void writeMemEvent(uint32_t addr, uint16_t value, bool & change_mem, std::shared_ptr<IEvent> & change);
-        void writeMemSafe(uint32_t addr, uint16_t value);
-        void writeMemRaw(uint32_t addr, uint16_t value);
+        uint16_t readPSR(void) const { return std::get<0>(readMem(PSR)); }
+        void writePSR(uint16_t value) { writeMem(PSR, value); }
 
-        bool pre_instruction_callback_v;
-        bool post_instruction_callback_v;
-        bool interrupt_enter_callback_v;
-        bool interrupt_exit_callback_v;
-        bool exception_enter_callback_v;
-        bool exception_exit_callback_v;
-        bool sub_enter_callback_v;
-        bool sub_exit_callback_v;
-        bool wait_for_input_callback_v;
-        callback_func_t pre_instruction_callback;
-        callback_func_t post_instruction_callback;
-        callback_func_t interrupt_enter_callback;
-        callback_func_t interrupt_exit_callback;
-        callback_func_t exception_enter_callback;
-        callback_func_t exception_exit_callback;
-        callback_func_t sub_enter_callback;
-        callback_func_t sub_exit_callback;
-        callback_func_t wait_for_input_callback;
+        uint16_t readMCR(void) const { return std::get<0>(readMem(MCR)); }
+        void writeMCR(uint16_t value) { writeMem(MCR, value); }
 
-        sim & simulator;
+        uint16_t readReg(uint16_t id) const { return rf[id]; }
+        void writeReg(uint16_t id, uint16_t value) { rf[id] = value; }
+
+        std::pair<uint16_t, PIMicroOp> readMem(uint16_t addr) const;
+        PIMicroOp writeMem(uint16_t addr, uint16_t value);
+        std::string getMemLine(uint16_t addr) const;
+        void setMemLine(uint16_t addr, std::string const & value);
+
+        void registerDeviceReg(uint16_t mem_addr, PIDevice device);
+
+        void enqueueInterrupt(InterruptType type) { pending_interrupts.push(type); }
+        InterruptType peekInterrupt(void) const;
+        InterruptType dequeueInterrupt(void);
+
+
+        void pushFuncTraceType(FuncType type) { func_trace.push(type); }
+        FuncType peekFuncTraceType(void) const;
+        FuncType popFuncTraceType(void);
+
+        std::vector<CallbackType> const & getPendingCallbacks(void) const { return pending_callbacks; }
+        void clearPendingCallbacks(void) { pending_callbacks.clear(); }
+        void addPendingCallback(CallbackType type) { pending_callbacks.push_back(type); }
+
+    private:
+        // Hardware state.
+        std::vector<MemLocation> mem;
+        std::vector<uint16_t> rf;
+        std::unordered_map<uint16_t, PIDevice> mmio;
+        uint16_t reset_pc, pc, ir;
+        PIInstruction decoded_ir;
+        uint16_t ssp;
+        std::queue<InterruptType> pending_interrupts;
+
+        // Simulation state.
         bool ignore_privilege;
-    };
 
-    enum class EventType {
-          EVENT_REG
-        , EVENT_PSR
-        , EVENT_PC
-        , EVENT_MEM
-        , EVENT_SWAP_SP
-        , EVENT_CALLBACK
-        , PUSH_SYS_CALL_TYPE
-        , POP_SYS_CALL_TYPE
-    };
-
-    class IEvent
-    {
-    public:
-        EventType type;
-
-        IEvent(EventType type) : type(type) {}
-        virtual ~IEvent(void) = default;
-
-        virtual void updateState(MachineState & state) const = 0;
-        virtual std::string getOutputString(MachineState const & state) const = 0;
-    };
-
-    class RegEvent : public IEvent
-    {
-    public:
-        RegEvent(uint32_t reg, uint32_t value) : IEvent(EventType::EVENT_REG), reg(reg), value(value) {}
-
-        virtual void updateState(MachineState & state) const override { state.regs[reg] = value & 0xFFFF; }
-        virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("R%d: 0x%0.4x => 0x%0.4x", reg, state.regs[reg], value); }
-    private:
-        uint32_t reg;
-        uint32_t value;
-    };
-
-    class PSREvent : public IEvent
-    {
-    public:
-        PSREvent(uint32_t value) : IEvent(EventType::EVENT_PSR), value(value) {}
-
-        virtual void updateState(MachineState & state) const override { state.writeMemRaw(PSR, value & 0xFFFF); }
-        virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("PSR: 0x%0.4x => 0x%0.4x", state.readMemRaw(PSR), value); }
-    private:
-        uint32_t value;
-    };
-
-    class PCEvent : public IEvent
-    {
-    public:
-        PCEvent(uint32_t value) : IEvent(EventType::EVENT_PC), value(value) {}
-
-        virtual void updateState(MachineState & state) const override { state.pc = value & 0xFFFF; }
-        virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("PC: 0x%0.4x => 0x%0.4x", state.pc, value); }
-    private:
-        uint32_t value;
-    };
-
-    class MemWriteEvent : public IEvent
-    {
-    public:
-        MemWriteEvent(uint32_t addr, uint32_t value) : IEvent(EventType::EVENT_MEM), addr(addr), value(value) {}
-
-        virtual void updateState(MachineState & state) const override;
-        virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("MEM[0x%0.4x]: 0x%0.4x => 0x%0.4x", addr, state.readMemRaw(addr), value); }
-    private:
-        uint32_t addr;
-        uint32_t value;
-    };
-
-    class SwapSPEvent : public IEvent
-    {
-    public:
-        SwapSPEvent(void) : IEvent(EventType::EVENT_SWAP_SP) {}
-
-        virtual void updateState(MachineState & state) const override;
-        virtual std::string getOutputString(MachineState const & state) const override {
-            return utils::ssprintf("R6 <=> SP : 0x%0.4x <=> 0x%0.4x", state.regs[6], state.readMemRaw(BSP));
-        }
-    };
-
-    class CallbackEvent : public IEvent
-    {
-    public:
-        CallbackEvent(bool callback_v, callback_func_t callback) :
-            IEvent(EventType::EVENT_CALLBACK), callback_v(callback_v), callback(callback) {}
-        virtual void updateState(MachineState & state) const override {
-            if(callback_v) { callback(state.simulator, state); }
-        }
-        virtual std::string getOutputString(MachineState const & state) const override { (void)state; return ""; }
-    private:
-        bool callback_v;
-        callback_func_t callback;
-    };
-
-    class PushSysCallTypeEvent : public IEvent
-    {
-    public:
-        PushSysCallTypeEvent(MachineState::SysCallType call_type) : IEvent(EventType::PUSH_SYS_CALL_TYPE),
-            call_type(call_type) {}
-        virtual void updateState(MachineState & state) const override {
-            state.sys_call_types.push(call_type);
-        }
-        virtual std::string getOutputString(MachineState const & state) const override { (void)state; return ""; }
-    private:
-        MachineState::SysCallType call_type;
-    };
-
-    class PopSysCallTypeEvent : public IEvent
-    {
-    public:
-        PopSysCallTypeEvent() : IEvent(EventType::POP_SYS_CALL_TYPE) {}
-        virtual void updateState(MachineState & state) const override {
-            if(state.sys_call_types.size() > 0) {
-                state.sys_call_types.pop();
-            }
-        }
-        virtual std::string getOutputString(MachineState const & state) const override { (void)state; return ""; }
+        std::stack<FuncType> func_trace;
+        std::vector<CallbackType> pending_callbacks;
     };
 };
 };

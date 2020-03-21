@@ -7,8 +7,9 @@
 #include <memory>
 
 #include "instructions.h"
+#include "isa.h"
 #include "logger.h"
-#include "optional.h"
+#include "utils.h"
 
 namespace lc3
 {
@@ -16,10 +17,10 @@ namespace core
 {
 namespace asmbl
 {
-    class InstructionEncoder : public InstructionHandler
+    class Encoder : public ISAHandler
     {
     public:
-        InstructionEncoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal_assembly);
+        Encoder(lc3::utils::AssemblerLogger & logger, bool enable_liberal_assembly);
 
         bool isStringPseudo(std::string const & search) const;
         bool isStringValidReg(std::string const & search) const;

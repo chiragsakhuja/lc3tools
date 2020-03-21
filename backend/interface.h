@@ -17,36 +17,22 @@
 
 #include "assembler.h"
 #include "converter.h"
-#include "optional.h"
 #include "simulator.h"
+#include "utils.h"
 
 namespace lc3
 {
-    class sim;
-
-    struct Breakpoint
-    {
-        // TODO: make this moveable and replace sim_inst with a reference
-        Breakpoint(uint32_t id, uint32_t loc, sim * sim_int) : id(id), loc(loc), sim_int(sim_int) {}
-
-        uint32_t id, loc;
-        sim const * sim_int;
-    };
-
-    using callback_func_t = std::function<void(core::MachineState &)>;
-    using breakpoint_callback_func_t = std::function<void(core::MachineState & state, Breakpoint const & bp)>;
-
     class sim
     {
     public:
-        sim(utils::IPrinter & printer, utils::IInputter & inputter, bool threaded_input,
-            uint32_t print_level, bool propagate_exceptions);
-        ~sim(void) = default;
+        using Callback = std::function<void(core::CallbackType, core::MachineState &)>;
 
-        bool loadObjFile(std::string const & obj_filename);
-        void reinitialize(void);
-        void randomize(void);
-        void restart(void);
+        sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level);
+
+        bool loadObjFile(std::string const & filename);
+        void setup(void);
+        void zeroState(void);
+        void randomizeState(void);
 
         void setRunInstLimit(uint64_t inst_limit);
         bool run(void);
@@ -59,95 +45,41 @@ namespace lc3
 
         core::MachineState & getMachineState(void);
         core::MachineState const & getMachineState(void) const;
-        uint64_t getInstExecCount(void) const;
-        bool didExceedInstLimit(void) const;
-        std::vector<Breakpoint> const & getBreakpoints() const;
 
-        uint16_t getReg(uint16_t id) const;
-        uint16_t getMem(uint16_t addr) const;
+        uint16_t readReg(uint16_t id) const;
+        uint16_t readMem(uint16_t addr) const;
         std::string getMemLine(uint16_t addr) const;
-        uint16_t getPC(void) const;
-        uint16_t getPSR(void) const;
-        uint16_t getMCR(void) const;
-        char getCC(void) const;
-        void setReg(uint16_t id, uint16_t value);
-        void setMem(uint16_t addr, uint16_t value);
-        void setMemString(uint16_t addr, std::string const & value);
+        uint16_t readPC(void) const;
+        uint16_t readPSR(void) const;
+        uint16_t readMCR(void) const;
+        char readCC(void) const;
+        void writeReg(uint16_t id, uint16_t value);
+        void writeMem(uint16_t addr, uint16_t value);
+        void writeStringMem(uint16_t addr, std::string const & value);
         void setMemLine(uint16_t addr, std::string const & value);
-        void setPC(uint16_t value);
-        void setPSR(uint16_t value);
-        void setMCR(uint16_t value);
-        void setCC(char value);
+        void writePC(uint16_t value);
+        void writePSR(uint16_t value);
+        void writeMCR(uint16_t value);
+        void writeCC(char value);
 
-        Breakpoint setBreakpoint(uint16_t addr);
-        bool removeBreakpointByID(uint32_t id);
-        bool removeBreakpointByAddr(uint16_t addr);
+        void setBreakpoint(uint16_t addr);
+        void removeBreakpoint(uint16_t addr);
 
-        void registerPreInstructionCallback(callback_func_t func);
-        void registerPostInstructionCallback(callback_func_t func);
-        void registerInterruptEnterCallback(callback_func_t func);
-        void registerInterruptExitCallback(callback_func_t func);
-        void registerExceptionEnterCallback(callback_func_t func);
-        void registerExceptionExitCallback(callback_func_t func);
-        void registerSubEnterCallback(callback_func_t func);
-        void registerSubExitCallback(callback_func_t func);
-        void registerWaitForInputCallback(callback_func_t func);
-        void registerBreakpointCallback(breakpoint_callback_func_t func);
+        void registerCallback(core::CallbackType type, Callback func);
 
         utils::IPrinter & getPrinter(void);
         utils::IPrinter const & getPrinter(void) const;
+        utils::IInputter & getInputter(void);
+        utils::IInputter const & getInputter(void) const;
         void setPrintLevel(uint32_t print_level);
-        void setPropagateExceptions(void);
-        void clearPropagateExceptions(void);
-        void setIgnorePrivilege(bool ignore);
+        void setIgnorePrivilege(bool ignore_privilege);
+
+        uint64_t getInstExecCount(void) const;
 
     private:
         utils::IPrinter & printer;
+        utils::IInputter & inputter;
         core::Simulator simulator;
-
-        friend class core::Simulator;
-        static void preInstructionCallback(sim & sim_int, core::MachineState & state);
-        static void postInstructionCallback(sim & sim_int, core::MachineState & state);
-        static void interruptEnterCallback(sim & sim_int, core::MachineState & state);
-        static void interruptExitCallback(sim & sim_int, core::MachineState & state);
-        static void exceptionEnterCallback(sim & sim_int, core::MachineState & state);
-        static void exceptionExitCallback(sim & sim_int, core::MachineState & state);
-        static void subEnterCallback(sim & sim_int, core::MachineState & state);
-        static void subExitCallback(sim & sim_int, core::MachineState & state);
-        static void waitForInputCallback(sim & sim_int, core::MachineState & state);
-
-        uint64_t inst_exec_count = 0;
-        uint64_t total_inst_limit = 0;
-        uint64_t inst_limit = 0;
-        int64_t remaining_inst_count = -1;
-        int32_t sub_depth = 0;
-        bool hit_internal_exception = false;
-
-        bool pre_instruction_callback_v = false;
-        bool post_instruction_callback_v = false;
-        bool interrupt_enter_callback_v = false;
-        bool interrupt_exit_callback_v = false;
-        bool exception_enter_callback_v = false;
-        bool exception_exit_callback_v = false;
-        bool sub_enter_callback_v = false;
-        bool sub_exit_callback_v = false;
-        bool wait_for_input_callback_v = false;
-        bool breakpoint_callback_v = false;
-        callback_func_t pre_instruction_callback;
-        callback_func_t post_instruction_callback;
-        callback_func_t interrupt_enter_callback;
-        callback_func_t interrupt_exit_callback;
-        callback_func_t exception_enter_callback;
-        callback_func_t exception_exit_callback;
-        callback_func_t sub_enter_callback;
-        callback_func_t sub_exit_callback;
-        callback_func_t wait_for_input_callback;
-        breakpoint_callback_func_t breakpoint_callback;
-
-        uint32_t breakpoint_id = 0;
-        std::vector<Breakpoint> breakpoints;
-
-        bool propagate_exceptions;
 
         enum class RunType
         {
@@ -157,42 +89,38 @@ namespace lc3
             , NORMAL
         } run_type;
 
+        bool encountered_lc3_exception;
+        uint64_t total_inst_exec;
+        uint64_t cur_inst_exec_limit, target_inst_exec;
+        uint64_t cur_sub_depth;
+
+        std::unordered_map<core::CallbackType, Callback> callbacks;
+
         void loadOS(void);
-        bool run(RunType cur_run_type);
+        bool runHelper(void);
+        static void callbackDispatcher(sim * sim_inst, core::CallbackType type, core::MachineState & state);
     };
 
     class as
     {
     public:
-        as(utils::IPrinter & printer, uint32_t print_level, bool propagate_exceptions, bool enable_liberal_asm)
-            : printer(printer), assembler(printer, print_level, enable_liberal_asm),
-              propagate_exceptions(propagate_exceptions) {}
+        as(utils::IPrinter & printer, uint32_t print_level, bool enable_liberal_asm);
         ~as(void) = default;
 
         optional<std::string> assemble(std::string const & asm_filename);
 
-        void setPropagateExceptions(void);
-        void clearPropagateExceptions(void);
         void setEnableLiberalAsm(bool enable);
 
     private:
-        friend class sim;
-
         utils::IPrinter & printer;
         core::Assembler assembler;
-
-        bool propagate_exceptions;
     };
 
     class conv
     {
     public:
-        conv(utils::IPrinter & printer, uint32_t print_level, bool propagate_exceptions)
-            : printer(printer), converter(printer, print_level), propagate_exceptions(propagate_exceptions) {}
+        conv(utils::IPrinter & printer, uint32_t print_level);
         optional<std::string> convertBin(std::string const & asm_filename);
-
-        void setPropagateExceptions(void);
-        void clearPropagateExceptions(void);
 
     private:
         utils::IPrinter & printer;

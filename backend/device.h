@@ -1,72 +1,91 @@
-/*
- * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
- */
 #ifndef DEVICE_H
 #define DEVICE_H
 
-#include <functional>
-#include <mutex>
-#include <unordered_map>
+#include <memory>
+#include <vector>
 
 #include "device_regs.h"
+#include "inputter.h"
+#include "intex.h"
+#include "logger.h"
+#include "mem_new.h"
+#include "uop.h"
 
 namespace lc3
 {
 namespace core
 {
-
-    extern std::mutex g_io_lock;
-
-struct State;
-
-class Device
-{
-public:
-    using read_callback_t  = std::function<void(uint32_t, State &)>;
-    using write_callback_t  = std::function<void(uint32_t, State &)>;
-
-    virtual std::unordered_map<uint32_t, read_callback_t> getReadAddrMap(void) const = 0;
-    virtual std::unordered_map<uint32_t, write_callback_t> getWriteAddrMap(void) const = 0;
-};
-
-class KeyboardDevice : public Device
-{
-public:
-    virtual std::unordered_map<uint32_t, read_callback_t> getReadAddrMap(void) const override
+    class IDevice
     {
-        return { { KBDR, readKBDR } };
-    }
+    public:
+        IDevice(void) = default;
+        virtual ~IDevice(void) {}
 
-    virtual std::unordered_map<uint32_t, write_callback_t> getWriteAddrMap(void) const override
-    {
-        return { { KBSR, writeKBSR } };
+        virtual void startup(void) { }
+        virtual void shutdown(void) { }
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const = 0;
+        virtual PIMicroOp write(uint16_t addr, uint16_t value) = 0;
+        virtual std::vector<uint16_t> getAddrMap(void) const = 0;
+        virtual std::string getName(void) const = 0;
+        virtual PIMicroOp tick(void) { return nullptr; }
     };
 
-    static void readKBDR(uint32_t value, State & state)
+    class RWReg : public IDevice
     {
-        std::lock_guard<std::mutex> guard(g_io_lock);
-        state[KBSR] &= 0x7FFF;
- /*    if(addr == KBSR || addr == KBDR) {
- *        std::lock_guard<std::mutex> guard(g_io_lock);
- *        value = readMemRaw(addr);
- *        if(addr == KBDR) {
- *            change_mem = true;
- *            change = std::make_shared<MemWriteEvent>(KBSR, readMemRaw(KBSR) & 0x7FFF);
- *        } else if(addr == KBSR && (value & 0x8000) == 0) {
- *            change_mem = true;
- *            change = std::make_shared<CallbackEvent>(wait_for_input_callback_v, wait_for_input_callback);
- *        }
- *    } else {
- *        value = readMemRaw(addr);
- *    }
- */
-    }
+    public:
+        RWReg(uint16_t data_addr) : data_addr(data_addr) { data.setValue(0x0000); }
+        virtual ~RWReg(void) override = default;
 
-    static void writeKBSR(uint32_t data, State & state)
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const override;
+        virtual PIMicroOp write(uint16_t addr, uint16_t value) override;
+        virtual std::vector<uint16_t> getAddrMap(void) const override;
+        virtual std::string getName(void) const override { return "RWReg"; }
+
+    private:
+        MemLocation data;
+        uint16_t data_addr;
+    };
+
+    class KeyboardDevice : public IDevice
     {
-    }
-};
+    public:
+        KeyboardDevice(lc3::utils::IInputter & inputter);
+        virtual ~KeyboardDevice(void) override = default;
 
+        virtual void startup(void) override;
+        virtual void shutdown(void) override;
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const override;
+        virtual PIMicroOp write(uint16_t addr, uint16_t value) override;
+        virtual std::vector<uint16_t> getAddrMap(void) const override;
+        virtual std::string getName(void) const override { return "Keyboard"; }
+        virtual PIMicroOp tick(void) override;
+
+    private:
+        lc3::utils::IInputter & inputter;
+
+        MemLocation status;
+        MemLocation data;
+        bool interrupt_triggered;
+    };
+
+    class DisplayDevice : public IDevice
+    {
+    public:
+        DisplayDevice(lc3::utils::Logger & logger);
+        virtual ~DisplayDevice(void) override = default;
+
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const override;
+        virtual PIMicroOp write(uint16_t addr, uint16_t value) override;
+        virtual std::vector<uint16_t> getAddrMap(void) const override;
+        virtual std::string getName(void) const override { return "Display"; }
+        virtual PIMicroOp tick(void) override;
+
+    private:
+        lc3::utils::Logger & logger;
+
+        MemLocation status;
+        MemLocation data;
+    };
 };
 };
 

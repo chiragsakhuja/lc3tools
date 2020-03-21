@@ -1,136 +1,116 @@
-/*
- * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
- */
-#include <cassert>
-#include <mutex>
-
 #include "device_regs.h"
+#include "device.h"
 #include "state.h"
 
-namespace lc3
-{
-namespace core
-{
-    extern std::mutex g_io_lock;
-};
-};
+using namespace lc3::core;
 
-uint32_t lc3::core::MachineState::readMemEvent(uint32_t addr, bool & change_mem, std::shared_ptr<IEvent> & change) const
+MachineState::MachineState(void) : reset_pc(RESET_PC), pc(0), ir(0), decoded_ir(nullptr), ssp(0)
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xFFFF);
-#endif
+    reinitialize();
 
-    change_mem = false;
-    change = nullptr;
+    registerDeviceReg(PSR, std::make_shared<RWReg>(PSR));
+    registerDeviceReg(MCR, std::make_shared<RWReg>(MCR));
+}
 
-    uint32_t value;
-    if(addr == KBSR || addr == KBDR) {
-        std::lock_guard<std::mutex> guard(g_io_lock);
-        value = readMemRaw(addr);
-        if(addr == KBDR) {
-            change_mem = true;
-            change = std::make_shared<MemWriteEvent>(KBSR, readMemRaw(KBSR) & 0x7FFF);
-        } else if(addr == KBSR && (value & 0x8000) == 0) {
-            change_mem = true;
-            change = std::make_shared<CallbackEvent>(wait_for_input_callback_v, wait_for_input_callback);
+void MachineState::reinitialize(void)
+{
+    reset_pc = RESET_PC;
+
+    mem.clear();
+    mem.resize(USER_END - SYSTEM_START + 1);
+
+    rf.clear();
+    rf.resize(16);
+}
+
+void MachineState::setIgnorePrivilege(bool ignore_privilege) { this->ignore_privilege = ignore_privilege; }
+bool MachineState::getIgnorePrivilege(void) const { return ignore_privilege; }
+
+std::pair<uint16_t, PIMicroOp> MachineState::readMem(uint16_t addr) const
+{
+    if(MMIO_START <= addr && addr <= MMIO_END) {
+        auto search = mmio.find(addr);
+        if(search != mmio.end()) {
+            return search->second->read(addr);
+        } else {
+            return std::make_pair(0x0000, nullptr);
         }
     } else {
-        value = readMemRaw(addr);
+        return std::make_pair(mem[addr].getValue(), nullptr);
     }
-    return value;
 }
 
-uint32_t lc3::core::MachineState::readMemSafe(uint32_t addr)
+PIMicroOp MachineState::writeMem(uint16_t addr, uint16_t value)
 {
-    bool change_mem;
-    std::shared_ptr<IEvent> change;
-
-    uint32_t value = readMemEvent(addr, change_mem, change);
-
-    if(change_mem) {
-        change->updateState(*this);
-    }
-
-    return value;
-}
-
-uint32_t lc3::core::MachineState::readMemRaw(uint32_t addr) const
-{
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xFFFF);
-#endif
-
-    return mem[addr].getValue();
-}
-
-void lc3::core::MachineState::writeMemEvent(uint32_t addr, uint16_t value, bool & change_mem,
-    std::shared_ptr<IEvent> & change)
-{
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xFFFF);
-#endif
-
-    change_mem = false;
-    change = nullptr;
-
-    if(addr == PSR) {
-        uint32_t current_psr = readMemRaw(PSR);
-        if(((current_psr & 0x8000) ^ (value & 0x8000)) == 0x8000) {
-            change_mem = true;
-            change = std::make_shared<SwapSPEvent>();
+    if(MMIO_START <= addr && addr <= MMIO_END) {
+        auto search = mmio.find(addr);
+        if(search != mmio.end()) {
+            return search->second->write(addr, value);
         }
+    } else {
+        mem[addr].setValue(value);
     }
 
-    writeMemRaw(addr, value);
+    return nullptr;
 }
 
-void lc3::core::MachineState::writeMemSafe(uint32_t addr, uint16_t value)
+std::string MachineState::getMemLine(uint16_t addr) const
 {
-    bool change_mem;
-    std::shared_ptr<IEvent> change;
+    if(addr < MMIO_START) {
+        return mem[addr].getLine();
+    }
 
-    writeMemEvent(addr, value, change_mem, change);
+    return "";
+}
 
-    if(change_mem) {
-        change->updateState(*this);
+void MachineState::setMemLine(uint16_t addr, std::string const & value)
+{
+    if(addr < MMIO_START) {
+        mem[addr].setLine(value);
     }
 }
 
-void lc3::core::MachineState::writeMemRaw(uint32_t addr, uint16_t value)
+void MachineState::registerDeviceReg(uint16_t mem_addr, PIDevice device)
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr <= 0xFFFF);
-#endif
-
-    mem[addr].setValue(value);
+    mmio[mem_addr] = device;
 }
 
-void lc3::core::MemWriteEvent::updateState(MachineState & state) const
+InterruptType MachineState::peekInterrupt(void) const
 {
-#ifdef _ENABLE_DEBUG
-    assert(addr < 0xFFFF);
-#endif
-
-    if(addr == DDR) {
-        char char_value = (char) (value & 0xFF);
-        if(char_value == 10 || char_value == 13) {
-            state.logger.newline(utils::PrintType::P_NONE);
-        } else {
-            state.logger.print(std::string(1, char_value));
-        }
-    } else if(addr == KBSR) {
-        std::lock_guard<std::mutex> guard(g_io_lock);
-        state.writeMemSafe(addr, value & 0x4000);
-        return;
+    if(pending_interrupts.size() == 0) {
+        return InterruptType::INVALID;
     }
 
-    state.writeMemSafe(addr, value);
+    return pending_interrupts.front();
 }
 
-void lc3::core::SwapSPEvent::updateState(MachineState & state) const
+InterruptType MachineState::dequeueInterrupt(void)
 {
-    uint32_t old_sp = state.regs[6];
-    state.regs[6] = state.readMemRaw(BSP);
-    state.writeMemRaw(BSP, old_sp);
+    if(pending_interrupts.size() == 0) {
+        return InterruptType::INVALID;
+    }
+
+    InterruptType type = pending_interrupts.front();
+    pending_interrupts.pop();
+    return type;
+}
+
+FuncType MachineState::peekFuncTraceType(void) const
+{
+    if(func_trace.size() == 0) {
+        return FuncType::INVALID;
+    }
+
+    return func_trace.top();
+}
+
+FuncType MachineState::popFuncTraceType(void)
+{
+    if(func_trace.size() == 0) {
+        return FuncType::INVALID;
+    }
+
+    FuncType type = func_trace.top();
+    func_trace.pop();
+    return type;
 }

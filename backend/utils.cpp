@@ -33,6 +33,11 @@ uint32_t lc3::utils::sextTo32(uint32_t value, uint32_t num_bits)
     }
 }
 
+uint16_t lc3::utils::sextTo16(uint16_t value, uint32_t num_bits)
+{
+    return static_cast<uint16_t>(sextTo32(static_cast<uint32_t>(value), num_bits) & 0xFFFF);
+}
+
 uint32_t lc3::utils::getBit(uint32_t value, uint32_t pos)
 {
     return (value >> pos) & 1;
@@ -43,6 +48,7 @@ uint32_t lc3::utils::getBits(uint32_t value, uint32_t end, uint32_t start)
     return (value >> start) & ((1 << (end - start + 1)) - 1);
 }
 
+// TODO: Remove
 uint32_t lc3::utils::computePSRCC(uint32_t value, uint32_t psr)
 {
     uint32_t cc = 0;
