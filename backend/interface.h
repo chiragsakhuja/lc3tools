@@ -30,6 +30,7 @@ namespace lc3
         sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level);
 
         bool loadObjFile(std::string const & filename);
+        void setup(void);
         void zeroState(void);
         void randomizeState(void);
 
@@ -61,11 +62,19 @@ namespace lc3
         void writeMCR(uint16_t value);
         void writeCC(char value);
 
+        void setBreakpoint(uint16_t addr);
+        void removeBreakpoint(uint16_t addr);
+
+        void registerCallback(core::CallbackType type, Callback func);
+
         utils::IPrinter & getPrinter(void);
         utils::IPrinter const & getPrinter(void) const;
         utils::IInputter & getInputter(void);
         utils::IInputter const & getInputter(void) const;
         void setPrintLevel(uint32_t print_level);
+        void setIgnorePrivilege(bool ignore_privilege);
+
+        uint64_t getInstExecCount(void) const;
 
     private:
         utils::IPrinter & printer;
@@ -84,6 +93,8 @@ namespace lc3
         uint64_t total_inst_exec;
         uint64_t cur_inst_exec_limit, target_inst_exec;
         uint64_t cur_sub_depth;
+
+        std::unordered_map<core::CallbackType, Callback> callbacks;
 
         void loadOS(void);
         bool runHelper(void);

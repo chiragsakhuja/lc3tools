@@ -26,11 +26,10 @@ std::string AtomicInstProcessEvent::toString(MachineState const & state) const
         std::get<0>(state.readMem(state.readPC())), state.getMemLine(state.readPC()).c_str());
 }
 
-void InitializeEvent::handleEvent(MachineState & state)
+void SetupEvent::handleEvent(MachineState & state)
 {
     uint16_t reset_pc = state.readResetPC();
-    state.writePC(reset_pc == 0x0000 ? RESET_PC : reset_pc);
-    state.writeMCR(0x8000);
+    state.writePC(reset_pc);
 
     // Clear privilege bit and condition codes.
     uint16_t psr_value = state.readPSR();
@@ -48,23 +47,23 @@ void InitializeEvent::handleEvent(MachineState & state)
     }
 }
 
-std::string InitializeEvent::toString(MachineState const & state) const
+std::string SetupEvent::toString(MachineState const & state) const
 {
     (void) state;
 
-    return "Initializing machine";
+    return "Setting up machine";
 }
 
-void ResumeEvent::handleEvent(MachineState & state)
+void PowerOnEvent::handleEvent(MachineState & state)
 {
     state.writeMCR(0x8000);
 }
 
-std::string ResumeEvent::toString(MachineState const & state) const
+std::string PowerOnEvent::toString(MachineState const & state) const
 {
     (void) state;
 
-    return "Resuming machine";
+    return "Powering on machine";
 }
 
 

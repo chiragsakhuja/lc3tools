@@ -40,8 +40,8 @@ namespace core
         Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, uint32_t print_level);
         void simulate(void);
         void loadObj(std::string const & name, std::istream & buffer);
-        void startup(uint64_t t_delta = 0);
-        void resume(uint64_t t_delta = 0);
+        void setup(uint64_t t_delta = 0);
+        void reinitialize(void);
         void triggerSuspend(uint64_t t_delta = 0);
         void registerCallback(CallbackType type, Callback func);
         void addBreakpoint(uint16_t pc);
@@ -50,6 +50,7 @@ namespace core
         MachineState const & getMachineState(void) const;
 
         void setPrintLevel(uint32_t print_level);
+        void setIgnorePrivilege(bool ignore_privilege);
 
     private:
         std::priority_queue<PIEvent, std::vector<PIEvent>, std::greater<PIEvent>> events;
@@ -64,13 +65,16 @@ namespace core
         std::unordered_map<CallbackType, Callback> callbacks;
         std::set<uint16_t> breakpoints;
 
+        uint64_t inst_count_this_run;
+        uint16_t pre_inst_pc;
+        std::vector<uint16_t> stack_trace;
+
+        void powerOn(uint64_t t_delta);
         void executeEvents(void);
         void handleDevices(void);
         void handleInstruction(sim::Decoder & decoder);
         void handleCallbacks(void);
 
-        uint16_t pre_inst_pc;
-        std::vector<uint16_t> stack_trace;
         static void callbackDispatcher(Simulator * sim, CallbackType type, MachineState & state);
     };
 };

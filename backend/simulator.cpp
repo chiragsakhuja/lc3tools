@@ -22,12 +22,13 @@ Simulator::Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inp
         }
     }
 
-    startup(0);
+    setup(0);
 }
 
 void Simulator::simulate(void)
 {
-    resume();
+    powerOn(0);
+    inst_count_this_run = 0;
 
     sim::Decoder decoder;
 
@@ -53,21 +54,20 @@ void Simulator::simulate(void)
 void Simulator::loadObj(std::string const & name, std::istream & buffer)
 {
     events.emplace(std::make_shared<LoadObjFileEvent>(time + 1, name, buffer, logger));
-    startup(2);
+    setup(2);
 
     executeEvents();
 }
 
-void Simulator::startup(uint64_t t_delta)
+void Simulator::setup(uint64_t t_delta)
 {
-    events.emplace(std::make_shared<InitializeEvent>(time + t_delta));
+    events.emplace(std::make_shared<SetupEvent>(time + t_delta));
     executeEvents();
 }
 
-void Simulator::resume(uint64_t t_delta)
+void Simulator::reinitialize(void)
 {
-    events.emplace(std::make_shared<ResumeEvent>(time + t_delta));
-    executeEvents();
+    state.reinitialize();
 }
 
 void Simulator::triggerSuspend(uint64_t t_delta)
@@ -83,6 +83,17 @@ void Simulator::registerCallback(CallbackType type, Callback func)
 void Simulator::addBreakpoint(uint16_t pc)
 {
     breakpoints.insert(pc);
+}
+
+void Simulator::removeBreakpoint(uint16_t pc)
+{
+    breakpoints.erase(pc);
+}
+
+void Simulator::powerOn(uint64_t t_delta)
+{
+    events.emplace(std::make_shared<PowerOnEvent>(time + t_delta));
+    executeEvents();
 }
 
 void Simulator::executeEvents(void)
@@ -134,7 +145,7 @@ void Simulator::handleInstruction(sim::Decoder & decoder)
     auto bp_search = std::find(breakpoints.begin(), breakpoints.end(), state.readPC());
 
     // Either insert breakpoints event or normal processing.
-    if(bp_search != breakpoints.end()) {
+    if(bp_search != breakpoints.end() && inst_count_this_run != 0) {
         triggerSuspend();
         events.emplace(std::make_shared<CallbackEvent>(
             time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::BREAKPOINT), CallbackType::BREAKPOINT,
@@ -182,9 +193,18 @@ void Simulator::callbackDispatcher(Simulator * sim, CallbackType type, MachineSt
         }
     } else if(type == CallbackType::SUB_EXIT || type == CallbackType::EX_EXIT || type == CallbackType::INT_EXIT) {
         sim->stack_trace.pop_back();
+        sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "Stack trace");
+        for(int64_t i = sim->stack_trace.size() - 1; i >= 0; --i) {
+            uint16_t pc = sim->stack_trace[i];
+            sim->logger.printf(lc3::utils::PrintType::P_DEBUG, true, "#%d 0x%0.4hx (%s)",
+                sim->stack_trace.size() - 1 - i, pc, state.getMemLine(pc).c_str());
+        }
+    } else if(type == CallbackType::POST_INST) {
+        ++(sim->inst_count_this_run);
     }
+
     auto search = sim->callbacks.find(type);
-    if(search != sim->callbacks.end()) {
+    if(search != sim->callbacks.end() && search->second != nullptr) {
         search->second(type, state);
     }
 }
@@ -192,3 +212,4 @@ void Simulator::callbackDispatcher(Simulator * sim, CallbackType type, MachineSt
 MachineState & Simulator::getMachineState(void) { return state; }
 MachineState const & Simulator::getMachineState(void) const { return state; }
 void Simulator::setPrintLevel(uint32_t print_level) { logger.setPrintLevel(print_level); }
+void Simulator::setIgnorePrivilege(bool ignore_privilege) { state.setIgnorePrivilege(ignore_privilege); }

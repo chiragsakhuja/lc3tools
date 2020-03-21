@@ -27,6 +27,10 @@ namespace core
     public:
         MachineState(void);
 
+        void reinitialize(void);
+        bool getIgnorePrivilege(void) const;
+        void setIgnorePrivilege(bool ignore);
+
         uint16_t readPC(void) const { return pc; }
         void writePC(uint16_t value) { pc = value; }
         uint16_t readResetPC(void) const { return reset_pc; }
@@ -81,6 +85,8 @@ namespace core
         std::queue<InterruptType> pending_interrupts;
 
         // Simulation state.
+        bool ignore_privilege;
+
         std::stack<FuncType> func_trace;
         std::vector<CallbackType> pending_callbacks;
     };

@@ -20,7 +20,7 @@ int main(int argc, char * argv[])
 
     lc3::FilePrinter printer{std::string{argv[1]}};
     lc3::ConsoleInputter inputter;
-    lc3::sim simulator{printer, inputter, 4};
+    lc3::sim simulator{printer, inputter, 9};
 
     for(int i = 2; i < argc; i += 1) {
         std::string arg(argv[i]);
@@ -30,7 +30,9 @@ int main(int argc, char * argv[])
         }
     }
 
-    simulator.run();
+    simulator.stepIn();
+    simulator.stepIn();
+    simulator.stepOut();
 
     return 0;
 }

@@ -6,16 +6,28 @@ using namespace lc3::core;
 
 MachineState::MachineState(void) : reset_pc(RESET_PC), pc(0), ir(0), decoded_ir(nullptr), ssp(0)
 {
-    mem.resize(USER_END - SYSTEM_START + 1);
-    rf.resize(16);
+    reinitialize();
 
     registerDeviceReg(PSR, std::make_shared<RWReg>(PSR));
     registerDeviceReg(MCR, std::make_shared<RWReg>(MCR));
 }
 
+void MachineState::reinitialize(void)
+{
+    reset_pc = RESET_PC;
+
+    mem.clear();
+    mem.resize(USER_END - SYSTEM_START + 1);
+
+    rf.clear();
+    rf.resize(16);
+}
+
+void MachineState::setIgnorePrivilege(bool ignore_privilege) { this->ignore_privilege = ignore_privilege; }
+bool MachineState::getIgnorePrivilege(void) const { return ignore_privilege; }
+
 std::pair<uint16_t, PIMicroOp> MachineState::readMem(uint16_t addr) const
 {
-    // TODO: Check ACV
     if(MMIO_START <= addr && addr <= MMIO_END) {
         auto search = mmio.find(addr);
         if(search != mmio.end()) {
@@ -30,7 +42,6 @@ std::pair<uint16_t, PIMicroOp> MachineState::readMem(uint16_t addr) const
 
 PIMicroOp MachineState::writeMem(uint16_t addr, uint16_t value)
 {
-    // TODO: Check ACV
     if(MMIO_START <= addr && addr <= MMIO_END) {
         auto search = mmio.find(addr);
         if(search != mmio.end()) {

@@ -46,19 +46,19 @@ namespace core
         sim::Decoder const & decoder;
     };
 
-    class InitializeEvent : public IEvent
+    class SetupEvent : public IEvent
     {
     public:
-        InitializeEvent(uint64_t time) : IEvent(time) { }
+        SetupEvent(uint64_t time) : IEvent(time) { }
 
         virtual void handleEvent(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;
     };
 
-    class ResumeEvent : public IEvent
+    class PowerOnEvent : public IEvent
     {
     public:
-        ResumeEvent(uint64_t time) : IEvent(time) { }
+        PowerOnEvent(uint64_t time) : IEvent(time) { }
 
         virtual void handleEvent(MachineState & state) override;
         virtual std::string toString(MachineState const & state) const override;

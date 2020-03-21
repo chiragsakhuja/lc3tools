@@ -360,7 +360,11 @@ PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
 
 bool lc3::core::isAccessViolation(uint16_t addr, MachineState const & state)
 {
-    return lc3::utils::getBit(state.readPSR(), 15) == 1 && (addr <= SYSTEM_END || addr >= MMIO_START);
+    if(state.getIgnorePrivilege()) {
+        return false;
+    } else {
+        return lc3::utils::getBit(state.readPSR(), 15) == 1 && (addr <= SYSTEM_END || addr >= MMIO_START);
+    }
 }
 
 std::pair<PIMicroOp, PIMicroOp> lc3::core::buildSystemModeEnter(uint16_t table_start, uint8_t vec, uint8_t priority)

@@ -53,18 +53,14 @@ bool lc3::sim::loadObjFile(std::string const & filename)
     return true;
 }
 
+void lc3::sim::setup(void)
+{
+    simulator.setup();
+}
+
 void lc3::sim::zeroState(void)
 {
-    core::MachineState & state = simulator.getMachineState();
-
-    for(uint32_t i = 0; i <= USER_END; ++i) {
-        state.writeMem(i, 0);
-    }
-
-    for(uint32_t i = 0; i <= 7; i += 1) {
-        state.writeReg(i, 0);
-    }
-
+    simulator.reinitialize();
     loadOS();
 }
 
@@ -73,6 +69,8 @@ void lc3::sim::randomizeState(void)
     std::random_device dev;
     std::mt19937 gen(dev());
     std::uniform_int_distribution<> dis(0x0000, 0xffff);
+
+    simulator.reinitialize();
 
     core::MachineState & state = simulator.getMachineState();
 
@@ -163,11 +161,19 @@ void lc3::sim::writeCC(char value)
     simulator.getMachineState().writePSR((readPSR() & 0x7FF8) | bits);
 }
 
+void lc3::sim::setBreakpoint(uint16_t addr) { simulator.addBreakpoint(addr); }
+void lc3::sim::removeBreakpoint(uint16_t addr) { simulator.removeBreakpoint(addr); }
+
+void lc3::sim::registerCallback(lc3::core::CallbackType type, lc3::sim::Callback func) { callbacks[type] = func; }
+
 lc3::utils::IPrinter & lc3::sim::getPrinter(void) { return printer; }
 lc3::utils::IPrinter const & lc3::sim::getPrinter(void) const { return printer; }
 lc3::utils::IInputter & lc3::sim::getInputter(void) { return inputter; }
 lc3::utils::IInputter const & lc3::sim::getInputter(void) const { return inputter; }
 void lc3::sim::setPrintLevel(uint32_t print_level) { simulator.setPrintLevel(print_level); }
+void lc3::sim::setIgnorePrivilege(bool ignore_privilege) { simulator.setIgnorePrivilege(ignore_privilege); }
+
+uint64_t lc3::sim::getInstExecCount(void) const { return total_inst_exec; }
 
 void lc3::sim::loadOS(void)
 {
@@ -201,6 +207,7 @@ bool lc3::sim::runHelper()
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
 
+    printer.newline();
     printer.print("elapsed time: " + std::to_string(elapsed.count() * 1000) + " ms");
     printer.newline();
 #endif
@@ -242,6 +249,11 @@ void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType t
             }
         }
     } 
+
+    auto search = sim_inst->callbacks.find(type);
+    if(search != sim_inst->callbacks.end() && search->second != nullptr) {
+        search->second(type, state);
+    }
 }
 
 lc3::as::as(utils::IPrinter & printer, uint32_t print_level, bool enable_liberal_asm) :
