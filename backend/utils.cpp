@@ -48,26 +48,6 @@ uint32_t lc3::utils::getBits(uint32_t value, uint32_t end, uint32_t start)
     return (value >> start) & ((1 << (end - start + 1)) - 1);
 }
 
-// TODO: Remove
-uint32_t lc3::utils::computePSRCC(uint32_t value, uint32_t psr)
-{
-    uint32_t cc = 0;
-    if(value == 0) {
-        cc = 2;
-    } else if((value & 0x8000) != 0) {
-        cc = 4;
-    } else {
-        cc = 1;
-    }
-
-    return (psr & 0xFFF8) | cc;
-}
-
-uint32_t lc3::utils::computeBasePlusSOffset(uint32_t base, uint32_t signed_off, uint32_t width)
-{
-    return (utils::sextTo32(base, (uint32_t) 16) + lc3::utils::sextTo32(signed_off, width)) & 0xffff;
-}
-
 std::string lc3::utils::toLower(std::string const & str)
 {
     std::string ret = str;
