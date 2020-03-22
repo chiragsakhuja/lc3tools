@@ -164,6 +164,8 @@ void lc3::sim::writeCC(char value)
 void lc3::sim::setBreakpoint(uint16_t addr) { simulator.addBreakpoint(addr); }
 void lc3::sim::removeBreakpoint(uint16_t addr) { simulator.removeBreakpoint(addr); }
 
+bool lc3::sim::didExceedInstLimit(void) const { return total_inst_exec == target_inst_exec; }
+
 void lc3::sim::registerCallback(lc3::core::CallbackType type, lc3::sim::Callback func) { callbacks[type] = func; }
 
 lc3::utils::IPrinter & lc3::sim::getPrinter(void) { return printer; }

@@ -110,8 +110,8 @@ int main(int argc, char * argv[])
     }
 
     lc3::ConsolePrinter asm_printer;
-    lc3::as assembler(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0, false, false);
-    lc3::conv converter(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0, false);
+    lc3::as assembler(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0, false);
+    lc3::conv converter(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0);
 
     std::vector<std::string> obj_filenames;
     bool valid_program = true;
@@ -213,7 +213,7 @@ std::pair<double, double> Grader::grade(TestCase const & test)
 
     BufferedPrinter printer(print_output);
     StringInputter inputter;
-    lc3::sim simulator(printer, inputter, false, print_level, true);
+    lc3::sim simulator(printer, inputter, print_level);
     this->printer = &printer;
     this->inputter = &inputter;
     this->simulator = &simulator;
@@ -224,7 +224,7 @@ std::pair<double, double> Grader::grade(TestCase const & test)
     std::cout << "Test: " << test.name;
 
     if(test.randomize) {
-        simulator.randomize();
+        simulator.randomizeState();
         std::cout << " (Randomized Machine)";
     }
     std::cout << std::endl;

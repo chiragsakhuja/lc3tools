@@ -11,7 +11,7 @@ void setupMem(lc3::sim & sim, std::vector<int16_t> const & data)
 {
     uint16_t addr = StartAddr;
     for(int16_t x : data) {
-        sim.setMem(addr, x);
+        sim.writeMem(addr, x);
         ++addr;
     }
 }
@@ -28,7 +28,7 @@ void verify(bool success, lc3::sim & sim, std::vector<int16_t> const & data, std
     bool full_match = true;
     uint16_t addr = StartAddr;
     for(int16_t expected : sorted) {
-        int16_t actual = sim.getMem(addr);
+        int16_t actual = sim.readMem(addr);
         std::stringstream stream;
         stream << std::hex;
         stream << "[x" << addr << "]";
@@ -48,22 +48,22 @@ void verify(bool success, lc3::sim & sim, std::vector<int16_t> const & data, std
 void ExampleTest(lc3::sim & sim, Grader & grader, double total_points)
 {
     std::vector<int16_t> data = {
-        0xFFFF,
-        0x0062,
-        0x0A73,
-        0x006C,
-        0x0070,
-        0x0001,
-        0x0063,
-        0x0065,
-        0x0062,
-        0x0073,
-        0x006E,
-        0x006B,
-        0xFF76,
-        0x0F7A,
-        0x0068,
-        0x006D
+        static_cast<int16_t>(0xFFFF),
+        static_cast<int16_t>(0x0062),
+        static_cast<int16_t>(0x0A73),
+        static_cast<int16_t>(0x006C),
+        static_cast<int16_t>(0x0070),
+        static_cast<int16_t>(0x0001),
+        static_cast<int16_t>(0x0063),
+        static_cast<int16_t>(0x0065),
+        static_cast<int16_t>(0x0062),
+        static_cast<int16_t>(0x0073),
+        static_cast<int16_t>(0x006E),
+        static_cast<int16_t>(0x006B),
+        static_cast<int16_t>(0xFF76),
+        static_cast<int16_t>(0x0F7A),
+        static_cast<int16_t>(0x0068),
+        static_cast<int16_t>(0x006D)
     };
 
     setupMem(sim, data);
@@ -102,22 +102,22 @@ void PositiveTest(lc3::sim & sim, Grader & grader, double total_points)
 void NegativeTest(lc3::sim & sim, Grader & grader, double total_points)
 {
     std::vector<int16_t> data = {
-        0xFFFF,
-        0xFFFE,
-        0xFFFD,
-        0xFFFC,
-        0xFFFB,
-        0xFFFA,
-        0xFFF9,
-        0xFFF8,
-        0xFFF7,
-        0xFFF6,
-        0xFFF5,
-        0xFFF4,
-        0xFFF3,
-        0xFFF2,
-        0xFFF1,
-        0xFFF0
+        static_cast<int16_t>(0xFFFF),
+        static_cast<int16_t>(0xFFFE),
+        static_cast<int16_t>(0xFFFD),
+        static_cast<int16_t>(0xFFFC),
+        static_cast<int16_t>(0xFFFB),
+        static_cast<int16_t>(0xFFFA),
+        static_cast<int16_t>(0xFFF9),
+        static_cast<int16_t>(0xFFF8),
+        static_cast<int16_t>(0xFFF7),
+        static_cast<int16_t>(0xFFF6),
+        static_cast<int16_t>(0xFFF5),
+        static_cast<int16_t>(0xFFF4),
+        static_cast<int16_t>(0xFFF3),
+        static_cast<int16_t>(0xFFF2),
+        static_cast<int16_t>(0xFFF1),
+        static_cast<int16_t>(0xFFF0)
     };
 
     setupMem(sim, data);
@@ -129,22 +129,22 @@ void NegativeTest(lc3::sim & sim, Grader & grader, double total_points)
 void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
 {
     std::vector<int16_t> data = {
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000)
     };
 
     setupMem(sim, data);
@@ -156,22 +156,22 @@ void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
 void NoChangeTest(lc3::sim & sim, Grader & grader, double total_points)
 {
     std::vector<int16_t> data = {
-        0xFFF8,
-        0xFFF9,
-        0xFFFA,
-        0xFFFB,
-        0xFFFC,
-        0xFFFD,
-        0xFFFE,
-        0xFFFF,
-        0x0000,
-        0x0001,
-        0x0002,
-        0x0003,
-        0x0004,
-        0x0005,
-        0x0006,
-        0x0007
+        static_cast<int16_t>(0xFFF8),
+        static_cast<int16_t>(0xFFF9),
+        static_cast<int16_t>(0xFFFA),
+        static_cast<int16_t>(0xFFFB),
+        static_cast<int16_t>(0xFFFC),
+        static_cast<int16_t>(0xFFFD),
+        static_cast<int16_t>(0xFFFE),
+        static_cast<int16_t>(0xFFFF),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0001),
+        static_cast<int16_t>(0x0002),
+        static_cast<int16_t>(0x0003),
+        static_cast<int16_t>(0x0004),
+        static_cast<int16_t>(0x0005),
+        static_cast<int16_t>(0x0006),
+        static_cast<int16_t>(0x0007)
     };
 
     setupMem(sim, data);
@@ -184,22 +184,22 @@ void NoChangeTest(lc3::sim & sim, Grader & grader, double total_points)
 void OverflowTest(lc3::sim & sim, Grader & grader, double total_points)
 {
     std::vector<int16_t> data = {
-        0x7FFF,
-        0x8000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000,
-        0x0000
+        static_cast<int16_t>(0x7FFF),
+        static_cast<int16_t>(0x8000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000),
+        static_cast<int16_t>(0x0000)
     };
 
     setupMem(sim, data);
@@ -211,7 +211,7 @@ void OverflowTest(lc3::sim & sim, Grader & grader, double total_points)
 
 void testBringup(lc3::sim & sim)
 {
-    sim.setPC(0x3000);
+    sim.writePC(0x3000);
     sim.setRunInstLimit(InstLimit);
 }
 

@@ -82,16 +82,16 @@ void deleteLists(solution_t solution)
 void setupMem(lc3::sim & sim, uint16_t sim_start_addr, Node * node)
 {
     if(node == nullptr) {
-        sim.setMem(sim_start_addr, 0x0000);
+        sim.writeMem(sim_start_addr, 0x0000);
         return;
     }
 
-    sim.setMem(sim_start_addr, node->sim_addr);
+    sim.writeMem(sim_start_addr, node->sim_addr);
 
     while(node != nullptr) {
-        sim.setMem(node->sim_addr, node->sim_next);
-        sim.setMem(node->sim_addr + 1, node->sim_str);
-        sim.setMemString(node->sim_str, node->name);
+        sim.writeMem(node->sim_addr, node->sim_next);
+        sim.writeMem(node->sim_addr + 1, node->sim_str);
+        sim.writeStringMem(node->sim_str, node->name);
         node = node->next;
     }
 }
@@ -150,8 +150,8 @@ std::string createString(lc3::sim & sim, uint16_t addr)
 {
     std::stringstream stream;
     uint16_t offset = 0;
-    while(sim.getMem(addr + offset) != 0 && offset < 100) {
-        stream << static_cast<char>(sim.getMem(addr + offset));
+    while(sim.readMem(addr + offset) != 0 && offset < 100) {
+        stream << static_cast<char>(sim.readMem(addr + offset));
         ++offset;
     }
     return stream.str();
@@ -163,11 +163,11 @@ ResultStatus verifySingleList(lc3::sim & sim, Node * list, Grader & grader)
 
     while(list_cur != nullptr) {
         std::stringstream stream;
-        uint16_t actual_next = sim.getMem(list_cur->sim_addr);
+        uint16_t actual_next = sim.readMem(list_cur->sim_addr);
         uint16_t expected_next = list_cur->sim_next;
 
         if(list_cur != list) {
-            std::string actual_str = createString(sim, sim.getMem(list_cur->sim_addr + 1));
+            std::string actual_str = createString(sim, sim.readMem(list_cur->sim_addr + 1));
             std::string const & expected_str = list_cur->name;
             stream << "(expected " << expected_str << ") (actual " << actual_str << ")";
 
@@ -188,7 +188,7 @@ ResultStatus verifySingleList(lc3::sim & sim, Node * list, Grader & grader)
  *        std::stringstream stream;
  *        stream << std::hex;
  *
- *        uint16_t actual_next = sim.getMem(list_cur->sim_addr);
+ *        uint16_t actual_next = sim.readMem(list_cur->sim_addr);
  *        uint16_t expected_next = list_cur->sim_next;
  *
  *        stream << "x" << std::setfill('0') << std::setw(4) << list_cur->sim_addr << ": ";
@@ -197,7 +197,7 @@ ResultStatus verifySingleList(lc3::sim & sim, Node * list, Grader & grader)
  *
  *        if(actual_next == expected_next) {
  *            if(list_cur != list) {
- *                std::string actual_str = createString(sim, sim.getMem(list_cur->sim_addr + 1));
+ *                std::string actual_str = createString(sim, sim.readMem(list_cur->sim_addr + 1));
  *                std::string const & expected_str = list_cur->name;
  *                stream << "(expected " << expected_str << ") (actual " << actual_str << ")";
  *
@@ -308,7 +308,7 @@ void Simple(lc3::sim & sim, Grader & grader, double total_points)
 
     bool allocated_mem = false;
     for(uint16_t i = 0x4003; i < 0xFE00; i += 1) {
-        if(sim.getMem(i) != 0x0000) {
+        if(sim.readMem(i) != 0x0000) {
             if(mem_map.find(i) == mem_map.end()) {
                 allocated_mem = true;
                 break;
@@ -464,7 +464,7 @@ void EmptyString(lc3::sim & sim, Grader & grader, double total_points)
 
 void testBringup(lc3::sim & sim)
 {
-    sim.setPC(0x3000);
+    sim.writePC(0x3000);
     sim.setRunInstLimit(InstLimit);
 }
 

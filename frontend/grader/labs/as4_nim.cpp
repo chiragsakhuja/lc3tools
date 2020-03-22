@@ -339,7 +339,7 @@ void ExactOutputTest(lc3::sim & sim, Grader & grader, double total_points)
 
 void testBringup(lc3::sim & sim)
 {
-    sim.setPC(0x3000);
+    sim.writePC(0x3000);
 }
 
 void testTeardown(lc3::sim & sim)

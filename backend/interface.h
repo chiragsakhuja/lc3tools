@@ -65,6 +65,8 @@ namespace lc3
         void setBreakpoint(uint16_t addr);
         void removeBreakpoint(uint16_t addr);
 
+        bool didExceedInstLimit(void) const;
+
         void registerCallback(core::CallbackType type, Callback func);
 
         utils::IPrinter & getPrinter(void);

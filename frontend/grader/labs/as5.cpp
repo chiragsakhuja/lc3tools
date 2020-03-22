@@ -183,7 +183,7 @@ void verify(Grader & grader, bool success, std::string const & expected, std::st
 
 void ExampleTest(lc3::sim & sim, Grader & grader, double total_points)
 {
-    sim.setPC(0x0800);
+    sim.writePC(0x0800);
     grader.getInputter().setStringAfter("5", 1000);
     bool success = sim.run();
     verify(grader, success, "55555", "Contains correct count", false, total_points / 2);
@@ -192,7 +192,7 @@ void ExampleTest(lc3::sim & sim, Grader & grader, double total_points)
 
 void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
 {
-    sim.setPC(0x0800);
+    sim.writePC(0x0800);
     grader.getInputter().setStringAfter("0", 1000);
     bool success = sim.run();
     std::cout << grader.getOutputter().display_buffer << '\n';
@@ -201,7 +201,7 @@ void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
 
 void PrevASCIITest(lc3::sim & sim, Grader & grader, double total_points)
 {
-    sim.setPC(0x0800);
+    sim.writePC(0x0800);
     grader.getInputter().setStringAfter("@", 1000);
     bool success = sim.run();
     std::cout << grader.getOutputter().display_buffer << '\n';
@@ -210,7 +210,7 @@ void PrevASCIITest(lc3::sim & sim, Grader & grader, double total_points)
 
 void NextASCIITest(lc3::sim & sim, Grader & grader, double total_points)
 {
-    sim.setPC(0x0800);
+    sim.writePC(0x0800);
     grader.getInputter().setStringAfter(":", 1000);
     bool success = sim.run();
     std::cout << grader.getOutputter().display_buffer << '\n';
