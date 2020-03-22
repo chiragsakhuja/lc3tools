@@ -1,6 +1,6 @@
 #include <cstring>
 
-#include "mem_new.h"
+#include "mem.h"
 
 std::ostream & lc3::core::operator<<(std::ostream & out, lc3::core::MemLocation const & in)
 {

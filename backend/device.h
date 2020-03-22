@@ -8,7 +8,7 @@
 #include "inputter.h"
 #include "intex.h"
 #include "logger.h"
-#include "mem_new.h"
+#include "mem.h"
 #include "uop.h"
 
 namespace lc3

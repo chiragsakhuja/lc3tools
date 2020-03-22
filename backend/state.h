@@ -13,7 +13,7 @@
 #include "device.h"
 #include "func_type.h"
 #include "intex.h"
-#include "mem_new.h"
+#include "mem.h"
 
 namespace lc3
 {

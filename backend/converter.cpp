@@ -12,7 +12,7 @@
     #include <chrono>
 #endif
 
-#include "mem_new.h"
+#include "mem.h"
 #include "converter.h"
 
 std::shared_ptr<std::stringstream> lc3::core::Converter::convertBin(std::istream & buffer)
