@@ -6,7 +6,6 @@
 
 #include <memory>
 
-#include "instructions.h"
 #include "isa.h"
 #include "logger.h"
 #include "utils.h"

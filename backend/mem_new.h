@@ -12,7 +12,9 @@ namespace core
     {
     public:
         MemLocation(void) : MemLocation(0x0000, "") {}
-        MemLocation(uint16_t value, std::string const & line) : value(value), line(line), is_orig(false) {}
+        MemLocation(uint16_t value, std::string const & line) : MemLocation(value, line, false) { }
+        MemLocation(uint16_t value, std::string const & line, bool is_orig) :
+            value(value), line(line), is_orig(is_orig) { }
 
         uint16_t getValue(void) const { return value; }
         std::string const & getLine(void) const { return line; }
@@ -21,12 +23,16 @@ namespace core
         void setLine(std::string const & line) { this->line = line; }
         void setIsOrig(bool is_orig) { this->is_orig = is_orig; }
 
+        friend std::ostream & operator<<(std::ostream & out, MemLocation const & in);
+        friend std::istream & operator>>(std::istream & in, MemLocation & out);
+
     private:
         uint16_t value;
         std::string line;
         bool is_orig;
     };
 
+    std::ostream & operator<<(std::ostream & out, MemLocation const & in);
     std::istream & operator>>(std::istream & in, MemLocation & out);
 };
 };

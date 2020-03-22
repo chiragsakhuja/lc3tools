@@ -12,7 +12,7 @@
     #include <chrono>
 #endif
 
-#include "mem.h"
+#include "mem_new.h"
 #include "converter.h"
 
 std::shared_ptr<std::stringstream> lc3::core::Converter::convertBin(std::istream & buffer)
@@ -20,7 +20,7 @@ std::shared_ptr<std::stringstream> lc3::core::Converter::convertBin(std::istream
     using namespace lc3::utils;
 
     std::string line;
-    std::vector<MemEntry> obj_blob;
+    std::vector<MemLocation> obj_blob;
     uint32_t line_no = 0;
     bool wrote_orig = false;
     bool success = true;
@@ -52,7 +52,7 @@ std::shared_ptr<std::stringstream> lc3::core::Converter::convertBin(std::istream
 
         uint32_t val = std::bitset<16>(line).to_ulong();
         logger.printf(PrintType::P_DEBUG, false, "%s => 0x%04x", line.c_str(), val);
-        obj_blob.emplace_back((uint16_t) val, ! wrote_orig, line);
+        obj_blob.emplace_back((uint16_t) val, line, ! wrote_orig);
         wrote_orig = true;
     }
 
@@ -66,8 +66,8 @@ std::shared_ptr<std::stringstream> lc3::core::Converter::convertBin(std::istream
     auto ret = std::make_shared<std::stringstream>(std::ios_base::in | std::ios_base::out | std::ios_base::binary);
     (*ret) << getMagicHeader();
     (*ret) << getVersionString();
-    for(MemEntry entry : obj_blob) {
-        (*ret) << entry;
+    for(MemLocation const & loc : obj_blob) {
+        (*ret) << loc;
     }
 
     return ret;

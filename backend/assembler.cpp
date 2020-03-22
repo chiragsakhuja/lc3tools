@@ -47,7 +47,7 @@ std::shared_ptr<std::stringstream> lc3::core::Assembler::assemble(std::istream &
     }
 
     logger.printf(PrintType::P_EXTRA, true, "===== begin assembling =====");
-    std::pair<bool, std::vector<MemEntry>> machine_code_blob = buildMachineCode(statements, symbols.second);
+    std::pair<bool, std::vector<MemLocation>> machine_code_blob = buildMachineCode(statements, symbols.second);
     success &= machine_code_blob.first;
     logger.printf(PrintType::P_EXTRA, true, "===== end assembling =====");
     logger.newline(PrintType::P_EXTRA);
@@ -67,7 +67,7 @@ std::shared_ptr<std::stringstream> lc3::core::Assembler::assemble(std::istream &
     auto ret = std::make_shared<std::stringstream>(std::ios_base::in | std::ios_base::out | std::ios_base::binary);
     (*ret) << getMagicHeader();
     (*ret) << getVersionString();
-    for(MemEntry const & entry : machine_code_blob.second) {
+    for(MemLocation const & entry : machine_code_blob.second) {
         (*ret) << entry;
     }
     return ret;
@@ -445,7 +445,7 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
     return std::make_pair(success, symbols);
 }
 
-std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMachineCode(
+std::pair<bool, std::vector<lc3::core::MemLocation>> lc3::core::Assembler::buildMachineCode(
     std::vector<lc3::core::asmbl::Statement> const & statements, lc3::core::SymbolTable const & symbols)
 {
     using namespace asmbl;
@@ -453,7 +453,7 @@ std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMac
 
     bool success = true;
 
-    std::vector<MemEntry> ret;
+    std::vector<MemLocation> ret;
 
     for(Statement const & statement : statements) {
         if(! statement.valid) {
@@ -477,24 +477,24 @@ std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMac
                 if(valid) {
                     if(encoder.isValidPseudoOrig(statement)) {
                         uint32_t address = encoder.getPseudoOrig(statement);
-                        ret.emplace_back(address, true, statement.line);
+                        ret.emplace_back(address, statement.line, true);
                         msg << utils::ssprintf("(orig) 0x%0.4x", address);
                     } else if(encoder.isValidPseudoFill(statement, symbols)) {
                         uint32_t value = encoder.getPseudoFill(statement, symbols);
-                        ret.emplace_back(value, false, statement.line);
+                        ret.emplace_back(value, statement.line, false);
                         msg << utils::ssprintf("0x%0.4x", value);
                     } else if(encoder.isValidPseudoBlock(statement)) {
                         uint32_t size = encoder.getPseudoBlockSize(statement);
                         for(uint32_t i = 0; i < size; i += 1) {
-                            ret.emplace_back(0, false, statement.line);
+                            ret.emplace_back(0, statement.line, false);
                         }
                         msg << utils::ssprintf("mem[0x%0.4x:0x%04x] = 0", statement.pc, statement.pc + size - 1);
                     } else if(encoder.isValidPseudoString(statement)) {
                         std::string const & value = encoder.getPseudoString(statement);
                         for(char c : value) {
-                            ret.emplace_back(c, false, std::string(1, c));
+                            ret.emplace_back(c, std::string(1, c), false);
                         }
-                        ret.emplace_back(0, false, statement.line);
+                        ret.emplace_back(0, statement.line, false);
                         msg << utils::ssprintf("mem[0x%0.4x:0x%04x] = \'%s\\0\'", statement.pc,
                             statement.pc + value.size(), value.c_str());
                     } else if(encoder.isValidPseudoEnd(statement)) {
@@ -520,7 +520,7 @@ std::pair<bool, std::vector<lc3::core::MemEntry>> lc3::core::Assembler::buildMac
                 if(candidate) {
                     optional<uint32_t> value = encoder.encodeInstruction(statement, symbols, *candidate);
                     if(value) {
-                        ret.emplace_back(*value, false, statement.line);
+                        ret.emplace_back(*value, statement.line, false);
                         msg << utils::ssprintf("0x%0.4x", *value);
                         valid = true;
                         logger.printf(PrintType::P_EXTRA, true, "  0x%0.4x", *value);
