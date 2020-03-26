@@ -4,7 +4,8 @@
 
 using namespace lc3::core;
 
-MachineState::MachineState(void) : reset_pc(RESET_PC), pc(0), ir(0), decoded_ir(nullptr), ssp(0)
+MachineState::MachineState(void) : reset_pc(RESET_PC), pc(0), ir(0), decoded_ir(nullptr), ssp(0),
+    ignore_privilege(false)
 {
     reinitialize();
 

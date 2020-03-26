@@ -218,8 +218,6 @@ std::pair<double, double> Grader::grade(TestCase const & test)
     this->inputter = &inputter;
     this->simulator = &simulator;
 
-    testBringup(simulator);
-
     std::cout << "==========\n";
     std::cout << "Test: " << test.name;
 
@@ -235,6 +233,8 @@ std::pair<double, double> Grader::grade(TestCase const & test)
             return std::make_pair(0, test.points);
         }
     }
+
+    testBringup(simulator);
 
     if(ignore_privilege) {
         simulator.setIgnorePrivilege(true);
