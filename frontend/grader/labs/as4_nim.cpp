@@ -19,7 +19,7 @@ std::vector<char> nimGolden(std::vector<std::array<char, 2>> const & inputs)
     while(input_pos < inputs.size()) {
         for(uint64_t i = 0; i < 3; i += 1) {
             output << "ROW " << static_cast<char>(i + 'A') << ": ";
-            for(uint64_t j = 0; j < state[i]; j += 1) {
+            for(int64_t j = 0; j < state[i]; j += 1) {
                 output << 'o';
             }
             output << '\n';
@@ -194,7 +194,7 @@ void ExampleTest(lc3::sim & sim, Grader & grader, double total_points)
     sim.setRunInstLimit(50000);
     bool success = sim.runUntilHalt();
     std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().display_buffer;
+    std::vector<char> actual = grader.getOutputter().getBuffer();
 
     uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
     verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
@@ -214,7 +214,7 @@ void CloseRowTest(lc3::sim & sim, Grader & grader, double total_points)
     sim.setRunInstLimit(10000);
     bool success = sim.runUntilHalt();
     std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().display_buffer;
+    std::vector<char> actual = grader.getOutputter().getBuffer();
 
     uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
     verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
@@ -232,7 +232,7 @@ void LowerCaseRowTest(lc3::sim & sim, Grader & grader, double total_points)
     sim.setRunInstLimit(10000);
     bool success = sim.runUntilHalt();
     std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().display_buffer;
+    std::vector<char> actual = grader.getOutputter().getBuffer();
 
     uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
     verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
@@ -256,7 +256,7 @@ void CloseCountTest(lc3::sim & sim, Grader & grader, double total_points)
     sim.setRunInstLimit(50000);
     bool success = sim.runUntilHalt();
     std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().display_buffer;
+    std::vector<char> actual = grader.getOutputter().getBuffer();
 
     uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
     verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
@@ -274,7 +274,7 @@ void ZeroCountTest(lc3::sim & sim, Grader & grader, double total_points)
     sim.setRunInstLimit(10000);
     bool success = sim.runUntilHalt();
     std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().display_buffer;
+    std::vector<char> actual = grader.getOutputter().getBuffer();
 
     uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
     verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
@@ -303,7 +303,7 @@ void ExactOutputTest(lc3::sim & sim, Grader & grader, double total_points)
     sim.setRunInstLimit(50000);
     bool success = sim.runUntilHalt();
     std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().display_buffer;
+    std::vector<char> actual = grader.getOutputter().getBuffer();
     auto expected_all = expected;
     auto actual_all = actual;
     preprocess(expected_all, PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation);

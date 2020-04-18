@@ -20,15 +20,16 @@ class BufferedPrinter : public lc3::utils::IPrinter
 public:
     BufferedPrinter(bool print_output) : print_output(print_output) {}
 
-    std::vector<char> display_buffer;
-
     virtual void setColor(lc3::utils::PrintColor color) override { (void) color; }
     virtual void print(std::string const & string) override;
     virtual void newline(void) override;
     void clear(void) { display_buffer.clear(); }
+    std::vector<char> const & getBuffer(void) const { return display_buffer; }
 
 private:
     bool print_output;
+    std::vector<char> display_buffer;
+
 };
 
 class StringInputter : public lc3::utils::IInputter

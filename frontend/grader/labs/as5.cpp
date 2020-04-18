@@ -9,60 +9,6 @@ static constexpr double correct_thresh = 1.0 - 0.00001;
 static constexpr double close_thresh = 0.9;
 static constexpr double partial_thresh = 0.2;
 
-std::vector<char> nimGolden(std::vector<std::array<char, 2>> const & inputs)
-{
-    int64_t state[] = {3, 5, 8};
-    uint64_t player = 1;
-
-    uint64_t input_pos = 0;
-    std::stringstream output;
-    while(input_pos < inputs.size()) {
-        for(uint64_t i = 0; i < 3; i += 1) {
-            output << "ROW " << static_cast<char>(i + 'A') << ": ";
-            for(uint64_t j = 0; j < state[i]; j += 1) {
-                output << 'o';
-            }
-            output << '\n';
-        }
-
-        bool valid_move;
-        char row, num;
-        do {
-            output << "Player " << player << ", choose a row and number of rocks: ";
-            if(input_pos >= inputs.size()) {
-                break;
-            }
-            row = inputs[input_pos][0];
-            num = inputs[input_pos][1] - '0';
-            output << row << static_cast<char>(num + '0') << '\n';
-            valid_move = ('A' <= row && row <= 'C') && (0 < num && num <= state[row - 'A']);
-            if(! valid_move) {
-                output << "Invalid move. Try again.\n";
-            }
-            ++input_pos;
-        } while(! valid_move);
-        output << '\n';
-
-        player = (player % 2) + 1;
-        state[row - 'A'] -= num;
-
-        if(state[0] + state[1] + state[2] == 0) {
-            output << "Player " << player << " Wins.";
-            break;
-        }
-    }
-
-    std::vector<char> output_buffer;
-    for(std::string line; std::getline(output, line); ) {
-        for(char x : line) {
-            output_buffer.push_back(x);
-        }
-        output_buffer.push_back('\n');
-    }
-
-    return output_buffer;
-}
-
 enum PreprocessType {
     IgnoreCase = 1,
     IgnoreWhitespace = 2,
@@ -152,11 +98,12 @@ std::ostream & operator<<(std::ostream & out, std::vector<char> const & buffer)
     return out;
 }
 
-void verify(Grader & grader, bool success, std::string const & expected, std::string const & message, bool not_present, double points)
+void verify(Grader & grader, bool success, std::string const & expected, std::string const & message, bool not_present,
+    double points)
 {
     if(! success) { grader.error("Execution hit exception"); return; }
 
-    std::vector<char> const & actual = grader.getOutputter().display_buffer;
+    std::vector<char> const & actual = grader.getOutputter().getBuffer();
 
     uint64_t actual_pos = 0;
     bool found = false;
@@ -195,7 +142,7 @@ void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
     sim.writePC(0x0800);
     grader.getInputter().setStringAfter("0", 1000);
     bool success = sim.run();
-    std::cout << grader.getOutputter().display_buffer << '\n';
+    std::cout << grader.getOutputter().getBuffer() << '\n';
     verify(grader, success, "0", "Does not contain zero", true, total_points);
 }
 
@@ -204,7 +151,7 @@ void PrevASCIITest(lc3::sim & sim, Grader & grader, double total_points)
     sim.writePC(0x0800);
     grader.getInputter().setStringAfter("@", 1000);
     bool success = sim.run();
-    std::cout << grader.getOutputter().display_buffer << '\n';
+    std::cout << grader.getOutputter().getBuffer() << '\n';
     verify(grader, success, "@ is not a decimal digit", "Correct behavior", false, total_points);
 }
 
@@ -213,7 +160,7 @@ void NextASCIITest(lc3::sim & sim, Grader & grader, double total_points)
     sim.writePC(0x0800);
     grader.getInputter().setStringAfter(":", 1000);
     bool success = sim.run();
-    std::cout << grader.getOutputter().display_buffer << '\n';
+    std::cout << grader.getOutputter().getBuffer() << '\n';
     verify(grader, success, ": is not a decimal digit", "Correct behavior", false, total_points);
 }
 
