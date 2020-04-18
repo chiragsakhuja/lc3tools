@@ -14,7 +14,7 @@ namespace core
     enum class CallbackType : CallbackTypeUnderlying
     {
           PRE_INST = -1
-        , POST_INST = 7
+        , POST_INST = 8
         , SUB_ENTER = 5
         , SUB_EXIT = 6
         , EX_ENTER = 1
@@ -22,6 +22,7 @@ namespace core
         , INT_ENTER = 3
         , INT_EXIT = 4
         , BREAKPOINT = -2
+        , INPUT_POLL = 7
         , INVALID
     };
 

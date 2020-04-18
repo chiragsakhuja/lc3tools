@@ -44,7 +44,8 @@ void KeyboardDevice::shutdown(void)
 std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr) const
 {
     if(addr == KBSR) {
-        return std::make_pair(status.getValue(), nullptr);
+        PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::INPUT_POLL);
+        return std::make_pair(status.getValue(), callback);
     } else if(addr == KBDR) {
         uint16_t status_value = status.getValue();
         PIMicroOp write_addr = std::make_shared<RegWriteImmMicroOp>(8, KBSR);

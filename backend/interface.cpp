@@ -99,6 +99,12 @@ bool lc3::sim::runUntilHalt(void)
     return runHelper();
 }
 
+bool lc3::sim::runUntilInputPoll(void)
+{
+    run_type = RunType::UNTIL_INPUT;
+    return runHelper();
+}
+
 bool lc3::sim::stepIn(void)
 {
     run_type = RunType::NORMAL;
