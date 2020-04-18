@@ -13,6 +13,7 @@
 #include "common.h"
 #include "console_printer.h"
 #include "console_inputter.h"
+#include "file_printer.h"
 #include "interface.h"
 
 std::string previous_command = "";
@@ -41,6 +42,7 @@ void breakpointCallback(lc3::core::CallbackType type, lc3::core::MachineState & 
 struct CLIArgs
 {
     uint32_t print_level = DEFAULT_PRINT_LEVEL;
+    std::string log_file = "";
     bool ignore_privilege = false;
 };
 
@@ -53,21 +55,29 @@ int main(int argc, char * argv[])
             args.print_level = std::stoi(std::get<1>(arg));
         } else if(std::get<0>(arg) == "ignore-privilege") {
             args.ignore_privilege = true;
+        } else if(std::get<0>(arg) == "log") {
+            args.log_file = std::get<1>(arg);
         } else if(std::get<0>(arg) == "h" || std::get<0>(arg) == "help") {
             std::cout << "usage: " << argv[0] << " [OPTIONS]\n";
             std::cout << "\n";
             std::cout << "  -h,--help              Print this message\n";
             std::cout << "  --print-level=N        Output verbosity [0-9]\n";
             std::cout << "  --ignore-privilege     Ignore access violations\n";
+            std::cout << "  --log=file             Output to log file\n";
             return 0;
         }
     }
 
     help();
 
-    lc3::ConsolePrinter printer;
+    std::shared_ptr<lc3::utils::IPrinter> printer;
+    if(args.log_file != "") {
+        printer = std::make_shared<lc3::FilePrinter>(args.log_file);
+    } else {
+        printer = std::make_shared<lc3::ConsolePrinter>();
+    }
     lc3::ConsoleInputter inputter;
-    lc3::sim simulator(printer, inputter, args.print_level);
+    lc3::sim simulator(*printer, inputter, args.print_level);
 
     simulator.registerCallback(lc3::core::CallbackType::BREAKPOINT, breakpointCallback);
     if(args.ignore_privilege) {
