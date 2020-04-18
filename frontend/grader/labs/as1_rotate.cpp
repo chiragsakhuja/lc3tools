@@ -1,4 +1,4 @@
-#include "../framework2.h"
+#include "framework2.h"
 
 static constexpr uint64_t InstLimit = 1000;
 

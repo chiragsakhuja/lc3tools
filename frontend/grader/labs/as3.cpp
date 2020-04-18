@@ -3,7 +3,7 @@
 #include <set>
 #include <sstream>
 
-#include "../framework2.h"
+#include "framework2.h"
 
 static constexpr uint64_t InstLimit = 500000;
 static constexpr uint16_t StartAddr = 0x32F0;

@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-#include "../framework2.h"
+#include "framework2.h"
 
 static constexpr double correct_thresh = 1.0 - 0.00001;
 static constexpr double close_thresh = 0.9;

@@ -1,7 +1,7 @@
 /*
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
  */
-#include "../framework2.h"
+#include "framework2.h"
 
 bool compareOutput(std::vector<char> const & source, std::vector<char> const & target)
 {
