@@ -72,6 +72,7 @@ void Simulator::reinitialize(void)
 
 void Simulator::triggerSuspend(uint64_t t_delta)
 {
+    while(! events.empty()) { events.pop(); }
     events.emplace(std::make_shared<ShutdownEvent>(time + t_delta));
 }
 

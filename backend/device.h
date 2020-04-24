@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <vector>
+#include <queue>
 
 #include "device_regs.h"
 #include "inputter.h"
@@ -65,7 +66,17 @@ namespace core
 
         MemLocation status;
         MemLocation data;
-        bool interrupt_triggered;
+
+        struct KeyInfo
+        {
+            char value;
+            bool triggered_interrupt;
+
+            KeyInfo(void) : KeyInfo(0) { }
+            KeyInfo(char value) : value(value), triggered_interrupt(false) { }
+        };
+
+        mutable std::queue<KeyInfo> key_buffer;
     };
 
     class DisplayDevice : public IDevice

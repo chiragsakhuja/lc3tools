@@ -26,6 +26,7 @@ lc3::sim::sim(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, 
     simulator.registerCallback(core::CallbackType::INT_ENTER, callback_dispatcher);
     simulator.registerCallback(core::CallbackType::INT_EXIT, callback_dispatcher);
     simulator.registerCallback(core::CallbackType::BREAKPOINT, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::INPUT_POLL, callback_dispatcher);
 
     total_inst_exec = 0;
     cur_inst_exec_limit = 0;
@@ -256,7 +257,11 @@ void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType t
                 sim_inst->simulator.triggerSuspend();
             }
         }
-    } 
+    } else if(type == CallbackType::INPUT_POLL) {
+        if(sim_inst->run_type == RunType::UNTIL_INPUT) {
+            sim_inst->simulator.triggerSuspend();
+        }
+    }
 
     auto search = sim_inst->callbacks.find(type);
     if(search != sim_inst->callbacks.end() && search->second != nullptr) {

@@ -25,7 +25,7 @@ std::vector<uint16_t> RWReg::getAddrMap(void) const
     return { data_addr };
 }
 
-KeyboardDevice::KeyboardDevice(lc3::utils::IInputter & inputter) : inputter(inputter), interrupt_triggered(false)
+KeyboardDevice::KeyboardDevice(lc3::utils::IInputter & inputter) : inputter(inputter)
 {
     status.setValue(0x0000);
     data.setValue(0x0000);
@@ -50,7 +50,9 @@ std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr) const
         uint16_t status_value = status.getValue();
         PIMicroOp write_addr = std::make_shared<RegWriteImmMicroOp>(8, KBSR);
         PIMicroOp toggle_status = std::make_shared<MemWriteImmMicroOp>(8, status_value & 0x7FFF);
+        PIMicroOp pop_from_buffer = std::make_shared<GenericPopMicroOp<std::queue<KeyInfo>>>(key_buffer, "kbbuf");
         write_addr->insert(toggle_status);
+        toggle_status->insert(pop_from_buffer);
 
         return std::make_pair(data.getValue(), write_addr);
     }
@@ -77,15 +79,17 @@ PIMicroOp KeyboardDevice::tick(void)
     // Set ready bit.
     char c;
     if(inputter.getChar(c)) {
-        status.setValue(status.getValue() | 0x8000);
-        data.setValue(static_cast<uint16_t>(c));
-        interrupt_triggered = false;
+        key_buffer.emplace(c);
     }
 
-    // Trigger interrupt.
-    if(! interrupt_triggered && (status.getValue() & 0xC000) == 0xC000) {
-        interrupt_triggered = true;
-        return std::make_shared<PushInterruptTypeMicroOp>(InterruptType::KEYBOARD);
+    if(! key_buffer.empty()) {
+        status.setValue(status.getValue() | 0x8000);
+        data.setValue(static_cast<uint16_t>(key_buffer.front().value));
+
+        if(! key_buffer.front().triggered_interrupt && (status.getValue() & 0x4000) == 0x4000) {
+            key_buffer.front().triggered_interrupt = true;
+            return std::make_shared<PushInterruptTypeMicroOp>(InterruptType::KEYBOARD);
+        }
     }
 
     return nullptr;

@@ -355,6 +355,29 @@ namespace core
         virtual std::string toString(MachineState const & state) const override;
     };
 
+    template<typename T>
+    class GenericPopMicroOp : public IMicroOp
+    {
+    public:
+        GenericPopMicroOp(T & data, std::string const & name) : IMicroOp(), data(data), name(name) { }
+
+        virtual void handleMicroOp(MachineState & state) override
+        {
+            (void) state;
+            data.pop();
+        }
+
+        virtual std::string toString(MachineState const & state) const override
+        {
+            (void) state;
+            return lc3::utils::ssprintf("%s <= %s.removeTop()", name.c_str(), name.c_str());
+        }
+
+    private:
+        T & data;
+        std::string name;
+    };
+
     class PrintMessageMicroOp : public IMicroOp
     {
     public:
