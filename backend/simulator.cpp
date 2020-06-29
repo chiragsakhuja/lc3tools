@@ -7,7 +7,6 @@
 #include <sstream>
 
 #include "device_regs.h"
-#include "lc3os.h"
 #include "simulator.h"
 #include "utils.h"
 
