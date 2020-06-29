@@ -64,6 +64,7 @@ namespace core
 #ifdef _ENABLE_DEBUG_ASM
             std::cout << "line: " << out.line << "\n";
 #endif
+            delete[] chars;
         }
         return in;
     }
