@@ -16,11 +16,11 @@ void setupMem(lc3::sim & sim, std::vector<int16_t> const & data)
     }
 }
 
-void verify(bool success, lc3::sim & sim, std::vector<int16_t> const & data, std::string const & message,
+void verify(bool success, lc3::sim & sim, std::vector<int16_t> const & data, std::string const & label,
     double points, Grader & grader)
 {
-    if(! success) { grader.error("Execution hit exception"); return; }
-    if(sim.didExceedInstLimit()) { grader.error("Exceeded instruction limit"); return; }
+    if(! success) { grader.error(label, "Execution hit exception"); return; }
+    if(sim.didExceedInstLimit()) { grader.error(label, "Exceeded instruction limit"); return; }
 
     std::vector<int16_t> sorted = data;
     std::sort(sorted.begin(), sorted.end());
@@ -41,7 +41,7 @@ void verify(bool success, lc3::sim & sim, std::vector<int16_t> const & data, std
     }
 
     if(full_match) {
-        grader.verify(message, full_match, points);
+        grader.verify(label, full_match, points);
     }
 }
 

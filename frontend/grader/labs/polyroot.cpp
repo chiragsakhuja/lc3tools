@@ -8,7 +8,7 @@ uint32_t sub_count;
 void verify(Grader & grader, lc3::sim & sim, bool success, uint16_t expected_val, uint64_t expected_sub_count,
     double points)
 {
-    if(! success) { grader.error("Execution hit exception"); return; }
+    if(! success) { grader.error("Error", "Execution hit exception"); return; }
 
     grader.verify("Correct functionality", sim.readMem(0x4000) == expected_val, points * 0.8);
     grader.verify("Correct time complexity", sub_count == expected_sub_count, points * 0.2);

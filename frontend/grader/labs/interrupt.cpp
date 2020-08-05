@@ -24,7 +24,7 @@ bool compareOutput(std::vector<char> const & source, std::vector<char> const & t
 void verify(Grader & grader, bool success, std::string const & expected, std::vector<char> const & actual,
     double points)
 {
-    if(! success) { grader.error("Execution hit exception"); return; }
+    if(! success) { grader.error("Error", "Execution hit exception"); return; }
 
     std::vector<char> expected_v(expected.begin(), expected.end());
     bool found_match = compareOutput(actual, expected_v);

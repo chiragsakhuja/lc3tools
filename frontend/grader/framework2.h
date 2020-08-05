@@ -95,7 +95,7 @@ public:
     lc3::sim & getSimulator(void) { return *simulator; }
 
     void registerTest(std::string const & name, test_func_t test_func, double points, bool randomize);
-    void verify(std::string const & name, bool pred, double points);
+    void verify(std::string const & label, bool pred, double points);
     void output(std::string const & message);
-    void error(std::string const & message);
+    void error(std::string const & label, std::string const & message);
 };

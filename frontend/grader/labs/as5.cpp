@@ -98,10 +98,10 @@ std::ostream & operator<<(std::ostream & out, std::vector<char> const & buffer)
     return out;
 }
 
-void verify(Grader & grader, bool success, std::string const & expected, std::string const & message, bool not_present,
+void verify(Grader & grader, bool success, std::string const & expected, std::string const & label, bool not_present,
     double points)
 {
-    if(! success) { grader.error("Execution hit exception"); return; }
+    if(! success) { grader.error(label, "Execution hit exception"); return; }
 
     std::vector<char> const & actual = grader.getOutputter().getBuffer();
 
@@ -125,7 +125,7 @@ void verify(Grader & grader, bool success, std::string const & expected, std::st
         ++actual_pos;
     }
 
-    grader.verify(message, found ^ not_present, points);
+    grader.verify(label, found ^ not_present, points);
 }
 
 void ExampleTest(lc3::sim & sim, Grader & grader, double total_points)

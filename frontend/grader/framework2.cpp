@@ -27,8 +27,6 @@ void testBringup(lc3::sim & sim);
 void testTeardown(lc3::sim & sim);
 
 std::vector<TestCase> tests;
-uint32_t verify_count;
-uint32_t verify_valid;
 
 bool endsWith(std::string const & search, std::string const & suffix)
 {
@@ -231,7 +229,7 @@ std::pair<double, double> Grader::grade(TestCase const & test)
 
     for(std::string const & obj_filename : obj_filenames) {
         if(! simulator.loadObjFile(obj_filename)) {
-            std::cout << "could not init simulator\n";
+            std::cout << "Could not init simulator\n";
             return std::make_pair(0, test.points);
         }
     }
@@ -245,7 +243,7 @@ std::pair<double, double> Grader::grade(TestCase const & test)
     try {
         test.test_func(simulator, *this, test.points);
     } catch(lc3::utils::exception const & e) {
-        error("ran into exception: " + std::string(e.what()));
+        error("c++ exception", std::string(e.what()));
         std::cout << "Test case ran into exception: " << e.what() << "\n";
         return std::make_pair(0, test.points);
     }
@@ -265,14 +263,14 @@ std::pair<double, double> Grader::grade(TestCase const & test)
     return std::make_pair(points_earned, test.points);
 }
 
-void Grader::verify(std::string const & message, bool pred, double points)
+void Grader::verify(std::string const & label, bool pred, double points)
 {
-    std::cout << "  " << message << " => ";
+    std::cout << "  " << label << " => ";
     if(pred) {
-        std::cout << "yes";
+        std::cout << "Correct (+" << points << " pts)";
         test_points_earned += points;
     } else {
-        std::cout << "no";
+        std::cout << "Incorrect (+0 pts)";
     }
     std::cout << std::endl;
 }
@@ -284,9 +282,9 @@ void Grader::output(std::string const & message)
     }
 }
 
-void Grader::error(std::string const & message)
+void Grader::error(std::string const & label, std::string const & message)
 {
-    std::cout << "  " << message << "\n";
+    std::cout << "  " << label << " => " << message << " (+0 pts)\n";
 }
 
 void Grader::resetTestPoints(void)

@@ -227,8 +227,8 @@ ResultStatus verifySingleList(lc3::sim & sim, Node * list, Grader & grader)
 void verify(bool success, lc3::sim & sim, solution_t solution,
     double points, Grader & grader)
 {
-    if(! success) { grader.error("Execution hit exception"); }
-    if(sim.didExceedInstLimit()) { grader.error("Exceeded instruction limit"); return; }
+    if(! success) { grader.error("Error", "Execution hit exception"); }
+    if(sim.didExceedInstLimit()) { grader.error("Error", "Exceeded instruction limit"); return; }
 
     auto result = verifySingleList(sim, std::get<0>(solution), grader);
     grader.verify("List 1 correct", result == ResultStatus::FULL_MATCH, points / 3);

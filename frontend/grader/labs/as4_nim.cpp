@@ -155,7 +155,7 @@ std::ostream & operator<<(std::ostream & out, std::vector<char> const & buffer)
 void verify(Grader & grader, bool success, std::vector<char> const & expected, std::vector<char> const & actual,
     double points)
 {
-    if(! success) { grader.error("Execution hit exception"); return; }
+    if(! success) { grader.error("Error", "Execution hit exception"); return; }
 
     double similarity = compareOutput(expected, actual);
     /*
@@ -328,8 +328,8 @@ void ExactOutputTest(lc3::sim & sim, Grader & grader, double total_points)
 
         std::stringstream ss;
 
-        if(! success) { grader.error("Execution hit exception"); return; }
-        if(grader.getSimulator().didExceedInstLimit()) { grader.error("Exceeded instruction limit"); return; }
+        if(! success) { grader.error("Error", "Execution hit exception"); return; }
+        if(grader.getSimulator().didExceedInstLimit()) { grader.error("Error", "Exceeded instruction limit"); return; }
 
         grader.verify("Correct capitalization", compareOutput(expected_c, actual_c) >= correct_thresh, std::round(total_points / 3.0));
         grader.verify("Correct whitespace", compareOutput(expected_w, actual_w) >= correct_thresh, std::round(total_points / 3.0));

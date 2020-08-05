@@ -5,7 +5,7 @@
 
 void verify(Grader & grader, lc3::sim & sim, bool success, uint16_t expected, double points)
 {
-    if(! success) { grader.error("Execution hit exception"); return; }
+    if(! success) { grader.error("Error", "Execution hit exception"); return; }
 
     grader.verify("Correct", sim.readMem(0x3051) == expected, points);
 }

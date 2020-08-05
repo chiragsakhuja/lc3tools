@@ -7,7 +7,7 @@ static constexpr uint64_t shift(uint64_t value, uint64_t amount)
     return (value << amount) & 0xFFFF;
 }
 
-void verify(bool success, bool exceeded_inst_limit, uint32_t expected, uint32_t actual, std::string const & message,
+void verify(bool success, bool exceeded_inst_limit, uint32_t expected, uint32_t actual, std::string const & label,
     double points, Grader & grader)
 {
     std::stringstream stream;
@@ -16,12 +16,12 @@ void verify(bool success, bool exceeded_inst_limit, uint32_t expected, uint32_t 
 
     if(success) {
         if(! exceeded_inst_limit) {
-            grader.verify(message, actual == expected, points);
+            grader.verify(label, actual == expected, points);
         } else {
-            grader.error("exceeded instruction limit");
+            grader.error(label, "Exceeded instruction limit");
         }
     } else {
-        grader.error("exection failed");
+        grader.error(label, "Exection failed");
     }
 }
 
