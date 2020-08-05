@@ -1,7 +1,9 @@
 #ifndef CALLBACK_H
 #define CALLBACK_H
 
+#include <cstdint>
 #include <functional>
+#include <string>
 
 namespace lc3
 {
