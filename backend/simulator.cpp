@@ -33,6 +33,14 @@ Simulator::Simulator(lc3::sim & simulator, lc3::utils::IPrinter & printer, lc3::
     state.interrupt_exit_callback_v = false;
 }
 
+inline static std::istream & readString(std::istream & in, std::string & out, size_t count) {
+    char * buf = new char[count];
+    in.read(buf, count);
+    out = std::string(buf, count);
+    delete[] buf;
+    return in;
+}
+
 void Simulator::loadObj(std::istream & buffer)
 {
     using namespace lc3::utils;
@@ -43,35 +51,29 @@ void Simulator::loadObj(std::istream & buffer)
 
     // Verify header.
     std::string expected_header = getMagicHeader();
-    char * header = new char[expected_header.size()];
-    if(buffer.read(header, expected_header.size())) {
-        for(uint32_t i = 0; i < expected_header.size(); i += 1) {
-            if(header[i] != expected_header[i]) {
-                logger.printf(PrintType::P_ERROR, true, "invalid header (is this a .obj file?); try re-assembling");
-                throw utils::exception("invalid header (is this a .obj file?); try re-assembling");
-            }
-        }
-    } else {
+    std::string header;
+
+    if (!readString(buffer, header, expected_header.size())) {
         logger.printf(PrintType::P_ERROR, true, "could not read header");
         throw utils::exception("could not read header");
     }
-    delete[] header;
+    if(header != expected_header) {
+        logger.printf(PrintType::P_ERROR, true, "invalid header (is this a .obj file?); try re-assembling");
+        throw utils::exception("invalid header (is this a .obj file?); try re-assembling");
+    }
 
     // Verify version number matches current version number.
     std::string expected_version = getVersionString();
-    char * version = new char[expected_version.size()];
-    if(buffer.read(version, expected_version.size())) {
-        for(uint32_t i = 0; i < expected_version.size(); i += 1) {
-            if(version[i] != expected_version[i]) {
-                logger.printf(PrintType::P_ERROR, true, "mismatched version numbers; try re-assembling");
-                throw utils::exception("mismatched version numbers; try re-assembling");
-            }
-        }
-    } else {
-        logger.printf(PrintType::P_ERROR, true, "could not version number; try re-assembling");
+    std::string version;
+
+    if (!readString(buffer, version, expected_version.size())) {
+        logger.printf(PrintType::P_ERROR, true, "mismatched version numbers; try re-assembling");
+        throw utils::exception("mismatched version numbers; try re-assembling");
+    }
+    if (version != expected_version) {
+        logger.printf(PrintType::P_ERROR, true, "could not read version number; try re-assembling");
         throw utils::exception("could not read version number; try re-assembling");
     }
-    delete[] version;
 
     while(! buffer.eof()) {
         MemEntry statement;
