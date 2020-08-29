@@ -21,7 +21,7 @@ void verify(bool success, bool exceeded_inst_limit, uint32_t expected, uint32_t 
             grader.error(label, "Exceeded instruction limit");
         }
     } else {
-        grader.error(label, "Exection failed");
+        grader.error(label, "Execution failed");
     }
 }
 
