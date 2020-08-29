@@ -267,10 +267,10 @@ void Grader::verify(std::string const & label, bool pred, double points)
 {
     std::cout << "  " << label << " => ";
     if(pred) {
-        std::cout << "Correct (+" << points << " pts)";
+        std::cout << "Pass (+" << points << " pts)";
         test_points_earned += points;
     } else {
-        std::cout << "Incorrect (+0 pts)";
+        std::cout << "Fail (+0 pts)";
     }
     std::cout << std::endl;
 }
