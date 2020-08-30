@@ -28,7 +28,7 @@ namespace utils
         template<typename ... Args>
         void printf(PrintType level, bool bold, std::string const & format, Args ... args) const;
         void newline(PrintType level = PrintType::P_ERROR) const {
-            if(static_cast<uint32_t>(level) <= print_level) { printer.newline(); }
+            if(print_level > static_cast<uint32_t>(level)) { printer.newline(); }
         }
         void print(std::string const & str) {
             if(print_level > static_cast<uint32_t>(PrintType::P_NONE)) { printer.print(str); }

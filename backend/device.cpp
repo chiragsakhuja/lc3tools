@@ -2,7 +2,7 @@
 
 using namespace lc3::core;
 
-std::pair<uint16_t, PIMicroOp> RWReg::read(uint16_t addr) const
+std::pair<uint16_t, PIMicroOp> RWReg::read(uint16_t addr)
 {
     if(addr == data_addr) {
         return std::make_pair(data.getValue(), nullptr);
@@ -41,20 +41,23 @@ void KeyboardDevice::shutdown(void)
     inputter.endInput();
 }
 
-std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr) const
+std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr)
 {
     if(addr == KBSR) {
         PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::INPUT_POLL);
         return std::make_pair(status.getValue(), callback);
     } else if(addr == KBDR) {
         uint16_t status_value = status.getValue();
-        PIMicroOp write_addr = std::make_shared<RegWriteImmMicroOp>(8, KBSR);
-        PIMicroOp toggle_status = std::make_shared<MemWriteImmMicroOp>(8, status_value & 0x7FFF);
-        PIMicroOp pop_from_buffer = std::make_shared<GenericPopMicroOp<std::queue<KeyInfo>>>(key_buffer, "kbbuf");
-        write_addr->insert(toggle_status);
-        toggle_status->insert(pop_from_buffer);
-
-        return std::make_pair(data.getValue(), write_addr);
+        if(utils::getBit(status_value, 15) == 1) {
+            PIMicroOp write_addr = std::make_shared<RegWriteImmMicroOp>(8, KBSR);
+            PIMicroOp toggle_status = std::make_shared<MemWriteImmMicroOp>(8, status_value & 0x7FFF);
+            PIMicroOp pop_from_buffer = std::make_shared<GenericPopMicroOp<std::queue<KeyInfo>>>(key_buffer, "kbbuf");
+            write_addr->insert(toggle_status);
+            toggle_status->insert(pop_from_buffer);
+            return std::make_pair(data.getValue(), write_addr);
+        } else {
+            return std::make_pair(0x0000, nullptr);
+        }
     }
 
     return std::make_pair(0x0000, nullptr);
@@ -95,7 +98,7 @@ PIMicroOp KeyboardDevice::tick(void)
     return nullptr;
 }
 
-std::pair<uint16_t, PIMicroOp> DisplayDevice::read(uint16_t addr) const
+std::pair<uint16_t, PIMicroOp> DisplayDevice::read(uint16_t addr)
 {
     if(addr == DSR) {
         return std::make_pair(status.getValue(), nullptr);

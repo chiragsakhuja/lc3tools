@@ -24,7 +24,7 @@ namespace core
 
         virtual void startup(void) { }
         virtual void shutdown(void) { }
-        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const = 0;
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) = 0;
         virtual PIMicroOp write(uint16_t addr, uint16_t value) = 0;
         virtual std::vector<uint16_t> getAddrMap(void) const = 0;
         virtual std::string getName(void) const = 0;
@@ -37,7 +37,7 @@ namespace core
         RWReg(uint16_t data_addr) : data_addr(data_addr) { data.setValue(0x0000); }
         virtual ~RWReg(void) override = default;
 
-        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const override;
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) override;
         virtual PIMicroOp write(uint16_t addr, uint16_t value) override;
         virtual std::vector<uint16_t> getAddrMap(void) const override;
         virtual std::string getName(void) const override { return "RWReg"; }
@@ -55,7 +55,7 @@ namespace core
 
         virtual void startup(void) override;
         virtual void shutdown(void) override;
-        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const override;
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) override;
         virtual PIMicroOp write(uint16_t addr, uint16_t value) override;
         virtual std::vector<uint16_t> getAddrMap(void) const override;
         virtual std::string getName(void) const override { return "Keyboard"; }
@@ -76,7 +76,7 @@ namespace core
             KeyInfo(char value) : value(value), triggered_interrupt(false) { }
         };
 
-        mutable std::queue<KeyInfo> key_buffer;
+        std::queue<KeyInfo> key_buffer;
     };
 
     class DisplayDevice : public IDevice
@@ -85,7 +85,7 @@ namespace core
         DisplayDevice(lc3::utils::Logger & logger);
         virtual ~DisplayDevice(void) override = default;
 
-        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) const override;
+        virtual std::pair<uint16_t, PIMicroOp> read(uint16_t addr) override;
         virtual PIMicroOp write(uint16_t addr, uint16_t value) override;
         virtual std::vector<uint16_t> getAddrMap(void) const override;
         virtual std::string getName(void) const override { return "Display"; }

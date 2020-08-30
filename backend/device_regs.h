@@ -14,6 +14,7 @@ static constexpr uint16_t MMIO_START = 0xFE00;
 static constexpr uint16_t MMIO_END = 0xFFFF;
 
 static constexpr uint16_t RESET_PC = 0x0200;
+static constexpr uint16_t SYSTEM_STACK_POINTER = 0x3000;
 static constexpr uint16_t TRAP_TABLE_START = 0x0000;
 static constexpr uint16_t INTEX_TABLE_START = 0x0100;
 static constexpr uint16_t KBSR = 0xFE00;

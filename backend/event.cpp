@@ -38,12 +38,13 @@ void SetupEvent::handleEvent(MachineState & state)
         // Set privilege bit to user mode and condition codes to Z.
         psr_value |= 0x8002;
         state.writePSR(psr_value);
-        state.writeSSP(USER_START);
+        state.writeSSP(SYSTEM_STACK_POINTER);
     } else {
         // Set condition codes to Z.
         psr_value |= 0x0002;
         state.writePSR(psr_value);
-        // Don't initialize stack pointer if in program starts in system mode.
+        state.writeReg(6, SYSTEM_STACK_POINTER);
+        // Don't initialize saved stack pointer if in program starts in system mode.
     }
 }
 
