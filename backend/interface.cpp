@@ -83,6 +83,8 @@ void lc3::sim::randomizeState(void)
         state.writeReg(i, dis(gen));
     }
 
+    state.writeSSP(dis(gen));
+
     loadOS();
 }
 

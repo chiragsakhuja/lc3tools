@@ -66,6 +66,9 @@ namespace core
         InterruptType dequeueInterrupt(void);
 
 
+        bool isFirstInit(void) const { return first_init; }
+        void completeFirstInit(void) { first_init = false; }
+
         void pushFuncTraceType(FuncType type) { func_trace.push(type); }
         FuncType peekFuncTraceType(void) const;
         FuncType popFuncTraceType(void);
@@ -86,6 +89,7 @@ namespace core
 
         // Simulation state.
         bool ignore_privilege;
+        bool first_init;
 
         std::stack<FuncType> func_trace;
         std::vector<CallbackType> pending_callbacks;

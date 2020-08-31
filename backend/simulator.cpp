@@ -40,9 +40,6 @@ void Simulator::simulate(void)
     do {
         handleDevices();
         handleInstruction(decoder);
-        executeEvents();
-        handleCallbacks();
-        executeEvents();
     } while(lc3::utils::getBit(state.readMCR(), 15) == 1);
 
     // Shutdown devices.
@@ -70,10 +67,10 @@ void Simulator::reinitialize(void)
     state.reinitialize();
 }
 
-void Simulator::triggerSuspend(uint64_t t_delta)
+void Simulator::triggerSuspend()
 {
     while(! events.empty()) { events.pop(); }
-    events.emplace(std::make_shared<ShutdownEvent>(time + t_delta));
+    events.emplace(std::make_shared<ShutdownEvent>(time));
 }
 
 void Simulator::registerCallback(CallbackType type, Callback func)
@@ -138,46 +135,53 @@ void Simulator::handleDevices(void)
 
     // Check for interrupts triggered by devices.
     events.emplace(std::make_shared<CheckForInterruptEvent>(time + fetch_time_offset - 9));
+    executeEvents();
 }
 
 void Simulator::handleInstruction(sim::Decoder & decoder)
 {
     uint64_t fetch_time_offset = INST_TIMESTEP - (time % INST_TIMESTEP);
-    auto bp_search = std::find(breakpoints.begin(), breakpoints.end(), state.readPC());
 
     // Either insert breakpoints event or normal processing.
+    auto bp_search = std::find(breakpoints.begin(), breakpoints.end(), state.readPC());
     if(bp_search != breakpoints.end() && inst_count_this_run != 0) {
+        // Insert suspend event and breakpoint callbacks.
         triggerSuspend();
-        events.emplace(std::make_shared<CallbackEvent>(
-            time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::BREAKPOINT), CallbackType::BREAKPOINT,
-            std::bind(callbackDispatcher, this, CallbackType::BREAKPOINT, std::placeholders::_2)
-        ));
+        triggerCallback(fetch_time_offset, CallbackType::BREAKPOINT);
+
+        executeEvents();
     } else {
-        // Insert pre- and post-instruction callback events.
-        events.emplace(std::make_shared<CallbackEvent>(
-            time + fetch_time_offset + callbackTypeToUnderlying(CallbackType::PRE_INST), CallbackType::PRE_INST,
-            std::bind(callbackDispatcher, this, CallbackType::PRE_INST, std::placeholders::_2)
-        ));
+        // Insert pre-instruction callback and any other pending callbacks (namely, interrupt-enter).
+        triggerCallback(fetch_time_offset, CallbackType::PRE_INST);
+        handleCallbacks(fetch_time_offset);
 
         // Insert instruction fetch event.
         events.emplace(std::make_shared<AtomicInstProcessEvent>(time + fetch_time_offset, decoder));
+        executeEvents();
+
+        // Insert post-instruction callback and any other callbacks generated during execution.
+        triggerCallback(0, CallbackType::POST_INST);
+        handleCallbacks(0);
+
+        executeEvents();
     }
 }
 
-void Simulator::handleCallbacks(void)
+void Simulator::handleCallbacks(uint64_t t_delta)
 {
-    events.emplace(std::make_shared<CallbackEvent>(
-        time + callbackTypeToUnderlying(CallbackType::POST_INST), CallbackType::POST_INST,
-        std::bind(callbackDispatcher, this, CallbackType::POST_INST, std::placeholders::_2)
-    ));
-
     // Insert callback events that might have been generated during execution.
     for(CallbackType cb : state.getPendingCallbacks()) {
-        events.emplace(std::make_shared<CallbackEvent>(
-            time + callbackTypeToUnderlying(cb), cb, std::bind(callbackDispatcher, this, cb, std::placeholders::_2)
-        ));
+        triggerCallback(t_delta, cb);
     }
     state.clearPendingCallbacks();
+}
+
+void Simulator::triggerCallback(uint64_t t_delta, CallbackType type)
+{
+    events.emplace(std::make_shared<CallbackEvent>(
+        time + t_delta + callbackTypeToUnderlying(type), type,
+        std::bind(callbackDispatcher, this, type, std::placeholders::_2)
+    ));
 }
 
 void Simulator::callbackDispatcher(Simulator * sim, CallbackType type, MachineState & state)

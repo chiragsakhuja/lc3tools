@@ -33,19 +33,35 @@ void SetupEvent::handleEvent(MachineState & state)
 
     // Clear privilege bit and condition codes.
     uint16_t psr_value = state.readPSR();
-    psr_value &= 0x7FF8;
     if(USER_START <= reset_pc && reset_pc <= USER_END) {
+        bool mode_switch = (utils::getBit(psr_value, 15) == 0);
+
         // Set privilege bit to user mode and condition codes to Z.
+        psr_value &= 0x7FF8;
         psr_value |= 0x8002;
         state.writePSR(psr_value);
-        state.writeSSP(SYSTEM_STACK_POINTER);
+
+        // Swap R6 and SSP if switching from system mode.
+        if(mode_switch || state.isFirstInit()) {
+            state.writeReg(6, state.readSSP());
+            state.writeSSP(SYSTEM_STACK_POINTER);
+        }
     } else {
+        bool mode_switch = (utils::getBit(psr_value, 15) == 1);
+
         // Set condition codes to Z.
+        psr_value &= 0x7FF8;
         psr_value |= 0x0002;
         state.writePSR(psr_value);
-        state.writeReg(6, SYSTEM_STACK_POINTER);
-        // Don't initialize saved stack pointer if in program starts in system mode.
+
+        // Swap R6 and SSP if switching from user mode.
+        if(mode_switch || state.isFirstInit()) {
+            state.writeSSP(state.readReg(6));
+            state.writeReg(6, SYSTEM_STACK_POINTER);
+        }
     }
+
+    state.completeFirstInit();
 }
 
 std::string SetupEvent::toString(MachineState const & state) const
@@ -182,6 +198,7 @@ void CheckForInterruptEvent::handleEvent(MachineState & state)
 
         handle_interrupt_chain.second->insert(dequeue_interrupt);
         dequeue_interrupt->insert(callback);
+        callback->insert(func_trace);
 
         uops = handle_interrupt_chain.first;
     }

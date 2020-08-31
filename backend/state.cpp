@@ -5,7 +5,7 @@
 using namespace lc3::core;
 
 MachineState::MachineState(void) : reset_pc(RESET_PC), pc(0), ir(0), decoded_ir(nullptr), ssp(0),
-    ignore_privilege(false)
+    ignore_privilege(false), first_init(true)
 {
     reinitialize();
 
@@ -16,6 +16,7 @@ MachineState::MachineState(void) : reset_pc(RESET_PC), pc(0), ir(0), decoded_ir(
 void MachineState::reinitialize(void)
 {
     reset_pc = RESET_PC;
+    first_init = true;
 
     mem.clear();
     mem.resize(USER_END - SYSTEM_START + 1);

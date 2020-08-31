@@ -15,16 +15,16 @@ namespace core
 
     enum class CallbackType : CallbackTypeUnderlying
     {
-          PRE_INST = -1
-        , POST_INST = 8
-        , SUB_ENTER = 5
-        , SUB_EXIT = 6
+          BREAKPOINT = -3
+        , PRE_INST = -2
+        , INT_ENTER = -1
         , EX_ENTER = 1
         , EX_EXIT = 2
-        , INT_ENTER = 3
-        , INT_EXIT = 4
-        , BREAKPOINT = -2
-        , INPUT_POLL = 7
+        , INT_EXIT = 3
+        , SUB_ENTER = 4
+        , SUB_EXIT = 5
+        , INPUT_POLL = 6
+        , POST_INST = 7
         , INVALID
     };
 

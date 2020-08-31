@@ -42,7 +42,7 @@ namespace core
         void loadObj(std::string const & name, std::istream & buffer);
         void setup(uint64_t t_delta = 0);
         void reinitialize(void);
-        void triggerSuspend(uint64_t t_delta = 0);
+        void triggerSuspend();
         void registerCallback(CallbackType type, Callback func);
         void addBreakpoint(uint16_t pc);
         void removeBreakpoint(uint16_t pc);
@@ -67,13 +67,15 @@ namespace core
 
         uint64_t inst_count_this_run;
         uint16_t pre_inst_pc;
+        bool first_setup;
         std::vector<uint16_t> stack_trace;
 
         void powerOn(uint64_t t_delta);
         void executeEvents(void);
         void handleDevices(void);
         void handleInstruction(sim::Decoder & decoder);
-        void handleCallbacks(void);
+        void handleCallbacks(uint64_t t_delta);
+        void triggerCallback(uint64_t t_delta, CallbackType type);
 
         static void callbackDispatcher(Simulator * sim, CallbackType type, MachineState & state);
     };
