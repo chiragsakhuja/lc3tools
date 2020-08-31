@@ -142,7 +142,6 @@ void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
     sim.writePC(0x0800);
     grader.getInputter().setStringAfter("0", 1000);
     bool success = sim.run();
-    std::cout << grader.getOutputter().getBuffer() << '\n';
     verify(grader, success, "0", "Does not contain zero", true, total_points);
 }
 
@@ -151,7 +150,6 @@ void PrevASCIITest(lc3::sim & sim, Grader & grader, double total_points)
     sim.writePC(0x0800);
     grader.getInputter().setStringAfter("@", 1000);
     bool success = sim.run();
-    std::cout << grader.getOutputter().getBuffer() << '\n';
     verify(grader, success, "@ is not a decimal digit", "Correct behavior", false, total_points);
 }
 
@@ -160,7 +158,6 @@ void NextASCIITest(lc3::sim & sim, Grader & grader, double total_points)
     sim.writePC(0x0800);
     grader.getInputter().setStringAfter(":", 1000);
     bool success = sim.run();
-    std::cout << grader.getOutputter().getBuffer() << '\n';
     verify(grader, success, ": is not a decimal digit", "Correct behavior", false, total_points);
 }
 
