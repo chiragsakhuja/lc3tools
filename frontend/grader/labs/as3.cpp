@@ -306,21 +306,21 @@ void Simple(lc3::sim & sim, Grader & grader, double total_points)
 
     auto solution = intersect(list1, list2);
 
-    bool allocated_mem = false;
-    for(uint16_t i = 0x4003; i < 0xFE00; i += 1) {
-        if(sim.readMem(i) != 0x0000) {
-            if(mem_map.find(i) == mem_map.end()) {
-                allocated_mem = true;
-                break;
-            }
-        }
-    }
-
-    /*
-     *if(allocated_mem) {
-     *    grader.verify("Did not duplicate nodes", false, total_points);
-     *} else {
-     */
+/*
+ *    bool allocated_mem = false;
+ *    for(uint16_t i = 0x4003; i < 0xFE00; i += 1) {
+ *        if(sim.readMem(i) != 0x0000) {
+ *            if(mem_map.find(i) == mem_map.end()) {
+ *                allocated_mem = true;
+ *                break;
+ *            }
+ *        }
+ *    }
+ *
+ *    if(allocated_mem) {
+ *        grader.verify("Did not duplicate nodes", false, total_points);
+ *    } else {
+ */
         verify(success, sim, solution, total_points, grader);
     /*
      *}
