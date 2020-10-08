@@ -152,7 +152,7 @@ PIMicroOp JSRRInstruction::buildMicroOps(MachineState const & state) const
     (void) state;
 
     PIMicroOp link = std::make_shared<RegWritePCMicroOp>(7);
-    PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(getOperand(2)->getValue());
+    PIMicroOp jump = std::make_shared<PCWriteRegMicroOp>(getOperand(3)->getValue());
     PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_ENTER);
     PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::SUBROUTINE);
 
