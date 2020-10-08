@@ -310,7 +310,6 @@ void ExactOutputTest(lc3::sim & sim, Grader & grader, double total_points)
     preprocess(actual_all, PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation);
     double similarity = compareOutput(expected_all, actual_all);
     grader.verify("Correct behavior", similarity >= correct_thresh, 0);
-    std::cout << expected_all << "\n\n" << actual_all;
 
     if(similarity >= correct_thresh) {
         auto expected_c = expected;
@@ -349,13 +348,13 @@ void testTeardown(lc3::sim & sim)
 
 void setup(Grader & grader)
 {
-    grader.registerTest("Example Test", ExampleTest, 15, false);
-    grader.registerTest("Example Test", ExampleTest, 15, true);
-    grader.registerTest("Close Row", CloseRowTest, 10, false);
-    grader.registerTest("Lower Case Row", LowerCaseRowTest, 10, false);
-    grader.registerTest("Close Count", CloseCountTest, 10, false);
-    grader.registerTest("Zero Count", ZeroCountTest, 10, false);
-    grader.registerTest("Exact Output", ExactOutputTest, 30, false);
+    grader.registerTest("ExampleTest", ExampleTest, 15, false);
+    grader.registerTest("ExampleTest", ExampleTest, 15, true);
+    grader.registerTest("CloseRow", CloseRowTest, 10, false);
+    grader.registerTest("LowerCaseRow", LowerCaseRowTest, 10, false);
+    grader.registerTest("CloseCount", CloseCountTest, 10, false);
+    grader.registerTest("ZeroCount", ZeroCountTest, 10, false);
+    grader.registerTest("ExactOutput", ExactOutputTest, 30, false);
 }
 
 void shutdown(void) {}
