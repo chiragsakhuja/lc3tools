@@ -56,7 +56,7 @@ std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr)
             toggle_status->insert(pop_from_buffer);
             return std::make_pair(data.getValue(), write_addr);
         } else {
-            return std::make_pair(0x0000, nullptr);
+            return std::make_pair(data.getValue(), nullptr);
         }
     }
 
