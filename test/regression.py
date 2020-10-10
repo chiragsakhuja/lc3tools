@@ -87,7 +87,7 @@ def main():
 
     hist = {'PASS': 0, 'FAIL': 0, 'FATAL': 0}
     for test in tests:
-        if not os.path.isfile(test['test_root']) or not os.path.isfile(test['bin_path']):
+        if not os.path.isdir(test['test_root']) or not os.path.isfile(test['bin_path']):
             print('Skipping %s ... did you extract the dataset and build in ../build?' % test['test_root'])
             continue
         local_hist = runTests(**test)
