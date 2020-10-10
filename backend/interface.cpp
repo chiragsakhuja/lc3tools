@@ -65,10 +65,13 @@ void lc3::sim::zeroState(void)
     loadOS();
 }
 
-void lc3::sim::randomizeState(void)
+uint64_t lc3::sim::randomizeState(uint64_t seed)
 {
     std::random_device dev;
-    std::mt19937 gen(dev());
+    if(seed == 0) {
+        seed = dev();
+    }
+    std::mt19937 gen(seed);
     std::uniform_int_distribution<> dis(0x0000, 0xffff);
 
     simulator.reinitialize();
@@ -86,6 +89,8 @@ void lc3::sim::randomizeState(void)
     state.writeSSP(dis(gen));
 
     loadOS();
+
+    return seed;
 }
 
 void lc3::sim::setRunInstLimit(uint64_t inst_limit) { cur_inst_exec_limit = inst_limit; }

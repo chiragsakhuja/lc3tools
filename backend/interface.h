@@ -32,7 +32,7 @@ namespace lc3
         bool loadObjFile(std::string const & filename);
         void setup(void);
         void zeroState(void);
-        void randomizeState(void);
+        uint64_t randomizeState(uint64_t seed = 0);
 
         void setRunInstLimit(uint64_t inst_limit);
         bool run(void);

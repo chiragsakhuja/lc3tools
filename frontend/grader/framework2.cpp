@@ -18,6 +18,7 @@ struct CLIArgs
     uint32_t sim_print_level_override = false;
     bool ignore_privilege = false;
     bool grader_verbose = false;
+    uint64_t seed = 0;
     std::vector<std::string> test_filter;
 };
 
@@ -93,6 +94,8 @@ int main(int argc, char * argv[])
             args.ignore_privilege = true;
         } else if(std::get<0>(arg) == "grader-verbose") {
             args.grader_verbose = true;
+        } else if(std::get<0>(arg) == "seed") {
+            args.seed = std::stoull(std::get<1>(arg));
         } else if(std::get<0>(arg) == "test-filter") {
             args.test_filter.push_back(std::get<1>(arg));
         } else if(std::get<0>(arg) == "h" || std::get<0>(arg) == "help") {
@@ -104,6 +107,7 @@ int main(int argc, char * argv[])
             std::cout << "  --sim-print-level=N    Simulator output verbosity [0-9]\n";
             std::cout << "  --ignore-privilege     Ignore access violations\n";
             std::cout << "  --grader-verbose       Output grader messages\n";
+            std::cout << "  --seed                 Optional seed for randomization\n";
             std::cout << "  --test-filter=TEST     Only run TEST (can be repeated)\n";
             return 0;
         }
@@ -143,7 +147,7 @@ int main(int argc, char * argv[])
 
     if(valid_program) {
         Grader grader(args.print_output, args.sim_print_level_override ? args.sim_print_level : 1,
-            args.ignore_privilege, args.grader_verbose, obj_filenames);
+            args.ignore_privilege, args.grader_verbose, args.seed, obj_filenames);
         setup(grader);
 
         if(args.test_filter.size() == 0) {
@@ -165,9 +169,9 @@ TestCase::TestCase(std::string const & name, test_func_t test_func, double point
 {}
 
 Grader::Grader(bool print_output, uint32_t print_level, bool ignore_privilege, bool verbose,
-    std::vector<std::string> const & obj_filenames)
+    uint64_t seed, std::vector<std::string> const & obj_filenames)
     : print_output(print_output), ignore_privilege(ignore_privilege), verbose(verbose),
-      print_level(print_level), obj_filenames(obj_filenames)
+      print_level(print_level), seed(seed), obj_filenames(obj_filenames)
 {
     resetTestPoints();
 }
@@ -222,8 +226,12 @@ std::pair<double, double> Grader::grade(TestCase const & test)
     std::cout << "Test: " << test.name;
 
     if(test.randomize) {
-        simulator.randomizeState();
-        std::cout << " (Randomized Machine)";
+        if(seed == 0) {
+            seed = simulator.randomizeState();
+        } else {
+            simulator.randomizeState(seed);
+        }
+        std::cout << " (Randomized Machine, Seed: " << seed << ")";
     }
     std::cout << std::endl;
 

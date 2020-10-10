@@ -70,6 +70,7 @@ private:
     std::vector<TestCase> tests;
     bool print_output, ignore_privilege, verbose;
     uint32_t print_level;
+    uint64_t seed;
     std::vector<std::string> obj_filenames;
 
     BufferedPrinter * printer;
@@ -88,7 +89,7 @@ private:
 
 public:
     Grader(bool print_output, uint32_t print_level, bool ignore_privilege, bool verbose,
-        std::vector<std::string> const & obj_filenames);
+        uint64_t seed, std::vector<std::string> const & obj_filenames);
 
     BufferedPrinter & getOutputter(void) { return *printer; }
     StringInputter & getInputter(void) { return *inputter; }
