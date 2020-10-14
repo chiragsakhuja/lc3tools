@@ -1,3 +1,6 @@
+/*
+ * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
+ */
 #include "intex.h"
 
 uint8_t lc3::core::getExceptionVector(ExceptionType type)

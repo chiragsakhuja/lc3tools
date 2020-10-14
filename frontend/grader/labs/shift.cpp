@@ -1,3 +1,6 @@
+/*
+ * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
+ */
 #include "framework2.h"
 
 static constexpr uint64_t InstLimit = 1000;
