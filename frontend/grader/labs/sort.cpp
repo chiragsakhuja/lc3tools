@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <sstream>
 
-#include "framework2.h"
+#include "framework.h"
 
 static constexpr uint64_t InstLimit = 50000;
 static constexpr uint16_t StartAddr = 0x32F0;

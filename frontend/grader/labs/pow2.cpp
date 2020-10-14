@@ -1,7 +1,7 @@
 /*
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
  */
-#include "framework2.h"
+#include "framework.h"
 
 void verify(Grader & grader, lc3::sim & sim, bool success, uint16_t expected, double points)
 {

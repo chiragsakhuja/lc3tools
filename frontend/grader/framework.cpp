@@ -7,7 +7,7 @@
 #include "common.h"
 #include "console_printer.h"
 #include "console_inputter.h"
-#include "framework2.h"
+#include "framework.h"
 
 struct CLIArgs
 {

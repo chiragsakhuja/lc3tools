@@ -3,7 +3,7 @@ include_directories(${PROJECT_SOURCE_DIR}/frontend/common)
 
 find_package(Threads)
 
-add_library(grader_common OBJECT framework2.cpp framework2.h)
+add_library(grader_common OBJECT framework.cpp framework.h)
 
 file(GLOB LAB_SOURCES ${PROJECT_SOURCE_DIR}/frontend/grader/labs/*.cpp)
 
