@@ -70,19 +70,19 @@ def main():
     tests = [{
         'test_root': 'dataset/2',
         'src_name': 'sort.asm',
-        'bin_path': '../build/bin/as2'
+        'bin_path': '../build/bin/sort'
     }, {
         'test_root': 'dataset/3',
         'src_name': 'intersection.asm',
-        'bin_path': '../build/bin/as3'
+        'bin_path': '../build/bin/intersection'
     }, {
         'test_root': 'dataset/4',
         'src_name': 'nim.asm',
-        'bin_path': '../build/bin/as4_nim'
+        'bin_path': '../build/bin/nim'
     }, {
         'test_root': 'dataset/5',
         'src_name': 'interrupt.asm',
-        'bin_path': '../build/bin/as5'
+        'bin_path': '../build/bin/interrupt2'
     }]
 
     hist = {'PASS': 0, 'FAIL': 0, 'FATAL': 0}
