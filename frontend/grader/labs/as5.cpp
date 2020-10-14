@@ -9,21 +9,6 @@ static constexpr double correct_thresh = 1.0 - 0.00001;
 static constexpr double close_thresh = 0.9;
 static constexpr double partial_thresh = 0.2;
 
-enum PreprocessType {
-    IgnoreCase = 1,
-    IgnoreWhitespace = 2,
-    IgnorePunctuation = 4
-};
-
-std::string flatten(std::vector<std::array<char, 2>> const & inputs)
-{
-    std::stringstream ss;
-    for(auto const & line : inputs) {
-        ss << line[0] << line[1];
-    }
-    return ss.str();
-}
-
 double compareOutput(std::vector<char> const & source, std::vector<char> const & target)
 {
     if(source.size() > target.size()) {
@@ -53,49 +38,6 @@ double compareOutput(std::vector<char> const & source, std::vector<char> const &
     }
 
     return 1 - static_cast<double>(lev_dist[min_size]) / min_size;
-}
-
-std::vector<char> & preprocess(std::vector<char> & buffer, uint64_t type)
-{
-    // Always remove trailing whitespace
-    for(uint64_t i = 0; i < buffer.size(); i += 1) {
-        if(buffer[i] == '\n') {
-            int64_t pos = i - 1;
-            while(pos >= 0 && std::isspace(buffer[pos])) {
-                buffer.erase(buffer.begin() + pos);
-                if(pos == 0 || buffer[pos - 1] == '\n') { break; }
-                --pos;
-            }
-        }
-    }
-
-    // Always remove new lines at end of file
-    for(int64_t i = buffer.size() - 1; i >= 0 && std::isspace(buffer[i]); --i) {
-        buffer.erase(buffer.begin() + i);
-    }
-
-    // Remove other characters
-    for(uint64_t i = 0; i < buffer.size(); i += 1) {
-        if((type & PreprocessType::IgnoreCase) && 'A' <= buffer[i] && buffer[i] <= 'Z') {
-            buffer[i] |= 0x20;
-        } else if(((type & PreprocessType::IgnoreWhitespace) && std::isspace(buffer[i])) ||
-                  ((type & PreprocessType::IgnorePunctuation) && std::ispunct(buffer[i])))
-        {
-            buffer.erase(buffer.begin() + i);
-            --i;
-        }
-    }
-    return buffer;
-}
-
-std::ostream & operator<<(std::ostream & out, std::vector<char> const & buffer)
-{
-    for(char x : buffer) {
-        //out << static_cast<uint64_t>(x) << ' ';
-        out << x;
-    }
-
-    return out;
 }
 
 void verify(Grader & grader, bool success, std::string const & expected, std::string const & label, bool not_present,
