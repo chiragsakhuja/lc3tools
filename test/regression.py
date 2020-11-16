@@ -20,7 +20,6 @@ def runTest(test_dir, src_name, bin_path):
     output = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, _ = output.communicate()
     stdout = stdout.decode('ISO-8859-1').replace(r'\n', '\r\n')
-    # print(test_dir, command, stdout)
 
     stdout_lines = [x.rstrip() for x in stdout.split('\n')]
     if len(stdout_lines) < 2: actual = 0
@@ -83,6 +82,22 @@ def main():
         'test_root': 'dataset/5',
         'src_name': 'interrupt.asm',
         'bin_path': '../build/bin/interrupt2'
+    }, {
+        'test_root': 'dataset/6',
+        'src_name': 'binsearch.asm',
+        'bin_path': '../build/bin/binsearch'
+    }, {
+        'test_root': 'dataset/7',
+        'src_name': 'interrupt1.asm',
+        'bin_path': '../build/bin/interrupt1'
+    }, {
+        'test_root': 'dataset/8',
+        'src_name': 'polyroot.asm',
+        'bin_path': '../build/bin/polyroot'
+    }, {
+        'test_root': 'dataset/9',
+        'src_name': 'pow2.bin',
+        'bin_path': '../build/bin/pow2'
     }]
 
     hist = {'PASS': 0, 'FAIL': 0, 'FATAL': 0}
