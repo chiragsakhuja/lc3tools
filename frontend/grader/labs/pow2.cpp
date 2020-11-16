@@ -37,7 +37,6 @@ void AllPowerTest(lc3::sim & sim, Grader & grader, double total_points)
 
         // Verify
         verify(grader, sim, success, 1, total_points / 16.0);
-        break;
     }
 }
 
