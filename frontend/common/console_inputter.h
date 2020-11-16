@@ -16,6 +16,7 @@ namespace lc3 {
         virtual void beginInput(void) override;
         virtual bool getChar(char & c) override;
         virtual void endInput(void) override;
+        virtual bool hasRemaining(void) const override { return false; }
 
     private:
 #if !(defined(WIN32) || defined(_WIN32) || defined(__WIN32))

@@ -17,6 +17,7 @@ namespace utils
         virtual void beginInput(void) = 0;
         virtual bool getChar(char & c) = 0;
         virtual void endInput(void) = 0;
+        virtual bool hasRemaining(void) const = 0;
     };
 
     class NullInputter : public IInputter
@@ -25,6 +26,7 @@ namespace utils
         virtual void beginInput(void) override {}
         virtual bool getChar(char &) override { return false; }
         virtual void endInput(void) override {}
+        virtual bool hasRemaining(void) const override { return false; }
     };
 };
 };

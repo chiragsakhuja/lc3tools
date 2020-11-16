@@ -26,6 +26,7 @@ lc3::sim::sim(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, 
     simulator.registerCallback(core::CallbackType::INT_ENTER, callback_dispatcher);
     simulator.registerCallback(core::CallbackType::INT_EXIT, callback_dispatcher);
     simulator.registerCallback(core::CallbackType::BREAKPOINT, callback_dispatcher);
+    simulator.registerCallback(core::CallbackType::INPUT_REQUEST, callback_dispatcher);
     simulator.registerCallback(core::CallbackType::INPUT_POLL, callback_dispatcher);
 
     total_inst_exec = 0;
@@ -107,9 +108,9 @@ bool lc3::sim::runUntilHalt(void)
     return runHelper();
 }
 
-bool lc3::sim::runUntilInputPoll(void)
+bool lc3::sim::runUntilInputConsumed(void)
 {
-    run_type = RunType::UNTIL_INPUT;
+    run_type = RunType::UNTIL_INPUT_CONSUMED;
     return runHelper();
 }
 
@@ -202,7 +203,7 @@ void lc3::sim::loadOS(void)
     simulator.loadObj("lc3os", *obj_stream);
 }
 
-bool lc3::sim::runHelper()
+bool lc3::sim::runHelper(void)
 {
     encountered_lc3_exception = false;
     target_inst_exec = total_inst_exec + cur_inst_exec_limit;
@@ -264,8 +265,8 @@ void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType t
                 sim_inst->simulator.triggerSuspend();
             }
         }
-    } else if(type == CallbackType::INPUT_POLL) {
-        if(sim_inst->run_type == RunType::UNTIL_INPUT) {
+    } else if(type == CallbackType::INPUT_REQUEST) {
+        if(sim_inst->run_type == RunType::UNTIL_INPUT_CONSUMED) {
             sim_inst->simulator.triggerSuspend();
         }
     }

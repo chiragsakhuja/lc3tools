@@ -26,8 +26,9 @@ namespace core
         , INT_EXIT = 3
         , SUB_ENTER = 4
         , SUB_EXIT = 5
-        , INPUT_POLL = 6
-        , POST_INST = 7
+        , INPUT_REQUEST = 6
+        , INPUT_POLL = 7
+        , POST_INST = 8
         , INVALID
     };
 

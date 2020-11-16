@@ -15,6 +15,7 @@ std::string lc3::core::callbackTypeToString(CallbackType type)
         case CallbackType::INT_ENTER: return "interrupt-enter";
         case CallbackType::INT_EXIT: return "interrupt-exit";
         case CallbackType::BREAKPOINT: return "breakpoint";
+        case CallbackType::INPUT_REQUEST: return "input-request";
         case CallbackType::INPUT_POLL: return "input-poll";
         default: return "unknown";
     }

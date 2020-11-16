@@ -40,9 +40,10 @@ public:
 
     void setString(std::string const & source) { setStringAfter(source, 0); }
     void setStringAfter(std::string const & source, uint32_t inst_count);
-    void beginInput(void) {}
-    bool getChar(char & c);
-    void endInput(void) {}
+    virtual void beginInput(void) override {}
+    virtual bool getChar(char & c) override;
+    virtual void endInput(void) override {}
+    virtual bool hasRemaining(void) const override { return pos == source.size(); }
 
 private:
     std::string source;
