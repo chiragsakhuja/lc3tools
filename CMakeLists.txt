@@ -10,8 +10,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release")
 endif()
 
-# give option to build tests (download google test/google mock)
-# option(test "Build all tests." OFF)
+option(BUILD_SAMPLES "Build sample testers." ON)
 
 # set build flags
 if(NOT DEFINED MSVC)
@@ -29,35 +28,4 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
 
 cmake_policy(SET CMP0042 NEW)
 
-#if(test)
-    #set(TestPath ${PROJECT_SOURCE_DIR}/test)
-    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_ENABLE_TESTING")
-
-    #find_package(Threads REQUIRED)
-    #enable_testing()
-
-    #include(ExternalProject)
-
-    #ExternalProject_Add(
-        #gtest
-        #URL https://googletest.googlecode.com/files/gtest-1.7.0.zip
-        #PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
-        #INSTALL_COMMAND ""
-    #)
-
-    #add_library(libgtest IMPORTED STATIC GLOBAL)
-    #add_dependencies(libgtest gtest)
-
-    #ExternalProject_Get_Property(gtest source_dir binary_dir)
-    #set_target_properties(libgtest PROPERTIES
-        #"IMPORTED_LOCATION" "${binary_dir}/libgtest.a"
-        #"IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-    #)
-
-    #include_directories("${source_dir}/include")
-
-    #subdirs(test)
-#endif()
-
-add_subdirectory(backend)
-add_subdirectory(frontend)
+add_subdirectory(src)
