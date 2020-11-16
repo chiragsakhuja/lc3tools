@@ -16,21 +16,9 @@ namespace lc3
     public:
         FilePrinter(std::string const & filename) : output(filename) { }
 
-        virtual void setColor(utils::PrintColor color) override
-        {
-            (void) color;
-            return;
-        }
-
-        virtual void print(std::string const & string) override
-        {
-            output << string << std::flush;
-        }
-
-        virtual void newline(void) override
-        {
-            output << "\n";
-        }
+        virtual void setColor(utils::PrintColor color) override { (void) color; return; }
+        virtual void print(std::string const & string) override { output << string << std::flush; }
+        virtual void newline(void) override { output << "\n"; }
 
     private:
         std::ofstream output;
