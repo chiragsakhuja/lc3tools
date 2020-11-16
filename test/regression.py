@@ -45,7 +45,7 @@ def runTests(test_root, src_name, bin_path):
                 stdout, actual, expected = future.result()
             except Exception as e:
                 status = 'FATAL'
-                faulures.append((test_dir, str(e), 0, expected))
+                failures.append((test_dir, str(e), 0, 0))
             else:
                 if actual == expected:
                     status = 'PASS'
