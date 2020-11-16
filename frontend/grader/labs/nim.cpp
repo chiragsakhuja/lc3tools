@@ -12,7 +12,7 @@ static constexpr double correct_thresh = 1.0 - 0.00001;
 static constexpr double close_thresh = 0.9;
 static constexpr double partial_thresh = 0.2;
 
-std::vector<char> nimGolden(std::vector<std::array<char, 2>> const & inputs)
+std::string nimGolden(std::vector<std::array<char, 2>> const & inputs)
 {
     int64_t state[] = {3, 5, 8};
     uint64_t player = 1;
@@ -63,14 +63,8 @@ std::vector<char> nimGolden(std::vector<std::array<char, 2>> const & inputs)
         output_buffer.push_back('\n');
     }
 
-    return output_buffer;
+    return std::string{output_buffer.begin(), output_buffer.end()};
 }
-
-enum PreprocessType {
-    IgnoreCase = 1,
-    IgnoreWhitespace = 2,
-    IgnorePunctuation = 4
-};
 
 std::string flatten(std::vector<std::array<char, 2>> const & inputs)
 {
@@ -81,91 +75,20 @@ std::string flatten(std::vector<std::array<char, 2>> const & inputs)
     return ss.str();
 }
 
-double compareOutput(std::vector<char> const & source, std::vector<char> const & target)
-{
-    if(source.size() > target.size()) {
-        return compareOutput(target, source);
-    }
-
-    std::size_t min_size = source.size(), max_size = target.size();
-    std::vector<std::size_t> lev_dist(min_size + 1);
-
-    for(std::size_t i = 0; i < min_size + 1; i += 1) {
-        lev_dist[i] = i;
-    }
-
-    for(std::size_t j = 1; j < max_size + 1; j += 1) {
-        std::size_t prev_diag = lev_dist[0];
-        ++lev_dist[0];
-
-        for(std::size_t i = 1; i < min_size + 1; i += 1) {
-            std::size_t prev_diag_tmp = lev_dist[i];
-            if(source[i - 1] == target[j - 1]) {
-                lev_dist[i] = prev_diag;
-            } else {
-                lev_dist[i] = std::min(std::min(lev_dist[i - 1], lev_dist[i]), prev_diag) + 1;
-            }
-            prev_diag = prev_diag_tmp;
-        }
-    }
-
-    return 1 - static_cast<double>(lev_dist[min_size]) / min_size;
-}
-
-std::vector<char> & preprocess(std::vector<char> & buffer, uint64_t type)
-{
-    // Always remove trailing whitespace
-    for(uint64_t i = 0; i < buffer.size(); i += 1) {
-        if(buffer[i] == '\n') {
-            int64_t pos = i - 1;
-            while(pos >= 0 && std::isspace(buffer[pos])) {
-                buffer.erase(buffer.begin() + pos);
-                if(pos == 0 || buffer[pos - 1] == '\n') { break; }
-                --pos;
-            }
-        }
-    }
-
-    // Always remove new lines at end of file
-    for(int64_t i = buffer.size() - 1; i >= 0 && std::isspace(buffer[i]); --i) {
-        buffer.erase(buffer.begin() + i);
-    }
-
-    // Remove other characters
-    for(uint64_t i = 0; i < buffer.size(); i += 1) {
-        if((type & PreprocessType::IgnoreCase) && 'A' <= buffer[i] && buffer[i] <= 'Z') {
-            buffer[i] |= 0x20;
-        } else if(((type & PreprocessType::IgnoreWhitespace) && std::isspace(buffer[i])) ||
-                  ((type & PreprocessType::IgnorePunctuation) && std::ispunct(buffer[i])))
-        {
-            buffer.erase(buffer.begin() + i);
-            --i;
-        }
-    }
-    return buffer;
-}
-
 std::ostream & operator<<(std::ostream & out, std::vector<char> const & buffer)
 {
     for(char x : buffer) {
-        //out << static_cast<uint64_t>(x) << ' ';
         out << x;
     }
 
     return out;
 }
 
-void verify(Grader & grader, bool success, std::vector<char> const & expected, std::vector<char> const & actual,
-    double points)
+void verify(Grader & grader, bool success, std::string const & expected, std::string const & actual, double points)
 {
     if(! success) { grader.error("Error", "Execution hit exception"); return; }
 
-    double similarity = compareOutput(expected, actual);
-    /*
-     *std::cout << "Actual: \n" << actual << '\n';
-     *std::cout << "Expected: \n" << expected << '\n';
-     *std::cout << "Similarity: " << similarity << '\n';
-     */
+    double similarity = grader.checkSimilarity(expected, actual);
     grader.verify("Correct", similarity >= correct_thresh, points);
     if(similarity < correct_thresh) {
         grader.verify("Close enough", similarity >= close_thresh, points);
@@ -192,15 +115,18 @@ void ExampleTest(lc3::sim & sim, Grader & grader, double total_points)
     };
 
     std::string input_str = flatten(inputs);
-    grader.getInputter().setString(input_str);
+    grader.setInputString(input_str);
 
     sim.setRunInstLimit(50000);
     bool success = sim.runUntilHalt();
-    std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().getBuffer();
+    std::string expected = nimGolden(inputs);
 
-    uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
-    verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
+    uint64_t preprocess_type = Grader::PreprocessType::IgnoreCase |
+        Grader::PreprocessType::IgnoreWhitespace |
+        Grader::PreprocessType::IgnorePunctuation;
+    std::string expected_pp = grader.getPreprocessedString(expected, preprocess_type);
+    std::string actual_pp = grader.getPreprocessedString(grader.getOutput(), preprocess_type);
+    verify(grader, success, expected_pp, actual_pp, total_points);
 }
 
 
@@ -212,15 +138,18 @@ void CloseRowTest(lc3::sim & sim, Grader & grader, double total_points)
     };
 
     std::string input_str = flatten(inputs);
-    grader.getInputter().setString(input_str);
+    grader.setInputString(input_str);
 
     sim.setRunInstLimit(10000);
     bool success = sim.runUntilHalt();
-    std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().getBuffer();
+    std::string expected = nimGolden(inputs);
 
-    uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
-    verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
+    uint64_t preprocess_type = Grader::PreprocessType::IgnoreCase |
+        Grader::PreprocessType::IgnoreWhitespace |
+        Grader::PreprocessType::IgnorePunctuation;
+    std::string expected_pp = grader.getPreprocessedString(expected, preprocess_type);
+    std::string actual_pp = grader.getPreprocessedString(grader.getOutput(), preprocess_type);
+    verify(grader, success, expected_pp, actual_pp, total_points);
 }
 
 void LowerCaseRowTest(lc3::sim & sim, Grader & grader, double total_points)
@@ -230,15 +159,18 @@ void LowerCaseRowTest(lc3::sim & sim, Grader & grader, double total_points)
     };
 
     std::string input_str = flatten(inputs);
-    grader.getInputter().setString(input_str);
+    grader.setInputString(input_str);
 
     sim.setRunInstLimit(10000);
     bool success = sim.runUntilHalt();
-    std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().getBuffer();
+    std::string expected = nimGolden(inputs);
 
-    uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
-    verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
+    uint64_t preprocess_type = Grader::PreprocessType::IgnoreCase |
+        Grader::PreprocessType::IgnoreWhitespace |
+        Grader::PreprocessType::IgnorePunctuation;
+    std::string expected_pp = grader.getPreprocessedString(expected, preprocess_type);
+    std::string actual_pp = grader.getPreprocessedString(grader.getOutput(), preprocess_type);
+    verify(grader, success, expected_pp, actual_pp, total_points);
 }
 
 void CloseCountTest(lc3::sim & sim, Grader & grader, double total_points)
@@ -254,15 +186,18 @@ void CloseCountTest(lc3::sim & sim, Grader & grader, double total_points)
     };
 
     std::string input_str = flatten(inputs);
-    grader.getInputter().setString(input_str);
+    grader.setInputString(input_str);
 
     sim.setRunInstLimit(50000);
     bool success = sim.runUntilHalt();
-    std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().getBuffer();
+    std::string expected = nimGolden(inputs);
 
-    uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
-    verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
+    uint64_t preprocess_type = Grader::PreprocessType::IgnoreCase |
+        Grader::PreprocessType::IgnoreWhitespace |
+        Grader::PreprocessType::IgnorePunctuation;
+    std::string expected_pp = grader.getPreprocessedString(expected, preprocess_type);
+    std::string actual_pp = grader.getPreprocessedString(grader.getOutput(), preprocess_type);
+    verify(grader, success, expected_pp, actual_pp, total_points);
 }
 
 void ZeroCountTest(lc3::sim & sim, Grader & grader, double total_points)
@@ -272,15 +207,18 @@ void ZeroCountTest(lc3::sim & sim, Grader & grader, double total_points)
     };
 
     std::string input_str = flatten(inputs);
-    grader.getInputter().setString(input_str);
+    grader.setInputString(input_str);
 
     sim.setRunInstLimit(10000);
     bool success = sim.runUntilHalt();
-    std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().getBuffer();
+    std::string expected = nimGolden(inputs);
 
-    uint64_t preprocess_type = PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation;
-    verify(grader, success, preprocess(expected, preprocess_type), preprocess(actual, preprocess_type), total_points);
+    uint64_t preprocess_type = Grader::PreprocessType::IgnoreCase |
+        Grader::PreprocessType::IgnoreWhitespace |
+        Grader::PreprocessType::IgnorePunctuation;
+    std::string expected_pp = grader.getPreprocessedString(expected, preprocess_type);
+    std::string actual_pp = grader.getPreprocessedString(grader.getOutput(), preprocess_type);
+    verify(grader, success, expected_pp, actual_pp, total_points);
 }
 
 
@@ -301,41 +239,44 @@ void ExactOutputTest(lc3::sim & sim, Grader & grader, double total_points)
     };
 
     std::string input_str = flatten(inputs);
-    grader.getInputter().setString(input_str);
+    grader.setInputString(input_str);
 
     sim.setRunInstLimit(50000);
     bool success = sim.runUntilHalt();
-    std::vector<char> expected = nimGolden(inputs);
-    std::vector<char> actual = grader.getOutputter().getBuffer();
-    auto expected_all = expected;
-    auto actual_all = actual;
-    preprocess(expected_all, PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation);
-    preprocess(actual_all, PreprocessType::IgnoreCase | PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation);
-    double similarity = compareOutput(expected_all, actual_all);
+
+    std::string output = grader.getOutput();
+    std::string expected = nimGolden(inputs);
+
+    uint64_t preprocess_type = Grader::PreprocessType::IgnoreCase |
+        Grader::PreprocessType::IgnoreWhitespace |
+        Grader::PreprocessType::IgnorePunctuation;
+    auto expected_all = grader.getPreprocessedString(expected, preprocess_type);
+    auto actual_all = grader.getPreprocessedString(output, preprocess_type);
+    double similarity = grader.checkSimilarity(expected_all, actual_all);
     grader.verify("Correct behavior", similarity >= correct_thresh, 0);
 
     if(similarity >= correct_thresh) {
-        auto expected_c = expected;
-        auto actual_c = actual;
-        auto expected_w = expected;
-        auto actual_w = actual;
-        auto expected_p = expected;
-        auto actual_p = actual;
-        preprocess(expected_c, PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation);
-        preprocess(actual_c, PreprocessType::IgnoreWhitespace | PreprocessType::IgnorePunctuation);
-        preprocess(expected_w, PreprocessType::IgnoreCase | PreprocessType::IgnorePunctuation);
-        preprocess(actual_w, PreprocessType::IgnoreCase | PreprocessType::IgnorePunctuation);
-        preprocess(expected_p, PreprocessType::IgnoreWhitespace | PreprocessType::IgnoreCase);
-        preprocess(actual_p, PreprocessType::IgnoreWhitespace | PreprocessType::IgnoreCase);
+        preprocess_type = Grader::PreprocessType::IgnoreWhitespace | Grader::PreprocessType::IgnorePunctuation;
+        auto expected_c = grader.getPreprocessedString(expected, preprocess_type);
+        auto actual_c = grader.getPreprocessedString(output, preprocess_type);
 
-        std::stringstream ss;
+        preprocess_type = Grader::PreprocessType::IgnoreCase | Grader::PreprocessType::IgnorePunctuation;
+        auto expected_w = grader.getPreprocessedString(expected, preprocess_type);
+        auto actual_w = grader.getPreprocessedString(output, preprocess_type);
+
+        preprocess_type = Grader::PreprocessType::IgnoreWhitespace | Grader::PreprocessType::IgnoreCase;
+        auto expected_p = grader.getPreprocessedString(expected, preprocess_type);
+        auto actual_p = grader.getPreprocessedString(output, preprocess_type);
 
         if(! success) { grader.error("Error", "Execution hit exception"); return; }
-        if(grader.getSimulator().didExceedInstLimit()) { grader.error("Error", "Exceeded instruction limit"); return; }
+        if(sim.didExceedInstLimit()) { grader.error("Error", "Exceeded instruction limit"); return; }
 
-        grader.verify("Correct capitalization", compareOutput(expected_c, actual_c) >= correct_thresh, std::round(total_points / 3.0));
-        grader.verify("Correct whitespace", compareOutput(expected_w, actual_w) >= correct_thresh, std::round(total_points / 3.0));
-        grader.verify("Correct punctuation", compareOutput(expected_p, actual_p) >= correct_thresh, std::round(total_points / 3.0));
+        grader.verify("Correct capitalization", grader.checkSimilarity(expected_c, actual_c) >= correct_thresh,
+            std::round(total_points / 3.0));
+        grader.verify("Correct whitespace", grader.checkSimilarity(expected_w, actual_w) >= correct_thresh,
+            std::round(total_points / 3.0));
+        grader.verify("Correct punctuation", grader.checkSimilarity(expected_p, actual_p) >= correct_thresh,
+            std::round(total_points / 3.0));
     }
 }
 

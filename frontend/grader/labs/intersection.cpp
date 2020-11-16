@@ -186,42 +186,6 @@ ResultStatus verifySingleList(lc3::sim & sim, Node * list, Grader & grader)
         if(expected_next == 0x0000 && actual_next != 0x0000) {
             return ResultStatus::INVALID_END;
         }
-
-/*
- *        std::stringstream stream;
- *        stream << std::hex;
- *
- *        uint16_t actual_next = sim.readMem(list_cur->sim_addr);
- *        uint16_t expected_next = list_cur->sim_next;
- *
- *        stream << "x" << std::setfill('0') << std::setw(4) << list_cur->sim_addr << ": ";
- *        stream << "(expected x" << std::setfill('0') << std::setw(4) << expected_next << ") ";
- *        stream << "(actual x" << std::setfill('0') << std::setw(4) << actual_next << ") ";
- *
- *        if(actual_next == expected_next) {
- *            if(list_cur != list) {
- *                std::string actual_str = createString(sim, sim.readMem(list_cur->sim_addr + 1));
- *                std::string const & expected_str = list_cur->name;
- *                stream << "(expected " << expected_str << ") (actual " << actual_str << ")";
- *
- *                if(actual_str != expected_str) {
- *                    grader.output(stream.str());
- *                    return ResultStatus::NO_MATCH;
- *                }
- *            }
- *        } else {
- *            if(expected_next == 0x0000) {
- *                grader.output(stream.str());
- *                return ResultStatus::INVALID_END;
- *            } else {
- *                grader.output(stream.str());
- *                return ResultStatus::NO_MATCH;
- *            }
- *        }
- *
- *        grader.output(stream.str());
- *        list_cur = list_cur->next;
- */
     }
 
     return ResultStatus::FULL_MATCH;
@@ -309,25 +273,7 @@ void Simple(lc3::sim & sim, Grader & grader, double total_points)
 
     auto solution = intersect(list1, list2);
 
-/*
- *    bool allocated_mem = false;
- *    for(uint16_t i = 0x4003; i < 0xFE00; i += 1) {
- *        if(sim.readMem(i) != 0x0000) {
- *            if(mem_map.find(i) == mem_map.end()) {
- *                allocated_mem = true;
- *                break;
- *            }
- *        }
- *    }
- *
- *    if(allocated_mem) {
- *        grader.verify("Did not duplicate nodes", false, total_points);
- *    } else {
- */
-        verify(success, sim, solution, total_points, grader);
-    /*
-     *}
-     */
+    verify(success, sim, solution, total_points, grader);
     deleteLists(solution);
 }
 

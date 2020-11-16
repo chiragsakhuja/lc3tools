@@ -3,47 +3,28 @@
  */
 #include "framework.h"
 
-bool compareOutput(std::vector<char> const & source, std::vector<char> const & target)
-{
-    if(source.size() < target.size()) { return false; }
-
-    bool found_match = false;
-    for(uint64_t i = 0; i < source.size(); ++i) {
-        found_match = true;
-        for(uint64_t j = 0; j < target.size() && i + j < source.size(); ++j) {
-            if(source[i + j] != target[j]) {
-                found_match = false;
-                break;
-            }
-        }
-    }
-
-    return found_match;
-}
-
-void verify(Grader & grader, bool success, std::string const & expected, std::vector<char> const & actual,
-    double points)
+void verify(Grader & grader, bool success, std::string const & expected, double points)
 {
     if(! success) { grader.error("Error", "Execution hit exception"); return; }
 
-    std::vector<char> expected_v(expected.begin(), expected.end());
-    bool found_match = compareOutput(actual, expected_v);
+    bool found_match = grader.checkContain(grader.getOutput(), expected);
     grader.verify("Correct", found_match, points);
 }
 
 void UpperCaseTest(lc3::sim & sim, Grader & grader, double total_points)
 {
-    grader.getInputter().setStringAfter("a", 50);
+    grader.setInputString("a");
+    grader.setInputCharDelay(50);
     bool success = sim.run();
-    verify(grader, success, "a is not a capital letter of the English alphabet", grader.getOutputter().getBuffer(),
-        total_points);
+    verify(grader, success, "a is not a capital letter of the English alphabet", total_points);
 }
 
 void LowerCaseTest(lc3::sim & sim, Grader & grader, double total_points)
 {
-    grader.getInputter().setStringAfter("A", 50);
+    grader.setInputString("A");
+    grader.setInputCharDelay(50);
     bool success = sim.run();
-    verify(grader, success, "The lower case of A is a", grader.getOutputter().getBuffer(), total_points);
+    verify(grader, success, "The lower case of A is a", total_points);
 }
 
 void testBringup(lc3::sim & sim)

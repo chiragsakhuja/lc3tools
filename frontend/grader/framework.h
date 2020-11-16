@@ -29,7 +29,6 @@ public:
 private:
     bool print_output;
     std::vector<char> display_buffer;
-
 };
 
 class StringInputter : public lc3::utils::IInputter
@@ -38,8 +37,8 @@ public:
     StringInputter(void) : pos(0), inst_delay(0), cur_inst_delay(0) { setString(""); }
     StringInputter(std::string const & source) : pos(0), inst_delay(0), cur_inst_delay(0) { setString(source); }
 
-    void setString(std::string const & source) { setStringAfter(source, 0); }
-    void setStringAfter(std::string const & source, uint32_t inst_count);
+    void setString(std::string const & source);
+    void setCharDelay(uint32_t inst_count);
     virtual void beginInput(void) override {}
     virtual bool getChar(char & c) override;
     virtual void endInput(void) override {}
@@ -86,18 +85,33 @@ private:
     std::pair<double, double> grade(TestCase const & test);
     void resetTestPoints(void);
 
+    double checkSimilarityHelper(std::vector<char> const & source, std::vector<char> const & target) const;
+
     friend int main(int argc, char * argv[]);
 
 public:
+    enum PreprocessType {
+        IgnoreCase = 1,
+        IgnoreWhitespace = 2,
+        IgnorePunctuation = 4
+    };
+
     Grader(bool print_output, uint32_t print_level, bool ignore_privilege, bool verbose,
         uint64_t seed, std::vector<std::string> const & obj_filenames);
 
-    BufferedPrinter & getOutputter(void) { return *printer; }
-    StringInputter & getInputter(void) { return *inputter; }
-    lc3::sim & getSimulator(void) { return *simulator; }
-
     void registerTest(std::string const & name, test_func_t test_func, double points, bool randomize);
     void verify(std::string const & label, bool pred, double points);
+
     void output(std::string const & message);
     void error(std::string const & label, std::string const & message);
+
+    void setInputString(std::string const & source) { inputter->setString(source); }
+    void setInputCharDelay(uint32_t inst_count) { inputter->setCharDelay(inst_count); }
+
+    std::string getOutput(void) const;
+    void clearOutput(void) { printer->clear(); }
+    bool checkMatch(std::string const & a, std::string const & b) const { return a == b; }
+    bool checkContain(std::string const & str, std::string const & expected_part) const;
+    double checkSimilarity(std::string const & source, std::string const & target) const;
+    std::string getPreprocessedString(std::string const & str, uint64_t type) const;
 };

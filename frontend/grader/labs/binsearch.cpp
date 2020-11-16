@@ -36,24 +36,12 @@ void fillMem(lc3::sim & sim, Node * root)
     }
 }
 
-bool compareOutput(std::vector<char> const & source, std::vector<char> const & target, bool full_match)
+std::ostream & operator<<(std::ostream & out, std::vector<char> const & data)
 {
-    if(full_match) { return source == target; }
-
-    if(source.size() > target.size()) { return false; }
-
-    uint64_t match_count = 0;
-    for(uint64_t i = 0; i < target.size() || match_count != source.size(); ++i) {
-        for(uint64_t j = 0; j < source.size(); ++j) {
-            if(source[j] == target[i]) {
-                ++match_count;
-            } else {
-                break;
-            }
-        }
+    for(char c : data) {
+        out << c;
     }
-
-    return match_count == source.size();
+    return out;
 }
 
 void OneTest(lc3::sim & sim, Grader & grader, double total_points)
@@ -65,34 +53,40 @@ void OneTest(lc3::sim & sim, Grader & grader, double total_points)
     fillMem(sim, &joe);
     sim.writeMem(0x4000, joe.node_addr);
 
-    // Setup
-    sim.runUntilInputPoll();
-    std::string expected = "Type a professor's name and then press enter:";
-    bool correct = compareOutput(grader.getOutputter().getBuffer(), std::vector<char>(expected.begin(), expected.end()), true);
+    bool success = true;
+    success &= sim.runUntilInputConsumed();
+    bool correct = grader.checkMatch(grader.getOutput(), "Type a professor's name and then press enter:");
+    grader.verify("Correct", success && correct, total_points / 5);
 
-    grader.getInputter().setString("Dan\n");
-    sim.runUntilInputPoll();
-    expected = "16000";
-    correct &= compareOutput(grader.getOutputter().getBuffer(), std::vector<char>(expected.begin(), expected.end()), false);
+    grader.clearOutput();
+    grader.setInputString("Dan\n");
+    success &= sim.runUntilInputConsumed();
+    correct = grader.checkContain(grader.getOutput(), "16000");
+    grader.verify("Dan", success && correct, total_points / 5);
 
-    grader.getInputter().setString("Dani\n");
-    sim.runUntilInputPoll();
-    expected = "No Entry";
-    correct &= compareOutput(grader.getOutputter().getBuffer(), std::vector<char>(expected.begin(), expected.end()), false);
+    grader.clearOutput();
+    grader.setInputString("Dani\n");
+    success &= sim.runUntilInputConsumed();
+    correct = grader.checkContain(grader.getOutput(), "No Entry");
+    grader.verify("Dani", success && correct, total_points / 5);
 
-    grader.getInputter().setString("Daniel\n");
-    sim.runUntilInputPoll();
-    expected = "24000";
-    correct &= compareOutput(grader.getOutputter().getBuffer(), std::vector<char>(expected.begin(), expected.end()), false);
+    grader.clearOutput();
+    grader.setInputString("Daniel\n");
+    success &= sim.runUntilInputConsumed();
+    correct = grader.checkContain(grader.getOutput(), "24000");
+    grader.verify("Daniel", success && correct, total_points / 5);
 
-    grader.getInputter().setString("dan\n");
-    sim.runUntilInputPoll();
-    expected = "No Entry";
-    correct &= compareOutput(grader.getOutputter().getBuffer(), std::vector<char>(expected.begin(), expected.end()), false);
+    grader.clearOutput();
+    grader.setInputString("dan\n");
+    success &= sim.runUntilInputConsumed();
+    correct = grader.checkContain(grader.getOutput(), "No Entry");
+    grader.verify("dan", success && correct, total_points / 5);
 
-    grader.getInputter().setString("d\n");
-    bool success = sim.runUntilHalt();
-    grader.verify("OneTest", success && ! sim.didExceedInstLimit() && correct, total_points);
+    grader.clearOutput();
+    grader.setInputString("d\n");
+    success &= sim.runUntilHalt();
+    grader.verify("Exit", success && ! sim.didExceedInstLimit(), 0);
+
 }
 
 void testBringup(lc3::sim & sim)

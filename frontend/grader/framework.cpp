@@ -6,7 +6,6 @@
 
 #include "common.h"
 #include "console_printer.h"
-#include "console_inputter.h"
 #include "framework.h"
 
 struct CLIArgs
@@ -51,18 +50,22 @@ void BufferedPrinter::newline(void)
     }
 }
 
-void StringInputter::setStringAfter(std::string const & source, uint32_t inst_count)
+void StringInputter::setString(std::string const & source)
 {
-    this->inst_delay = inst_count;
-    this->cur_inst_delay = inst_count;
     this->source = source;
     this->pos = 0;
 }
 
+void StringInputter::setCharDelay(uint32_t inst_count)
+{
+    this->inst_delay = inst_count;
+    this->cur_inst_delay = inst_count;
+}
+
 bool StringInputter::getChar(char & c)
 {
-    if(inst_delay > 0) {
-        --inst_delay;
+    if(cur_inst_delay > 0) {
+        --cur_inst_delay;
         return false;
     }
 
@@ -298,4 +301,101 @@ void Grader::error(std::string const & label, std::string const & message)
 void Grader::resetTestPoints(void)
 {
     test_points_earned = 0;
+}
+
+std::string Grader::getOutput(void) const
+{
+    auto const & buffer = printer->getBuffer();
+    return std::string{buffer.begin(), buffer.end()};
+}
+
+bool Grader::checkContain(std::string const & str, std::string const & expected_part) const
+{
+    if(expected_part.size() > str.size()) { return false; }
+
+    for(uint64_t i = 0; i < str.size(); ++i) {
+        uint64_t j;
+        for(j = 0; j < expected_part.size() && i + j < str.size(); ++j) {
+            if(str[i + j] != expected_part[j]) {
+                break;
+            }
+        }
+        if(j == expected_part.size()) { return true; }
+    }
+
+    return false;
+}
+
+double Grader::checkSimilarity(std::string const & source, std::string const & target) const
+{
+    std::vector<char> source_buffer{source.begin(), source.end()};
+    std::vector<char> target_buffer{target.begin(), target.end()};
+    return checkSimilarityHelper(source_buffer, target_buffer);
+}
+
+double Grader::checkSimilarityHelper(std::vector<char> const & source, std::vector<char> const & target) const
+{
+    if(source.size() > target.size()) {
+        return checkSimilarityHelper(target, source);
+    }
+
+    std::size_t min_size = source.size(), max_size = target.size();
+    std::vector<std::size_t> lev_dist(min_size + 1);
+
+    for(std::size_t i = 0; i < min_size + 1; i += 1) {
+        lev_dist[i] = i;
+    }
+
+    for(std::size_t j = 1; j < max_size + 1; j += 1) {
+        std::size_t prev_diag = lev_dist[0];
+        ++lev_dist[0];
+
+        for(std::size_t i = 1; i < min_size + 1; i += 1) {
+            std::size_t prev_diag_tmp = lev_dist[i];
+            if(source[i - 1] == target[j - 1]) {
+                lev_dist[i] = prev_diag;
+            } else {
+                lev_dist[i] = std::min(std::min(lev_dist[i - 1], lev_dist[i]), prev_diag) + 1;
+            }
+            prev_diag = prev_diag_tmp;
+        }
+    }
+
+    return 1 - static_cast<double>(lev_dist[min_size]) / min_size;
+}
+
+std::string Grader::getPreprocessedString(std::string const & str, uint64_t type) const
+{
+    std::vector<char> buffer{str.begin(), str.end()};
+
+    // Always remove trailing whitespace
+    for(uint64_t i = 0; i < buffer.size(); i += 1) {
+        if(buffer[i] == '\n') {
+            int64_t pos = i - 1;
+            while(pos >= 0 && std::isspace(buffer[pos])) {
+                buffer.erase(buffer.begin() + pos);
+                if(pos == 0 || buffer[pos - 1] == '\n') { break; }
+                --pos;
+            }
+        }
+    }
+
+    // Always remove new lines at end of file
+    for(int64_t i = buffer.size() - 1; i >= 0 && std::isspace(buffer[i]); --i) {
+        buffer.erase(buffer.begin() + i);
+    }
+
+    // Remove other characters
+    for(uint64_t i = 0; i < buffer.size(); i += 1) {
+        if((type & PreprocessType::IgnoreCase) && 'A' <= buffer[i] && buffer[i] <= 'Z') {
+            buffer[i] |= 0x20;
+        } else if(((type & PreprocessType::IgnoreWhitespace) && std::isspace(buffer[i])) ||
+                  ((type & PreprocessType::IgnorePunctuation) && std::ispunct(buffer[i])))
+        {
+            buffer.erase(buffer.begin() + i);
+            --i;
+        }
+    }
+
+    return std::string{buffer.begin(), buffer.end()};
 }
