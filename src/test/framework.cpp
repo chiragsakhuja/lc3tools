@@ -21,7 +21,7 @@ struct CLIArgs
     std::vector<std::string> test_filter;
 };
 
-void setup(Grader & grader);
+void setup(Tester & grader);
 void shutdown(void);
 void testBringup(lc3::sim & sim);
 void testTeardown(lc3::sim & sim);
@@ -149,7 +149,7 @@ int main(int argc, char * argv[])
     }
 
     if(valid_program) {
-        Grader grader(args.print_output, args.sim_print_level_override ? args.sim_print_level : 1,
+        Tester grader(args.print_output, args.sim_print_level_override ? args.sim_print_level : 1,
             args.ignore_privilege, args.grader_verbose, args.seed, obj_filenames);
         setup(grader);
 
@@ -171,7 +171,7 @@ TestCase::TestCase(std::string const & name, test_func_t test_func, double point
     : name(name), test_func(test_func), points(points), randomize(randomize)
 {}
 
-Grader::Grader(bool print_output, uint32_t print_level, bool ignore_privilege, bool verbose,
+Tester::Tester(bool print_output, uint32_t print_level, bool ignore_privilege, bool verbose,
     uint64_t seed, std::vector<std::string> const & obj_filenames)
     : print_output(print_output), ignore_privilege(ignore_privilege), verbose(verbose),
       print_level(print_level), seed(seed), obj_filenames(obj_filenames)
@@ -179,12 +179,12 @@ Grader::Grader(bool print_output, uint32_t print_level, bool ignore_privilege, b
     resetTestPoints();
 }
 
-void Grader::registerTest(std::string const & name, test_func_t test_func, double points, bool randomize)
+void Tester::registerTest(std::string const & name, test_func_t test_func, double points, bool randomize)
 {
     tests.emplace_back(name, test_func, points, randomize);
 }
 
-std::pair<double, double> Grader::gradeAll(void)
+std::pair<double, double> Tester::gradeAll(void)
 {
     double total_points_earned = 0, total_points = 0;
     for(TestCase const & test : tests) {
@@ -203,7 +203,7 @@ std::pair<double, double> Grader::gradeAll(void)
     return std::make_pair(total_points_earned, total_points);
 }
 
-std::pair<double, double> Grader::grade(std::string const & test_name)
+std::pair<double, double> Tester::grade(std::string const & test_name)
 {
     for(TestCase const & test : tests) {
         if(test.name == test_name) {
@@ -214,7 +214,7 @@ std::pair<double, double> Grader::grade(std::string const & test_name)
     return std::make_pair(0, 0);
 }
 
-std::pair<double, double> Grader::grade(TestCase const & test)
+std::pair<double, double> Tester::grade(TestCase const & test)
 {
     resetTestPoints();
 
@@ -274,7 +274,7 @@ std::pair<double, double> Grader::grade(TestCase const & test)
     return std::make_pair(points_earned, test.points);
 }
 
-void Grader::verify(std::string const & label, bool pred, double points)
+void Tester::verify(std::string const & label, bool pred, double points)
 {
     std::cout << "  " << label << " => ";
     if(pred) {
@@ -286,30 +286,30 @@ void Grader::verify(std::string const & label, bool pred, double points)
     std::cout << std::endl;
 }
 
-void Grader::output(std::string const & message)
+void Tester::output(std::string const & message)
 {
     if(verbose) {
         std::cout << "  " << message << "\n";
     }
 }
 
-void Grader::error(std::string const & label, std::string const & message)
+void Tester::error(std::string const & label, std::string const & message)
 {
     std::cout << "  " << label << " => " << message << " (+0 pts)\n";
 }
 
-void Grader::resetTestPoints(void)
+void Tester::resetTestPoints(void)
 {
     test_points_earned = 0;
 }
 
-std::string Grader::getOutput(void) const
+std::string Tester::getOutput(void) const
 {
     auto const & buffer = printer->getBuffer();
     return std::string{buffer.begin(), buffer.end()};
 }
 
-bool Grader::checkContain(std::string const & str, std::string const & expected_part) const
+bool Tester::checkContain(std::string const & str, std::string const & expected_part) const
 {
     if(expected_part.size() > str.size()) { return false; }
 
@@ -326,14 +326,14 @@ bool Grader::checkContain(std::string const & str, std::string const & expected_
     return false;
 }
 
-double Grader::checkSimilarity(std::string const & source, std::string const & target) const
+double Tester::checkSimilarity(std::string const & source, std::string const & target) const
 {
     std::vector<char> source_buffer{source.begin(), source.end()};
     std::vector<char> target_buffer{target.begin(), target.end()};
     return checkSimilarityHelper(source_buffer, target_buffer);
 }
 
-double Grader::checkSimilarityHelper(std::vector<char> const & source, std::vector<char> const & target) const
+double Tester::checkSimilarityHelper(std::vector<char> const & source, std::vector<char> const & target) const
 {
     if(source.size() > target.size()) {
         return checkSimilarityHelper(target, source);
@@ -364,7 +364,7 @@ double Grader::checkSimilarityHelper(std::vector<char> const & source, std::vect
     return 1 - static_cast<double>(lev_dist[min_size]) / min_size;
 }
 
-std::string Grader::getPreprocessedString(std::string const & str, uint64_t type) const
+std::string Tester::getPreprocessedString(std::string const & str, uint64_t type) const
 {
     std::vector<char> buffer{str.begin(), str.end()};
 

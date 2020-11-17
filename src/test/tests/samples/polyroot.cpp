@@ -5,16 +5,16 @@
 
 uint32_t sub_count;
 
-void verify(Grader & grader, lc3::sim & sim, bool success, uint16_t expected_val, uint64_t expected_sub_count,
+void verify(Tester & tester, lc3::sim & sim, bool success, uint16_t expected_val, uint64_t expected_sub_count,
     double points)
 {
-    if(! success) { grader.error("Error", "Execution hit exception"); return; }
+    if(! success) { tester.error("Error", "Execution hit exception"); return; }
 
-    grader.verify("Correct functionality", sim.readMem(0x4000) == expected_val, points * 0.8);
-    grader.verify("Correct time complexity", sub_count == expected_sub_count, points * 0.2);
+    tester.verify("Correct functionality", sim.readMem(0x4000) == expected_val, points * 0.8);
+    tester.verify("Correct time complexity", sub_count == expected_sub_count, points * 0.2);
 }
 
-void LinearTest(lc3::sim & sim, Grader & grader, double total_points)
+void LinearTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     sim.writeMem(0x4001, -100);
     sim.writeMem(0x4002, 100);
@@ -26,10 +26,10 @@ void LinearTest(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     // Verify
-    verify(grader, sim, success, static_cast<uint16_t>(-3), 24, total_points);
+    verify(tester, sim, success, static_cast<uint16_t>(-3), 24, total_points);
 }
 
-void QuadraticTest1(lc3::sim & sim, Grader & grader, double total_points)
+void QuadraticTest1(lc3::sim & sim, Tester & tester, double total_points)
 {
     sim.writeMem(0x4001, 2);
     sim.writeMem(0x4002, 100);
@@ -42,10 +42,10 @@ void QuadraticTest1(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     // Verify
-    verify(grader, sim, success, static_cast<uint16_t>(4), 21, total_points);
+    verify(tester, sim, success, static_cast<uint16_t>(4), 21, total_points);
 }
 
-void QuadraticTest2(lc3::sim & sim, Grader & grader, double total_points)
+void QuadraticTest2(lc3::sim & sim, Tester & tester, double total_points)
 {
     sim.writeMem(0x4001, -100);
     sim.writeMem(0x4002, 2);
@@ -58,7 +58,7 @@ void QuadraticTest2(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     // Verify
-    verify(grader, sim, success, static_cast<uint16_t>(0), 18, total_points);
+    verify(tester, sim, success, static_cast<uint16_t>(0), 18, total_points);
 }
 
 void subEnterCallback(lc3::core::CallbackType type, lc3::core::MachineState & state)
@@ -83,14 +83,14 @@ void testTeardown(lc3::sim & sim)
     (void) sim;
 }
 
-void setup(Grader & grader)
+void setup(Tester & tester)
 {
-    grader.registerTest("Linear", LinearTest, 30, false);
-    grader.registerTest("Linear", LinearTest, 10, true);
-    grader.registerTest("Quadratic 1", QuadraticTest1, 20, false);
-    grader.registerTest("Quadratic 1", QuadraticTest1, 10, true);
-    grader.registerTest("Quadratic 2", QuadraticTest2, 20, false);
-    grader.registerTest("Quadratic 2", QuadraticTest2, 10, true);
+    tester.registerTest("Linear", LinearTest, 30, false);
+    tester.registerTest("Linear", LinearTest, 10, true);
+    tester.registerTest("Quadratic 1", QuadraticTest1, 20, false);
+    tester.registerTest("Quadratic 1", QuadraticTest1, 10, true);
+    tester.registerTest("Quadratic 2", QuadraticTest2, 20, false);
+    tester.registerTest("Quadratic 2", QuadraticTest2, 10, true);
 }
 
 void shutdown(void) {}

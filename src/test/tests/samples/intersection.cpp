@@ -160,7 +160,7 @@ std::string createString(lc3::sim & sim, uint16_t addr)
     return stream.str();
 }
 
-ResultStatus verifySingleList(lc3::sim & sim, Node * list, Grader & grader)
+ResultStatus verifySingleList(lc3::sim & sim, Node * list, Tester & tester)
 {
     Node * list_cur = list;
 
@@ -175,12 +175,12 @@ ResultStatus verifySingleList(lc3::sim & sim, Node * list, Grader & grader)
             stream << "(expected " << expected_str << ") (actual " << actual_str << ")";
 
             if(actual_str != expected_str) {
-                grader.output(stream.str());
+                tester.output(stream.str());
                 return ResultStatus::NO_MATCH;
             }
         }
 
-        grader.output(stream.str());
+        tester.output(stream.str());
         list_cur = list_cur->next;
 
         if(expected_next == 0x0000 && actual_next != 0x0000) {
@@ -192,31 +192,31 @@ ResultStatus verifySingleList(lc3::sim & sim, Node * list, Grader & grader)
 }
 
 void verify(bool success, lc3::sim & sim, solution_t solution,
-    double points, Grader & grader)
+    double points, Tester & tester)
 {
-    if(! success) { grader.error("Error", "Execution hit exception"); }
-    if(sim.didExceedInstLimit()) { grader.error("Error", "Exceeded instruction limit"); return; }
+    if(! success) { tester.error("Error", "Execution hit exception"); }
+    if(sim.didExceedInstLimit()) { tester.error("Error", "Exceeded instruction limit"); return; }
 
-    auto result = verifySingleList(sim, std::get<0>(solution), grader);
-    grader.verify("List 1 correct", result == ResultStatus::FULL_MATCH, points / 3);
+    auto result = verifySingleList(sim, std::get<0>(solution), tester);
+    tester.verify("List 1 correct", result == ResultStatus::FULL_MATCH, points / 3);
     if(result != ResultStatus::FULL_MATCH) {
-        grader.verify("List 1 mostly correct", result == ResultStatus::INVALID_END, points / 12);
+        tester.verify("List 1 mostly correct", result == ResultStatus::INVALID_END, points / 12);
     }
 
-    result = verifySingleList(sim, std::get<1>(solution), grader);
-    grader.verify("List 2 correct", result == ResultStatus::FULL_MATCH, points / 3);
+    result = verifySingleList(sim, std::get<1>(solution), tester);
+    tester.verify("List 2 correct", result == ResultStatus::FULL_MATCH, points / 3);
     if(result != ResultStatus::FULL_MATCH) {
-        grader.verify("List 2 mostly correct", result == ResultStatus::INVALID_END, points / 12);
+        tester.verify("List 2 mostly correct", result == ResultStatus::INVALID_END, points / 12);
     }
 
-    result = verifySingleList(sim, std::get<2>(solution), grader);
-    grader.verify("List 3 correct", result == ResultStatus::FULL_MATCH, points / 3);
+    result = verifySingleList(sim, std::get<2>(solution), tester);
+    tester.verify("List 3 correct", result == ResultStatus::FULL_MATCH, points / 3);
     if(result != ResultStatus::FULL_MATCH) {
-        grader.verify("List 3 mostly correct", result == ResultStatus::INVALID_END, points / 12);
+        tester.verify("List 3 mostly correct", result == ResultStatus::INVALID_END, points / 12);
     }
 }
 
-void Example(lc3::sim & sim, Grader & grader, double total_points)
+void Example(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node * list1 = new Node("Chen", 0x4040, 0x4025);
     Node * tail = list1->append(new Node("Grey", 0x4140, 0x4077));
@@ -232,7 +232,7 @@ void Example(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     auto solution = intersect(list1, list2);
-    verify(success, sim, solution, total_points, grader);
+    verify(success, sim, solution, total_points, tester);
     deleteLists(solution);
 }
 
@@ -251,7 +251,7 @@ void buildMemMapSingleList(mem_map_t & mem_map, Node * list)
     }
 }
 
-void Simple(lc3::sim & sim, Grader & grader, double total_points)
+void Simple(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node * list1 = new Node("Arjun", 0x8000, 0x8010);
     Node * tail = list1->append(new Node("Chirag", 0x8100, 0x8110));
@@ -273,12 +273,12 @@ void Simple(lc3::sim & sim, Grader & grader, double total_points)
 
     auto solution = intersect(list1, list2);
 
-    verify(success, sim, solution, total_points, grader);
+    verify(success, sim, solution, total_points, tester);
     deleteLists(solution);
 }
 
 template<int EmptyListN>
-void EmptyList(lc3::sim & sim, Grader & grader, double total_points)
+void EmptyList(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node * list = new Node("Chirag", 0x8000, 0x8010);
     Node * tail = list->append(new Node("Evil", 0x8100, 0x8110));
@@ -296,11 +296,11 @@ void EmptyList(lc3::sim & sim, Grader & grader, double total_points)
 
     bool success = sim.runUntilHalt();
 
-    verify(success, sim, solution, total_points, grader);
+    verify(success, sim, solution, total_points, tester);
     deleteLists(solution);
 }
 
-void EmptyIntersection(lc3::sim & sim, Grader & grader, double total_points)
+void EmptyIntersection(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node * list1 = new Node("Arjun", 0x8000, 0x8010);
     Node * tail = list1->append(new Node("Chirag", 0x8100, 0x8110));
@@ -316,11 +316,11 @@ void EmptyIntersection(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     auto solution = intersect(list1, list2);
-    verify(success, sim, solution, total_points, grader);
+    verify(success, sim, solution, total_points, tester);
     deleteLists(solution);
 }
 
-void EmptyAll(lc3::sim & sim, Grader & grader, double total_points)
+void EmptyAll(lc3::sim & sim, Tester & tester, double total_points)
 {
     setupMem(sim, 0x4000, nullptr);
     setupMem(sim, 0x4001, nullptr);
@@ -328,11 +328,11 @@ void EmptyAll(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     auto solution = intersect(nullptr, nullptr);
-    verify(success, sim, solution, total_points, grader);
+    verify(success, sim, solution, total_points, tester);
     deleteLists(solution);
 }
 
-void MoveAll(lc3::sim & sim, Grader & grader, double total_points)
+void MoveAll(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node * list1 = new Node("Chirag", 0x8000, 0x8010);
     Node * list2 = new Node("Chirag", 0x8300, 0x8310);
@@ -343,11 +343,11 @@ void MoveAll(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     auto solution = intersect(list1, list2);
-    verify(success, sim, solution, total_points, grader);
+    verify(success, sim, solution, total_points, tester);
     deleteLists(solution);
 }
 
-void SimilarStrings(lc3::sim & sim, Grader & grader, double total_points)
+void SimilarStrings(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node * list1 = new Node("Arjun", 0x8000, 0x8010);
     Node * tail = list1->append(new Node("Chirag", 0x8100, 0x8110));
@@ -365,11 +365,11 @@ void SimilarStrings(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     auto solution = intersect(list1, list2);
-    verify(success, sim, solution, total_points, grader);
+    verify(success, sim, solution, total_points, tester);
     deleteLists(solution);
 }
 
-void SameStringAddr(lc3::sim & sim, Grader & grader, double total_points)
+void SameStringAddr(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node * list1 = new Node("Arjun", 0x8000, 0x8010);
     Node * tail = list1->append(new Node("Chirag", 0x8100, 0x8110));
@@ -386,11 +386,11 @@ void SameStringAddr(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     auto solution = intersect(list1, list2);
-    verify(success, sim, solution, total_points, grader);
+    verify(success, sim, solution, total_points, tester);
     deleteLists(solution);
 }
 
-void EmptyString(lc3::sim & sim, Grader & grader, double total_points)
+void EmptyString(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node * list1 = new Node("Arjun", 0x8000, 0x8010);
     Node * tail = list1->append(new Node("Chirag", 0x8100, 0x8110));
@@ -407,7 +407,7 @@ void EmptyString(lc3::sim & sim, Grader & grader, double total_points)
     bool success = sim.runUntilHalt();
 
     auto solution = intersect(list1, list2);
-    verify(success, sim, solution, total_points, grader);
+    verify(success, sim, solution, total_points, tester);
     deleteLists(solution);
 }
 
@@ -422,19 +422,19 @@ void testTeardown(lc3::sim & sim)
     (void) sim;
 }
 
-void setup(Grader & grader)
+void setup(Tester & tester)
 {
-    grader.registerTest("Example", Example, 10, false);
-    grader.registerTest("Example", Example, 10, true);
-    grader.registerTest("Simple", Simple, 10, false);
-    grader.registerTest("Empty List1", EmptyList<0>, 5, true);
-    grader.registerTest("Empty List2", EmptyList<1>, 5, true);
-    grader.registerTest("Empty Intersection", EmptyIntersection, 10, true);
-    grader.registerTest("Empty All", EmptyAll, 10, true);
-    grader.registerTest("Move All", MoveAll, 10, false);
-    grader.registerTest("Similar Strings", SimilarStrings, 10, false);
-    grader.registerTest("Same String Address", SameStringAddr, 10, false);
-    grader.registerTest("Empty String", EmptyString, 10, false);
+    tester.registerTest("Example", Example, 10, false);
+    tester.registerTest("Example", Example, 10, true);
+    tester.registerTest("Simple", Simple, 10, false);
+    tester.registerTest("Empty List1", EmptyList<0>, 5, true);
+    tester.registerTest("Empty List2", EmptyList<1>, 5, true);
+    tester.registerTest("Empty Intersection", EmptyIntersection, 10, true);
+    tester.registerTest("Empty All", EmptyAll, 10, true);
+    tester.registerTest("Move All", MoveAll, 10, false);
+    tester.registerTest("Similar Strings", SimilarStrings, 10, false);
+    tester.registerTest("Same String Address", SameStringAddr, 10, false);
+    tester.registerTest("Empty String", EmptyString, 10, false);
 }
 
 void shutdown(void) {}

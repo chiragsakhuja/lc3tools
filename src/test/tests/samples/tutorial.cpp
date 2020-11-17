@@ -3,16 +3,16 @@
  */
 #include "framework.h"
 
-void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
+void ZeroTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     sim.writeMem(0x3200, 0);
 
     sim.run();
 
-    grader.verify("ZeroTest", sim.readMem(0x3100) == 0, total_points);
+    tester.verify("ZeroTest", sim.readMem(0x3100) == 0, total_points);
 }
 
-void SimpleTest(lc3::sim & sim, Grader & grader, double total_points)
+void SimpleTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     // Initialize the values and compute their sum in C++ to compare against
     uint16_t values[] = {5, 4, 3, 2, 1, 0};
@@ -29,7 +29,7 @@ void SimpleTest(lc3::sim & sim, Grader & grader, double total_points)
     sim.run();
 
     // Verify result
-    grader.verify("SimpleTest", sim.readMem(0x3100) == real_sum, total_points);
+    tester.verify("SimpleTest", sim.readMem(0x3100) == real_sum, total_points);
 }
 
 void testBringup(lc3::sim & sim)
@@ -40,10 +40,10 @@ void testBringup(lc3::sim & sim)
 
 void testTeardown(lc3::sim & sim) { (void) sim; }
 
-void setup(Grader & grader)
+void setup(Tester & tester)
 {
-    grader.registerTest("Zero", ZeroTest, 10, false);
-    grader.registerTest("Simple", SimpleTest, 20, false);
+    tester.registerTest("Zero", ZeroTest, 10, false);
+    tester.registerTest("Simple", SimpleTest, 20, false);
 }
 
 void shutdown(void) {}

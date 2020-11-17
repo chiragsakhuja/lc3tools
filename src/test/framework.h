@@ -50,9 +50,9 @@ private:
     uint32_t inst_delay, cur_inst_delay;
 };
 
-class Grader;
+class Tester;
 
-using test_func_t = std::function<void(lc3::sim &, Grader &, double total_points)>;
+using test_func_t = std::function<void(lc3::sim &, Tester &, double total_points)>;
 
 struct TestCase
 {
@@ -64,7 +64,7 @@ struct TestCase
     TestCase(std::string const & name, test_func_t test_func, double points, bool randomize);
 };
 
-class Grader
+class Tester
 {
 private:
     std::vector<TestCase> tests;
@@ -96,7 +96,7 @@ public:
         IgnorePunctuation = 4
     };
 
-    Grader(bool print_output, uint32_t print_level, bool ignore_privilege, bool verbose,
+    Tester(bool print_output, uint32_t print_level, bool ignore_privilege, bool verbose,
         uint64_t seed, std::vector<std::string> const & obj_filenames);
 
     void registerTest(std::string const & name, test_func_t test_func, double points, bool randomize);

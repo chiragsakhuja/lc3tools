@@ -44,7 +44,7 @@ std::ostream & operator<<(std::ostream & out, std::vector<char> const & data)
     return out;
 }
 
-void OneTest(lc3::sim & sim, Grader & grader, double total_points)
+void OneTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node ali{0x4009, 0x5000, nullptr, nullptr, "Ali", 18000};
     Node dan{0x400d, 0x5004, nullptr, nullptr, "Dan", 16000};
@@ -55,37 +55,37 @@ void OneTest(lc3::sim & sim, Grader & grader, double total_points)
 
     bool success = true;
     success &= sim.runUntilInputConsumed();
-    bool correct = grader.checkMatch(grader.getOutput(), "Type a professor's name and then press enter:");
-    grader.verify("Correct", success && correct, total_points / 5);
+    bool correct = tester.checkMatch(tester.getOutput(), "Type a professor's name and then press enter:");
+    tester.verify("Correct", success && correct, total_points / 5);
 
-    grader.clearOutput();
-    grader.setInputString("Dan\n");
+    tester.clearOutput();
+    tester.setInputString("Dan\n");
     success &= sim.runUntilInputConsumed();
-    correct = grader.checkContain(grader.getOutput(), "16000");
-    grader.verify("Dan", success && correct, total_points / 5);
+    correct = tester.checkContain(tester.getOutput(), "16000");
+    tester.verify("Dan", success && correct, total_points / 5);
 
-    grader.clearOutput();
-    grader.setInputString("Dani\n");
+    tester.clearOutput();
+    tester.setInputString("Dani\n");
     success &= sim.runUntilInputConsumed();
-    correct = grader.checkContain(grader.getOutput(), "No Entry");
-    grader.verify("Dani", success && correct, total_points / 5);
+    correct = tester.checkContain(tester.getOutput(), "No Entry");
+    tester.verify("Dani", success && correct, total_points / 5);
 
-    grader.clearOutput();
-    grader.setInputString("Daniel\n");
+    tester.clearOutput();
+    tester.setInputString("Daniel\n");
     success &= sim.runUntilInputConsumed();
-    correct = grader.checkContain(grader.getOutput(), "24000");
-    grader.verify("Daniel", success && correct, total_points / 5);
+    correct = tester.checkContain(tester.getOutput(), "24000");
+    tester.verify("Daniel", success && correct, total_points / 5);
 
-    grader.clearOutput();
-    grader.setInputString("dan\n");
+    tester.clearOutput();
+    tester.setInputString("dan\n");
     success &= sim.runUntilInputConsumed();
-    correct = grader.checkContain(grader.getOutput(), "No Entry");
-    grader.verify("dan", success && correct, total_points / 5);
+    correct = tester.checkContain(tester.getOutput(), "No Entry");
+    tester.verify("dan", success && correct, total_points / 5);
 
-    grader.clearOutput();
-    grader.setInputString("d\n");
+    tester.clearOutput();
+    tester.setInputString("d\n");
     success &= sim.runUntilHalt();
-    grader.verify("Exit", success && ! sim.didExceedInstLimit(), 0);
+    tester.verify("Exit", success && ! sim.didExceedInstLimit(), 0);
 
 }
 
@@ -100,10 +100,10 @@ void testTeardown(lc3::sim & sim)
     (void) sim;
 }
 
-void setup(Grader & grader)
+void setup(Tester & tester)
 {
-    grader.registerTest("One", OneTest, 60, false);
-    grader.registerTest("One", OneTest, 40, true);
+    tester.registerTest("One", OneTest, 60, false);
+    tester.registerTest("One", OneTest, 40, true);
 }
 
 void shutdown(void) {}

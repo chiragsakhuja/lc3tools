@@ -20,10 +20,10 @@ void setupMem(lc3::sim & sim, std::vector<int16_t> const & data)
 }
 
 void verify(bool success, lc3::sim & sim, std::vector<int16_t> const & data, std::string const & label,
-    double points, Grader & grader)
+    double points, Tester & tester)
 {
-    if(! success) { grader.error(label, "Execution hit exception"); return; }
-    if(sim.didExceedInstLimit()) { grader.error(label, "Exceeded instruction limit"); return; }
+    if(! success) { tester.error(label, "Execution hit exception"); return; }
+    if(sim.didExceedInstLimit()) { tester.error(label, "Exceeded instruction limit"); return; }
 
     std::vector<int16_t> sorted = data;
     std::sort(sorted.begin(), sorted.end());
@@ -37,18 +37,18 @@ void verify(bool success, lc3::sim & sim, std::vector<int16_t> const & data, std
         stream << "[x" << addr << "]";
         stream << " Actual: x" << std::setfill('0') << std::setw(4) << actual;
         stream << "; Expected: x" << std::setfill('0') << std::setw(4) << expected;
-        grader.output(stream.str());
+        tester.output(stream.str());
 
         full_match &= actual == expected;
         ++addr;
     }
 
     if(full_match) {
-        grader.verify(label, full_match, points);
+        tester.verify(label, full_match, points);
     }
 }
 
-void ExampleTest(lc3::sim & sim, Grader & grader, double total_points)
+void ExampleTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     std::vector<int16_t> data = {
         static_cast<int16_t>(0xFFFF),
@@ -72,10 +72,10 @@ void ExampleTest(lc3::sim & sim, Grader & grader, double total_points)
     setupMem(sim, data);
 
     bool success = sim.runUntilHalt();
-    verify(success, sim, data, "Sorted provided example", total_points, grader);
+    verify(success, sim, data, "Sorted provided example", total_points, tester);
 }
 
-void PositiveTest(lc3::sim & sim, Grader & grader, double total_points)
+void PositiveTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     std::vector<int16_t> data = {
         0x0010,
@@ -99,10 +99,10 @@ void PositiveTest(lc3::sim & sim, Grader & grader, double total_points)
     setupMem(sim, data);
 
     bool success = sim.runUntilHalt();
-    verify(success, sim, data, "Sorted positive numbers", total_points, grader);
+    verify(success, sim, data, "Sorted positive numbers", total_points, tester);
 }
 
-void NegativeTest(lc3::sim & sim, Grader & grader, double total_points)
+void NegativeTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     std::vector<int16_t> data = {
         static_cast<int16_t>(0xFFFF),
@@ -126,10 +126,10 @@ void NegativeTest(lc3::sim & sim, Grader & grader, double total_points)
     setupMem(sim, data);
 
     bool success = sim.runUntilHalt();
-    verify(success, sim, data, "Sorted negative numbers", total_points, grader);
+    verify(success, sim, data, "Sorted negative numbers", total_points, tester);
 }
 
-void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
+void ZeroTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     std::vector<int16_t> data = {
         static_cast<int16_t>(0x0000),
@@ -153,10 +153,10 @@ void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
     setupMem(sim, data);
 
     bool success = sim.runUntilHalt();
-    verify(success, sim, data, "Sorted zeroes", total_points, grader);
+    verify(success, sim, data, "Sorted zeroes", total_points, tester);
 }
 
-void NoChangeTest(lc3::sim & sim, Grader & grader, double total_points)
+void NoChangeTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     std::vector<int16_t> data = {
         static_cast<int16_t>(0xFFF8),
@@ -181,10 +181,10 @@ void NoChangeTest(lc3::sim & sim, Grader & grader, double total_points)
 
     bool success = sim.runUntilHalt();
 
-    verify(success, sim, data, "Did not change already-sorted list", total_points, grader);
+    verify(success, sim, data, "Did not change already-sorted list", total_points, tester);
 }
 
-void OverflowTest(lc3::sim & sim, Grader & grader, double total_points)
+void OverflowTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     std::vector<int16_t> data = {
         static_cast<int16_t>(0x7FFF),
@@ -209,7 +209,7 @@ void OverflowTest(lc3::sim & sim, Grader & grader, double total_points)
 
     bool success = sim.runUntilHalt();
 
-    verify(success, sim, data, "Sorted overflowing numbers", total_points, grader);
+    verify(success, sim, data, "Sorted overflowing numbers", total_points, tester);
 }
 
 void testBringup(lc3::sim & sim)
@@ -223,16 +223,16 @@ void testTeardown(lc3::sim & sim)
     (void) sim;
 }
 
-void setup(Grader & grader)
+void setup(Tester & tester)
 {
-    grader.registerTest("Example", ExampleTest, 20, false);
-    grader.registerTest("Example", ExampleTest, 10, true);
-    grader.registerTest("Positive", PositiveTest, 10, false);
-    grader.registerTest("Negative", NegativeTest, 10, false);
-    grader.registerTest("Zero", ZeroTest, 5, false);
-    grader.registerTest("Zero", ZeroTest, 5, true);
-    grader.registerTest("NoChange", NoChangeTest, 30, false);
-    grader.registerTest("Overflow", OverflowTest, 10, false);
+    tester.registerTest("Example", ExampleTest, 20, false);
+    tester.registerTest("Example", ExampleTest, 10, true);
+    tester.registerTest("Positive", PositiveTest, 10, false);
+    tester.registerTest("Negative", NegativeTest, 10, false);
+    tester.registerTest("Zero", ZeroTest, 5, false);
+    tester.registerTest("Zero", ZeroTest, 5, true);
+    tester.registerTest("NoChange", NoChangeTest, 30, false);
+    tester.registerTest("Overflow", OverflowTest, 10, false);
 }
 
 void shutdown(void) {}

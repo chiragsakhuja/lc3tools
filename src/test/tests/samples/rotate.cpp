@@ -11,24 +11,24 @@ static constexpr uint64_t rotate(uint64_t value, uint64_t amount)
 }
 
 void verify(bool success, bool exceeded_inst_limit, uint32_t expected, uint32_t actual, std::string const & label,
-    double points, Grader & grader)
+    double points, Tester & tester)
 {
     std::stringstream stream;
     stream << "Expected: " << expected << "; Actual: " << actual;
-    grader.output(stream.str());
+    tester.output(stream.str());
 
     if(success) {
         if(! exceeded_inst_limit) {
-            grader.verify(label, actual == expected, points);
+            tester.verify(label, actual == expected, points);
         } else {
-            grader.error(label, "Exceeded instruction limit");
+            tester.error(label, "Exceeded instruction limit");
         }
     } else {
-        grader.error(label, "Execution failed");
+        tester.error(label, "Execution failed");
     }
 }
 
-void OneByOneTest(lc3::sim & sim, Grader & grader, double total_points)
+void OneByOneTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     uint64_t value = 0x8000;
     uint64_t amount = 0x1;
@@ -40,10 +40,10 @@ void OneByOneTest(lc3::sim & sim, Grader & grader, double total_points)
     uint32_t expected = rotate(value, amount);
     uint32_t actual = sim.readMem(0x3102);
 
-    verify(success, exceeded_inst_limit, expected, actual, "OneByOne", total_points, grader);
+    verify(success, exceeded_inst_limit, expected, actual, "OneByOne", total_points, tester);
 }
 
-void AllByOneTest(lc3::sim & sim, Grader & grader, double total_points)
+void AllByOneTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     for(uint64_t i = 1; i < 16; i += 1) {
         sim.writePC(0x3000);
@@ -59,11 +59,11 @@ void AllByOneTest(lc3::sim & sim, Grader & grader, double total_points)
         uint32_t expected = rotate(value, amount);
         uint32_t actual = sim.readMem(0x3102);
 
-        verify(success, exceeded_inst_limit, expected, actual, "AllByOne", total_points / 15, grader);
+        verify(success, exceeded_inst_limit, expected, actual, "AllByOne", total_points / 15, tester);
     }
 }
 
-void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
+void ZeroTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     uint64_t values[] = {0, 0x8000};
     uint64_t amounts[] = {0, 1};
@@ -81,12 +81,12 @@ void ZeroTest(lc3::sim & sim, Grader & grader, double total_points)
             uint32_t expected = rotate(values[i], amounts[j]);
             uint32_t actual = sim.readMem(0x3102);
 
-            verify(success, exceeded_inst_limit, expected, actual, "Zero", total_points, grader);
+            verify(success, exceeded_inst_limit, expected, actual, "Zero", total_points, tester);
         }
     }
 }
 
-void OnesTest(lc3::sim & sim, Grader & grader, double total_points)
+void OnesTest(lc3::sim & sim, Tester & tester, double total_points)
 {
     for(uint64_t i = 0; i <= 16; i += 1) {
         sim.writePC(0x3000);
@@ -102,7 +102,7 @@ void OnesTest(lc3::sim & sim, Grader & grader, double total_points)
         uint32_t expected = rotate(value, amount);
         uint32_t actual = sim.readMem(0x3102);
 
-        verify(success, exceeded_inst_limit, expected, actual, "Ones", total_points / 17, grader);
+        verify(success, exceeded_inst_limit, expected, actual, "Ones", total_points / 17, tester);
     }
 }
 
@@ -117,14 +117,14 @@ void testTeardown(lc3::sim & sim)
     (void) sim;
 }
 
-void setup(Grader & grader)
+void setup(Tester & tester)
 {
-    grader.registerTest("OneByOne", OneByOneTest, 10, false);
-    grader.registerTest("AllByOne", AllByOneTest, 40, false);
-    grader.registerTest("AllByOne", AllByOneTest, 10, true);
-    grader.registerTest("Zero", ZeroTest, 20, false);
-    grader.registerTest("Zero", ZeroTest, 10, true);
-    grader.registerTest("Ones", OnesTest, 10, false);
+    tester.registerTest("OneByOne", OneByOneTest, 10, false);
+    tester.registerTest("AllByOne", AllByOneTest, 40, false);
+    tester.registerTest("AllByOne", AllByOneTest, 10, true);
+    tester.registerTest("Zero", ZeroTest, 20, false);
+    tester.registerTest("Zero", ZeroTest, 10, true);
+    tester.registerTest("Ones", OnesTest, 10, false);
 }
 
 void shutdown(void) {}
