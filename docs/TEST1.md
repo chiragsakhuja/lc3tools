@@ -17,7 +17,7 @@ built, as per the [build document](BUILD.md), the executables will be in the
 
 The tutorial below will help you get bootstrapped in writing graders.
 Details on the grading framework and full API can be found in the
-[API document](API.md).
+[API document](API1.md).
 
 # Tutorial
 This tutorial will cover all the steps necessary to create a grader for a simple
@@ -158,7 +158,7 @@ VERIFY(sim.getMem(0x3100) == 0);
 The `VERIFY` macro is part of the grading framework and is used to determine
 how many points a test case will earn if correct. More information on how
 points are assigned can be found in the
-[API document](API.md#grading-framework).
+[API document](API1.md#grading-framework).
 
 That's it! It only took 5 lines to create a simple test case. As a final step,
 the test case must be registered with the grading framework and assigned a
@@ -284,7 +284,7 @@ This tutorial covered a small subset of the capabilities of the grading
 framework and API. Some other features include: easy-to-use I/O checks; hooks
 before and after instruction execution, subroutine calls, interrupts, etc.; and
 control over every element of the LC-3 state. Full details can be found in the
-[API document](API.md).
+[API document](API1.md).
 
 ## Appendix: Common Paradigms
 There are a couple of common paradigms that can be found across test cases, such
@@ -293,7 +293,7 @@ as I/O grading.
 ### Successful Exit Paradigm
 There are typically two conditions for a successful exit: the program did not
 trigger any exceptions and it did not exceed the instruction limit. The variants
-of the `run` functions, detailed in the [API document](API.md), return a boolean
+of the `run` functions, detailed in the [API document](API1.md), return a boolean
 based on the status of execution. If the return value is `true`, the program
 did not trigger any exceptions. The `didExceedInstLimit` function returns
 whether or not the program exceeded the instruction limit. Assuming the limit
@@ -324,7 +324,7 @@ Enter a character (q to exit): q
 ```
 
 A test case could be written using the I/O API, detailed in the [API
-document](API.md).
+document](API1.md).
 
 ```
 sim.runUntilInputPoll();
