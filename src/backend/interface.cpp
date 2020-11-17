@@ -108,9 +108,9 @@ bool lc3::sim::runUntilHalt(void)
     return runHelper();
 }
 
-bool lc3::sim::runUntilInputConsumed(void)
+bool lc3::sim::runUntilInputRequested(void)
 {
-    run_type = RunType::UNTIL_INPUT_CONSUMED;
+    run_type = RunType::UNTIL_INPUT_REQUESTED;
     return runHelper();
 }
 
@@ -266,7 +266,7 @@ void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType t
             }
         }
     } else if(type == CallbackType::INPUT_REQUEST) {
-        if(sim_inst->run_type == RunType::UNTIL_INPUT_CONSUMED) {
+        if(sim_inst->run_type == RunType::UNTIL_INPUT_REQUESTED) {
             sim_inst->simulator.triggerSuspend();
         }
     }

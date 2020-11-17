@@ -37,7 +37,7 @@ namespace lc3
         void setRunInstLimit(uint64_t inst_limit);
         bool run(void);
         bool runUntilHalt(void);
-        bool runUntilInputConsumed(void);
+        bool runUntilInputRequested(void);
         void pause(void);
         bool stepIn(void);
         bool stepOver(void);
@@ -85,7 +85,7 @@ namespace lc3
 
         enum class RunType
         {
-              UNTIL_INPUT_CONSUMED
+              UNTIL_INPUT_REQUESTED
             , UNTIL_HALT
             , UNTIL_DEPTH
             , NORMAL

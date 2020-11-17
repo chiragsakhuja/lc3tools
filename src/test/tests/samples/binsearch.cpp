@@ -54,31 +54,31 @@ void OneTest(lc3::sim & sim, Tester & tester, double total_points)
     sim.writeMem(0x4000, joe.node_addr);
 
     bool success = true;
-    success &= sim.runUntilInputConsumed();
+    success &= sim.runUntilInputRequested();
     bool correct = tester.checkMatch(tester.getOutput(), "Type a professor's name and then press enter:");
     tester.verify("Correct", success && correct, total_points / 5);
 
     tester.clearOutput();
     tester.setInputString("Dan\n");
-    success &= sim.runUntilInputConsumed();
+    success &= sim.runUntilInputRequested();
     correct = tester.checkContain(tester.getOutput(), "16000");
     tester.verify("Dan", success && correct, total_points / 5);
 
     tester.clearOutput();
     tester.setInputString("Dani\n");
-    success &= sim.runUntilInputConsumed();
+    success &= sim.runUntilInputRequested();
     correct = tester.checkContain(tester.getOutput(), "No Entry");
     tester.verify("Dani", success && correct, total_points / 5);
 
     tester.clearOutput();
     tester.setInputString("Daniel\n");
-    success &= sim.runUntilInputConsumed();
+    success &= sim.runUntilInputRequested();
     correct = tester.checkContain(tester.getOutput(), "24000");
     tester.verify("Daniel", success && correct, total_points / 5);
 
     tester.clearOutput();
     tester.setInputString("dan\n");
-    success &= sim.runUntilInputConsumed();
+    success &= sim.runUntilInputRequested();
     correct = tester.checkContain(tester.getOutput(), "No Entry");
     tester.verify("dan", success && correct, total_points / 5);
 
