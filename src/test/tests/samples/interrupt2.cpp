@@ -8,10 +8,6 @@
 
 #include "framework.h"
 
-static constexpr double correct_thresh = 1.0 - 0.00001;
-static constexpr double close_thresh = 0.9;
-static constexpr double partial_thresh = 0.2;
-
 void verify(Tester & tester, bool success, std::string const & expected, std::string const & label, bool not_present,
     double points)
 {

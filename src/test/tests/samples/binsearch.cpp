@@ -86,7 +86,6 @@ void OneTest(lc3::sim & sim, Tester & tester, double total_points)
     tester.setInputString("d\n");
     success &= sim.runUntilHalt();
     tester.verify("Exit", success && ! sim.didExceedInstLimit(), 0);
-
 }
 
 void testBringup(lc3::sim & sim)
