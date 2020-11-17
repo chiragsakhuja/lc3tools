@@ -7,9 +7,9 @@ add_library(framework OBJECT framework.cpp framework.h)
 
 # get all necessary files
 if(BUILD_SAMPLES)
-    file(GLOB TEST_SOURCES testers/*.cpp testers/samples/*.cpp)
+    file(GLOB TEST_SOURCES tests/*.cpp tests/samples/*.cpp)
 else()
-    file(GLOB TEST_SOURCES testers/*.cpp)
+    file(GLOB TEST_SOURCES tests/*.cpp)
 endif()
 
 foreach(TEST_SOURCE ${TEST_SOURCES})
