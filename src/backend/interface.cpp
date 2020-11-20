@@ -348,7 +348,7 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
         return {};
     }
 
-    printer.print("attemping to convert " + bin_filename + " into " + obj_filename);
+    printer.print("attempting to convert " + bin_filename + " into " + obj_filename);
     printer.newline();
 
     std::shared_ptr<std::stringstream> out_stream;
