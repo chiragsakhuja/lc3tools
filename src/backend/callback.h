@@ -40,9 +40,9 @@ namespace core
 namespace std
 {
     template<>
-    struct std::hash<lc3::core::CallbackType> {
+    struct hash<lc3::core::CallbackType> {
         size_t operator()(lc3::core::CallbackType const & x) const {
-            return static_cast<size_t>(x);
+            return std::hash<size_t>()(static_cast<size_t>(x));
         }
     };
 };
