@@ -1,3 +1,7 @@
+**Disclaimer:** This document describes the testing framework for version
+v1.0.6, which is deprecated. To see details on the latest testing framework, see
+[this document](TEST.md).
+
 # Graders
 Graders are standalone executables that consume LC-3 source code in binary
 (`*.bin`) or assembly (`*.asm`), perform a series of tests, and output a report.

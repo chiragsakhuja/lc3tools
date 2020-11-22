@@ -1,3 +1,6 @@
+**Disclaimer:** This document reflects the API for version v1.0.6, which is
+deprecated. To see details on the latest API, see [this document](API1.md).
+
 # Grading API
 The purpose of this document is to describe the subset of the LC3Tools API that
 is relevant to grading. The full API can be found in `src/backend/interface.h`.
