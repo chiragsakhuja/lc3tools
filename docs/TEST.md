@@ -1,7 +1,7 @@
 **Disclaimer:** This document reflects the testing framework as of
 release v2.0.0, which is incompatible with prior versions. To see details on the
 previous testing framework, which is now deprecated, see [this
-document](TEST1.MD).
+document](TEST1.md).
 
 # Unit tests
 Unit tests in this framework are standalone executables that consume LC-3 source
@@ -21,15 +21,16 @@ resources](TEST.md#additional-resources) section.
 Generally there will be a single unit test for each assignment. The unit test
 will consist of a set of test cases. The unit test executable consumes a single
 student's assignment and outputs a report for that student. In practice, the
-instructor will need to write scripts that invokes the unit test for each
-student and then aggregates the results from the reports. At UT Austin we use
+instructor will need to write scripts that invoke the unit test for each
+student and then aggregate the results from the reports. At UT Austin we use
 Canvas to distribute grades, which has its own API. This project will soon
 include a comprehensive script to interface with Canvas that runs unit tests for
 every student, aggregates the results, and uploads the grades to Canvas with the
 report attached.
 
 Unit test source files live in the `src/test/tests` directory. When a unit test
-is built, as per the [build document](BUILD.md), the executable will be
+is built, as per the [build
+document](BUILD.md#command-line-tools-and-unit-tests), the executable will be
 generated in the `build/bin` directory with the same name as the source file for
 the unit test (e.g. a unit test labeled `assignment1.cpp` will produce an
 executable called `assignment1`).
@@ -37,12 +38,11 @@ executable called `assignment1`).
 # Tutorial
 This tutorial covers all the steps necessary to create a unit test for a simple
 assignment. This tutorial assumes you are using a *NIX system (macOS or Linux),
-although Windows works fine. For a Windows system, adjust the build commands as
+although Windows also works. For a Windows system, adjust the build commands as
 described in the [build document](BUILD.md#windows).
 
 **It is recommended that you follow this tutorial from top to bottom to get a
-better understanding of how to utilize the testing framework.** We will walk
-through a sample assignment.
+better understanding of how to utilize the testing framework.**
 
 ## Assignment Description
 Write an LC-3 assembly program that performs unsigned addition on a set of
@@ -104,8 +104,9 @@ void shutdown(void) { }
 
 To build the unit test, you must first rerun CMake to make it aware of the new
 unit test file. Then you may build the unit test. Navigate to the `build/`
-directory that was created during the [initial build](BUILD.md) and invoke the
-following commands:
+directory that was created during the [initial
+build](BUILD.md#command-line-tools-and-unit-tests) and invoke the following
+commands:
 
 ```
 cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -155,7 +156,7 @@ argument) to 0 (i.e.  the second argument).
 
 Next the test case should actually run the input program so it can verify the
 results. It is usually best to restrict the total number of instructions that
-are executed so that the grader terminates even if the input program does not.
+are executed so that the unit test terminates even if the input program does not.
 To be safe, set the instruction limit to 50000 instructions (which will execute
 in well under 1 second) and then run the input program. Add the following lines
 to the `ZeroTest` function.
@@ -173,7 +174,7 @@ Finally, verify that the result is correct by adding the following line to the
 `ZeroTest` function:
 
 ```
-tester.verify("Correct", sim.readMem(0x3100) == 0, total_points);
+tester.verify("Is Zero?", sim.readMem(0x3100) == 0, total_points);
 ```
 
 The `readMem` function returns the value at location 0x3100.
@@ -186,8 +187,8 @@ The `verify` function takes the following three arguments:
 
 A single test case may invoke the verify function any number of times and
 allocate any amount of points to each check. In this case there is only a single
-check, the final value in memory location 0x3100, so assign the full number of
-points to the check.
+check, that the final value in memory location 0x3100, so assign the full number
+of points to the check.
 
 That's it! It only took 5 lines to create a simple test case. The last step is
 to make sure the testing framework invokes the test case. To do this, add the
@@ -223,11 +224,11 @@ build/bin/tutorial tutorial_sol.asm
 The output should be as follows:
 
 ```
-attemping to assemble tutorial_sol.asm into tutorial_sol.obj
+attempting to assemble tutorial_sol.asm into tutorial_sol.obj
 assembly successful
 ==========
 Test: Zero Test
-  Correct => Pass (+10 pts)
+  Is Zero? => Pass (+10 pts)
 Test points earned: 10/10 (100%)
 ==========
 ==========
@@ -257,7 +258,7 @@ void SimpleTest(lc3::sim & sim, Tester & tester, double total_points)
     sim.run();
 
     // Verify result
-    tester.verify("Correct", sim.readMem(0x3100) == real_sum, total_points);
+    tester.verify("Is Correct?", sim.readMem(0x3100) == real_sum, total_points);
 }
 ```
 
@@ -268,18 +269,18 @@ line to the `setup` function.
 tester.registerTest("Simple Test", SimpleTest, 20, false);
 ```
 
-After rebuilding the grader and running it, you should see the following output:
+After rebuilding the unit test and running it, you should see the following output:
 
 ```
-attemping to assemble tutorial_sol.asm into tutorial_sol.obj
+attempting to assemble tutorial_sol.asm into tutorial_sol.obj
 assembly successful
 ==========
 Test: Zero Test
-  Correct => Pass (+10 pts)
+  Is Zero? => Pass (+10 pts)
 Test points earned: 10/10 (100%)
 ==========
 Test: Simple Test
-  Correct => Pass (+20 pts)
+  Is Correct? => Pass (+20 pts)
 Test points earned: 20/20 (100%)
 ==========
 ==========
@@ -311,10 +312,10 @@ use.
 The full source code of this tutorial can be found in
 [src/test/tests/samples/tutorial_grader.cpp](https://github.com/chiragsakhuja/lc3tools/blob/master/src/test/tests/samples/tutorial_grader.cpp).
 This tutorial covered a small subset of the capabilities of the unit testing
-framework and API. Some other features include: easy-to-use I/O checks; hooks
-before and after instruction execution, subroutine calls, interrupts, etc.; and
-control over every element of the LC-3 state. Full details can be found in the
-[API document](API.md).
+framework and API. Some other features include: easy-to-use I/O checks;
+callbacks before and after instruction execution, subroutine calls, interrupts,
+etc.; and control over every element of the LC-3 state. Full details can be
+found in the [API document](API.md).
 
 ## Appendix: Common Paradigms
 Some common paradigms can be found across test cases, such as supplying input
@@ -336,7 +337,7 @@ verify the program behaved correctly.
 
 ```
 bool success = sim.runUntilHalt();
-tester.verify("Correct execution", success & ! sim.didExceedInstLimit(), 0);
+tester.verify("Correct Execution?", success && ! sim.didExceedInstLimit(), 0);
 ```
 
 ### I/O Paradigm (Polling)
@@ -354,33 +355,37 @@ Enter a character (q to exit): q
 ```
 
 A test case could be written using the I/O API, detailed in the [API
-document](API.md).
+document](API.md#automated-input).
 
 ```
 bool success = true;
+bool check;
 
 success &= sim.runUntilInputRequested();
-tester.checkMatch(tester.getOutput(), "Enter a character (q to exit): ");
+check = tester.checkMatch(tester.getOutput(), "Enter a character (q to exit): ");
+tester.verify("Is Prompt Correct?", check, total_points / 4);
 
 tester.clearOutput();
 tester.setInputString("a");
 success &= sim.runUntilInputRequested();
-tester.checkContain(tester.getOutput(), "aaaaa");
+check = tester.checkContain(tester.getOutput(), "aaaaa");
+tester.verify("Is 'a' Correct?", check, total_points / 4);
 
 tester.clearOutput();
 tester.setInputString("b");
 success &= sim.runUntilInputRequested();
-tester.checkContain(tester.getOutput(), "bbbbb");
+check = tester.checkContain(tester.getOutput(), "bbbbb");
+tester.verify("Is 'b' Correct?", check, total_points / 4);
 
 tester.setInputString("q");
 success &= sim.runUntilHalt();
-tester.verify("Correct execution", success && ! sim.didExceedInstLimit(), total_points);
+tester.verify("Correct execution?", success && ! sim.didExceedInstLimit(), total_points / 4);
 ```
 
-The first two lines verify that the prompt is correct, before sending any input.
-`runUntilInputRequested` allows the entire prompt to print and then pauses
-simulation as soon as any input is requested. Thus, the only output that has
-been generated so far will be the prompt.
+The first set of lines verify that the prompt is correct before sending any
+input.  `runUntilInputRequested` allows the entire prompt to print and then
+pauses simulation as soon as any input is requested. Thus, the only output that
+has been generated so far will be the prompt.
 
 The next set of lines clears the output buffer, which erases the prompt and any
 other output the simulation has created thus far. Then the input can be set.
@@ -390,26 +395,26 @@ sequence is checked for the input "a" and "b".
 The final set of lines verifies that the program exits properly as described in
 the [Successful Exit Paradigm](TEST.md#successful-exit-paradigm).
 
-**Important Note about I/O**
-
-Remember that the newline character is considered input like any other key. As
-such, you must add a `\n` to the end of the string provided to `setInputString`
-function if the program expects a newline character.
+**Important Note about I/O**: Remember that the newline character is considered
+input like any other key. As such, you must add a `\n` to the end of the string
+provided to `setInputString` function if the program expects a newline character
+as input.
 
 ### I/O Paradigm (Interrupt)
 The I/O Paradigm for interrupt-driven input is similar to the paradigm for
 polling, so please read [that section](TEST.md#io-paradigm-polling) before.
 
 The main difference between interrupt-driven and polling-driven paradigms is
-`runUntilInputRequested` can no longer be reliably used since the program will
-never request for input. Instead the program must run normally after the input
-string has been set.
+that `runUntilInputRequested` can no longer be reliably used since the program
+will never request for input. Instead the program must run normally after the
+input string has been set.
 
 ```
 tester.setInputString("a");
 tester.setInputCharDelay(50);
 bool success = sim.run();
-tester.verify("Correct output", tester.checkContain(tester.getOutput(), "aaaaa"), total_points / 2);
+bool check = tester.checkContain(tester.getOutput(), "aaaaa");
+tester.verify("Correct output", check, total_points / 2);
 tester.verify("Correct execution", success && ! sim.didExceedInstLimit(), total_points / 2);
 ```
 
@@ -417,7 +422,10 @@ The `setInputCharDelay` delays the input from being sent until 50 instructions
 have executed. This is useful in the context of interrupts because interrupts
 are disabled by default and the program must execute a handful of instructions
 to enable them. Note that `setInputCharDelay` applies to every character, not
-the string as a whole, and remains set until it is changed again.
+the string as a whole, and remains set until it is changed again. This is, in
+turn, useful because the interrupt service routine typically executes many
+instructions. It is often beneficial, though not necessary, for the test case to
+allow the entire ISR to execute before triggering another interrupt.
 
 # Additional Resources
 
@@ -428,10 +436,14 @@ features that the simulator and testing framework provide.
 
 ## Sample Unit Tests and Solutions
 
-Several sample unit tests are also provided in the `src/test/tests/samples`
-directory that can be used as reference. They are practical unit tests developed
-over the course of 2 semesters of real assignments at UT Austin. They exemplify
-testing features as follows:
+Several sample unit tests are provided in the `src/test/tests/samples` directory
+that can be used as reference. They are the unit tests that have been developed
+for all of the real assignments over 2 semesters of the introductory ECE course
+at UT Austin. While the samples are not comprehensive, the do cover a thorough
+range of assignment types such as complex interactive programs (e.g.  `nim`),
+interrupt-driven I/O (`interrupt1`), and even algorithms with strict time
+complexity (`polyroot`). In particular, each sample exemplifies testing features
+as follows:
 
 1. `binsearch`: complex data initialization; I/O paradigm (polling); simulator
    randomization
@@ -443,8 +455,8 @@ testing features as follows:
    checking; simulator randomization
 5. `nim`: complex I/O interaction; complex verification; exception checking;
    fuzzy string matching; I/O paradigm (polling); simulator randomization;
-   string preprocessor
-6. `polyroot`: exception checking; simulator hooks; simulator randomization;
+   string preprocessing
+6. `polyroot`: exception checking; simulator callbacks; simulator randomization;
    time complexity verification
 7. `pow2`: exception checking; simulator randomization
 8. `rotate`: detailed report messages; exception checking; simulator
@@ -474,10 +486,13 @@ build/bin/shift src/test/tests/samples/solutions/shift.bin
 build/bin/sort src/test/tests/samples/solutions/sort.asm
 ```
 
-`interupt1.asm` and `interrupt2.asm` show two different methods for enabling
-interrupts. The former creates a new `TRAP` instruction that can be called from
-the user program and the latter starts off with some code in system space that
-enables interrupts and then jumps to to the user program with an `RTI`.
+Furthermore, `interupt1.asm` and `interrupt2.asm` show two different methods for
+enabling interrupts. The former creates a new `TRAP` instruction that can be
+called from the user program and the latter starts off with some code in system
+space that enables interrupts and then jumps to to the user program with an
+`RTI`. Either of these methods may be useful to provide to students as starter
+code, since they require slightly more advanced knowledge of the LC-3 than some
+classes may cover.
 
 ## Debugging the Program Under Test
 In a classroom environment, it is very often the case that students will ask

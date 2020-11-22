@@ -12,7 +12,7 @@ void ZeroTest(lc3::sim & sim, Tester & tester, double total_points)
     sim.run();
 
     // Verify result
-    tester.verify("Correct", sim.readMem(0x3100) == 0, total_points);
+    tester.verify("Is Zero?", sim.readMem(0x3100) == 0, total_points);
 }
 
 void SimpleTest(lc3::sim & sim, Tester & tester, double total_points)
@@ -30,7 +30,7 @@ void SimpleTest(lc3::sim & sim, Tester & tester, double total_points)
     sim.run();
 
     // Verify result
-    tester.verify("Correct", sim.readMem(0x3100) == real_sum, total_points);
+    tester.verify("Is Correct?", sim.readMem(0x3100) == real_sum, total_points);
 }
 
 void testBringup(lc3::sim & sim)

@@ -21,11 +21,10 @@ Students trying to use LC3Tools can refer to the
 [downloading/installing guide](DownloadingAndInstalling.pdf) and the
 [beginniner's usage guide](GuideToUsingLC3Tools.pdf).
 
-Instructors trying to develop auto-graders or students trying to develop unit
-tests will need to [build from source](README.md#building-from-source) and use
-the [command line utilities](README.md#additional-information). The details on
-developing auto-graders/unit can be found in the [testing framework
-document](TEST.md).
+Instructors or any interested students trying to develop unit tests will need to
+[build from source](README.md#building-from-source) and use the [command line
+utilities](README.md#additional-information). The details on developing
+unit tests can be found in the [testing framework document](TEST.md).
 
 ## Downloading Releases
 Pre-built GUI packages for Windows, macOS, and Linux can be found in the
