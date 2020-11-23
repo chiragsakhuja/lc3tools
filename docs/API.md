@@ -218,18 +218,18 @@ The function prototype that all test cases must follow, defined as
 
 Arguments:
 
-* `sim`: Interface to simulator
-* `tester`: Interface to testing framework
-* `total_points`: Total number of points allocated to this test case
+* `sim`: Interface to simulator.
+* `tester`: Interface to testing framework.
+* `total_points`: Total number of points allocated to this test case.
 
 ### `void registerTest(std::string const & name, test_func_t test_func, double points, bool randomize)`
 Register a test case with the testing framework.
 
 Arguments:
 
-* `name`: Name of test case
-* `test_func`: Function to call when invoking test case
-* `points`: Number of points allocated to test case
+* `name`: Name of test case.
+* `test_func`: Function to call when invoking test case.
+* `points`: Number of points allocated to test case.
 * `randomize`: `true` if machine should be randomized before running test case,
    `false` otherwise.
 
@@ -242,9 +242,9 @@ specified as any number and does not automatically max out to `total_points`
 
 Arguments:
 
-* `label`: String to be shown in score report to identify this check
-* `pred`: Condition that must be true to earn points
-* `points`: Number of points to add to test case score
+* `label`: String to be shown in score report to identify this check.
+* `pred`: Condition that must be true to earn points.
+* `points`: Number of points to add to test case score.
 
 ### `void error(std::string const & label, std::string const & message)`
 
@@ -253,8 +253,8 @@ instruction execution limit or running into an LC-3 exception.
 
 Arguments:
 
-* `label`: String in the score report to identify this error
-* `msg`: The error message
+* `label`: String in the score report to identify this error.
+* `msg`: The error message.
 
 ## Automated Input
 
@@ -302,8 +302,8 @@ output.
 
 Arguments:
 
-* `a`: One string to compare with
-* `b`: Other string to compare with
+* `a`: One string to compare with.
+* `b`: Other string to compare with.
 
 Return Value:
 
@@ -317,8 +317,8 @@ character exactly.
 
 Arguments:
 
-* `str`: Larger string
-* `expected_part`: Substring to check
+* `str`: Larger string.
+* `expected_part`: Substring to check.
 
 Return Value
 
@@ -334,8 +334,8 @@ very efficient so it should not be used on very long strings.
 
 Arguments:
 
-* `a`: One string to compare similarity with
-* `b`: Other string to compare similarity with
+* `a`: One string to compare similarity with.
+* `b`: Other string to compare similarity with.
 
 Return Value:
 
@@ -350,9 +350,9 @@ Enum values are integers and can be combined together with a bitwise OR (|).
 
 Values:
 
-* `IgnoreCase`: Convert string to lower case
-* `IgnoreWhitespace`: Remove whitespace from string
-* `IgnorePunctuation`: Remove punctuation from string
+* `IgnoreCase`: Convert string to lower case.
+* `IgnoreWhitespace`: Remove whitespace from string.
+* `IgnorePunctuation`: Remove punctuation from string.
 
 ### `std::string getPreprocessedString(std::string const & str, uint64_t type)`
 Preprocess a string. Generally used to preprocess the expected output and/or
@@ -365,12 +365,12 @@ bitwise OR (|).
 
 Arguments:
 
-* `str`: String to be preprocessed
-* `type`: Preprocessing method to apply
+* `str`: String to be preprocessed.
+* `type`: Preprocessing method to apply.
 
 Return Value:
 
-* Preprocessed string
+* Preprocessed string.
 
 ## Debugging
 
@@ -381,7 +381,7 @@ provide more detail in the report.
 
 Arguments:
 
-* `message`: Message to output
+* `message`: Message to output.
 
 # Copyright Notice
 Copyright 2020 &copy; McGraw-Hill Education. All rights reserved. No
