@@ -79,10 +79,10 @@ private:
 
     double test_points_earned;
 
-    std::pair<double, double> gradeAll(void);
-    std::pair<double, double> grade(std::string const & test_name);
+    std::pair<double, double> testAll(void);
+    std::pair<double, double> testSingle(std::string const & test_name);
 
-    std::pair<double, double> grade(TestCase const & test);
+    std::pair<double, double> testSingle(TestCase const & test);
     void resetTestPoints(void);
 
     double checkSimilarityHelper(std::vector<char> const & source, std::vector<char> const & target) const;

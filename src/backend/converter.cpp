@@ -51,7 +51,7 @@ std::shared_ptr<std::stringstream> lc3::core::Converter::convertBin(std::istream
         if(skip_conversion) { continue; }
 
         uint32_t val = std::bitset<16>(line).to_ulong();
-        logger.printf(PrintType::P_DEBUG, false, "%s => 0x%04x", line.c_str(), val);
+        logger.printf(PrintType::P_EXTRA, false, "%s => 0x%04x", line.c_str(), val);
         obj_blob.emplace_back((uint16_t) val, line, ! wrote_orig);
         wrote_orig = true;
     }

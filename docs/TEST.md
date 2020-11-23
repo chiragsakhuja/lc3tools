@@ -16,7 +16,9 @@ compiled alongside the command line tools.
 This document is geared toward instructors who are writing their first unit
 tests in a classroom setting. The bulk of the document is in the form of a
 tutorial, and many more details are provided in the [additional
-resources](TEST.md#additional-resources) section.
+resources](TEST.md#additional-resources) section. Please read the [build
+document](BUILD.md#command-line-tools-and-unit-tests) and the [command line
+tools document](CLI.md) before reading this document.
 
 Generally there will be a single unit test for each assignment. The unit test
 will consist of a set of test cases. The unit test executable consumes a single
@@ -472,7 +474,8 @@ Assignments document](SampleAssignments.pdf).
 Assembly/binary solutions for each assignment (other than `nim`) are also
 provided in `src/test/tests/samples/solutions`. To verify the unit test's
 functionality, you may run the following from the root directory after
-[compiling the command line tools](BUILD.md) with samples enabled (default).
+[compiling the command line tools](BUILD.md#command-line-tools-and-unit-tests)
+with samples enabled (default).
 
 ```
 build/bin/binsearch src/test/tests/samples/solutions/binsearch.asm

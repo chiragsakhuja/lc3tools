@@ -16,12 +16,12 @@ struct CLIArgs
     uint32_t sim_print_level = 0;
     uint32_t sim_print_level_override = false;
     bool ignore_privilege = false;
-    bool grader_verbose = false;
+    bool tester_verbose = false;
     uint64_t seed = 0;
     std::vector<std::string> test_filter;
 };
 
-void setup(Tester & grader);
+void setup(Tester & tester);
 void shutdown(void);
 void testBringup(lc3::sim & sim);
 void testTeardown(lc3::sim & sim);
@@ -95,22 +95,22 @@ int main(int argc, char * argv[])
             args.print_output = true;
         } else if(std::get<0>(arg) == "ignore-privilege") {
             args.ignore_privilege = true;
-        } else if(std::get<0>(arg) == "grader-verbose") {
-            args.grader_verbose = true;
+        } else if(std::get<0>(arg) == "tester-verbose") {
+            args.tester_verbose = true;
         } else if(std::get<0>(arg) == "seed") {
             args.seed = std::stoull(std::get<1>(arg));
         } else if(std::get<0>(arg) == "test-filter") {
             args.test_filter.push_back(std::get<1>(arg));
         } else if(std::get<0>(arg) == "h" || std::get<0>(arg) == "help") {
-            std::cout << "usage: " << argv[0] << " [OPTIONS]\n";
+            std::cout << "usage: " << argv[0] << " [OPTIONS] FILE [FILE...]\n";
             std::cout << "\n";
             std::cout << "  -h,--help              Print this message\n";
             std::cout << "  --print-output         Print program output\n";
             std::cout << "  --asm-print-level=N    Assembler output verbosity [0-9]\n";
             std::cout << "  --sim-print-level=N    Simulator output verbosity [0-9]\n";
             std::cout << "  --ignore-privilege     Ignore access violations\n";
-            std::cout << "  --grader-verbose       Output grader messages\n";
-            std::cout << "  --seed                 Optional seed for randomization\n";
+            std::cout << "  --tester-verbose       Output tester messages\n";
+            std::cout << "  --seed=N               Optional seed for randomization\n";
             std::cout << "  --test-filter=TEST     Only run TEST (can be repeated)\n";
             return 0;
         }
@@ -149,15 +149,15 @@ int main(int argc, char * argv[])
     }
 
     if(valid_program) {
-        Tester grader(args.print_output, args.sim_print_level_override ? args.sim_print_level : 1,
-            args.ignore_privilege, args.grader_verbose, args.seed, obj_filenames);
-        setup(grader);
+        Tester tester(args.print_output, args.sim_print_level_override ? args.sim_print_level : 1,
+            args.ignore_privilege, args.tester_verbose, args.seed, obj_filenames);
+        setup(tester);
 
         if(args.test_filter.size() == 0) {
-            grader.gradeAll();
+            tester.testAll();
         } else {
             for(std::string const & test_name : args.test_filter) {
-                grader.grade(test_name);
+                tester.testSingle(test_name);
             }
         }
 
@@ -184,11 +184,11 @@ void Tester::registerTest(std::string const & name, test_func_t test_func, doubl
     tests.emplace_back(name, test_func, points, randomize);
 }
 
-std::pair<double, double> Tester::gradeAll(void)
+std::pair<double, double> Tester::testAll(void)
 {
     double total_points_earned = 0, total_points = 0;
     for(TestCase const & test : tests) {
-        auto points = grade(test);
+        auto points = testSingle(test);
         total_points_earned += std::get<0>(points);
         total_points += std::get<1>(points);
     }
@@ -203,18 +203,18 @@ std::pair<double, double> Tester::gradeAll(void)
     return std::make_pair(total_points_earned, total_points);
 }
 
-std::pair<double, double> Tester::grade(std::string const & test_name)
+std::pair<double, double> Tester::testSingle(std::string const & test_name)
 {
     for(TestCase const & test : tests) {
         if(test.name == test_name) {
-            return grade(test);
+            return testSingle(test);
         }
     }
 
     return std::make_pair(0, 0);
 }
 
-std::pair<double, double> Tester::grade(TestCase const & test)
+std::pair<double, double> Tester::testSingle(TestCase const & test)
 {
     resetTestPoints();
 

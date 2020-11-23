@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         } else if(std::get<0>(arg) == "enable-liberal-asm") {
             args.enable_liberal_asm = true;
         } else if(std::get<0>(arg) == "h" || std::get<0>(arg) == "help") {
-            std::cout << "usage: " << argv[0] << " [OPTIONS]\n";
+            std::cout << "usage: " << argv[0] << " [OPTIONS] FILE [FILE...]\n";
             std::cout << "\n";
             std::cout << "  -h,--help              Print this message\n";
             std::cout << "  --print-level=N        Output verbosity [0-9]\n";
