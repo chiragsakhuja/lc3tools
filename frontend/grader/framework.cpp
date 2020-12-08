@@ -52,15 +52,16 @@ void BufferedPrinter::newline(void)
 
 void StringInputter::setStringAfter(std::string const & source, uint32_t inst_count)
 {
-    this->inst_delay = inst_count;
+    this->reset_inst_delay = inst_count;
+    this->cur_inst_delay = inst_count;
     this->source = source;
     this->pos = 0;
 }
 
 bool StringInputter::getChar(char & c)
 {
-    if(inst_delay > 0) {
-        inst_delay -= 1;
+    if(cur_inst_delay > 0) {
+        cur_inst_delay -= 1;
         return false;
     }
 
@@ -70,6 +71,7 @@ bool StringInputter::getChar(char & c)
 
     c = source[pos];
     pos += 1;
+    cur_inst_delay = reset_inst_delay;
     return true;
 }
 

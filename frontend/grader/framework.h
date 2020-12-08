@@ -50,7 +50,8 @@ public:
 private:
     std::string source;
     uint32_t pos;
-    uint32_t inst_delay;
+    uint32_t reset_inst_delay;
+    uint32_t cur_inst_delay;
 };
 
 struct TestCase
