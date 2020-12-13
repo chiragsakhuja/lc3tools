@@ -9,46 +9,7 @@
 #include <sstream>
 #include <vector>
 
-#include "inputter.h"
-#include "interface.h"
-#include "printer.h"
-
-struct TestCase;
-
-class BufferedPrinter : public lc3::utils::IPrinter
-{
-public:
-    BufferedPrinter(bool print_output) : print_output(print_output) {}
-
-    virtual void setColor(lc3::utils::PrintColor color) override { (void) color; }
-    virtual void print(std::string const & string) override;
-    virtual void newline(void) override;
-    void clear(void) { display_buffer.clear(); }
-    std::vector<char> const & getBuffer(void) const { return display_buffer; }
-
-private:
-    bool print_output;
-    std::vector<char> display_buffer;
-};
-
-class StringInputter : public lc3::utils::IInputter
-{
-public:
-    StringInputter(void) : StringInputter("") {}
-    StringInputter(std::string const & source) : pos(0), reset_inst_delay(0), cur_inst_delay(0) { setString(source); }
-
-    void setString(std::string const & source);
-    void setCharDelay(uint32_t inst_count);
-    virtual void beginInput(void) override {}
-    virtual bool getChar(char & c) override;
-    virtual void endInput(void) override {}
-    virtual bool hasRemaining(void) const override { return pos == source.size(); }
-
-private:
-    std::string source;
-    uint32_t pos;
-    uint32_t reset_inst_delay, cur_inst_delay;
-};
+#include "framework_common.h"
 
 class Tester;
 

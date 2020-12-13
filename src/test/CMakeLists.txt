@@ -3,7 +3,7 @@ include_directories(../backend)
 include_directories(../common)
 
 # generate package
-add_library(framework OBJECT framework.cpp framework.h)
+add_library(framework OBJECT framework_common.h framework_common.cpp framework.cpp framework.h)
 
 # get all necessary files
 if(BUILD_SAMPLES)
