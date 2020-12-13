@@ -34,8 +34,8 @@ private:
 class StringInputter : public lc3::utils::IInputter
 {
 public:
-    StringInputter(void) : pos(0), inst_delay(0), cur_inst_delay(0) { setString(""); }
-    StringInputter(std::string const & source) : pos(0), inst_delay(0), cur_inst_delay(0) { setString(source); }
+    StringInputter(void) : StringInputter("") {}
+    StringInputter(std::string const & source) : pos(0), reset_inst_delay(0), cur_inst_delay(0) { setString(source); }
 
     void setString(std::string const & source);
     void setCharDelay(uint32_t inst_count);
@@ -47,7 +47,7 @@ public:
 private:
     std::string source;
     uint32_t pos;
-    uint32_t inst_delay, cur_inst_delay;
+    uint32_t reset_inst_delay, cur_inst_delay;
 };
 
 class Tester;

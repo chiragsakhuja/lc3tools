@@ -58,7 +58,7 @@ void StringInputter::setString(std::string const & source)
 
 void StringInputter::setCharDelay(uint32_t inst_count)
 {
-    this->inst_delay = inst_count;
+    this->reset_inst_delay = inst_count;
     this->cur_inst_delay = inst_count;
 }
 
@@ -75,7 +75,7 @@ bool StringInputter::getChar(char & c)
 
     c = source[pos];
     ++pos;
-    cur_inst_delay = inst_delay;
+    cur_inst_delay = reset_inst_delay;
     return true;
 }
 

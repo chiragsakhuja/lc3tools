@@ -60,6 +60,7 @@ std::istream & lc3::core::operator>>(std::istream & in, MemLocation & out)
 #ifdef _ENABLE_DEBUG_ASM
         std::cout << "line: " << out.line << "\n";
 #endif
+        delete[] chars;
     }
 
     return in;
