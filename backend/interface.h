@@ -169,7 +169,7 @@ namespace lc3
               propagate_exceptions(propagate_exceptions) {}
         ~as(void) = default;
 
-        optional<std::string> assemble(std::string const & asm_filename);
+        optional<std::pair<std::string, core::SymbolTable>> assemble(std::string const & asm_filename);
 
         void setPropagateExceptions(void);
         void clearPropagateExceptions(void);

@@ -72,6 +72,7 @@ struct TestCase
 };
 
 bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr);
+lc3::core::SymbolTable const & getSymbolTable(void);
 
 #define REGISTER_TEST(name, function, points)                        \
     tests.emplace_back( #name , ( function ), ( points ), false);    \

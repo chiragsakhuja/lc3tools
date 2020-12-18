@@ -17,7 +17,8 @@
 
 static constexpr uint32_t INST_NAME_CLOSENESS = 2;
 
-std::shared_ptr<std::stringstream> lc3::core::Assembler::assemble(std::istream & buffer)
+std::pair<std::shared_ptr<std::stringstream>, lc3::core::SymbolTable>
+lc3::core::Assembler::assemble(std::istream & buffer)
 {
     using namespace asmbl;
     using namespace lc3::utils;
@@ -70,7 +71,7 @@ std::shared_ptr<std::stringstream> lc3::core::Assembler::assemble(std::istream &
     for(MemEntry const & entry : machine_code_blob.second) {
         (*ret) << entry;
     }
-    return ret;
+    return std::make_pair(ret, symbols.second);
 }
 
 std::vector<lc3::core::asmbl::Statement> lc3::core::Assembler::buildStatements(std::istream & buffer)

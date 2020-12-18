@@ -87,8 +87,8 @@ void lc3::sim::loadOS(void)
 
     std::stringstream src_buffer;
     src_buffer << lc3::core::getOSSrc();
-    std::shared_ptr<std::stringstream> obj_stream = assembler.assemble(src_buffer);
-    simulator.loadObj(*obj_stream);
+    std::pair<std::shared_ptr<std::stringstream>, core::SymbolTable> asm_res = assembler.assemble(src_buffer);
+    simulator.loadObj(*(asm_res.first));
     getMachineState().pc = RESET_PC;
 }
 
@@ -537,7 +537,7 @@ void lc3::sim::waitForInputCallback(lc3::sim & sim_inst, core::MachineState & st
     }
 }
 
-lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
+lc3::optional<std::pair<std::string, lc3::core::SymbolTable>> lc3::as::assemble(std::string const & asm_filename)
 {
     std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
     assembler.setFilename(asm_filename);
@@ -555,17 +555,17 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
     printer.print("attemping to assemble " + asm_filename + " into " + obj_filename);
     printer.newline();
 
-    std::shared_ptr<std::stringstream> out_stream;
+    std::pair<std::shared_ptr<std::stringstream>, core::SymbolTable> asm_res;
 
 #ifdef _ENABLE_DEBUG
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
     if(propagate_exceptions) {
-        out_stream = assembler.assemble(in_file);
+        asm_res = assembler.assemble(in_file);
     } else {
         try {
-            out_stream = assembler.assemble(in_file);
+            asm_res = assembler.assemble(in_file);
         } catch(utils::exception const & e) {
             (void) e;
 #ifdef _ENABLE_DEBUG
@@ -599,10 +599,10 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
         }
     }
 
-    out_file << out_stream->rdbuf();
+    out_file << (asm_res.first)->rdbuf();
     out_file.close();
 
-    return obj_filename;
+    return std::make_pair(obj_filename, asm_res.second);
 }
 
 lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filename)
