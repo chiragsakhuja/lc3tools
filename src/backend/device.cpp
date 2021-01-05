@@ -62,7 +62,7 @@ std::pair<uint16_t, PIMicroOp> KeyboardDevice::read(uint16_t addr)
             PIMicroOp callback = nullptr;
 
             if(! inputter.hasRemaining()) {
-                std::make_shared<CallbackMicroOp>(CallbackType::INPUT_REQUEST);
+                callback = std::make_shared<CallbackMicroOp>(CallbackType::INPUT_REQUEST);
             }
 
             return std::make_pair(data.getValue(), callback);

@@ -350,8 +350,8 @@ PIMicroOp STRInstruction::buildMicroOps(MachineState const & state) const
 
 PIMicroOp TRAPInstruction::buildMicroOps(MachineState const & state) const
 {
-    std::pair<PIMicroOp, PIMicroOp> handle_trap_chain =  buildSystemModeEnter(TRAP_TABLE_START,
-        getOperand(2)->getValue(), (state.readPSR() & 0x0700) >> 8);
+    std::pair<PIMicroOp, PIMicroOp> handle_trap_chain = buildSystemModeEnter(TRAP_TABLE_START,
+        static_cast<uint8_t>(getOperand(2)->getValue()), (state.readPSR() & 0x0700) >> 8);
     PIMicroOp callback = std::make_shared<CallbackMicroOp>(CallbackType::SUB_ENTER);
     PIMicroOp func_trace = std::make_shared<PushFuncTypeMicroOp>(FuncType::TRAP);
 

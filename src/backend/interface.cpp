@@ -72,7 +72,7 @@ uint64_t lc3::sim::randomizeState(uint64_t seed)
     if(seed == 0) {
         seed = dev();
     }
-    std::mt19937 gen(seed);
+    std::mt19937 gen((unsigned int) seed);
     std::uniform_int_distribution<> dis(0x0000, 0xffff);
 
     simulator.reinitialize();
@@ -160,8 +160,8 @@ void lc3::sim::writeStringMem(uint16_t addr, std::string const & value)
             state.setMemLine(addr + i, std::string(1, value[i]));
         }
     }
-    state.writeMem(addr + value.size(), 0);
-    state.setMemLine(addr + value.size(), "");
+    state.writeMem(addr + static_cast<uint16_t>(value.size()), 0);
+    state.setMemLine(addr + static_cast<uint16_t>(value.size()), "");
 }
 void lc3::sim::setMemLine(uint16_t addr, std::string const & value)
 { simulator.getMachineState().setMemLine(addr, value); }
