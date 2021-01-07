@@ -38,13 +38,10 @@ namespace lc3
         bool run(void);
         bool runUntilHalt(void);
         bool runUntilInputRequested(void);
-        void pause(void);
+        void asyncInterrupt(void);
         bool stepIn(void);
         bool stepOver(void);
         bool stepOut(void);
-
-        core::MachineState & getMachineState(void);
-        core::MachineState const & getMachineState(void) const;
 
         uint16_t readReg(uint16_t id) const;
         uint16_t readMem(uint16_t addr) const;
@@ -83,6 +80,9 @@ namespace lc3
         using callback_func_t = std::function<void(core::MachineState &)>;
 
         bool runUntilInputPull(void) { return runUntilInputRequested(); }
+
+        core::MachineState & getMachineState(void);
+        core::MachineState const & getMachineState(void) const;
 
         uint16_t getReg(uint16_t id) const { return readReg(id); }
         uint16_t getMem(uint16_t addr) const { return readMem(addr); }

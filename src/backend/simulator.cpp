@@ -32,6 +32,7 @@ void Simulator::simulate(void)
 {
     powerOn(0);
     inst_count_this_run = 0;
+    async_interrupt = false;
 
     sim::Decoder decoder;
 
@@ -43,7 +44,12 @@ void Simulator::simulate(void)
     do {
         handleDevices();
         handleInstruction(decoder);
-    } while(lc3::utils::getBit(state.readMCR(), 15) == 1);
+    } while(lc3::utils::getBit(state.readMCR(), 15) == 1 && ! async_interrupt);
+    // While this loop is running, async_interrupt will only be read by this thread.  It may be written by another
+    // thread, such as in the context of a GUI running the simulator asynchronously, but even then there will only
+    // by a single writer and a single reader.  Thus, async_interrupt is left unprotected by mutexes.
+
+    async_interrupt = false;
 
     // Shutdown devices.
     for(PIDevice dev : devices) {

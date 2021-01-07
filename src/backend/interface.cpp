@@ -114,6 +114,11 @@ bool lc3::sim::runUntilInputRequested(void)
     return runHelper();
 }
 
+void lc3::sim::asyncInterrupt(void)
+{
+    simulator.asyncInterrupt();
+}
+
 bool lc3::sim::stepIn(void)
 {
     run_type = RunType::NORMAL;

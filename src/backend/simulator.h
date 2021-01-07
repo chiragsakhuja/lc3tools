@@ -48,6 +48,7 @@ namespace core
         void removeBreakpoint(uint16_t pc);
         MachineState & getMachineState(void);
         MachineState const & getMachineState(void) const;
+        void asyncInterrupt(void) { async_interrupt = true; }
 
         void setPrintLevel(uint32_t print_level);
         void setIgnorePrivilege(bool ignore_privilege);
@@ -69,6 +70,7 @@ namespace core
         uint16_t pre_inst_pc;
         bool first_setup;
         std::vector<uint16_t> stack_trace;
+        bool async_interrupt;
 
         void powerOn(uint64_t t_delta);
         void executeEvents(void);
