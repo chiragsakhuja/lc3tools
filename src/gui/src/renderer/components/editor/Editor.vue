@@ -179,8 +179,7 @@ export default {
         }
       }
 
-      const temp_console_string = lc3.GetOutput();
-      lc3.ClearOutput();
+      const temp_console_string = lc3.GetAndClearOutput();
       this.console_str = "";
       setTimeout(() => { this.console_str = temp_console_string; }, 200);
       if (success) {

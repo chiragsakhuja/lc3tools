@@ -368,7 +368,7 @@ export default {
         return new Promise((resolve, reject) => {
           let callback = (error) => {
             if(error) { reject(error); return; }
-            this.endSimulation(run_function_str != "run");
+            this.endSimulation(run_function_str != "run" || lc3.DidHitBreakpoint());
             resolve();
           };
           if(run_function_str == "in") { lc3.StepIn(callback); }
@@ -471,7 +471,7 @@ export default {
     },
     updateConsole() {
       // Console
-      let update = lc3.GetOutput();
+      let update = lc3.GetAndClearOutput();
       if(update.length) {
         // Resolve all internal backspaces first
         while(update.match(/[^\x08\n]\x08/)) {
@@ -487,7 +487,6 @@ export default {
         }
         this.console_str += update;
         setTimeout(() => this.$refs.console.scrollTop = this.$refs.console.scrollHeight);
-        lc3.ClearOutput();
       }
       this.prev_inst_executed = lc3.GetInstExecCount();
     },

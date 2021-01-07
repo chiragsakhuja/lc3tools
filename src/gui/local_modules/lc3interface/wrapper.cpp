@@ -3,22 +3,25 @@
  */
 #include <nan.h>
 
-#ifndef _PRINT_LEVEL
-    #define _PRINT_LEVEL 4
+#ifndef DEFAULT_PRINT_LEVEL
+    #define DEFAULT_PRINT_LEVEL 1
 #endif
 
 #include <algorithm>
+#include <memory>
+#include <mutex>
 
 #define API_VER 2
 #include "interface.h"
 #include "ui_printer.h"
 #include "ui_inputter.h"
 
-utils::UIPrinter *printer = nullptr;
-utils::UIInputter *inputter = nullptr;
-lc3::as *as = nullptr;
-lc3::conv *conv = nullptr;
-lc3::sim *sim = nullptr;
+utils::UIPrinter printer;
+utils::UIInputter inputter;
+std::shared_ptr<lc3::as> as = nullptr;
+std::shared_ptr<lc3::conv> conv = nullptr;
+std::shared_ptr<lc3::sim> sim = nullptr;
+bool hit_breakpoint = false;
 
 class SimulatorAsyncWorker : public Nan::AsyncWorker
 {
@@ -58,28 +61,27 @@ public:
 NAN_METHOD(Init)
 {
     try {
-        printer = new utils::UIPrinter();
-        inputter = new utils::UIInputter();
-        as = new lc3::as(*printer, _PRINT_LEVEL, false);
-        conv = new lc3::conv(*printer, _PRINT_LEVEL);
-        sim = new lc3::sim(*printer, *inputter, _PRINT_LEVEL);
+        as = std::make_shared<lc3::as>(printer, DEFAULT_PRINT_LEVEL, false);
+        conv = std::make_shared<lc3::conv>(printer, DEFAULT_PRINT_LEVEL);
+        sim = std::make_shared<lc3::sim>(printer, inputter, DEFAULT_PRINT_LEVEL);
+        sim->registerCallback(lc3::core::CallbackType::BREAKPOINT,
+            [](lc3::core::CallbackType, lc3::core::MachineState &) {
+                hit_breakpoint = true;
+            }
+        );
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
 
-NAN_METHOD(Shutdown)
-{
-    delete sim;
-    delete conv;
-    delete as;
-    delete inputter;
-    delete printer;
-}
-
 NAN_METHOD(ConvertBin)
 {
-    if(!info[0]->IsString()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsString()) {
         Nan::ThrowError("Must provide filename as a string argument");
         return;
     }
@@ -100,7 +102,12 @@ NAN_METHOD(ConvertBin)
 
 NAN_METHOD(Assemble)
 {
-    if(!info[0]->IsString()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsString()) {
         Nan::ThrowError("Must provide filename as a string argument");
         return;
     }
@@ -140,7 +147,12 @@ NAN_METHOD(SetEnableLiberalAsm)
 
 NAN_METHOD(LoadObjectFile)
 {
-    if(!info[0]->IsString()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsString()) {
         Nan::ThrowError("Must provide filename as a string argument");
         return;
     }
@@ -184,11 +196,17 @@ NAN_METHOD(RandomizeMachine)
 
 NAN_METHOD(Run)
 {
-    if(!info[0]->IsFunction()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsFunction()) {
         Nan::ThrowError("Must provide callback as an argument");
         return;
     }
 
+    hit_breakpoint = false;
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
         []() {
           try {
@@ -204,11 +222,17 @@ NAN_METHOD(Run)
 
 NAN_METHOD(StepIn)
 {
-    if(!info[0]->IsFunction()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsFunction()) {
         Nan::ThrowError("Must provide callback as an argument");
         return;
     }
 
+    hit_breakpoint = false;
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
         []() {
           try {
@@ -223,11 +247,17 @@ NAN_METHOD(StepIn)
 
 NAN_METHOD(StepOut)
 {
-    if(!info[0]->IsFunction()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsFunction()) {
         Nan::ThrowError("Must provide callback as an argument");
         return;
     }
 
+    hit_breakpoint = false;
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
         []() {
           try {
@@ -242,11 +272,17 @@ NAN_METHOD(StepOut)
 
 NAN_METHOD(StepOver)
 {
-    if(!info[0]->IsFunction()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsFunction()) {
         Nan::ThrowError("Must provide callback as an argument");
         return;
     }
 
+    hit_breakpoint = false;
     Nan::AsyncQueueWorker(new SimulatorAsyncWorker(
         []() {
           try {
@@ -262,7 +298,7 @@ NAN_METHOD(StepOver)
 NAN_METHOD(Pause)
 {
     try {
-        sim->pause();
+        sim->asyncInterrupt();
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -272,7 +308,12 @@ NAN_METHOD(GetRegValue)
 {
     uint32_t ret_val = 0;
 
-    if(!info[0]->IsString()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsString()) {
         Nan::ThrowError("Must provide register name as a string argument");
         return;
     }
@@ -467,12 +508,17 @@ NAN_METHOD(SetIgnorePrivilege)
 
 NAN_METHOD(ClearInput)
 {
-    inputter->clearInput();
+    inputter.clearInput();
 }
 
 NAN_METHOD(AddInput)
 {
-    if(!info[0]->IsString()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsString()) {
         Nan::ThrowError("Must provide character as as a string argument");
         return;
     }
@@ -485,16 +531,16 @@ NAN_METHOD(AddInput)
     }
 
     try {
-        inputter->addInput(c[0]);
+        inputter.addInput(c[0]);
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
 }
 
-NAN_METHOD(GetOutput)
+NAN_METHOD(GetAndClearOutput)
 {
     try {
-        std::vector<std::string> const & output = printer->getOutputBuffer();
+        std::vector<std::string> const & output = printer.getAndClearOutputBuffer();
         std::string joined = "";
         for(std::string const & str : output) { joined += str; }
         auto ret = Nan::New<v8::String>(joined).ToLocalChecked();
@@ -502,11 +548,6 @@ NAN_METHOD(GetOutput)
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
-}
-
-NAN_METHOD(ClearOutput)
-{
-    printer->clearOutputBuffer();
 }
 
 NAN_METHOD(SetBreakpoint)
@@ -559,10 +600,19 @@ NAN_METHOD(GetInstExecCount)
     }
 }
 
-NAN_MODULE_INIT(Initialize)
+NAN_METHOD(DidHitBreakpoint)
+{
+    try {
+        auto ret = Nan::New<v8::Boolean>(hit_breakpoint);
+        info.GetReturnValue().Set(ret);
+    } catch(std::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
+NAN_MODULE_INIT(NanInit)
 {
     NAN_EXPORT(target, Init);
-    NAN_EXPORT(target, Shutdown);
 
     NAN_EXPORT(target, ConvertBin);
     NAN_EXPORT(target, Assemble);
@@ -589,13 +639,83 @@ NAN_MODULE_INIT(Initialize)
 
     NAN_EXPORT(target, ClearInput);
     NAN_EXPORT(target, AddInput);
-    NAN_EXPORT(target, GetOutput);
-    NAN_EXPORT(target, ClearOutput);
+    NAN_EXPORT(target, GetAndClearOutput);
 
     NAN_EXPORT(target, SetBreakpoint);
     NAN_EXPORT(target, RemoveBreakpoint);
 
     NAN_EXPORT(target, GetInstExecCount);
+    NAN_EXPORT(target, DidHitBreakpoint);
 }
 
-NODE_MODULE(lc3interface, Initialize);
+NODE_MODULE(lc3interface, NanInit);
+
+void utils::UIPrinter::setColor(lc3::utils::PrintColor color)
+{
+    using namespace lc3::utils;
+
+    if(color == PrintColor::RESET) {
+        while(pending_colors != 0) {
+            output_buffer.push_back("</span>");
+            pending_colors -= 1;
+        }
+    } else {
+        std::string format = "<span class=\"text-";
+        switch(color)
+        {
+            case PrintColor::RED      : format += "red"    ; break;
+            case PrintColor::YELLOW   : format += "yellow" ; break;
+            case PrintColor::GREEN    : format += "green"  ; break;
+            case PrintColor::MAGENTA  : format += "magenta"; break;
+            case PrintColor::BLUE     : format += "blue"   ; break;
+            case PrintColor::GRAY     : format += "gray"   ; break;
+            case PrintColor::BOLD     : format += "bold"   ; break;
+            default                   : break;
+        }
+        format += "\">";
+        output_buffer.push_back(format);
+        pending_colors += 1;
+    }
+}
+
+std::vector<std::string> utils::UIPrinter::getAndClearOutputBuffer(void)
+{
+    std::lock_guard<std::mutex> const lock(output_buffer_mutex);
+    std::vector<std::string> output_buffer_copy = output_buffer;
+    output_buffer.clear();
+    return output_buffer_copy;
+}
+
+void utils::UIPrinter::print(std::string const & string)
+{
+    std::lock_guard<std::mutex> const lock(output_buffer_mutex);
+    output_buffer.push_back(string);
+}
+
+void utils::UIPrinter::newline(void)
+{
+    std::lock_guard<std::mutex> const lock(output_buffer_mutex);
+    output_buffer.push_back("\n");
+}
+
+bool utils::UIInputter::getChar(char & c)
+{
+    std::lock_guard<std::mutex> const lock(buffer_mutex);
+    if(buffer.empty()) { return false; }
+
+    c = buffer.front();
+    buffer.erase(buffer.begin());
+    return true;
+}
+
+void utils::UIInputter::clearInput(void)
+{
+    std::lock_guard<std::mutex> const lock(buffer_mutex);
+    buffer.clear();
+}
+
+void utils::UIInputter::addInput(char c)
+{
+    std::lock_guard<std::mutex> const lock(buffer_mutex);
+    buffer.push_back(c);
+}

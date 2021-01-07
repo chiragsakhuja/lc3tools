@@ -11,6 +11,7 @@ namespace utils
     class UIInputter : public lc3::utils::IInputter
     {
     private:
+        std::mutex buffer_mutex;
         std::vector<char> buffer;
 
     public:
@@ -25,24 +26,5 @@ namespace utils
         void addInput(char c);
     };
 };
-
-bool utils::UIInputter::getChar(char & c)
-{
-    if(buffer.empty()) { return false; }
-
-    c = buffer.front();
-    buffer.erase(buffer.begin());
-    return true;
-}
-
-void utils::UIInputter::clearInput(void)
-{
-    buffer.clear();
-}
-
-void utils::UIInputter::addInput(char c)
-{
-    buffer.push_back(c);
-}
 
 #endif
