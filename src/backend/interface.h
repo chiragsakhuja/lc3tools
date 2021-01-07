@@ -78,6 +78,58 @@ namespace lc3
 
         uint64_t getInstExecCount(void) const;
 
+#if (not defined API_VER) || API_VER == 1
+        // Provide backward compatibility with API version.
+        using callback_func_t = std::function<void(core::MachineState &)>;
+
+        bool runUntilInputPull(void) { return runUntilInputRequested(); }
+
+        uint16_t getReg(uint16_t id) const { return readReg(id); }
+        uint16_t getMem(uint16_t addr) const { return readMem(addr); }
+        uint16_t getPC(void) const { return readPC(); }
+        uint16_t getPSR(void) const { return readPSR(); }
+        uint16_t getMCR(void) const { return readMCR(); }
+        char getCC(void) const { return readCC(); }
+        void setReg(uint16_t id, uint16_t value) { writeReg(id, value); }
+        void setMem(uint16_t addr, uint16_t value) { writeMem(addr, value); }
+        void setStringMem(uint16_t addr, std::string const & value) { writeStringMem(addr, value); }
+        void setPC(uint16_t value) { writePC(value); }
+        void setPSR(uint16_t value) { writePSR(value); }
+        void setMCR(uint16_t value) { writeMCR(value); }
+        void setCC(char value) { writeCC(value); }
+
+        void registerPreInstructionCallback(callback_func_t func) {
+            registerCallback(core::CallbackType::PRE_INST, [func](core::CallbackType, core::MachineState & state) {
+                func(state);
+            });
+        }
+        void registerPostInstructionCallback(callback_func_t func) {
+            registerCallback(core::CallbackType::POST_INST, [func](core::CallbackType, core::MachineState & state) {
+                func(state);
+            });
+        }
+        void registerSubEnterCallback(callback_func_t func) {
+            registerCallback(core::CallbackType::SUB_ENTER, [func](core::CallbackType, core::MachineState & state) {
+                func(state);
+            });
+        }
+        void registerSubExitCallback(callback_func_t func) {
+            registerCallback(core::CallbackType::SUB_EXIT, [func](core::CallbackType, core::MachineState & state) {
+                func(state);
+            });
+        }
+        void registerInterruptEnterCallback(callback_func_t func) {
+            registerCallback(core::CallbackType::INT_ENTER, [func](core::CallbackType, core::MachineState & state) {
+                func(state);
+            });
+        }
+        void registerInterruptExitCallback(callback_func_t func) {
+            registerCallback(core::CallbackType::INT_EXIT, [func](core::CallbackType, core::MachineState & state) {
+                func(state);
+            });
+        }
+#endif
+
     private:
         utils::IPrinter & printer;
         utils::IInputter & inputter;

@@ -11,9 +11,16 @@
 
 #include "framework_common.h"
 
+namespace framework2
+{
 class Tester;
 
 using test_func_t = std::function<void(lc3::sim &, Tester &, double total_points)>;
+
+extern std::function<void(Tester &)> setup;
+extern std::function<void(void)> shutdown;
+extern std::function<void(lc3::sim &)> testBringup;
+extern std::function<void(lc3::sim &)> testTeardown;
 
 struct TestCase
 {
@@ -75,4 +82,7 @@ public:
     bool checkContain(std::string const & str, std::string const & expected_part) const;
     double checkSimilarity(std::string const & source, std::string const & target) const;
     std::string getPreprocessedString(std::string const & str, uint64_t type) const;
+};
+
+    int main(int argc, char * argv[]);
 };

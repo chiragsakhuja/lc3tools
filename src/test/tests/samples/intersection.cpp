@@ -6,6 +6,7 @@
 #include <set>
 #include <sstream>
 
+#define API_VER 2
 #include "framework.h"
 
 static constexpr uint64_t InstLimit = 500000;

@@ -6,8 +6,10 @@
 
 #include "common.h"
 #include "console_printer.h"
-#include "framework.h"
+#include "framework2.h"
 
+namespace framework2
+{
 struct CLIArgs
 {
     uint32_t print_output = false;
@@ -21,15 +23,22 @@ struct CLIArgs
     std::vector<std::string> test_filter;
 };
 
-void setup(Tester & tester);
-void shutdown(void);
-void testBringup(lc3::sim & sim);
-void testTeardown(lc3::sim & sim);
-
 std::vector<TestCase> tests;
+
+std::function<void(Tester &)> setup = nullptr;
+std::function<void(void)> shutdown = nullptr;
+std::function<void(lc3::sim &)> testBringup = nullptr;
+std::function<void(lc3::sim &)> testTeardown = nullptr;
 
 int main(int argc, char * argv[])
 {
+    if(setup == nullptr || shutdown == nullptr || testBringup == nullptr || testTeardown == nullptr) {
+        // Will never happen if framework.h wrapper is used, since, if any of these functions are missing, linking
+        // will fail.
+        std::cerr << "Unit test does not implement necessary functionality.\n";
+        return 0;
+    }
+
     CLIArgs args;
     std::vector<std::pair<std::string, std::string>> parsed_args = parseCLIArgs(argc, argv);
     for(auto const & arg : parsed_args) {
@@ -348,3 +357,4 @@ std::string Tester::getPreprocessedString(std::string const & str, uint64_t type
 
     return std::string{buffer.begin(), buffer.end()};
 }
+};

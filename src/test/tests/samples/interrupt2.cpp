@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 
+#define API_VER 2
 #include "framework.h"
 
 void verify(Tester & tester, bool success, std::string const & expected, std::string const & label, bool not_present,

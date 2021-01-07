@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 
+#define API_VER 2
 #include "framework.h"
 
 static constexpr double correct_thresh = 1.0 - 0.00001;
