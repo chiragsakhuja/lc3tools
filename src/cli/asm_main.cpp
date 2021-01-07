@@ -3,6 +3,7 @@
  */
 #include <string>
 
+#define API_VER 2
 #include "common.h"
 #include "console_printer.h"
 #include "interface.h"
