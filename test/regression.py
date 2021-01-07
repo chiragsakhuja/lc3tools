@@ -3,6 +3,7 @@
 import os
 import subprocess
 import concurrent.futures
+import argparse
 
 def runTest(test_dir, src_name, bin_path):
     src_path = os.path.join(test_dir, src_name)
@@ -28,7 +29,7 @@ def runTest(test_dir, src_name, bin_path):
 
     return stdout, actual, expected
 
-def runTests(test_root, src_name, bin_path):
+def runTests(opt, test_root, src_name, bin_path):
     failures = list()
     hist = {'PASS': 0, 'FAIL': 0, 'FATAL': 0}
 
@@ -37,6 +38,7 @@ def runTests(test_root, src_name, bin_path):
         futures = {
             executor.submit(runTest, os.path.join(test_root, test_dir), src_name, bin_path): test_dir
             for test_dir in os.listdir(test_root)
+            if opt.testnum == -1 or opt.testnum == int(test_dir)
         }
 
         for future in concurrent.futures.as_completed(futures):
@@ -66,6 +68,11 @@ def runTests(test_root, src_name, bin_path):
     return hist
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=int, default=-1, help='Dataset to run')
+    parser.add_argument('--testnum', type=int, default=-1, help='Test number within dataset to run')
+    opt = parser.parse_args()
+
     tests = [{
         'test_root': 'dataset/2',
         'src_name': 'sort.asm',
@@ -102,10 +109,12 @@ def main():
 
     hist = {'PASS': 0, 'FAIL': 0, 'FATAL': 0}
     for test in tests:
+        if opt.dataset != -1 and test['test_root'] != 'dataset/' + str(opt.dataset): continue
+
         if not os.path.isdir(test['test_root']) or not os.path.isfile(test['bin_path']):
-            print('Skipping %s ... did you extract the dataset and build in ../build?' % test['test_root'])
+            print('Skipping %s ... did you extract the dataset, build in ../build, and run from within test directory?' % test['test_root'])
             continue
-        local_hist = runTests(**test)
+        local_hist = runTests(opt, **test)
         for key, value in local_hist.items():
             hist[key] += value
         print(local_hist)
