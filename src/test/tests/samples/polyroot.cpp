@@ -62,11 +62,11 @@ void QuadraticTest2(lc3::sim & sim, Tester & tester, double total_points)
     verify(tester, sim, success, static_cast<uint16_t>(0), 18, total_points);
 }
 
-void subEnterCallback(lc3::core::CallbackType type, lc3::core::MachineState & state)
+void subEnterCallback(lc3::core::CallbackType type, lc3::sim & sim)
 {
     (void) type;
 
-    if(state.readPC() == 0x5000) {
+    if(sim.readPC() == 0x5000) {
         sub_count += 1;
     }
 }

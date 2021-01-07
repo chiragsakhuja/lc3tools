@@ -25,7 +25,7 @@ namespace lc3
     class sim
     {
     public:
-        using Callback = std::function<void(core::CallbackType, core::MachineState &)>;
+        using Callback = std::function<void(core::CallbackType, sim &)>;
 
         sim(utils::IPrinter & printer, utils::IInputter & inputter, uint32_t print_level);
 
@@ -99,33 +99,33 @@ namespace lc3
         void setCC(char value) { writeCC(value); }
 
         void registerPreInstructionCallback(callback_func_t func) {
-            registerCallback(core::CallbackType::PRE_INST, [func](core::CallbackType, core::MachineState & state) {
-                func(state);
+            registerCallback(core::CallbackType::PRE_INST, [func](core::CallbackType, sim & sim_inst) {
+                func(sim_inst.getMachineState());
             });
         }
         void registerPostInstructionCallback(callback_func_t func) {
-            registerCallback(core::CallbackType::POST_INST, [func](core::CallbackType, core::MachineState & state) {
-                func(state);
+            registerCallback(core::CallbackType::POST_INST, [func](core::CallbackType, sim & sim_inst) {
+                func(sim_inst.getMachineState());
             });
         }
         void registerSubEnterCallback(callback_func_t func) {
-            registerCallback(core::CallbackType::SUB_ENTER, [func](core::CallbackType, core::MachineState & state) {
-                func(state);
+            registerCallback(core::CallbackType::SUB_ENTER, [func](core::CallbackType, sim & sim_inst) {
+                func(sim_inst.getMachineState());
             });
         }
         void registerSubExitCallback(callback_func_t func) {
-            registerCallback(core::CallbackType::SUB_EXIT, [func](core::CallbackType, core::MachineState & state) {
-                func(state);
+            registerCallback(core::CallbackType::SUB_EXIT, [func](core::CallbackType, sim & sim_inst) {
+                func(sim_inst.getMachineState());
             });
         }
         void registerInterruptEnterCallback(callback_func_t func) {
-            registerCallback(core::CallbackType::INT_ENTER, [func](core::CallbackType, core::MachineState & state) {
-                func(state);
+            registerCallback(core::CallbackType::INT_ENTER, [func](core::CallbackType, sim & sim_inst) {
+                func(sim_inst.getMachineState());
             });
         }
         void registerInterruptExitCallback(callback_func_t func) {
-            registerCallback(core::CallbackType::INT_EXIT, [func](core::CallbackType, core::MachineState & state) {
-                func(state);
+            registerCallback(core::CallbackType::INT_EXIT, [func](core::CallbackType, sim & sim_inst) {
+                func(sim_inst.getMachineState());
             });
         }
 #endif

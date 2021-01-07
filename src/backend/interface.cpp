@@ -246,15 +246,6 @@ void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType t
             // Halt if current instruction is HALT.
             sim_inst->simulator.triggerSuspend();
         }
-    } else if(type == CallbackType::EX_ENTER) {
-        // Mark that execution resulted in LC-3 exception.
-        sim_inst->encountered_lc3_exception = true;
-    } else if(type == CallbackType::SUB_ENTER) {
-        ++(sim_inst->cur_sub_depth);
-    } else if(type == CallbackType::SUB_EXIT) {
-        if(sim_inst->cur_sub_depth > 0) {
-            --(sim_inst->cur_sub_depth);
-        }
     } else if(type == CallbackType::POST_INST) {
         // Increment total instruction count
         ++(sim_inst->total_inst_exec);
@@ -270,6 +261,26 @@ void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType t
                 sim_inst->simulator.triggerSuspend();
             }
         }
+    } else if(type == CallbackType::SUB_ENTER) {
+        ++(sim_inst->cur_sub_depth);
+    } else if(type == CallbackType::SUB_EXIT) {
+        if(sim_inst->cur_sub_depth > 0) {
+            --(sim_inst->cur_sub_depth);
+        }
+    } else if(type == CallbackType::EX_ENTER) {
+        // Mark that execution resulted in LC-3 exception.
+        sim_inst->encountered_lc3_exception = true;
+        ++(sim_inst->cur_sub_depth);
+    } else if(type == CallbackType::EX_EXIT) {
+        if(sim_inst->cur_sub_depth > 0) {
+            --(sim_inst->cur_sub_depth);
+        }
+    } else if(type == CallbackType::INT_ENTER) {
+        ++(sim_inst->cur_sub_depth);
+    } else if(type == CallbackType::INT_EXIT) {
+        if(sim_inst->cur_sub_depth > 0) {
+            --(sim_inst->cur_sub_depth);
+        }
     } else if(type == CallbackType::INPUT_REQUEST) {
         if(sim_inst->run_type == RunType::UNTIL_INPUT_REQUESTED) {
             sim_inst->simulator.triggerSuspend();
@@ -278,7 +289,7 @@ void lc3::sim::callbackDispatcher(lc3::sim * sim_inst, lc3::core::CallbackType t
 
     auto search = sim_inst->callbacks.find(type);
     if(search != sim_inst->callbacks.end() && search->second != nullptr) {
-        search->second(type, state);
+        search->second(type, *sim_inst);
     }
 }
 

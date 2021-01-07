@@ -65,7 +65,7 @@ NAN_METHOD(Init)
         conv = std::make_shared<lc3::conv>(printer, DEFAULT_PRINT_LEVEL);
         sim = std::make_shared<lc3::sim>(printer, inputter, DEFAULT_PRINT_LEVEL);
         sim->registerCallback(lc3::core::CallbackType::BREAKPOINT,
-            [](lc3::core::CallbackType, lc3::core::MachineState &) {
+            [](lc3::core::CallbackType, lc3::sim &) {
                 hit_breakpoint = true;
             }
         );

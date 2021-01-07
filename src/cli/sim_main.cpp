@@ -38,7 +38,7 @@ void promptBreak(lc3::sim & simulator, std::stringstream & command_tokens);
 void list(lc3::sim const & simulator, int32_t context);
 std::string formatMem(lc3::sim const & simulator, uint32_t addr);
 std::ostream & operator<<(std::ostream & out, Breakpoint const & x);
-void breakpointCallback(lc3::core::CallbackType type, lc3::core::MachineState & state);
+void breakpointCallback(lc3::core::CallbackType type, lc3::sim & sim);
 
 struct CLIArgs
 {
@@ -401,11 +401,11 @@ std::ostream & operator<<(std::ostream & out, Breakpoint const & x)
     return out;
 }
 
-void breakpointCallback(lc3::core::CallbackType type, lc3::core::MachineState & state)
+void breakpointCallback(lc3::core::CallbackType type, lc3::sim & sim)
 {
     (void) type;
 
-    uint16_t pc = state.readPC();
+    uint16_t pc = sim.readPC();
     auto bp_search = std::find_if(breakpoints.begin(), breakpoints.end(), [pc](Breakpoint const & x) {
         return x.loc == pc;
     });
