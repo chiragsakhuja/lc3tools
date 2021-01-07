@@ -75,7 +75,7 @@ namespace lc3
 
         uint64_t getInstExecCount(void) const;
 
-#if (not defined API_VER) || API_VER == 1
+#if (! defined API_VER) || API_VER == 1
         // Provide backward compatibility with API version.
         using callback_func_t = std::function<void(core::MachineState &)>;
 
