@@ -9,6 +9,7 @@
 
 #include <algorithm>
 
+#define API_VER 2
 #include "interface.h"
 #include "ui_printer.h"
 #include "ui_inputter.h"
@@ -59,9 +60,9 @@ NAN_METHOD(Init)
     try {
         printer = new utils::UIPrinter();
         inputter = new utils::UIInputter();
-        as = new lc3::as(*printer, _PRINT_LEVEL, false, false);
-        conv = new lc3::conv(*printer, _PRINT_LEVEL, false);
-        sim = new lc3::sim(*printer, *inputter, true, _PRINT_LEVEL, false);
+        as = new lc3::as(*printer, _PRINT_LEVEL, false);
+        conv = new lc3::conv(*printer, _PRINT_LEVEL);
+        sim = new lc3::sim(*printer, *inputter, _PRINT_LEVEL);
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -120,13 +121,18 @@ NAN_METHOD(Assemble)
 
 NAN_METHOD(SetEnableLiberalAsm)
 {
-    if(!info[0]->IsBoolean()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsBoolean()) {
         Nan::ThrowError("Must provide setting as a bool argument");
         return;
     }
 
     try {
-        as->setEnableLiberalAsm((bool) info[0]->BooleanValue(Nan::GetCurrentContext()).ToChecked());
+        as->setEnableLiberalAsm(Nan::To<bool>(info[0]).FromJust());
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -152,7 +158,7 @@ NAN_METHOD(LoadObjectFile)
 NAN_METHOD(RestartMachine)
 {
     try {
-        sim->restart();
+        sim->setup();
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -161,7 +167,7 @@ NAN_METHOD(RestartMachine)
 NAN_METHOD(ReinitializeMachine)
 {
     try {
-        sim->reinitialize();
+        sim->zeroState();
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -170,7 +176,7 @@ NAN_METHOD(ReinitializeMachine)
 NAN_METHOD(RandomizeMachine)
 {
     try {
-        sim->randomize();
+        sim->randomizeState();
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -276,22 +282,21 @@ NAN_METHOD(GetRegValue)
     std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
 
     try {
-        lc3::core::MachineState const & state = sim->getMachineState();
         if(reg_name[0] == 'r') {
             uint32_t reg_num = reg_name[1] - '0';
             if(reg_num > 7) {
                 Nan::ThrowError("GPR must be R0 through R7");
                 return;
             }
-            ret_val = state.regs[reg_num];
+            ret_val = sim->readReg(reg_num);
         } else if(reg_name == "ir") {
-            ret_val = state.readMemRaw(state.pc);
+            ret_val = sim->readMem(sim->readPC());
         } else if(reg_name == "psr") {
-            ret_val = sim->getPSR();
+            ret_val = sim->readPSR();
         } else if(reg_name == "pc") {
-            ret_val =  sim->getPC();
+            ret_val =  sim->readPC();
         } else if(reg_name == "mcr") {
-            ret_val = sim->getMCR();
+            ret_val = sim->readMCR();
         }
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
@@ -303,12 +308,17 @@ NAN_METHOD(GetRegValue)
 
 NAN_METHOD(SetRegValue)
 {
-    if(!info[0]->IsString()) {
+    if(info.Length() != 2) {
+        Nan::ThrowError("Requires 2 arguments");
+        return;
+    }
+
+    if(! info[0]->IsString()) {
         Nan::ThrowError("First argument must be register name as a string");
         return;
     }
 
-    if(!info[1]->IsNumber()) {
+    if(! info[1]->IsNumber()) {
         Nan::ThrowError("Second argument must be value as a number");
         return;
     }
@@ -316,23 +326,22 @@ NAN_METHOD(SetRegValue)
     Nan::Utf8String str(info[0].As<v8::String>());
     std::string reg_name((char const *) *str);
     std::transform(reg_name.begin(), reg_name.end(), reg_name.begin(), ::tolower);
-    uint32_t value = info[1]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t value = Nan::To<uint32_t>(info[1]).FromJust();
 
     try {
-        lc3::core::MachineState & state = sim->getMachineState();
         if(reg_name[0] == 'r') {
             uint32_t reg_num = reg_name[1] - '0';
             if(reg_num > 7) {
                 Nan::ThrowError("GPR must be R0 through R7");
                 return;
             }
-            state.regs[reg_num] = value;
+            sim->writeReg(reg_num, value);
         } else if(reg_name == "psr") {
-            sim->setPSR(value);
+            sim->writePSR(value);
         } else if(reg_name == "pc") {
-            sim->setPC(value);
+            sim->writePC(value);
         } else if(reg_name == "mcr") {
-            sim->setMCR(value);
+            sim->writeMCR(value);
         }
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
@@ -341,15 +350,19 @@ NAN_METHOD(SetRegValue)
 
 NAN_METHOD(GetMemValue)
 {
-    if(!info[0]->IsNumber()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsNumber()) {
         Nan::ThrowError("Must provide memory address as an numerical argument");
         return;
     }
 
-    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = Nan::To<uint32_t>(info[0]).FromJust();
     try {
-        lc3::core::MachineState const & state = sim->getMachineState();
-        auto ret = Nan::New<v8::Number>(state.readMemRaw(addr));
+        auto ret = Nan::New<v8::Number>(sim->readMem(addr));
         info.GetReturnValue().Set(ret);
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
@@ -358,22 +371,26 @@ NAN_METHOD(GetMemValue)
 
 NAN_METHOD(SetMemValue)
 {
-    if(!info[0]->IsNumber()) {
+    if(info.Length() != 2) {
+        Nan::ThrowError("Requires 2 arguments");
+        return;
+    }
+
+    if(! info[0]->IsNumber()) {
         Nan::ThrowError("First argument must be a memory address as a number");
         return;
     }
 
-    if(!info[1]->IsNumber()) {
+    if(! info[1]->IsNumber()) {
         Nan::ThrowError("Second argument must be value as a number");
         return;
     }
 
-    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
-    uint32_t value = info[1]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = Nan::To<uint32_t>(info[0]).FromJust();
+    uint32_t value = Nan::To<uint32_t>(info[1]).FromJust();
     try {
-        lc3::core::MachineState & state = sim->getMachineState();
-        state.writeMemSafe(addr, value);
-        state.mem[addr].setLine("");
+        sim->writeMem(addr, value);
+        sim->setMemLine(addr, "");
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -382,15 +399,19 @@ NAN_METHOD(SetMemValue)
 
 NAN_METHOD(GetMemLine)
 {
-    if(!info[0]->IsNumber()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsNumber()) {
         Nan::ThrowError("Must provide memory address as a numerical argument");
         return;
     }
 
-    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = Nan::To<uint32_t>(info[0]).FromJust();
     try {
-        lc3::core::MachineState const & state = sim->getMachineState();
-        auto ret = Nan::New<v8::String>(state.mem[addr].getLine()).ToLocalChecked();
+        auto ret = Nan::New<v8::String>(sim->getMemLine(addr)).ToLocalChecked();
         info.GetReturnValue().Set(ret);
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
@@ -399,17 +420,22 @@ NAN_METHOD(GetMemLine)
 
 NAN_METHOD(SetMemLine)
 {
-    if(!info[0]->IsNumber()) {
+    if(info.Length() != 2) {
+        Nan::ThrowError("Requires 2 arguments");
+        return;
+    }
+
+    if(! info[0]->IsNumber()) {
         Nan::ThrowError("Must provide memory address as a numerical argument");
         return;
     }
 
-    if(!info[1]->IsString()) {
+    if(! info[1]->IsString()) {
         Nan::ThrowError("Second argument must be string");
         return;
     }
 
-    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = Nan::To<uint32_t>(info[0]).FromJust();
     Nan::Utf8String str(info[1].As<v8::String>());
     std::string line((char const *) *str);
 
@@ -422,13 +448,18 @@ NAN_METHOD(SetMemLine)
 
 NAN_METHOD(SetIgnorePrivilege)
 {
-    if(!info[0]->IsBoolean()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsBoolean()) {
         Nan::ThrowError("Must provide setting as a bool argument");
         return;
     }
 
     try {
-        sim->setIgnorePrivilege((bool) info[0]->BooleanValue(Nan::GetCurrentContext()).ToChecked());
+        sim->setIgnorePrivilege(Nan::To<bool>(info[0]).FromJust());
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -480,12 +511,17 @@ NAN_METHOD(ClearOutput)
 
 NAN_METHOD(SetBreakpoint)
 {
-    if(!info[0]->IsNumber()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsNumber()) {
         Nan::ThrowError("Must provide memory address as a numerical argument");
         return;
     }
 
-    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = Nan::To<uint32_t>(info[0]).FromJust();
     try {
         sim->setBreakpoint(addr);
     } catch(std::exception const & e) {
@@ -495,14 +531,19 @@ NAN_METHOD(SetBreakpoint)
 
 NAN_METHOD(RemoveBreakpoint)
 {
-    if(!info[0]->IsNumber()) {
+    if(info.Length() != 1) {
+        Nan::ThrowError("Requires 1 argument");
+        return;
+    }
+
+    if(! info[0]->IsNumber()) {
         Nan::ThrowError("Must provide memory address as a numerical argument");
         return;
     }
 
-    uint32_t addr = info[0]->Uint32Value(Nan::GetCurrentContext()).ToChecked();
+    uint32_t addr = Nan::To<uint32_t>(info[0]).FromJust();
     try {
-        sim->removeBreakpointByAddr(addr);
+        sim->removeBreakpoint(addr);
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
     }
@@ -557,4 +598,4 @@ NAN_MODULE_INIT(Initialize)
     NAN_EXPORT(target, GetInstExecCount);
 }
 
-NODE_MODULE(wrapper, Initialize);
+NODE_MODULE(lc3interface, Initialize);

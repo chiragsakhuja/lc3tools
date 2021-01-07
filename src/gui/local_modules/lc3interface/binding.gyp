@@ -3,7 +3,7 @@
         {
             'include_dirs': [
                 "<!(node -e \"require('nan')\")",
-                '<(module_root_dir)/../../../../backend'
+                '<(module_root_dir)/../../../backend'
             ],
             'target_name': 'lc3interface',
             'sources': ['wrapper.cpp'],

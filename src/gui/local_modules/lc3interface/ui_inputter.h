@@ -19,6 +19,7 @@ namespace utils
         virtual void beginInput(void) override {}
         virtual bool getChar(char & c) override;
         virtual void endInput(void) override {}
+        virtual bool hasRemaining(void) const override { return false; }
 
         void clearInput(void);
         void addInput(char c);
