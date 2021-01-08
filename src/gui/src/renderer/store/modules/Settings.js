@@ -2,7 +2,8 @@ const state = {
   theme: "light",
   number_type: "unsigned",
   ignore_privilege: false,
-  liberal_asm: false
+  liberal_asm: false,
+  ignore_update: false
 }
 
 const mutations = {
@@ -17,6 +18,9 @@ const mutations = {
   },
   setLiberalAsm(state, setting) {
     state.liberal_asm = setting
+  },
+  setIgnoreUpdate(state, setting) {
+    state.ignore_update = setting
   }
 }
 
@@ -24,7 +28,8 @@ const getters = {
   theme: state => state.theme,
   number_type: state => state.number_type,
   ignore_privilege: state => state.ignore_privilege,
-  liberal_asm: state => state.liberal_asm
+  liberal_asm: state => state.liberal_asm,
+  ignore_update: state => state.ignore_update
 }
 
 export default {
