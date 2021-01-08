@@ -62,12 +62,21 @@ lc3::core::asmbl::Tokenizer & lc3::core::asmbl::Tokenizer::operator>>(Token & to
         }
 
         // Ignore comments directly in tokenizer.
-        size_t search = line.find(';');
-        if(search != std::string::npos) {
-            line = line.substr(0, search);
+        // The ; may be embedded within quotes in a .stringz, so we cannot blindly ignore after ;.
+        bool in_string = false;
+        uint64_t comment_idx = line.size();
+        for(uint64_t i = 0; i < line.size(); ++i) {
+            if(line[i] == '"') {
+                in_string = ! in_string;
+            }
+            if(line[i] == ';' && ! in_string) {
+                comment_idx = i;
+                break;
+            }
         }
+        line = line.substr(0, comment_idx);
 
-        search = line.find_last_not_of(" \t");
+        size_t search = line.find_last_not_of(" \t");
         if(search != std::string::npos) {
             // Ignore trailing whitespace.
             line = line.substr(0, search + 1);
@@ -151,10 +160,8 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
             }
             return true;
         } else {
-            if(enable_liberal_asm) {
-                val = std::stoi(c_str);
-                return true;
-            }
+            val = std::stoi(c_str);
+            return true;
         }
         return false;
     } catch(std::invalid_argument const & e) {
