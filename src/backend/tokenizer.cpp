@@ -150,6 +150,8 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
     try {
         if(c_str[0] == 'B' || c_str[0] == 'b' || c_str[0] == 'X' || c_str[0] == 'x' || c_str[0] == '#') {
             std::string conv = std::string(c_str + 1);
+            // For some reason, std::stoi will ignore part anything after the conversion.  For example, 1@ gets parsed
+            // to 1.  Leave it be for now.
             switch(c_str[0]) {
                 case 'B':
                 case 'b': val = std::stoi(conv, nullptr, 2) ; break;
