@@ -149,7 +149,10 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
 
         if(mem.isOrig()) {
             if(! first_orig_set) {
-                state.writeResetPC(mem.getValue());
+                if(mem.getValue() != 0) {
+                    // If orig is 0, then most likely an OS is being loaded.  Don't change the reset PC.
+                    state.writeResetPC(mem.getValue());
+                }
                 first_orig_set = true;
             }
             fill_pc = mem.getValue();

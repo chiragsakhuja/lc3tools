@@ -417,8 +417,14 @@ lc3::optional<uint32_t> Encoder::encodeInstruction(Statement const & statement, 
 
         encoding <<= operand->getWidth();
         try {
-            optional<uint32_t> operand_encoding = operand->encode(statement, statement.operands[operand_idx], regs,
-                symbols, logger);
+            optional<uint32_t> operand_encoding = {};
+            if(operand->getType() == IOperand::Type::FIXED) {
+                StatementPiece dummy;
+                operand_encoding = operand->encode(statement, dummy, regs, symbols, logger);
+            } else {
+                operand_encoding = operand->encode(statement, statement.operands[operand_idx], regs, symbols, logger);
+            }
+
             if(operand_encoding) {
                 encoding |= *operand_encoding;
             } else {

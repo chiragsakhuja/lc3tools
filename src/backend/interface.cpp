@@ -204,7 +204,14 @@ void lc3::sim::loadOS(void)
 
     std::stringstream src_buffer;
     src_buffer << lc3::core::getOSSrc();
-    std::shared_ptr<std::stringstream> obj_stream = assembler.assemble(src_buffer);
+    std::shared_ptr<std::stringstream> obj_stream;
+    try {
+        obj_stream = assembler.assemble(src_buffer);
+    } catch(utils::exception const & e) {
+        printer.print("caught exception: " + std::string(e.what()));
+        printer.newline();
+        return;
+    }
     simulator.loadObj("lc3os", *obj_stream);
 }
 
