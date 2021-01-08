@@ -65,18 +65,18 @@
     }
   },
   "dependencies": {
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "electron-log": "^2.2.17",
     "electron-storage": "^1.0.7",
-    "electron-updater": "^4.1.2",
+    "electron-updater": "^4.3.5",
     "lc3interface": "file:./local_modules/lc3interface",
     "material-design-icons-iconfont": "^3.0.3",
-    "vue": "^2.5.16",
+    "vue": "^2.6.12",
     "vue-electron": "^1.0.6",
     "vue-electron-storage": "^1.0.1",
-    "vue-router": "^3.0.1",
+    "vue-router": "^3.4.9",
     "vue2-ace-editor-electron": "^0.0.4",
-    "vuetify": "^1.5.21",
+    "vuetify": "^1.5.24",
     "vuex": "^2.3.1"
   },
   "devDependencies": {
@@ -94,7 +94,7 @@
     "css-loader": "^0.28.4",
     "del": "^3.0.0",
     "devtron": "^1.4.0",
-    "electron": "^2.0.4",
+    "electron": "^3.1.13",
     "electron-builder": "^21.2.0",
     "electron-debug": "^1.5.0",
     "electron-devtools-installer": "^2.2.4",
@@ -108,7 +108,7 @@
     "vue-html-loader": "^1.2.4",
     "vue-loader": "^13.0.5",
     "vue-style-loader": "^3.0.1",
-    "vue-template-compiler": "^2.4.2",
+    "vue-template-compiler": "^2.6.12",
     "webpack": "^3.5.2",
     "webpack-dev-server": "^2.7.1",
     "webpack-hot-middleware": "^2.18.2"
