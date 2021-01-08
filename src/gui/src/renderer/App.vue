@@ -226,12 +226,25 @@ export default {
 .text-red {
   color: red;
 }
+.text-yellow {
+  color: yellow;
+}
 .text-green {
   color: green;
+}
+.text-magenta {
+  color: magenta;
+}
+.text-blue {
+  color: blue;
+}
+.text-gray {
+  color: gray;
 }
 .text-bold {
   font-weight: bold;
 }
+
 body {
   user-select: none;
   cursor: default;
