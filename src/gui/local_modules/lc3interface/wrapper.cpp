@@ -4,11 +4,10 @@
 #include <nan.h>
 
 #ifndef DEFAULT_PRINT_LEVEL
-    #define DEFAULT_PRINT_LEVEL 9
+    #define DEFAULT_PRINT_LEVEL 1
 #endif
 
 #include <algorithm>
-#include <fstream>
 #include <memory>
 #include <mutex>
 
@@ -23,7 +22,6 @@ std::shared_ptr<lc3::as> as = nullptr;
 std::shared_ptr<lc3::conv> conv = nullptr;
 std::shared_ptr<lc3::sim> sim = nullptr;
 bool hit_breakpoint = false;
-std::ofstream log_file("log.log");
 
 class SimulatorAsyncWorker : public Nan::AsyncWorker
 {
@@ -38,10 +36,6 @@ public:
     {
         try {
             run_function();
-            std::vector<std::string> const & output = printer.getAndClearOutputBuffer();
-            std::string joined = "";
-            for(std::string const & str : output) { joined += str; }
-            log_file << joined;
         } catch(std::exception const & e) {
             this->SetErrorMessage(e.what());
         }
@@ -546,10 +540,10 @@ NAN_METHOD(AddInput)
 NAN_METHOD(GetAndClearOutput)
 {
     try {
-        // std::vector<std::string> const & output = printer.getAndClearOutputBuffer();
-        // std::string joined = "";
-        // for(std::string const & str : output) { joined += str; }
-        auto ret = Nan::New<v8::String>("").ToLocalChecked();
+        std::vector<std::string> const & output = printer.getAndClearOutputBuffer();
+        std::string joined = "";
+        for(std::string const & str : output) { joined += str; }
+        auto ret = Nan::New<v8::String>(joined).ToLocalChecked();
         info.GetReturnValue().Set(ret);
     } catch(std::exception const & e) {
         Nan::ThrowError(e.what());
