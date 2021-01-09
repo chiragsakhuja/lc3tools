@@ -204,15 +204,15 @@ void lc3::sim::loadOS(void)
 
     std::stringstream src_buffer;
     src_buffer << lc3::core::getOSSrc();
-    std::shared_ptr<std::stringstream> obj_stream;
+    std::pair<std::shared_ptr<std::stringstream>, core::SymbolTable> asm_res;
     try {
-        obj_stream = assembler.assemble(src_buffer);
+        asm_res = assembler.assemble(src_buffer);
     } catch(utils::exception const & e) {
         printer.print("caught exception: " + std::string(e.what()));
         printer.newline();
         return;
     }
-    simulator.loadObj("lc3os", *obj_stream);
+    simulator.loadObj("lc3os", *(asm_res.first));
 }
 
 bool lc3::sim::runHelper(void)
@@ -304,7 +304,7 @@ lc3::as::as(utils::IPrinter & printer, uint32_t print_level, bool enable_liberal
     printer(printer), assembler(printer, print_level, enable_liberal_asm)
 { }
 
-lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
+lc3::optional<std::pair<std::string, lc3::core::SymbolTable>> lc3::as::assemble(std::string const & asm_filename)
 {
     std::string obj_filename(asm_filename.substr(0, asm_filename.find_last_of('.')) + ".obj");
     assembler.setFilename(asm_filename);
@@ -318,14 +318,14 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
     printer.print("attempting to assemble " + asm_filename + " into " + obj_filename);
     printer.newline();
 
-    std::shared_ptr<std::stringstream> out_stream;
+    std::pair<std::shared_ptr<std::stringstream>, core::SymbolTable> asm_res;
 
 #ifdef _ENABLE_DEBUG
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
     try {
-        out_stream = assembler.assemble(in_file);
+        asm_res = assembler.assemble(in_file);
     } catch(utils::exception const & e) {
         printer.print("caught exception: " + std::string(e.what()));
         printer.newline();
@@ -351,10 +351,10 @@ lc3::optional<std::string> lc3::as::assemble(std::string const & asm_filename)
         return {};
     }
 
-    out_file << out_stream->rdbuf();
+    out_file << (asm_res.first)->rdbuf();
     out_file.close();
 
-    return obj_filename;
+    return std::make_pair(obj_filename, asm_res.second);
 }
 
 lc3::conv::conv(utils::IPrinter & printer, uint32_t print_level) :

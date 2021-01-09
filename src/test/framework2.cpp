@@ -77,6 +77,7 @@ int main(int argc, char * argv[])
     lc3::ConsolePrinter asm_printer;
     lc3::as assembler(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0, false);
     lc3::conv converter(asm_printer, args.asm_print_level_override ? args.asm_print_level : 0);
+    lc3::core::SymbolTable symbol_table;
 
     std::vector<std::string> obj_filenames;
     bool valid_program = true;
@@ -88,7 +89,12 @@ int main(int argc, char * argv[])
                 if(endsWith(filename, ".bin")) {
                     result = converter.convertBin(filename);
                 } else {
-                    result = assembler.assemble(filename);
+                    lc3::optional<std::pair<std::string, lc3::core::SymbolTable>> asm_result;
+                    asm_result = assembler.assemble(filename);
+                    if(asm_result) {
+                        symbol_table.insert(asm_result->second.begin(), asm_result->second.end());
+                        result = asm_result->first;
+                    }
                 }
             } else {
                 result = filename;
@@ -109,6 +115,7 @@ int main(int argc, char * argv[])
     if(valid_program) {
         Tester tester(args.print_output, args.sim_print_level_override ? args.sim_print_level : 1,
             args.ignore_privilege, args.tester_verbose, args.seed, obj_filenames);
+        tester.setSymbolTable(symbol_table);
         setup(tester);
 
         if(args.test_filter.size() == 0) {

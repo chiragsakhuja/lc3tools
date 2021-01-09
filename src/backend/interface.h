@@ -161,7 +161,7 @@ namespace lc3
         as(utils::IPrinter & printer, uint32_t print_level, bool enable_liberal_asm);
         ~as(void) = default;
 
-        optional<std::string> assemble(std::string const & asm_filename);
+        optional<std::pair<std::string, core::SymbolTable>> assemble(std::string const & asm_filename);
 
         void setEnableLiberalAsm(bool enable);
 

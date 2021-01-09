@@ -40,6 +40,7 @@ private:
     uint32_t print_level;
     uint64_t seed;
     std::vector<std::string> obj_filenames;
+    lc3::core::SymbolTable symbol_table;
 
     BufferedPrinter * printer;
     StringInputter * inputter;
@@ -82,6 +83,9 @@ public:
     bool checkContain(std::string const & str, std::string const & expected_part) const;
     double checkSimilarity(std::string const & source, std::string const & target) const;
     std::string getPreprocessedString(std::string const & str, uint64_t type) const;
+
+    void setSymbolTable(lc3::core::SymbolTable const & symbol_table) { this->symbol_table = symbol_table; }
+    lc3::core::SymbolTable const & getSymbolTable(void) { return symbol_table; }
 };
 
     int main(int argc, char * argv[]);

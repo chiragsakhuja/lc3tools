@@ -28,7 +28,7 @@ namespace core
         Assembler & operator=(Assembler const &) = delete;
         ~Assembler(void) = default;
 
-        std::shared_ptr<std::stringstream> assemble(std::istream & buffer);
+        std::pair<std::shared_ptr<std::stringstream>, SymbolTable> assemble(std::istream & buffer);
         void setFilename(std::string const & filename) { logger.setFilename(filename); }
 
         void setLiberalAsm(bool enable_liberal_asm);

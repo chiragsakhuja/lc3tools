@@ -42,6 +42,7 @@ struct TestCase
 };
 
 bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr);
+lc3::core::SymbolTable const & getSymbolTable(void);
 
 int main(int argc, char * argv[]);
 };

@@ -29,6 +29,7 @@ std::function<void(void)> setup = nullptr;
 std::function<void(void)> shutdown = nullptr;
 std::function<void(lc3::sim &)> testBringup = nullptr;
 std::function<void(lc3::sim &)> testTeardown = nullptr;
+lc3::core::SymbolTable symbol_table;
 
 int main(int argc, char * argv[])
 {
@@ -82,7 +83,12 @@ int main(int argc, char * argv[])
                 if(endsWith(filename, ".bin")) {
                     result = converter.convertBin(filename);
                 } else {
-                    result = assembler.assemble(filename);
+                    lc3::optional<std::pair<std::string, lc3::core::SymbolTable>> asm_result;
+                    asm_result = assembler.assemble(filename);
+                    if(asm_result) {
+                        symbol_table.insert(asm_result->second.begin(), asm_result->second.end());
+                        result = asm_result->first;
+                    }
                 }
             } else {
                 result = filename;
@@ -206,5 +212,7 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool
     }
     return false;
 }
+
+lc3::core::SymbolTable const & getSymbolTable(void) { return symbol_table; }
 };
 
