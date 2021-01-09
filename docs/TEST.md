@@ -25,17 +25,18 @@ will consist of a set of test cases. The unit test executable consumes a single
 student's assignment and outputs a report for that student. In practice, the
 instructor will need to write scripts that invoke the unit test for each
 student and then aggregate the results from the reports. At UT Austin we use
-Canvas to distribute grades, which has its own API. This project will soon
-include a comprehensive script to interface with Canvas that runs unit tests for
-every student, aggregates the results, and uploads the grades to Canvas with the
-report attached.
+Canvas to distribute grades, which has its own API. This project includes a
+comprehensive script, which is described in the [Canvas document](CANVAS.md),
+to interface with Canvas that runs unit tests for every student, aggregates
+the results, and uploads the grades to Canvas with the report attached.
 
 Unit test source files live in the `src/test/tests` directory. When a unit test
 is built, as per the [build
 document](BUILD.md#command-line-tools-and-unit-tests), the executable will be
-generated in the `build/bin` directory with the same name as the source file for
-the unit test (e.g. a unit test labeled `assignment1.cpp` will produce an
-executable called `assignment1`).
+generated in the `build/bin` directory on \*NIX systems and `build/Release/bin`
+on Windows. The executable be named the same as the source file for the unit
+test (e.g. a unit test labeled `assignment1.cpp` will produce an executable
+called `assignment1`).
 
 # Tutorial
 This tutorial covers all the steps necessary to create a unit test for a simple
@@ -93,6 +94,7 @@ explanations for each function will be provided. Fill in the following code in
 `tutorial.cpp`:
 
 ```
+#define API_VER 2
 #include "framework.h"
 
 void testBringup(lc3::sim & sim) { }
@@ -118,6 +120,9 @@ make
 You should see a new executable at `build/bin/tutorial`. Once the unit test has
 been built for the first time, it suffices to just run the `make` command from
 the `build/` directory to rebuild.
+
+**Note that you must have the `#define API_VER 2` line to use the correct API
+version.**
 
 ## Adding a Test Case
 A test case takes the form of a function and takes three arguments of the
@@ -471,7 +476,7 @@ as follows:
 A more in-depth description of each assignment can be found in the [Sample
 Assignments document](SampleAssignments.pdf).
 
-Assembly/binary solutions for each assignment (other than `nim`) are also
+Assembly/binary solutions som assignments  are also
 provided in `src/test/tests/samples/solutions`. To verify the unit test's
 functionality, you may run the following from the root directory after
 [compiling the command line tools](BUILD.md#command-line-tools-and-unit-tests)
@@ -481,12 +486,13 @@ with samples enabled (default).
 build/bin/binsearch src/test/tests/samples/solutions/binsearch.asm
 build/bin/interrupt1 src/test/tests/samples/solutions/interrupt1.asm
 build/bin/interrupt2 src/test/tests/samples/solutions/interrupt2.asm
-build/bin/intersection src/test/tests/samples/solutions/intersection.asm
+build/bin/intersection NOT-PROVIDED
+build/bin/nim NOT-PROVIDED
 build/bin/polyroot src/test/tests/samples/solutions/polyroot.asm
 build/bin/pow2 src/test/tests/samples/solutions/pow2.bin
 build/bin/rotate src/test/tests/samples/solutions/rotate.bin
 build/bin/shift src/test/tests/samples/solutions/shift.bin
-build/bin/sort src/test/tests/samples/solutions/sort.asm
+build/bin/sort NOT-PROVIDED
 ```
 
 Furthermore, `interupt1.asm` and `interrupt2.asm` show two different methods for

@@ -1,3 +1,15 @@
+# Table of Contents
+
+* [Running the Machine](API.md#running-the-machine)
+* [`Tester`](API.md#tester)
+* [Getting/Setting Machine State](API.md#gettingsetting-machine-state)
+* [Callbacks](API.md#callbacks)
+* [Miscellaneous](API.md#miscellaneous)
+* [Test Cases](API.md#test-cases)
+* [Automated Input](API.md#automated-input)
+* [String Manipulation and Comparison](API.md#string-manipulation-and-comparison)
+* [Debugging](API.md#debugging)
+
 # Testing Framework API
 The purpose of this document is to describe the subset of the LC3Tools API that
 is relevant to unit testing. The full API can be found in
@@ -163,13 +175,12 @@ the available callbacks are defined by the `lc3::core::CallbackType` enum.
 
 ### `callback_func_t`
 The callback function prototype that all callback functions must follow, defined
-as `std::function<void(lc3::core::CallbackType type, lc3::core::MachineState &
-state)>`.
+as `std::function<void(lc3::core::CallbackType type, lc3::sim & sim)>`.
 
 Arguments:
 
 * `type`: Hook trigger given by the `lc3::core::CallbackType` enum.
-* `state`: Reference to entire machine state under simulation.
+* `sim`: Reference to simulator.
 
 ### `lc3::core::CallbackType`
 An enum that defines available hook triggers, described as follows and
@@ -204,6 +215,21 @@ program halted properly.
 Return Value:
 
 * `true` if the instruction limit was exceeded, `false` otherwise.
+
+### `void setBreakpoint(uint16_t addr)`
+Set a breakpoint, by address, that will pause execution whenever the PC reaches
+it.
+
+Arguments:
+
+* `addr`: Address to place breakpoint on.
+
+### `bool removeBreakpoint(uint16_t addr)`
+Remove a breakpoint.
+
+Arguments:
+
+* `addr`: Address to remove breakpoint from.
 
 # `Tester`
 Additionally, the testing framework, which is accessed by through
