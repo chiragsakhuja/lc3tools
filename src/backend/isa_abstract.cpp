@@ -73,7 +73,7 @@ std::string IInstruction::toValueString(void) const
                         std::static_pointer_cast<NumOperand>(operand)->shouldSEXT()) ||
                     operand->getType() == IOperand::Type::LABEL)
                 {
-                    oper_str = "#" + std::to_string(static_cast<uint32_t>(
+                    oper_str = "#" + std::to_string(static_cast<uint16_t>(
                         lc3::utils::sextTo32(operand->getValue(), operand->getWidth())
                     ));
                 } else {
