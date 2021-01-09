@@ -124,7 +124,7 @@ SKIP    OUT
         PUTS
 
 EXIT    ADD R6, R6, #7
-        STR R7, R6, #-7
+        LDR R7, R6, #-7
         LDR R5, R6, #-6
         LDR R4, R6, #-5
         LDR R3, R6, #-4

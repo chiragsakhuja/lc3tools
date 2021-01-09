@@ -380,6 +380,7 @@ std::pair<PIMicroOp, PIMicroOp> lc3::core::buildSystemModeEnter(uint16_t table_s
     PIMicroOp copy_psr = std::make_shared<RegWriteRegMicroOp>(10, 9);
     PIMicroOp clear_priority = std::make_shared<RegAndImmMicroOp>(10, 10, 0xF1FF);
     PIMicroOp set_priority = std::make_shared<RegAddImmMicroOp>(10, 10, (priority & 0x7) << 8);
+    PIMicroOp write_priority = std::make_shared<PSRWriteRegMicroOp>(10);
     PIMicroOp set_priv = std::make_shared<RegAndImmMicroOp>(10, 10, 0x7FFF);
     PIMicroOp change_priv = std::make_shared<PSRWriteRegMicroOp>(10);
     PIMicroOp store_psr = std::make_shared<MemWriteRegMicroOp>(6, 9);
@@ -403,7 +404,8 @@ std::pair<PIMicroOp, PIMicroOp> lc3::core::buildSystemModeEnter(uint16_t table_s
     write_psr->insert(copy_psr);
     copy_psr->insert(clear_priority);
     clear_priority->insert(set_priority);
-    set_priority->insert(std::make_shared<BranchMicroOp>([](MachineState const & state) {
+    set_priority->insert(write_priority);
+    write_priority->insert(std::make_shared<BranchMicroOp>([](MachineState const & state) {
         return lc3::utils::getBit(state.readPSR(), 15) == 1;
     }, "PSR[15] == 1", set_priv, store_psr));
 
