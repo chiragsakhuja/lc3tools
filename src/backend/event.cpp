@@ -117,11 +117,12 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
                 throw lc3::utils::exception("invalid header (is this a .obj file?); try re-assembling");
             }
         }
+        delete[] header;
     } else {
-        //logger.printf(PrintType::P_ERROR, true, "could not read header");
+        delete[] header;
+        logger.printf(PrintType::P_ERROR, true, "could not read header");
         throw lc3::utils::exception("could not read header");
     }
-    delete[] header;
 
     // Verify version number matches current version number.
     std::string expected_version = lc3::utils::getVersionString();
@@ -133,11 +134,12 @@ void LoadObjFileEvent::handleEvent(MachineState & state)
                 throw lc3::utils::exception("mismatched version numbers; try re-assembling");
             }
         }
+        delete[] version;
     } else {
-        logger.printf(PrintType::P_ERROR, true, "could not version number; try re-assembling");
+        delete[] version;
+        logger.printf(PrintType::P_ERROR, true, "could not read version number; try re-assembling");
         throw lc3::utils::exception("could not read version number; try re-assembling");
     }
-    delete[] version;
 
     while(! buffer.eof()) {
         MemLocation mem;
