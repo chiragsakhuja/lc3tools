@@ -62,6 +62,21 @@ Arguments:
 
 * `inst_limit`: The number of instructions to execute before halting simulation.
 
+### `void setBreakpoint(uint16_t addr)`
+Set a breakpoint, by address, that will pause execution whenever the PC reaches
+it.
+
+Arguments:
+
+* `addr`: Address to place breakpoint on.
+
+### `bool removeBreakpoint(uint16_t addr)`
+Remove a breakpoint by address.
+
+Arguments:
+
+* `addr`: Address to remove breakpoint from.
+
 ## Getting/Setting Machine State
 
 ### `uint16_t readReg(uint16_t id) const`
@@ -214,21 +229,6 @@ program halted properly.
 Return Value:
 
 * `true` if the instruction limit was exceeded, `false` otherwise.
-
-### `void setBreakpoint(uint16_t addr)`
-Set a breakpoint, by address, that will pause execution whenever the PC reaches
-it.
-
-Arguments:
-
-* `addr`: Address to place breakpoint on.
-
-### `bool removeBreakpoint(uint16_t addr)`
-Remove a breakpoint.
-
-Arguments:
-
-* `addr`: Address to remove breakpoint from.
 
 # `Tester`
 Additionally, the testing framework, which is accessed by through
