@@ -43,7 +43,7 @@ void testBringup(lc3::sim & sim)
     sim.setRunInstLimit(50000);
 } 
 
-void testTeardown(lc3::sim & sim) { }
+void testTeardown(lc3::sim &) { }
 
 void setup(Tester & tester)
 {

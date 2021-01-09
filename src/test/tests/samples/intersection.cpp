@@ -282,7 +282,7 @@ template<int EmptyListN>
 void EmptyList(lc3::sim & sim, Tester & tester, double total_points)
 {
     Node * list = new Node("Chirag", 0x8000, 0x8010);
-    Node * tail = list->append(new Node("Evil", 0x8100, 0x8110));
+    list->append(new Node("Evil", 0x8100, 0x8110));
 
     solution_t solution;
     if(EmptyListN == 0) {
