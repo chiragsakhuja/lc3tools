@@ -179,8 +179,6 @@ namespace lc3
     private:
         utils::IPrinter & printer;
         core::Converter converter;
-
-        bool propagate_exceptions;
     };
 };
 

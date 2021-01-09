@@ -14,7 +14,7 @@ using namespace lc3::core;
 static constexpr uint64_t INST_TIMESTEP = 20;
 
 Simulator::Simulator(lc3::utils::IPrinter & printer, lc3::utils::IInputter & inputter, uint32_t print_level) :
-    time(0), logger(printer, print_level), inputter(inputter)
+    time(0), logger(printer, print_level)
 {
     devices.emplace_back(std::make_shared<KeyboardDevice>(inputter));
     devices.emplace_back(std::make_shared<DisplayDevice>(logger));

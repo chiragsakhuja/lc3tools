@@ -61,14 +61,12 @@ namespace core
         std::vector<PIDevice> devices;
 
         lc3::utils::Logger logger;
-        lc3::utils::IInputter & inputter;
 
         std::unordered_map<CallbackType, Callback> callbacks;
         std::set<uint16_t> breakpoints;
 
         uint64_t inst_count_this_run;
         uint16_t pre_inst_pc;
-        bool first_setup;
         std::vector<uint16_t> stack_trace;
         bool async_interrupt;
 
