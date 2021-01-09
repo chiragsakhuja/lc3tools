@@ -117,8 +117,6 @@ int main(int argc, char * argv[])
             StringInputter sim_inputter;
             lc3::sim simulator(sim_printer, sim_inputter, args.sim_print_level_override ? args.sim_print_level : 1);
 
-            testBringup(simulator);
-
             verify_count = 0;
             verify_valid = 0;
 
@@ -136,6 +134,8 @@ int main(int argc, char * argv[])
                     return 2;
                 }
             }
+
+            testBringup(simulator);
 
             if(args.ignore_privilege) {
                 simulator.setIgnorePrivilege(true);
