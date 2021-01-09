@@ -175,6 +175,8 @@ int main(int argc, char * argv[])
     return 0;
 }
 
+};
+
 bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr)
 {
     BufferedPrinter const & buffered_printer = static_cast<BufferedPrinter const &>(printer);
@@ -212,8 +214,6 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool
     }
     return false;
 }
-
-};
 
 lc3::core::SymbolTable const & getSymbolTable(void) { return framework1::symbol_table; }
 

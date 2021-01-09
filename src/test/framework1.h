@@ -41,11 +41,10 @@ struct TestCase
     }
 };
 
-bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr);
-
 int main(int argc, char * argv[]);
 };
 
+bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr);
 lc3::core::SymbolTable const & getSymbolTable(void);
 
 #define REGISTER_TEST(name, function, points)                                    \
@@ -69,7 +68,7 @@ lc3::core::SymbolTable const & getSymbolTable(void);
 #define VERIFY_OUTPUT_NAMED(message, check)                                      \
     framework1::verify_count += 1;                                               \
     std::cout << " " << ( message ) << " => ";                                   \
-    if(framework1::outputCompare(sim.getPrinter(), check, false)) {              \
+    if(outputCompare(sim.getPrinter(), check, false)) {                          \
         framework1::verify_valid += 1;                                           \
         std::cout << "yes\n";                                                    \
     } else {                                                                     \
@@ -82,7 +81,7 @@ lc3::core::SymbolTable const & getSymbolTable(void);
 #define VERIFY_OUTPUT_HAD_NAMED(message, check)                                  \
     framework1::verify_count += 1;                                               \
     std::cout << " " << ( message ) << " => ";                                   \
-    if(framework1::outputCompare(sim.getPrinter(), check, true)) {               \
+    if(outputCompare(sim.getPrinter(), check, true)) {                           \
         framework1::verify_valid += 1;                                           \
         std::cout << "yes\n";                                                    \
     } else {                                                                     \

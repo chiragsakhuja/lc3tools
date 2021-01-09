@@ -21,9 +21,6 @@ public:
 
 private:
     bool print_output;
-#if (! defined API_VER) || API_VER == 1
-public:
-#endif
     std::vector<char> display_buffer;
 };
 
