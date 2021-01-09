@@ -20,7 +20,7 @@
     "pack:renderer": "cross-env NODE_ENV=production webpack --progress --colors --config .electron-vue/webpack.renderer.config.js",
     "postinstall": "electron-builder install-app-deps",
     "lc3": "yarn add file:./local_modules/lc3interface",
-    "release": "build"
+    "release": "node .electron-vue/build.js && electron-builder --publish always"
   },
   "extraResources": "",
   "buildResources": "static",
@@ -50,13 +50,18 @@
       ]
     },
     "mac": {
-      "icon": "static/icons/icon.icns"
+      "icon": "static/icons/icon.icns",
+      "category": "public.app-category.developer-tools",
+      "target": "dmg"
     },
     "win": {
-      "icon": "static/icons/icon.ico"
+      "icon": "static/icons/icon.ico",
+      "target": "nsis"
     },
     "linux": {
-      "icon": "static/icons"
+      "icon": "static/icons",
+      "category": "Development",
+      "target": "AppImage"
     },
     "publish": {
       "provider": "github",
@@ -94,7 +99,7 @@
     "css-loader": "^0.28.4",
     "del": "^3.0.0",
     "devtron": "^1.4.0",
-    "electron": "^3.1.13",
+    "electron": "^4.2.12",
     "electron-builder": "^21.2.0",
     "electron-debug": "^1.5.0",
     "electron-devtools-installer": "^2.2.4",
