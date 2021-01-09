@@ -92,7 +92,7 @@ namespace lc3
         char getCC(void) const { return readCC(); }
         void setReg(uint16_t id, uint16_t value) { writeReg(id, value); }
         void setMem(uint16_t addr, uint16_t value) { writeMem(addr, value); }
-        void setStringMem(uint16_t addr, std::string const & value) { writeStringMem(addr, value); }
+        void setMemString(uint16_t addr, std::string const & value) { writeStringMem(addr, value); }
         void setPC(uint16_t value) { writePC(value); }
         void setPSR(uint16_t value) { writePSR(value); }
         void setMCR(uint16_t value) { writeMCR(value); }

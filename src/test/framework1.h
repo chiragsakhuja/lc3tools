@@ -42,10 +42,11 @@ struct TestCase
 };
 
 bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool substr);
-lc3::core::SymbolTable const & getSymbolTable(void);
 
 int main(int argc, char * argv[]);
 };
+
+lc3::core::SymbolTable const & getSymbolTable(void);
 
 #define REGISTER_TEST(name, function, points)                                    \
     framework1::tests.emplace_back( #name , ( function ), ( points ), false);    \
@@ -55,39 +56,39 @@ int main(int argc, char * argv[]);
     do {} while(false)
 #define VERIFY_NAMED(message, check)                                             \
     framework1::verify_count += 1;                                               \
-    std::cout << "  " << ( message ) << " => ";                      \
-    if(( check ) == true) {                                          \
+    std::cout << "  " << ( message ) << " => ";                                  \
+    if(( check ) == true) {                                                      \
         framework1::verify_valid += 1;                                           \
-        std::cout << "yes\n";                                        \
-    } else {                                                         \
-        std::cout << "no\n";                                         \
-    }                                                                \
+        std::cout << "yes\n";                                                    \
+    } else {                                                                     \
+        std::cout << "no\n";                                                     \
+    }                                                                            \
     do {} while(false)
-#define VERIFY(check)                                                \
+#define VERIFY(check)                                                            \
     VERIFY_NAMED(#check, check)
-#define VERIFY_OUTPUT_NAMED(message, check)                          \
+#define VERIFY_OUTPUT_NAMED(message, check)                                      \
     framework1::verify_count += 1;                                               \
-    std::cout << " " << ( message ) << " => ";                       \
-    if(outputCompare(sim.getPrinter(), check, false)) {              \
+    std::cout << " " << ( message ) << " => ";                                   \
+    if(framework1::outputCompare(sim.getPrinter(), check, false)) {              \
         framework1::verify_valid += 1;                                           \
-        std::cout << "yes\n";                                        \
-    } else {                                                         \
-        std::cout << "no\n";                                         \
-    }                                                                \
-    static_cast<BufferedPrinter &>(sim.getPrinter()).clear();        \
+        std::cout << "yes\n";                                                    \
+    } else {                                                                     \
+        std::cout << "no\n";                                                     \
+    }                                                                            \
+    static_cast<BufferedPrinter &>(sim.getPrinter()).clear();                    \
     do {} while(false)
-#define VERIFY_OUTPUT(check)                                         \
+#define VERIFY_OUTPUT(check)                                                     \
     VERIFY_OUTPUT_NAMED(#check, check)
-#define VERIFY_OUTPUT_HAD_NAMED(message, check)                      \
+#define VERIFY_OUTPUT_HAD_NAMED(message, check)                                  \
     framework1::verify_count += 1;                                               \
-    std::cout << " " << ( message ) << " => ";                       \
-    if(outputCompare(sim.getPrinter(), check, true)) {               \
+    std::cout << " " << ( message ) << " => ";                                   \
+    if(framework1::outputCompare(sim.getPrinter(), check, true)) {               \
         framework1::verify_valid += 1;                                           \
-        std::cout << "yes\n";                                        \
-    } else {                                                         \
-        std::cout << "no\n";                                         \
-    }                                                                \
-    static_cast<BufferedPrinter &>(sim.getPrinter()).clear();        \
+        std::cout << "yes\n";                                                    \
+    } else {                                                                     \
+        std::cout << "no\n";                                                     \
+    }                                                                            \
+    static_cast<BufferedPrinter &>(sim.getPrinter()).clear();                    \
     do {} while(false)
-#define VERIFY_OUTPUT_HAD(check)                                     \
+#define VERIFY_OUTPUT_HAD(check)                                                 \
     VERIFY_OUTPUT_HAD_NAMED(#check, check)

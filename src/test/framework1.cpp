@@ -213,6 +213,7 @@ bool outputCompare(lc3::utils::IPrinter const & printer, std::string check, bool
     return false;
 }
 
-lc3::core::SymbolTable const & getSymbolTable(void) { return symbol_table; }
 };
+
+lc3::core::SymbolTable const & getSymbolTable(void) { return framework1::symbol_table; }
 
