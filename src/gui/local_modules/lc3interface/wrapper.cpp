@@ -550,6 +550,15 @@ NAN_METHOD(GetAndClearOutput)
     }
 }
 
+NAN_METHOD(ClearOutput)
+{
+    try {
+        printer.clearOutputBuffer();
+    } catch(std::exception const & e) {
+        Nan::ThrowError(e.what());
+    }
+}
+
 NAN_METHOD(SetBreakpoint)
 {
     if(info.Length() != 1) {
@@ -640,6 +649,7 @@ NAN_MODULE_INIT(NanInit)
     NAN_EXPORT(target, ClearInput);
     NAN_EXPORT(target, AddInput);
     NAN_EXPORT(target, GetAndClearOutput);
+    NAN_EXPORT(target, ClearOutput);
 
     NAN_EXPORT(target, SetBreakpoint);
     NAN_EXPORT(target, RemoveBreakpoint);
@@ -684,6 +694,12 @@ std::vector<std::string> utils::UIPrinter::getAndClearOutputBuffer(void)
     std::vector<std::string> output_buffer_copy = output_buffer;
     output_buffer.clear();
     return output_buffer_copy;
+}
+
+void utils::UIPrinter::clearOutputBuffer(void)
+{
+    std::lock_guard<std::mutex> const lock(output_buffer_mutex);
+    output_buffer.clear();
 }
 
 void utils::UIPrinter::print(std::string const & string)
