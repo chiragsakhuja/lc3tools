@@ -1,7 +1,8 @@
-**Disclaimer:** This document reflects the testing framework as of
+**Disclaimer:** This document reflects the testing framework for
 release v2.0.0, which is incompatible with prior versions. To see details on the
 previous testing framework, which is now deprecated, see [this
-document](TEST1.md).
+document](TEST1.md). For help transitioning, see [this document](TEST.md).  For
+help transitioning, see [this document](UPGRADE1.md).
 
 # Unit tests
 Unit tests in this framework are standalone executables that consume LC-3 source

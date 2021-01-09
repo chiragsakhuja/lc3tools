@@ -1,3 +1,7 @@
+**Disclaimer:** This document reflects the API for release v2.0.0, which is
+incompatible with prior versions. To see details on the previous API, see [this
+document](API1.md). For help transitioning, see [this document](UPGRADE1.md).
+
 # Table of Contents
 
 * [Running the Machine](API.md#running-the-machine)
@@ -7,7 +11,6 @@
 * [Test Cases](API.md#test-cases)
 * [Automated Input](API.md#automated-input)
 * [String Manipulation and Comparison](API.md#string-manipulation-and-comparison)
-* [Debugging](API.md#debugging)
 
 # Testing Framework API
 The purpose of this document is to describe the subset of the LC3Tools API that
@@ -271,8 +274,16 @@ Arguments:
 * `pred`: Condition that must be true to earn points.
 * `points`: Number of points to add to test case score.
 
-### `void error(std::string const & label, std::string const & message)`
+### `void output(std::string const & message)`
+Outputs a debugging message in the report if the `tester-verbose` command line
+flag is provided. Useful when debugging test cases or when wanting to provide
+more detail in the report.
 
+Arguments:
+
+* `message`: Message to output.
+
+### `void error(std::string const & label, std::string const & message)`
 Reports that an error occurred in the test case.  Errors may include exceeding
 instruction execution limit or running into an LC-3 exception.
 
@@ -280,6 +291,16 @@ Arguments:
 
 * `label`: String in the score report to identify this error.
 * `msg`: The error message.
+
+### `lc3::core::SymbolTable const & getSymbolTable(void) const`
+Access the symbol table as an `std::unordered_map<std::string, uint16_t>`, which
+contains the address of each symbol used across all assembly files under test.
+If symbols are duplicated across assembly files, only one arbitrary instance
+will be accessible in the symbol table.
+
+Return Value:
+
+* The symbol table.
 
 ## Automated Input
 
@@ -396,17 +417,6 @@ Arguments:
 Return Value:
 
 * Preprocessed string.
-
-## Debugging
-
-### `void output(std::string const & message)`
-Outputs a debugging message in the report when the `tester-verbose` command
-line flag is provided. Useful when debugging test cases or when wanting to
-provide more detail in the report.
-
-Arguments:
-
-* `message`: Message to output.
 
 # Copyright Notice
 Copyright 2020 &copy; McGraw-Hill Education. All rights reserved. No

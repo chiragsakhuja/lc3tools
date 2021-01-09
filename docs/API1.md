@@ -1,5 +1,6 @@
-**Disclaimer:** This document reflects the API for version v1.0.6, which is
-deprecated. To see details on the latest API, see [this document](API1.md).
+**Disclaimer:** This document reflects the API for release v1.0.6, which is
+deprecated. To see details on the latest API, see [this document](API.md). For
+help transitioning, see [this document](UPGRADE1.md).
 
 # Grading API
 The purpose of this document is to describe the subset of the LC3Tools API that

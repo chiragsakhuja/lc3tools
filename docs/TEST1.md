@@ -1,6 +1,7 @@
-**Disclaimer:** This document describes the testing framework for version
+**Disclaimer:** This document describes the testing framework for release
 v1.0.6, which is deprecated. To see details on the latest testing framework, see
-[this document](TEST.md).
+[this document](TEST.md).  For help transitioning, see [this
+document](UPGRADE1.md).
 
 # Graders
 Graders are standalone executables that consume LC-3 source code in binary

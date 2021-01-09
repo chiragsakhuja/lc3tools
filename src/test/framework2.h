@@ -84,8 +84,11 @@ public:
     double checkSimilarity(std::string const & source, std::string const & target) const;
     std::string getPreprocessedString(std::string const & str, uint64_t type) const;
 
+    lc3::core::SymbolTable const & getSymbolTable(void) const { return symbol_table; }
+
+private:
     void setSymbolTable(lc3::core::SymbolTable const & symbol_table) { this->symbol_table = symbol_table; }
-    lc3::core::SymbolTable const & getSymbolTable(void) { return symbol_table; }
+    friend int framework2::main(int argc, char * argv[]);
 };
 
     int main(int argc, char * argv[]);
