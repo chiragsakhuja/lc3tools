@@ -1,3 +1,8 @@
+# Table of Contents
+
+* [Command Line Tools and Unit Test](BUILD.md#command-line-tools-and-unit-tests)
+* [GUI](BUILD.md#gui-line-tools-and-unit-tests)
+
 # Building from Source
 
 There are two build systems in place for LC3Tools. The command line tools and
@@ -57,22 +62,13 @@ The default build options also build several sample unit tests under
 ### Windows
 Building on Windows may be done with any build system that CMake supports (e.g.
 Visual Studio, MSYS2, etc.). This document will focus on building with Visual
-Studio. Some of the build system files may need to be changed for other build
-systems on Windows, as they are untested.
+Studio 2019 Community Edition (free). Some of the build system files may need
+to be changed for other build systems or earlier versions of Visual Studio.
 
-To build on Windows, first create a `build/` directory in the root directory of
-this project. Then create a Visual Studio project with the CMake GUI as
-follows: Open the CMake GUI through the Start Menu or the command line via the
-`cmake-gui` command. Select the root directory of the project as the source and
-the `build/` directory as the target in the CMake GUI. Press the Configure
-button and then the Generate button.
-
-Open the Visual Studio solution produced in the `build/` directory. In Visual
-Studio select the x64 Release configuration and build the solution.
-
-Relative to the root directory, the binaries for the command line tools and
-graders will be built under `build/bin/Release/`, and the static library will
-be built under `build/lib/Release/`.
+Visual Studio 2019 has CMake built in, so building is straightforward.  Simply
+open Visual Studio and select the `Open a Local Folder` option.  Open the
+`lc3tools` directory and then set the build configuration to `Release`.  Build
+using the keyboard shortcut `Ctrl+Shift+B`.
 
 ## GUI
 **Ensure that you have already completed the steps outlined in the
@@ -93,17 +89,16 @@ yarn lc3
 ```
 
 ### Running the GUI
-Electron applications require an additional step to create a standalone
-executable. However, this step takes a couple of minutes to run, so it is
-also possible to run the application in development mode through Yarn. To do so,
-you may invoke the following command from the `src/gui/` directory:
+To run the GUI in development mode, invoke the following command from the
+`src/gui` directory:
 
 ```
 yarn run dev
 ```
 
-To optionally create a standalone executable, you may invoke the following
-command from the `src/gui/` directory:
+Development mode runs slowly, so once development is complete, invoke the
+following command from the `src/gui` directory to build an optimized and
+standalone executable:
 
 ```
 yarn build

@@ -1,15 +1,22 @@
+# Table of Contents
+
+* [Assembler](CLI.md#assembler)
+* [Simulator](CLI.md#simulator)
+* [Unit Tests](CLI.md#unit-tests)
+* [Static Library](CLI.md#static-library)
+* [Debugging](CLI.md#debugging)
+
 # Command Line Tools
 The command line tools include an `assembler` executable, a `simulator`
 executable, and a static library that is used by both tools as well as the GUI
-and testing framework. The testing framework is also invoked through the
-command line, and more information about them can be found in the [testing
-framework document](TEST.md).
+and unit tests. More information about unit tests can be found in the
+[unit test document](TEST.md).
 
-Assuming you have followed the [build
-document](BUILD.md#command-line-tools-and-unit-tests), the `assembler` and
-`simulator` executables will be under `build/bin/` on \*NIX systems and
-`build/bin/Release/`on Windows systems. The static library will be under
-`build/lib/` on \*NIX systems and `build/lib/Release/` on Windows systems.
+Assuming you have followed the
+[build document](BUILD.md#command-line-tools-and-unit-tests), the `assembler`
+and `simulator` executables will be under `build/bin/` on \*NIX systems and
+`build/Release/bin/` on Windows systems. The static library will be under
+`build/lib/` on \*NIX systems and `build/Release/lib/` on Windows systems.
 
 ## Assembler
 The `assembler` executable accepts one or more assembly or binary files as
@@ -45,9 +52,9 @@ to 8 will print messages from all preceding levels (i.e. 0-8).
 * Extra (8): Print detailed information about the assembly process
 
 ### Liberal Assembly Mode
-Previous versions of LC-3 assemblers are sometimes more loose with the ISA's
-rules than this assembler. Liberal assembly mode is a compatibility mode that
-should support all old assembly code.
+Other versions of LC-3 assemblers are sometimes more loose with the ISA's
+rules than this assembler. Liberal assembly mode loosens the requirements
+and should only be used as a compatibility mode.
 
 ## Simulator
 The `simulator` executable accepts one or more object files (extension `.obj`)
@@ -87,8 +94,7 @@ to 8 will print messages from all preceding levels (i.e. 0-8).
 
 ### Ignore Privilege
 LC-3 privilege modes may be an advanced topic that is not covered in class.
-Enabling this mode makes the simulation ignore access violation exceptions, so
-students and instructors can ignore them.
+Enabling this mode suppresses access violation exceptions.
 
 ### Log File
 Providing a log file will redirect output from the simulation to a file while
@@ -96,9 +102,9 @@ still enabling interaction with the simulator shell. Useful when the print level
 is set to 9.
 
 ## Unit Tests
-Unit test executables accept one or more assembly (`*.asm`) or binary (`*.bin`)
-files as arguments, assembles them, and then runs the unit test, which is
-effectively one or more executions of the simulator.
+A unit test executables accepts one or more assembly (`*.asm`) or binary
+(`*.bin`) files as arguments, assembles them, and then runs the unit test,
+which is effectively one or more executions of the simulator.
 
 ```
 usage: bin/unittest [OPTIONS] FILE [FILE...]
@@ -139,14 +145,15 @@ as `--test-filter="Advanced Test (Randomized)"`.
 The static library is not directly accessible through the command line but is
 built alongside the command line tools. The name of the static library depends
 on the platform it is compiled for, but will be similar to `liblc3tools.a`.
-This static library is referred to as "the backend" for this project.
+This static library is referred to as "the backend" for this project.  On \*NIX
+systems, the static library is in `build/lib` and on Windows it is in
+`build/Release/lib`.
 
 The command line tools, [unit tests](TEST.md), and [GUI](GUI.md) use the same
 static library to perform all tasks, thus guaranteeing consistent behavior.
 These components are all referred to as "frontends" for this project. Other
 frontends can also be created by utilizing the API provided by the static
 library. For more details on the API, see the [API document](API.md).
-
 
 ## Debugging
 The command line tools offer significantly more debugging features than the GUI
