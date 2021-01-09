@@ -1,0 +1,12 @@
+;
+; Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
+;
+0011 0000 0000 0000    ; start at location x3000
+0010 000 011111111     ; load x3100 into r0
+0010 001 011111111     ; load x3101 into r1
+0000 110 000000011     ; if shift amount is zero, finish
+0001 000 000 000 000   ; left shift r0 (by adding it to itself)
+0001 001 001 1 11111   ; subtract the counter in r1
+0000 111 111111100     ; branch back to completion check
+0011 000 011111011     ; store result in x3102
+1111 0000 00100101     ; halt
