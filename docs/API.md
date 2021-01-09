@@ -1,7 +1,6 @@
 # Table of Contents
 
 * [Running the Machine](API.md#running-the-machine)
-* [`Tester`](API.md#tester)
 * [Getting/Setting Machine State](API.md#gettingsetting-machine-state)
 * [Callbacks](API.md#callbacks)
 * [Miscellaneous](API.md#miscellaneous)
