@@ -212,7 +212,7 @@ pending.
 * `SUB_ENTER`: Upon entering a subroutine using `JSR`.
 * `SUB_EXIT`: Upon exiting a subroutine using `RET`.
 * `INPUT_REQUEST`: When input is requested and no characters are pending in the
-*  buffer.
+   buffer.
 * `INPUT_POLL`: Any time input is requested.
 * `POST_INST`: After the instruction finishes executing.
 
