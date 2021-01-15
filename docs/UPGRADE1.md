@@ -107,28 +107,28 @@ document](API.md#automated-input), and the samples at `src/test/tests/samples`
 for details on usage.
 
 ### Output Checking
-Output is now accessible to each test case through the `lc3::sim::getOutput`
+Output is now accessible to each test case through the `Tester::getOutput`
 function rather than hidden behind the `VERIFY_OUTPUT`-style macros.  The API
 provides some new string manipulation functions, detailed in [this section of
 the API document](API.md#string-manipulation-and-comparison), as well as an
 explicit `clearOutput` function, that provide all the functionality, and more,
-of API_VER 1.
+of API_VER 1.  See the samples at `src/test/tests/samples` for details on usage.
 
 ### Verification Checks
 Verification is no longer performed by the `VERIFY`-style macros, which obscured
 functionality and made strict assumptions about point distributions.  Instead,
 the provided `Tester` object has a single `verify` function, documented in [this
-section of the API document](API.md#tester).  It is provided a condition that
-should be satisfied, as well as how many points are added if the condition is
-true.  Additionally, the `verify` function is provided a message to be
-outputted in the report.  See the samples at `src/test/tests/samples` for
-details on usage.
+section of the API document](API.md#tester).  The `verify` function is provided
+a condition that should be satisfied, as well as the number of points that are
+added if the condition is true.  Additionally, the `verify` function is provided
+a message to be outputted in the report.  See the samples at
+`src/test/tests/samples` for details on usage.
 
 ### New Functionality
 Finally, some new functionality is provided in API_VER 2.
 
-*  A new set of string manipulation functions that help facilitate output
-     checking.
+*  A new set of string manipulation functions, such as fuzzy matching, that help
+     facilitate output verification.
 * `setBreakpoint` and `removeBreakpoint` functions that will pause execution as
     soon as the PC reaches a breakpointed address.
 * An `output` function that allows the instructor to add useful messages to the
@@ -136,11 +136,11 @@ Finally, some new functionality is provided in API_VER 2.
 * An `error` function that allows the instructor to explicitly report an error
     in grading.
 * A couple of of new callback types, such as `INPUT_POLL`.
-* A symbol table that is built during assembly and can be used to reference the
-    address at which a symbol is.  Pairs well with breakpoints, for example.
+* A function to access the symbol table generated during assembly.  Pairs well
+    with breakpoints, for example.
 
 Details on all of these new functions are provided in the [API
-document](API.md), and some of them can be found in the samples at
+document](API.md), and some example usage can be found in the samples at
 `src/test/tests/samples`.
 
 # Copyright Notice
