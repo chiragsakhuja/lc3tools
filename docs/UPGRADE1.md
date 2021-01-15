@@ -52,21 +52,22 @@ LC3Tools header files. Add the following line to the top of your unit test.**
 The functions used to interact with the `lc3::sim` object have been renamed.
 Functionality is identical.  This table shows the names in API_VER 1 and 2.
 
-| API_VER 1    | API_VER 2      |
-| ------------ | -------------- |
-| getReg       | readReg        |
-| setReg       | writeReg       |
-| getMem       | readMem        |
-| setMem       | writeMem       |
-| getPC        | readPC         |
-| setPC        | writePC        |
-| getPSR       | readPSR        |
-| setPSR       | writePSR       |
-| getMCR       | readMCR        |
-| setMCR       | writeMCR       |
-| getCC        | readCC         |
-| setCC        | writeCC        |
-| setMemString | writeStringMem |
+| API_VER 1         | API_VER 2              |
+| ----------------- | ---------------------- |
+| getReg            | readReg                |
+| setReg            | writeReg               |
+| getMem            | readMem                |
+| setMem            | writeMem               |
+| getPC             | readPC                 |
+| setPC             | writePC                |
+| getPSR            | readPSR                |
+| setPSR            | writePSR               |
+| getMCR            | readMCR                |
+| setMCR            | writeMCR               |
+| getCC             | readCC                 |
+| setCC             | writeCC                |
+| setMemString      | writeStringMem         |
+| runUntilInputPoll | runUntilInputRequested |
 
 ### Callbacks
 In API_VER 2, the `callback_func_t` type is now a function pointer that takes
@@ -96,8 +97,11 @@ manipulation, verification, and scoring, is provided through these objects.
 
 ### Automated Input
 The `StringInputter` object is no longer passed into each test case.  Instead,
-input is handled through the `lc3::sim &` object using the functions
-`setInputString` and `setInputCharDelay`.  See [this section of the unit test
+input is handled through the `Tester &` object using the functions
+`setInputString` and `setInputCharDelay`.  Also, as described in the [Renamed
+Simulator Functions](UPGRADE1.md#renamed-simulator-functions) section, the
+`runUntilInputPoll` function has been renamed to `runUntilInputRequested` and is
+unchanged in behavior.  See [this section of the unit test
 tutorial](TEST.md#appendix-common-paradigms), [this section of the API
 document](API.md#automated-input), and the samples at `src/test/tests/samples`
 for details on usage.
