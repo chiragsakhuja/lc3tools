@@ -211,9 +211,9 @@ pending.
 * `INT_EXIT`: Upon exiting an interrupt service routine using `RTI`.
 * `SUB_ENTER`: Upon entering a subroutine using `JSR`.
 * `SUB_EXIT`: Upon exiting a subroutine using `RET`.
-* `INPUT_REQUEST`: When input is requested and no characters are pending in the
-   buffer.
-* `INPUT_POLL`: Any time input is requested.
+* `INPUT_REQUEST`: When the simulator polls for input and no characters are
+    pending in the buffer.
+* `INPUT_POLL`: Any time the simulator polls for input.
 * `POST_INST`: After the instruction finishes executing.
 
 ### `void registerCallback(CallbackType type, callback_func_t func)`
