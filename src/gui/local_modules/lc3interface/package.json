@@ -1,6 +1,6 @@
 {
     "name": "lc3interface",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "description": "LC-3 Backend",
     "gypfile": true,
     "main": "./build/Release/lc3interface",
