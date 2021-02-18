@@ -4,7 +4,7 @@
 #include <nan.h>
 
 #ifndef DEFAULT_PRINT_LEVEL
-    #define DEFAULT_PRINT_LEVEL 1
+    #define DEFAULT_PRINT_LEVEL 4
 #endif
 
 #include <algorithm>

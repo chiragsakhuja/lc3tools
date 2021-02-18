@@ -47,8 +47,10 @@ bool lc3::sim::loadObjFile(std::string const & filename)
     try {
         simulator.loadObj(filename, obj_file);
     } catch(utils::exception const & e) {
+#ifdef _ENABLE_DEBUG
         printer.print("caught exception: " + std::string(e.what()));
         printer.newline();
+#endif
         return false;
     }
 
@@ -208,8 +210,10 @@ void lc3::sim::loadOS(void)
     try {
         asm_res = assembler.assemble(src_buffer);
     } catch(utils::exception const & e) {
+#ifdef _ENABLE_DEBUG
         printer.print("caught exception: " + std::string(e.what()));
         printer.newline();
+#endif
         return;
     }
     simulator.loadObj("lc3os", *(asm_res.first));
@@ -227,8 +231,10 @@ bool lc3::sim::runHelper(void)
     try {
         simulator.simulate();
     } catch(utils::exception const & e) {
+#ifdef _ENABLE_DEBUG
         printer.print("caught exception: " + std::string(e.what()));
         printer.newline();
+#endif
         return false;
     }
 
@@ -327,8 +333,10 @@ lc3::optional<std::pair<std::string, lc3::core::SymbolTable>> lc3::as::assemble(
     try {
         asm_res = assembler.assemble(in_file);
     } catch(utils::exception const & e) {
+#ifdef _ENABLE_DEBUG
         printer.print("caught exception: " + std::string(e.what()));
         printer.newline();
+#endif
         return {};
     }
 
@@ -383,8 +391,10 @@ lc3::optional<std::string> lc3::conv::convertBin(std::string const & bin_filenam
     try {
         out_stream = converter.convertBin(in_file);
     } catch(utils::exception const & e) {
+#ifdef _ENABLE_DEBUG
         printer.print("caught exception: " + std::string(e.what()));
         printer.newline();
+#endif
         return {};
     }
 
