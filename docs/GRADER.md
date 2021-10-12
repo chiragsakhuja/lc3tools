@@ -111,6 +111,9 @@ And `INFO.json` for Chirag Sakhuja will contain something similar to:
 ```
 
 ## Grade Mode
+**Ensure that the submission directory has been prepared by [Prepare
+Mode](GRADER.md#prepare-mode).**
+
 Grade Mode performs grading and is the most commonly used mode in the grader
 script.  At a high level, Grade Mode simply automates invocations to the
 specified unit test.  However, this mode provides several useful features in the
@@ -129,9 +132,6 @@ usage: python grader.py grade [OPTIONS]
 ```
 
 ### Grading
-**Ensure that the submission directory has been prepared by [Prepare
-Mode](GRADER.md#prepare-mode).**
-
 Grading can either be performed in batch mode or solo mode (e.g. when looking
 into a single student's submission).  In either case, simply provide the
 `--file` and `--tester` arguments.  To grade a single student's assignment,
