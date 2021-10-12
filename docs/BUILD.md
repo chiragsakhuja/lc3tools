@@ -35,7 +35,7 @@ the least, the products will be the following:
 
 Additionally, an executable for each unit test will also be produced with the
 same name as the source file for the unit test. More details on the unit tests
-can be found in the [testing framework document](GRADE.md).
+can be found in the [unit test document](TEST.md).
 
 ### *NIX system
 To build on macOS and Linux, you may invoke the following commands from the

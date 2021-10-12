@@ -1,8 +1,18 @@
 **Disclaimer:** This document reflects the testing framework for
 release v2.0.0, which is incompatible with prior versions. To see details on the
 previous testing framework, which is now deprecated, see [this
-document](TEST1.md). For help transitioning, see [this document](TEST.md).  For
-help transitioning, see [this document](UPGRADE1.md).
+document](TEST1.md).  For help transitioning, see [this document](UPGRADE1.md).
+
+# Table of Contents
+
+* [Tutorial](TEST.md#tutorial)
+  * [Assignment Description](TEST.md#assignment-description)
+  * [Creating a Unit Test](TEST.md#creating-a-unit-test)
+  * [Adding a Test Case](TEST.md#adding-a-test-case)
+  * [Adding Another Test Case](TEST.md#adding-another-test-case)
+  * [Conclusion](TEST.md#conclusion)
+  * [Appendix: Common Paradigms](TEST.md#appendix-common-paradigms)
+* [Additional Resources](TEST.md#additional-resources)
 
 # Unit tests
 Unit tests in this framework are standalone executables that consume LC-3 source
@@ -24,12 +34,11 @@ tools document](CLI.md) before reading this document.
 Generally there will be a single unit test for each assignment. The unit test
 will consist of a set of test cases. The unit test executable consumes a single
 student's assignment and outputs a report for that student. In practice, the
-instructor will need to write scripts that invoke the unit test for each
-student and then aggregate the results from the reports. At UT Austin we use
-Canvas to distribute grades, which has its own API. This project includes a
-comprehensive script, which is described in the [Canvas document](CANVAS.md),
-to interface with Canvas that runs unit tests for every student, aggregates
-the results, and uploads the grades to Canvas with the report attached.
+instructor will need scripts that invoke the unit test for each student and then
+aggregate the results from the reports. We provide such a script, as described
+in the [Grader document](GRADER.md), that facilitates batch grading and even
+interfaces with Canvas, the learning management system used at UT Austin, to
+download student information and upload grades and unit test reports.
 
 Unit test source files live in the `src/test/tests` directory. When a unit test
 is built, as per the [build

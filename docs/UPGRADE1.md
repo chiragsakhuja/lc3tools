@@ -19,7 +19,8 @@ This change may also impact anyone who has developed their own frontend.
 Release v2.0.0 introduces a completely new simulator backend as well as some
 minor bugfixes that are not in v1.0.6.  The new backend is functionality
 identical to the previous backend, but it more stable and is fully
-deterministic.  If these changes are important, please transition to API_VER 2.
+deterministic.  If these changes are important to you, please transition to
+`API_VER 2`.
 
 ## New Directories
 The `backend` and `frontend` categorization no longer applies, and everything is
@@ -49,8 +50,9 @@ LC3Tools header files. Add the following line to the top of your unit test.**
 
 
 ### Renamed Simulator Functions
-The functions used to interact with the `lc3::sim` object have been renamed.
-Functionality is identical.  This table shows the names in API_VER 1 and 2.
+The functions that used to interact with the `lc3::sim` object have been
+renamed.  Functionality is identical.  This table shows the names in API_VER 1
+and 2.
 
 | API_VER 1         | API_VER 2              |
 | ----------------- | ---------------------- |
@@ -119,25 +121,25 @@ Verification is no longer performed by the `VERIFY`-style macros, which obscured
 functionality and made strict assumptions about point distributions.  Instead,
 the provided `Tester` object has a single `verify` function, documented in [this
 section of the API document](API.md#tester).  The `verify` function is provided
-a condition that should be satisfied, as well as the number of points that are
+with a condition that should be satisfied and the number of points that are
 added if the condition is true.  Additionally, the `verify` function is provided
 a message to be outputted in the report.  See the samples at
 `src/test/tests/samples` for details on usage.
 
 ### New Functionality
-Finally, some new functionality is provided in API_VER 2.
+The following new functionality has been added in `API_VER 2`.
 
 *  A new set of string manipulation functions, such as fuzzy matching, that help
      facilitate output verification.
-* `setBreakpoint` and `removeBreakpoint` functions that will pause execution as
-    soon as the PC reaches a breakpointed address.
 * An `output` function that allows the instructor to add useful messages to the
-    report (when the `--grader-verbose` flag is passed at the command line).
+    report (when the `--tester-verbose` flag is passed at the command line).
 * An `error` function that allows the instructor to explicitly report an error
     in grading.
 * A couple of of new callback types, such as `INPUT_POLL`.
-* A function to access the symbol table generated during assembly.  Pairs well
-    with breakpoints, for example.
+* `setBreakpoint` and `removeBreakpoint` functions that will pause execution as
+    soon as the PC reaches a breakpointed address.
+* A function to access the symbol table generated during assembly.  This pairs
+    well with breakpoints, for example.
 
 Details on all of these new functions are provided in the [API
 document](API.md), and some example usage can be found in the samples at
