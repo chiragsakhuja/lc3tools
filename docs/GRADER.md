@@ -165,7 +165,6 @@ command from `tools`:
 python grade.py grade --file=tutorial_sol.asm --tester=../build/bin/tutorial --root=tutorial_submissions
 ```
 
-Continuing the [example from the previous section](GRADER.md#example), the
 `REPORT.tsv` may look like the following:
 ```
 Doe, Jane	jd57293	4768371	100.0
