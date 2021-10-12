@@ -212,8 +212,8 @@ usage: python grader.py grade [OPTIONS]
 ```
 
 ### Example
-The final step in the example from [the previous sections](GRADER.md#example) is
-to upload grades and reports to Canvas.  To do so, run the following command:
+The final step in the example from [the previous sections](GRADER.md#example-1)
+is to upload grades and reports to Canvas.  To do so, run the following command:
 ```
 python grade.py upload --file=tutorial_sol.asm --assignment='Tutorial Assignment' --root=tutorial_submissions
 ```
