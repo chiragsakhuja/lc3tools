@@ -202,7 +202,7 @@ whitespace-sensitive name of the assignment on Canvas.
 
 Full operation of Upload Mode is as follows:
 ```
-usage: python grader.py grade [OPTIONS]
+usage: python grader.py upload [OPTIONS]
 
   --file=FILE              [Required] File name of assignment
   --assignment=ASSIGNMENT  [Required] Exact name of assignment on Canvas
