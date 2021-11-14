@@ -36,6 +36,7 @@ namespace asmbl
         bool done;
 
         bool convertStringToNum(std::string const & str, int32_t & val) const;
+        bool isValidNumString(std::string const & str, uint32_t base) const;
         std::istream & getline(std::istream & is, std::string & t) const;
 
         bool enable_liberal_asm;
