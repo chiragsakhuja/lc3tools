@@ -144,7 +144,12 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
 {
     char const * c_str = str.c_str();
     if(enable_liberal_asm) {
-        if(c_str[0] == '0' && c_str[1] != '\0') { c_str += 1; }
+        if(c_str[0] == '0' && 
+           (c_str[1] == 'B' || c_str[1] == 'b' ||
+            c_str[1] == 'X' || c_str[1] == 'x'))
+        {
+            c_str += 1;
+        }
     }
 
     try {
