@@ -194,6 +194,9 @@ export default {
       require("brace/theme/textmate");
       require("brace/theme/twilight");
       editor.setShowPrintMargin(false);
+      editor.setOptions({
+        fontSize: "1.25em"
+      })
       editor.commands.addCommand({
         name: 'save',
         bindKey: {win: "Ctrl-S", "mac": "Cmd-S"},
