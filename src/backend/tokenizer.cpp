@@ -182,6 +182,9 @@ bool lc3::core::asmbl::Tokenizer::convertStringToNum(std::string const & str, in
     } catch(std::invalid_argument const & e) {
         (void) e;
         return false;
+    } catch(std::out_of_range const & e) {
+        (void) e;
+        return false;
     }
 }
 
