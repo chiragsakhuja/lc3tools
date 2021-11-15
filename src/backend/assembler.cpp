@@ -436,6 +436,14 @@ std::pair<bool, lc3::core::SymbolTable> lc3::core::Assembler::buildSymbolTable(
                     }
                 }
 
+                if(encoder.isStringValidReg(statement.label->str)) {
+                    logger.asmPrintf(PrintType::P_ERROR, statement, *statement.label,
+                        "label cannot be a register");
+                    logger.newline();
+                    success = false;
+                    continue;
+                }
+
                 symbols[utils::toLower(statement.label->str)] = statement.pc;
                 logger.printf(PrintType::P_EXTRA, true, "adding label \'%s\' := 0x%0.4x", statement.label->str.c_str(),
                     statement.pc);
