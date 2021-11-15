@@ -56,7 +56,7 @@
     },
     "win": {
       "icon": "static/icons/icon.ico",
-      "target": "nsis"
+      "target": ["nsis", "portable"]
     },
     "linux": {
       "icon": "static/icons",

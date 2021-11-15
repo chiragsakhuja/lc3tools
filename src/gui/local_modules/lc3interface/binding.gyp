@@ -27,7 +27,7 @@
                         }
                     },
                     'link_settings': {
-                        'libraries': ['<(module_root_dir)/../../../../build/Release/lib/lc3core']
+                        'libraries': ['<(module_root_dir)/../../../../build/lib/Release/lc3core']
                     }
                 }]
             ]
