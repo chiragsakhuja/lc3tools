@@ -212,7 +212,7 @@ to make sure the testing framework invokes the test case. To do this, add the
 following line to the `setup` function.
 
 ```
-tester.registerTest("Zero Test", ZeroTest, 100, false);
+tester.registerTest("Zero Test", ZeroTest, 10, false);
 ```
 
 The `setup` function is called one time before any test cases are run. It can be
