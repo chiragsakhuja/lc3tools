@@ -226,7 +226,7 @@ class ArgDispatcher(object):
         parser.add_argument('--dryrun', action='store_true', help='Don\'t modify reports and output to stdout instead of file')
         parser.add_argument('--passargs', type=str, default='', help='Argument string to pass to grader binary')
         args = parser.parse_args(sys.argv[2:])
-        grade(args.root, args.file, args.grader, args.eid, args.dryrun, args.passargs)
+        grade(args.root, args.file, args.tester, args.eid, args.dryrun, args.passargs)
 
     def upload(S):
         parser = argparse.ArgumentParser(description='Upload grades and comments')
