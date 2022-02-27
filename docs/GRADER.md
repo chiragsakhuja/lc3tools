@@ -86,7 +86,7 @@ download submissions.  We will assume the downloaded file is called
 `submissions.zip` and is also stored in the `tools` directory.  Prepare Mode may
 be run as follows from the `tools` directory:
 ```
-python grader.py --file=tutorial_sol.asm --zip=submissions.zip --root=tutorial_submissions
+python grader.py prepare --file=tutorial_sol.asm --zip=submissions.zip --root=tutorial_submissions
 ```
 
 Extracting `submissions.zip` may result in the following two files:
@@ -162,7 +162,7 @@ Continuing from the [example from the previous section](GRADER.md#example), we
 now wish to grade the batch of submissions.  To do so, simply run the following
 command from `tools`:
 ```
-python grade.py grade --file=tutorial_sol.asm --tester=../build/bin/tutorial --root=tutorial_submissions
+python grader.py grade --file=tutorial_sol.asm --tester=../build/bin/tutorial --root=tutorial_submissions
 ```
 
 `REPORT.tsv` may look like the following:
@@ -176,7 +176,7 @@ examination, so re-run just his submission to get more detailed information.
 Since this is just for debugging purposes, there's no need to update the grade
 report.  Run the following command:
 ```
-python grade.py grade --file=tutorial_sol.asm --tester=../build/bin/tutorial --root=tutorial_submissions --eid=cs84292 --dryrun --passargs='--sim-print-level=9 --asm-print-level=9'
+python grader.py grade --file=tutorial_sol.asm --tester=../build/bin/tutorial --root=tutorial_submissions --eid=cs84292 --dryrun --passargs='--sim-print-level=9 --asm-print-level=9'
 ```
 
 The updated output files,
@@ -214,7 +214,7 @@ usage: python grader.py upload [OPTIONS]
 The final step in the example from [the previous sections](GRADER.md#example-1)
 is to upload grades and reports to Canvas.  To do so, run the following command:
 ```
-python grade.py upload --file=tutorial_sol.asm --assignment='Tutorial Assignment' --root=tutorial_submissions
+python grader.py upload --file=tutorial_sol.asm --assignment='Tutorial Assignment' --root=tutorial_submissions
 ```
 
 If a submission needs to be regraded, then run Grade Mode without `--dryrun` and
