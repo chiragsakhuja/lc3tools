@@ -172,7 +172,7 @@ export default {
       settings_menu: false,
       settings: {
         theme: "light",
-        numbers: "unsigned",
+        numbers: "signed",
         ignore_privilege: false,
         liberal_asm: false,
         ignore_update: false
