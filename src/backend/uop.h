@@ -4,6 +4,7 @@
 #ifndef UOP_H
 #define UOP_H
 
+#include <cstdint>
 #include <functional>
 #include <memory>
 

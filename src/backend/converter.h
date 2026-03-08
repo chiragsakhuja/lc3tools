@@ -4,6 +4,7 @@
 #ifndef CONVERTER_H
 #define CONVERTER_H
 
+#include <cstdint>
 #include <memory>
 
 #include "logger.h"

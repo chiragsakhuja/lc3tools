@@ -2,6 +2,7 @@
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
  */
 #define API_VER 2
+#include <cstdint>
 #include "framework.h"
 
 void ZeroTest(lc3::sim & sim, Tester & tester, double total_points)

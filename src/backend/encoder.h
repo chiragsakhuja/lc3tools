@@ -4,6 +4,7 @@
 #ifndef INSTRUCTION_ENCODER_H
 #define INSTRUCTION_ENCODER_H
 
+#include <cstdint>
 #include <memory>
 
 #include "isa.h"

@@ -4,6 +4,7 @@
 #ifndef ASSEMBLER_H
 #define ASSEMBLER_H
 
+#include <cstdint>
 #include <memory>
 #include <sstream>
 #include <vector>

@@ -4,6 +4,7 @@
 #ifndef ALIASES_H
 #define ALIASES_H
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>

@@ -4,6 +4,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <cstdint>
 #include <vector>
 
 #include "asm_types.h"

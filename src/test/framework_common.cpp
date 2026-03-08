@@ -1,6 +1,7 @@
 /*
  * Copyright 2020 McGraw-Hill Education. All rights reserved. No reproduction or distribution without the prior written consent of McGraw-Hill Education.
  */
+#include <cstdint>
 #include "framework_common.h"
 
 bool endsWith(std::string const & search, std::string const & suffix)

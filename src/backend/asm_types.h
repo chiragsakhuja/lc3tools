@@ -4,6 +4,7 @@
 #ifndef ASM_TYPES_H
 #define ASM_TYPES_H
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <iostream>

@@ -4,6 +4,7 @@
 #ifndef EVENT_H
 #define EVENT_H
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>

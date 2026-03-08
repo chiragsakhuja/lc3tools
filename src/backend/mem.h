@@ -4,6 +4,7 @@
 #ifndef MEM_NEW_H
 #define MEM_NEW_H
 
+#include <cstdint>
 #include <string>
 #include <iostream>
 

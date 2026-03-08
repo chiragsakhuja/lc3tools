@@ -4,6 +4,7 @@
 #ifndef DEVICE_H
 #define DEVICE_H
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <queue>

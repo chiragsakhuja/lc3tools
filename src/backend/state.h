@@ -4,6 +4,7 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include <cstdint>
 #include <queue>
 #include <stack>
 #include <string>

@@ -12,6 +12,7 @@
     #endif
 #endif
 
+#include <cstdint>
 #include <functional>
 #include <utility>
 

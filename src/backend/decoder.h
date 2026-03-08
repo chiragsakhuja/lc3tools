@@ -4,6 +4,7 @@
 #ifndef DECODER_H
 #define DECODER_H
 
+#include <cstdint>
 #include "isa_abstract.h"
 #include "utils.h"
 

@@ -4,6 +4,7 @@
 #ifndef ISA_ABSTRACT_H
 #define ISA_ABSTRACT_H
 
+#include <cstdint>
 #include <string>
 
 #include "aliases.h"
