@@ -10,6 +10,7 @@
     "url": "https://github.com/chiragsakhuja/lc3tools.git"
   },
   "scripts": {
+    "test": "node --test",
     "build": "electron-vite build && electron-builder",
     "build:dir": "electron-vite build && electron-builder --dir",
     "build:mac:universal": "electron-vite build && electron-builder --mac --universal",

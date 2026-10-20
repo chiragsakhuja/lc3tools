@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('lc3tools', {
     saveFile: (options) => ipcRenderer.invoke('dialog:save', options)
   },
   file: {
+    getStartupPath: () => ipcRenderer.invoke('file:startup'),
     basename: (filePath) => path.basename(filePath),
     exists: (filePath) => fs.existsSync(filePath),
     readText: (filePath) => fs.readFileSync(filePath, 'utf8'),

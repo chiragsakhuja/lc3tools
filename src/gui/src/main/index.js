@@ -4,6 +4,7 @@ import log from 'electron-log'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import lc3 from 'lc3interface'
+import { getStartupFile } from './startup-file.mjs'
 
 let mainWindow
 const isDev = Boolean(process.env.ELECTRON_RENDERER_URL)
@@ -138,6 +139,13 @@ app.on('ready', () => {
     autoUpdater.autoDownload = false
     autoUpdater.checkForUpdates()
   }
+})
+
+ipcMain.handle('file:startup', (event) => {
+  if (!mainWindow || event.sender !== mainWindow.webContents) {
+    return null
+  }
+  return getStartupFile(process.argv, process.defaultApp)
 })
 
 ipcMain.handle('dialog:open', async (_event, options) => {
