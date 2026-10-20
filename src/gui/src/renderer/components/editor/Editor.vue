@@ -106,7 +106,15 @@ export default {
   components: {
     "ace-editor": AceEditor
   },
-  mounted() {
+  async mounted() {
+    try {
+      const filePath = await file.getStartupPath();
+      if (filePath) {
+        await this.openFile(filePath);
+      }
+    } catch (error) {
+      console.error('Unable to open startup file:', error);
+    }
     // setInterval(this.autosaveFile, 5 * 60 * 1000);
   },
   methods: {
