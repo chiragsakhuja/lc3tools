@@ -43,13 +43,10 @@ To build on macOS and Linux, you may invoke the following commands from the
 root directory:
 
 ```
-# Create build directory
-mkdir build && cd build
-# Set up build directory (run twice)
-cmake -DCMAKE_BUILD_TYPE=Release ..
-cmake -DCMAKE_BUILD_TYPE=Release ..
+# Configure an out-of-source build in ./build
+cmake -S . -B build
 # Build
-make
+cmake --build build
 ```
 
 macOS builds are universal by default:
