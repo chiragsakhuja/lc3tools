@@ -154,7 +154,13 @@ std::string lc3::sim::getMemLine(uint16_t addr) const { return simulator.getMach
 uint16_t lc3::sim::readPC(void) const { return simulator.getMachineState().readPC(); }
 uint16_t lc3::sim::readPSR(void) const { return simulator.getMachineState().readPSR(); }
 uint16_t lc3::sim::readMCR(void) const { return simulator.getMachineState().readMCR(); }
-char lc3::sim::readCC(void) const { return utils::getBits(readPSR(), 2, 0); }
+char lc3::sim::readCC(void) const
+{
+    uint16_t psr = readPSR();
+    if((psr & 0x4) != 0) { return 'N'; }
+    if((psr & 0x2) != 0) { return 'Z'; }
+    return 'P';
+}
 void lc3::sim::writeReg(uint16_t id, uint16_t value) { simulator.getMachineState().writeReg(id, value); }
 void lc3::sim::writeMem(uint16_t addr, uint16_t value) { simulator.getMachineState().writeMem(addr, value); }
 void lc3::sim::writeStringMem(uint16_t addr, std::string const & value)
