@@ -146,12 +146,12 @@ Return Value:
 
 * Value of the CC as 'N', 'Z', or 'P'.
 
-### `void setCC(uint16_t value)`
+### `void setCC(char value)`
 Set the value of the Condition Codes (CC) as a character.
 
 Arguments:
 
-* `value`: New MCR value as 'N', 'Z', or 'P'.
+* `value`: New CC value as 'N', 'Z', or 'P'.
 
 ### `void setMemString(uint16_t addr, std::string const & value)`
 Set a series of memory locations to a null-terminated string.
